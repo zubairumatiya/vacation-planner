@@ -12,8 +12,10 @@
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^9.28.0",
+    "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.18",
     "@types/express": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/morgan": "^1.9.9",
     "@types/node": "^22.15.30",
     "@types/pg": "^8.15.4",
@@ -24,10 +26,14 @@
     "typescript-eslint": "^8.33.1"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
-    "pg": "^8.16.0"
+    "nodemon": "^3.1.10",
+    "pg": "^8.16.0",
+    "uuid": "^11.1.0"
   }
 }

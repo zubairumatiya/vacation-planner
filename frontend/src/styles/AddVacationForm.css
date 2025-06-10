@@ -1,0 +1,17 @@
+.dateError {
+  border-color: red;
+}
+
+.submitButton {
+  height: 5vh;
+  width: 10vh;
+  border-radius: 15px;
+  border-width: 5px;
+  box-shadow: 10px;
+  color: dodgerblue;
+}
+
+button.submitButton.disabledSubmitButton {
+  border-width: 10px;
+  color: #f1f1f1;
+}
