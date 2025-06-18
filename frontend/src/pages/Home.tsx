@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+const apiUrl = import.meta.env.VITE_API_URL;
+
 const Home = () => {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,7 @@ const Home = () => {
 
   useEffect(() => {
     const getTrips = async () => {
-      const res = await fetch("http://localhost:5000/home");
+      const res = await fetch(`${apiUrl}/home`);
       const data = await res.json();
       setTrips(data);
       setLoading(false);

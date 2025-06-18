@@ -2,19 +2,37 @@ import express from "express";
 const router = express.Router();
 import db from "../db/db.js";
 import bcrypt from "bcrypt";
-import { v4 as createUUID } from "uuid";
+//import { v4 as createUUID } from "uuid";
+import crypto from "crypto";
+import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+dotenv.config();
 
 interface PgError extends Error {
   code?: string;
 }
 
+const BASE_URL =
+  process.env.NODE_ENV === "production"
+    ? process.env.PROD_URL
+    : process.env.DEV_URL;
+
+if (process.env.SIGNATURE === undefined) {
+  throw new Error("SIGNATURE is undefined");
+}
+const SECRET: string = process.env.SIGNATURE;
+
 router.post("/signup", async (req, res, next) => {
-  const hash: string = await bcrypt.hash(req.body.password, 12);
-  const token: string = createUUID();
+  if (req.body.password) {
+    //insert password criteria verfication (can't be null, etc)!!!
+  }
+  const pass: string = req.body.password.trim().normalize("NFC");
+  const hash: string = await bcrypt.hash(pass, 12);
+  const token: string = crypto.randomBytes(32).toString("hex");
   try {
     //check for email uniqueness in both tables
     const existingUnverifiedEmail = await db.query(
-      "SELECT * FROM unverified_users WHERE email=$1",
+      "SELECT * FROM unverified_users WHERE email=$1 AND expires_at > NOW()",
       [req.body.email]
     );
     const existingActiveEmail = await db.query(
@@ -23,7 +41,8 @@ router.post("/signup", async (req, res, next) => {
     );
 
     if (existingUnverifiedEmail.rows.length > 0) {
-      // let's use this to send an email again
+      // let's use this to send an email again ONLY if it isn't expired --- because it will be gone in an hour
+      const existingToken = existingUnverifiedEmail.rows[0].token;
       // if it isn't expired simply send a message to confirm email with an optional
       // link to re-send verification email. If expired, send verfication email link
     } else if (existingActiveEmail.rows.length > 0) {
@@ -74,10 +93,7 @@ router.get("/verify", async (req, res, next) => {
         } finally {
           client.release();
         }
-        res.redirect(
-          200,
-          "http://localhost:5173/verify-email?verified=success"
-        );
+        res.redirect(200, `${BASE_URL}/verify-email?verified=success`);
       }
     } catch (err) {
       next(err);
@@ -88,5 +104,40 @@ router.get("/verify", async (req, res, next) => {
         "broken token, try clicking the link again or create new account",
     });
     return;
+  }
+});
+
+router.post("/login", async (req, res, next) => {
+  const email = req.body.email;
+  try {
+    const foundUser = await db.query("SELECT * FROM users WHERE email=$1", [
+      email,
+    ]);
+
+    if (foundUser.rows.length === 0) {
+      res.sendStatus(401);
+      return;
+    } else {
+      const storedHash = foundUser.rows[0].password;
+      const userInput = req.body.password;
+      const isMatch = await bcrypt.compare(userInput, storedHash);
+      if (!isMatch) {
+        res.status(401).json({ message: "wrong login" });
+        return;
+      } else {
+        const token = jwt.sign(
+          {
+            id: foundUser.rows[0].id,
+            email: foundUser.rows[0].email,
+          },
+          SECRET,
+          { expiresIn: "1h" }
+        );
+        res.status(200).json({ message: "Success!", token });
+        return;
+      }
+    }
+  } catch (err) {
+    next(err);
   }
 });

@@ -1,6 +1,7 @@
 import { useState, useContext } from "react";
 import styles from "../styles/AddVacationForm.module.css";
 import { AuthContext } from "../context/AuthContext.tsx";
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const AddVacation = () => {
   const auth = useContext(AuthContext);
@@ -13,7 +14,7 @@ const AddVacation = () => {
     e.preventDefault();
     if (token) {
       const formData = new FormData(e.currentTarget);
-      const res = await fetch("http://localhost:5000/add-vacation", {
+      const res = await fetch(`${apiUrl}/add-vacation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
