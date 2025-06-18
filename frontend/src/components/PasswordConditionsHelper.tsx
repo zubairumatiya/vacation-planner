@@ -13,16 +13,47 @@ const PasswordConditionsHelper = (props: {
 
   useEffect(() => {
     const newPassword = props.updatedPassword;
+    let holdMessage = "";
+
+    if (newPassword.length < 8) {
+      holdMessage = "Password must be at least 8 characters";
+      setAtLeastEight(false);
+    } else {
+      setAtLeastEight(true);
+    }
+
+    if (!/[-!@#$%^&*()_+=[\]{}\\|`~:;"'<>,.?/]+/.test(newPassword)) {
+      holdMessage = "Password must contain at least 1 special character";
+      setSpecialPresent(false);
+    } else {
+      setSpecialPresent(true);
+    }
+
+    if (!/[0-9]+/.test(newPassword)) {
+      holdMessage = "Password must contain at least 1 number";
+      setNumberPresent(false);
+    } else {
+      setNumberPresent(true);
+    }
+
+    if (!/[A-Z]+/.test(newPassword)) {
+      holdMessage = "Password must contain at least 1 uppercase letter";
+      setUpperCasePresent(false);
+    } else {
+      setUpperCasePresent(true);
+    }
+
     if (!/[a-z]+/.test(newPassword)) {
-      props.errorCallback("Password must contain at least 1 lowercase letter");
-    } else if (!/[A-Z]+/.test(newPassword)) {
-      props.errorCallback("Password must contain at least 1 uppercase letter");
-    } else if (!/[0-9]+/.test(newPassword)) {
-      props.errorCallback("Password must contain at least 1 number");
-    } else if (!/[-!@#$%^&*()_+=[\]{}\\|`~:;"'<>,.?/]+/.test(newPassword)) {
-      props.errorCallback("Password must contain at least 1 special character");
-    } else if (newPassword.length < 8) {
-      props.errorCallback("Password must be at least 8 characters");
+      holdMessage = "Password must contain at least 1 lowercase letter";
+      setLowerCasePresent(false);
+    } else {
+      setLowerCasePresent(true);
+    }
+
+    if (newPassword.length < 72) {
+      props.errorCallback(holdMessage);
+    } else {
+      props.errorCallback("Password cannot exceed 72 characters");
     }
   }, []);
 
@@ -220,3 +251,5 @@ const PasswordConditionsHelper = (props: {
     </div>
   );
 };
+
+export default PasswordConditionsHelper;

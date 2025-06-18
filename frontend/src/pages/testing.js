@@ -2,7 +2,7 @@ import crytpo from "crypto";
 
 const token = crytpo.randomBytes(8).toString("hex");
 
-//console.log(token);
+console.log(token);
 
 const regex =
   /^\w+[\w.-]*@[A-Za-z0-9]+(?!.*\.\.)(?!.*(\.-|-\.))\.[A-Za-z0-9.-]*[A-Za-z0-9]+$/;
@@ -16,4 +16,4 @@ const passwordRegex =
 
 //const passwordRegex = /\W+/;
 console.log(regex.test("zubair@gmail.com"));
-//console.log(passwordRegex.test(`asSsf2da`)); //é
+console.log(passwordRegex.test(`asSsf2da`)); //é

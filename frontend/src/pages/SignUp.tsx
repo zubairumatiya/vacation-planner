@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "../styles/SignUp.module.css";
 import { isValidEmail } from "../../../shared/emailUtils.ts";
 import { isValidPassword } from "../../../shared/passwordUtils.ts";
-import { PasswordConditionsHelper } from "../components/PasswordConditionsHelper.tsx";
+import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -13,12 +16,35 @@ const SignUp = () => {
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
   const [showCritera, setShowCriteria] = useState(false);
-  const [exceededSeventyTwo, setExceededSeventyTwo] = useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
+  const navigate = useNavigate();
 
-  const handleFormSubmission = () => {};
+  useEffect(() => {
+    if (isValidPassword(password) && isValidEmail(email)) {
+      setDisableSubmission(false);
+    }
+  }, [password, email]);
 
-  const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleFormSubmission = async (e: React.FormEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    const dataObj = Object.fromEntries(formData.entries()); // this makes our form fields into an obj like: {email: "...", password: "...", username: "..."}
+
+    const res = await fetch(`${apiUrl}/signup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(dataObj),
+    });
+
+    if (res.status !== 200) {
+      alert("error creating account - refresh and retry");
+    } else {
+      navigate("/verify-email");
+    }
+  };
+
+  const handleEmailBlur = () => {
     setEmailMicroing(true);
 
     if (!isValidEmail(email)) {
@@ -44,7 +70,7 @@ const SignUp = () => {
     }
   };
 
-  const handlePasswordBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handlePasswordBlur = () => {
     setPasswordMicroing(true);
 
     if (!isValidPassword(password)) {
@@ -56,13 +82,13 @@ const SignUp = () => {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
     if (password.length > 72) {
-      setPasswordErrorMessage("Password cannot exceed 72 characters");
       setPasswordError(true);
     }
     if (passwordMicroing) {
       if (!isValidPassword(password)) {
         setPasswordError(true);
-        //micromanage tracking against password criteria and trigger/clear error
+        // we are using password error messages from two different sources. The red border and ! symbol with this, and the criteria with the pch child.
+        //the setPasswordError is holding it together. I believe my regex is the same for both.
       } else {
         if (passwordError === true) {
           setPasswordError(false);
@@ -209,3 +235,5 @@ const SignUp = () => {
     </>
   );
 };
+
+export default SignUp;

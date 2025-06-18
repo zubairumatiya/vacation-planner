@@ -12,6 +12,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/add-vacation" element={<AddVacation />} />
+          <add the login routes here
         </Routes>
       </main>
     </BrowserRouter>

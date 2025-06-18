@@ -6,6 +6,8 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import { isValidPassword } from "../../shared/passwordUtils.js";
+import { isValidEmail } from "../../shared/emailUtils.js";
 dotenv.config();
 
 interface PgError extends Error {
@@ -25,6 +27,16 @@ const SECRET: string = process.env.SIGNATURE;
 router.post("/signup", async (req, res, next) => {
   if (req.body.password) {
     //insert password criteria verfication (can't be null, etc)!!!
+    if (!isValidPassword(req.body.password) || req.body.password === null) {
+      res.status(400).json({ message: "invalid password criteria" });
+      return;
+    }
+  }
+  if (req.body.email) {
+    if (!isValidEmail(req.body.email) || req.body.email === null) {
+      res.status(400).json({ message: "invalid email input" });
+      return;
+    }
   }
   const pass: string = req.body.password.trim().normalize("NFC");
   const hash: string = await bcrypt.hash(pass, 12);

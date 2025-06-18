@@ -6,8 +6,8 @@ import styles from "../styles/Login.module.css";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const LoginPage = () => {
-  const auth = useContext(AuthContext);
-  const token = auth?.token;
+  //const auth = useContext(AuthContext);
+  //const token = auth?.token;
   const navigate = useNavigate();
   const [invalidLogin, setInvalidLogin] = useState(false);
 
@@ -19,7 +19,7 @@ const LoginPage = () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        //Authorization: `Bearer ${token}`, ---> why do we have this?? I think we should be setting the token here not sending it, this needs a redo
       },
       body: JSON.stringify(dataObj),
     });
@@ -57,3 +57,5 @@ const LoginPage = () => {
     </>
   );
 };
+
+export default LoginPage;
