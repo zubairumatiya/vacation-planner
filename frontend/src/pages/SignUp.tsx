@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import styles from "../styles/SignUp.module.css";
 import { isValidEmail } from "../../../shared/emailUtils.ts";
 import { isValidPassword } from "../../../shared/passwordUtils.ts";
@@ -17,6 +17,7 @@ const SignUp = () => {
   const [passwordError, setPasswordError] = useState(false);
   const [showCritera, setShowCriteria] = useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
+  const [existingUserError, setExistingUserError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,11 +37,14 @@ const SignUp = () => {
       },
       body: JSON.stringify(dataObj),
     });
-
+    const data = await res.json();
     if (res.status !== 200) {
+      if (res.status === 409) {
+        setExistingUserError(`${data.message}`);
+      }
       alert("error creating account - refresh and retry");
     } else {
-      navigate("/verify-email");
+      navigate("/verify-email", { state: { email: dataObj.email } });
     }
   };
 
@@ -104,6 +108,15 @@ const SignUp = () => {
   return (
     <>
       <h2>Let&apos;s get started!</h2>
+      <div>
+        {existingUserError !== "" && (
+          <p className={styles.errorMessage}>
+            An account with this email already exist. Please{" "}
+            <Link to="/login">log in</Link> or{" "}
+            <Link to="/reset-password">reset your password</Link>
+          </p>
+        )}
+      </div>
       <form onSubmit={handleFormSubmission}>
         <div className={styles.formContainer}>
           <div>
