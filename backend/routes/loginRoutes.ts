@@ -35,8 +35,8 @@ const sendRegistrationEmail = (userEmail: string, passToken: string) =>
     userEmail,
     registerSubj,
     "Verification Link:",
-    "verify",
     BACKEND_BASE_URL,
+    "verify",
     passToken
   );
 
@@ -213,16 +213,66 @@ router.post("/resend-verification", async (req, res, next) => {
 });
 
 router.post("send-password-reset-link", async (req, res, next) => {
-  //do email exists in users db queries
+  try {
+    const email = req.body.email;
+    const result = await db.query("SELECT * FROM users WHERE email=$1", [
+      email,
+    ]);
+    if (result.rows[0].length < 1) {
+      res.sendStatus(400);
+      return;
+    }
+    const token: string = crypto.randomBytes(32).toString("hex");
+
+    await db.query("INSERT INTO password_reset (token, email) VALUES ($1,$2)", [
+      token,
+      email,
+    ]);
+
+    await emailSender(
+      email,
+      `${appName}: Reset Password`,
+      "Password reset link",
+      BASE_URL,
+      "reset-password",
+      token
+    );
+    res.sendStatus(200);
+    return;
+  } catch (err) {
+    next(err);
+  }
+  //does email exists in users db queries
   // create new crypto token
   // add to reset password db and a 15 min expiration
+  // send email with a link to the front end reset-password page url should have the token as a query!
 });
 
 router.post("/reset-passsword", async (req, res, next) => {
+  const { password, token } = req.body;
   try {
-    // double check password criteria are met
-    // we will need to figure out how to query, i think the safest way would be to store the crypto token on front end and send it back in this req, and we can double check the token exists, and the email it's associated with
-    // then we can look up the email in our users db, bcrypt the newpassword and store it in place of the current one
+    const existingReset = await db.query(
+      "SELECT * FROM password_reset WHERE token=$1 AND expires_at > NOW()",
+      [token]
+    );
+    if (existingReset.rows[0].length < 1) {
+      res.sendStatus(400);
+      return;
+    }
+    if (!isValidPassword(password)) {
+      res.sendStatus(400);
+      return;
+    }
+    const email = existingReset.rows[0].email;
+    const hash = bcrypt.hash(password, 12);
+
+    await db.query("UPDATE users SET password=$1 WHERE email=$2", [
+      hash,
+      email,
+    ]);
+
+    res.sendStatus(200);
+    return;
   } catch (err) {
     next(err);
   }

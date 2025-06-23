@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
 import styles from "../styles/resetPassword.module.css";
 
@@ -14,13 +14,17 @@ const ResetPassword = () => {
   const [submitDisabled, setSubmitDisabled] = useState(true);
   const navigate = useNavigate();
 
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const token: string = params.get("token") || "";
+
   const handleResetSubmit = async () => {
     const res = await fetch(`${apiUrl}/reset-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ password: newPassword }),
+      body: JSON.stringify({ password: newPassword, token: token }), // gonna have to add token as well from the url queries after user clicks on the email
     });
 
     if (res.status !== 200) {
@@ -137,3 +141,5 @@ const ResetPassword = () => {
     </div>
   );
 };
+
+export default ResetPassword;

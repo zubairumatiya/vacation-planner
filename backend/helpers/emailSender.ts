@@ -5,8 +5,8 @@ export async function emailSender(
   userEmail: string,
   subject: string,
   text: string,
-  path: string,
   BASE_URL: string,
+  path: string,
   token: string
 ): Promise<void> {
   const mailgun = new Mailgun(FormData);

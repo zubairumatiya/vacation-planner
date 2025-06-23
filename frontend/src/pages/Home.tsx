@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
+import { AuthContext } from "../context/AuthContext";
+import styles from "../styles/Home.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const Home = () => {
+  const auth = useContext(AuthContext);
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   type Trip = {
@@ -27,6 +30,12 @@ const Home = () => {
     <>
       {!loading && (
         <>
+          {!auth?.token && (
+            <h1 className={styles.signInWarning}>
+              WARNING: You are not signed in, your vacation planning will not be
+              saved!
+            </h1>
+          )}
           <h2>Upcoming Trips...</h2>
           <br />
           {trips.length === 0 ? (
