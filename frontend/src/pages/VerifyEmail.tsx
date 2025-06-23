@@ -35,6 +35,11 @@ const VerifyEmail = () => {
     return () => clearInterval(interval); // cleanup
   }, [timer]);
 
+  const clickResendLink = () => {
+    setResendLinkMessage(true);
+    localStorage.setItem("resendTimer", "300");
+  };
+
   return (
     <>
       {resendLinkMessage && <p>Link resent check email please</p>}
@@ -46,10 +51,7 @@ const VerifyEmail = () => {
       <p>
         Can&apos;t find email? Resend link here:{" "}
         {Number(timer) === 0 ? (
-          <Link
-            to="/verify-email"
-            onClick={() => setResendLinkMessage(true)}
-          ></Link>
+          <Link to="/verify-email" onClick={clickResendLink}></Link>
         ) : (
           timer
         )}{" "}

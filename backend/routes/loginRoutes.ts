@@ -211,3 +211,19 @@ router.post("/resend-verification", async (req, res, next) => {
     next(err);
   }
 });
+
+router.post("send-password-reset-link", async (req, res, next) => {
+  //do email exists in users db queries
+  // create new crypto token
+  // add to reset password db and a 15 min expiration
+});
+
+router.post("/reset-passsword", async (req, res, next) => {
+  try {
+    // double check password criteria are met
+    // we will need to figure out how to query, i think the safest way would be to store the crypto token on front end and send it back in this req, and we can double check the token exists, and the email it's associated with
+    // then we can look up the email in our users db, bcrypt the newpassword and store it in place of the current one
+  } catch (err) {
+    next(err);
+  }
+});
