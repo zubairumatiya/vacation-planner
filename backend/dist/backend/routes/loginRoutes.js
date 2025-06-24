@@ -125,7 +125,7 @@ router.post("/login", async (req, res, next) => {
         }
         else {
             const storedHash = foundUser.rows[0].password;
-            const userInput = req.body.password;
+            const userInput = req.body.password.trim().normalize("NFC");
             const isMatch = await bcrypt.compare(userInput, storedHash);
             if (!isMatch) {
                 res.status(401).json({ message: "wrong login" });
@@ -207,7 +207,8 @@ router.post("/reset-passsword", async (req, res, next) => {
             res.sendStatus(400);
             return;
         }
-        if (!isValidPassword(password)) {
+        const pass = password.trim().normalize("NFC");
+        if (!isValidPassword(pass)) {
             res.sendStatus(400);
             return;
         }
