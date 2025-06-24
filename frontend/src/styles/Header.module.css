@@ -1,4 +1,21 @@
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.rightItems {
+  display: flex;
+}
+
+.signIn {
+  display: flex;
+  margin-right: 1vw;
+  border: 3px solid #00bf55;
+
+  padding: 5px;
+}
+
+.linkColor {
+  color: #00bf55;
 }

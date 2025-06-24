@@ -11,6 +11,7 @@ const LoginPage = () => {
   const [invalidLogin, setInvalidLogin] = useState(false);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const dataObj = Object.fromEntries(formData.entries()); // this makes our form fields into an obj like: {email: "...", password: "...", username: "..."}
 
@@ -34,30 +35,58 @@ const LoginPage = () => {
 
   return (
     <>
-      <h3>Sign In</h3>
-      {invalidLogin && (
-        <p className={styles.errorMessage}>username or password was invalid</p>
-      )}
-      <form onSubmit={handleLogin}>
-        <label htmlFor="email">Email</label>
-        <input
-          type="text"
-          name="email"
-          id="email"
-          className={invalidLogin ? styles.invalid : undefined}
-        />
-        <label htmlFor="password">Password</label>
-        <input
-          type="password"
-          name="password"
-          id="password"
-          className={invalidLogin ? styles.invalid : undefined}
-        />
-        <button type="submit">Login</button>
-      </form>
+      <div>
+        <h3>Sign In</h3>
+      </div>
+      <div>
+        {invalidLogin && (
+          <p className={styles.errorMessage}>
+            username or password was invalid
+          </p>
+        )}
+      </div>
+      <div>
+        <form onSubmit={handleLogin}>
+          <div>
+            <div>
+              <label htmlFor="email">Email</label>
+            </div>
+            <div>
+              <input
+                type="text"
+                name="email"
+                id="email"
+                className={invalidLogin ? styles.invalid : undefined}
+              />
+            </div>
+          </div>
+          <div>
+            <div>
+              <label htmlFor="password">Password</label>
+            </div>
+            <div>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                className={invalidLogin ? styles.invalid : undefined}
+              />
+            </div>
+          </div>
+          <div>
+            <button type="submit">Login</button>
+          </div>
+        </form>
+      </div>
       <br />
-      <Link to="/signup">New here? Sign up here!</Link>
-      <Link to="/reset-password">Forgot password?</Link>
+      <div>
+        <p>
+          New here? <Link to="/signup">Sign up</Link>{" "}
+        </p>
+      </div>
+      <div>
+        <Link to="/reset-password">Forgot password?</Link>
+      </div>
     </>
   );
 };
