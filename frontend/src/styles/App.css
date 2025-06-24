@@ -1,9 +1,17 @@
-#root {
-  width: 100%;
+body {
   height: 100%;
+  width: 100%;
+}
+
+#root {
+  width: 96vw;
+  height: 96vh;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2vh 2vw;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .logo {

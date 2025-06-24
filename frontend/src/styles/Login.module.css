@@ -1,7 +1,19 @@
 .invalid {
-  border: red;
+  border: 1px solid red;
 }
 
 .errorMessage {
   color: red;
+}
+
+.button {
+  margin-top: 3vh;
+  transition: opacity 0.5s ease;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  pointer-events: auto;
+  border: none;
+  opacity: 0.3;
 }

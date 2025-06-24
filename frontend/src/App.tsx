@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Header from "./pages/Header.tsx";
+import LayoutWithHeader from "./layouts/LayoutWithHeader.tsx";
+import LayoutWithoutHeader from "./layouts/LayoutWithoutHeader.tsx";
+
 import Home from "./pages/Home.tsx";
 import AddVacation from "./pages/AddVacation.tsx";
 import "./styles/App.css";
@@ -14,11 +16,13 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 function App() {
   return (
     <BrowserRouter>
-      <Header />
-      <main>
-        <Routes>
+      <Routes>
+        <Route element={<LayoutWithHeader />}>
           <Route path="/" element={<Home />} />
           <Route path="/add-vacation" element={<AddVacation />} />
+        </Route>
+
+        <Route element={<LayoutWithoutHeader />}>
           <Route path="verify-email" element={<VerifyEmail />} />
           <Route path="/redirect" element={<RedirectPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -29,8 +33,8 @@ function App() {
           />
           <Route path="reset-password-wait" element={<ResetPasswordWait />} />
           <Route path="reset-password" element={<ResetPassword />} />
-        </Routes>
-      </main>
+        </Route>
+      </Routes>
     </BrowserRouter>
   );
 }
