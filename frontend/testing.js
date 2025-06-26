@@ -1,6 +1,6 @@
 import crytpo from "crypto";
 
-const token = crytpo.randomBytes(8).toString("hex");
+const token = crytpo.randomBytes(64).toString("hex");
 
 console.log(token);
 

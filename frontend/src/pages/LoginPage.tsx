@@ -68,7 +68,7 @@ const LoginPage = () => {
                 type="text"
                 name="email"
                 id="email"
-                className={invalidLogin ? styles.invalid : undefined}
+                className={invalidLogin ? styles.invalid : styles.normalInput}
                 disabled={disableChanges}
               />
             </div>
@@ -82,7 +82,7 @@ const LoginPage = () => {
                 type="password"
                 name="password"
                 id="password"
-                className={invalidLogin ? styles.invalid : undefined}
+                className={invalidLogin ? styles.invalid : styles.normalInput}
                 disabled={disableChanges}
               />
             </div>

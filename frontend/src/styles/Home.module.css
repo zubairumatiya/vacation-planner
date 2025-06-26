@@ -2,3 +2,9 @@
   color: red;
   border: 5px dashed orange;
 }
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}

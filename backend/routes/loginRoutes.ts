@@ -166,7 +166,8 @@ router.post("/login", async (req, res, next) => {
         const token = jwt.sign(
           {
             id: foundUser.rows[0].id,
-            email: foundUser.rows[0].email,
+            name: foundUser.rows[0].first_name,
+            //email: foundUser.rows[0].email,      NOT SURE IF I SHOULD OR NEED TO SEND
           },
           SECRET,
           { expiresIn: "1h" }
@@ -278,5 +279,7 @@ router.post("/reset-passsword", async (req, res, next) => {
     next(err);
   }
 });
+
+router.post("/refresh"); // to - do for refreshing exp auth tokens using refresh token in http cookies.
 
 export default router;

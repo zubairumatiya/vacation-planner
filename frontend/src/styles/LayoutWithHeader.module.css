@@ -1,0 +1,21 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  justify-content: flex-start;
+}
+
+.main {
+  padding-top: 20vh;
+}
+
+.mainWithWarning {
+  padding-top: 0vh;
+}
+
+.signInWarning {
+  color: red;
+  border: 0.75vh dashed orange;
+  margin-bottom: 2vh;
+}

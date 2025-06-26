@@ -36,6 +36,9 @@ export default function ensureLoggedIn(
     const user = decodedToken as MyPayload;
     req.user = user;
   } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ error: "TokenExpired " });
+    }
     next(err);
   }
 }
