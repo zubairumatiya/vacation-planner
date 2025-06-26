@@ -107,8 +107,10 @@ const SignUp = () => {
   };
 
   return (
-    <>
-      <h2>Let&apos;s get started!</h2>
+    <div className={styles.container}>
+      <div>
+        <h2>Let&apos;s get started!</h2>
+      </div>
       <div>
         {existingUserError !== "" && (
           <p className={styles.errorMessage}>
@@ -139,114 +141,121 @@ const SignUp = () => {
             </div>
             <div></div>
           </div>
-
-          <div>
-            <div>
-              <label htmlFor="email">Email</label>
-            </div>
+          <div className={styles.peContainer}>
             <div>
               <div>
-                <div>
-                  <input
-                    onChange={handleEmailChange}
-                    onBlur={emailMicroing ? undefined : handleEmailBlur}
-                    className={emailError ? styles.error : undefined}
-                    type="email"
-                    name="email"
-                    id="email"
-                    value={email}
-                  />
+                <label htmlFor="email">Email</label>
+              </div>
+              <div>
+                <div className={styles.inputField}>
+                  <div>
+                    <input
+                      onChange={handleEmailChange}
+                      onBlur={emailMicroing ? undefined : handleEmailBlur}
+                      className={emailError ? styles.error : undefined}
+                      type="email"
+                      name="email"
+                      id="email"
+                      value={email}
+                    />
+                  </div>
+                  <div>
+                    {emailError && (
+                      <svg
+                        className={styles.emailErrIcon}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM11.25 13.5V8.25H12.75V13.5H11.25ZM11.25 15.75V14.25H12.75V15.75H11.25Z"
+                          fill="red"
+                        />
+                      </svg>
+                    )}
+                  </div>
                 </div>
                 <div>
                   {emailError && (
-                    <svg
-                      width="800px"
-                      height="800px"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM11.25 13.5V8.25H12.75V13.5H11.25ZM11.25 15.75V14.25H12.75V15.75H11.25Z"
-                        fill="#080341"
-                      />
-                    </svg>
+                    <p className={styles.errorMessage}>
+                      Incorrect email format
+                    </p>
                   )}
                 </div>
               </div>
-              <div>
-                {emailError && (
-                  <p className={styles.errorMessage}>Incorrect email format</p>
-                )}
-              </div>
             </div>
-          </div>
 
-          <div>
-            <div>
-              <label htmlFor="password">Password</label>
-            </div>
             <div>
               <div>
-                <div>
-                  <input
-                    onChange={handlePasswordChange}
-                    onBlur={passwordMicroing ? undefined : handlePasswordBlur}
-                    onFocus={() => {
-                      setShowCriteria(true);
-                    }}
-                    className={passwordError ? styles.error : undefined}
-                    type="password"
-                    name="password"
-                    id="password"
-                    value={password}
-                  />
+                <label htmlFor="password">Password</label>
+              </div>
+              <div>
+                <div className={styles.inputField}>
+                  <div>
+                    <input
+                      onChange={handlePasswordChange}
+                      onBlur={passwordMicroing ? undefined : handlePasswordBlur}
+                      onFocus={() => {
+                        setShowCriteria(true);
+                      }}
+                      className={passwordError ? styles.error : undefined}
+                      type="password"
+                      name="password"
+                      id="password"
+                      value={password}
+                    />
+                  </div>
+                  <div>
+                    {passwordError && (
+                      <svg
+                        className={styles.emailErrIcon}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM11.25 13.5V8.25H12.75V13.5H11.25ZM11.25 15.75V14.25H12.75V15.75H11.25Z"
+                          fill="red"
+                        />
+                      </svg>
+                    )}
+                  </div>
                 </div>
                 <div>
                   {passwordError && (
-                    <svg
-                      width="800px"
-                      height="800px"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM11.25 13.5V8.25H12.75V13.5H11.25ZM11.25 15.75V14.25H12.75V15.75H11.25Z"
-                        fill="#080341"
-                      />
-                    </svg>
+                    <p className={styles.errorMessage}>
+                      {passwordErrorMessage}
+                    </p>
                   )}
                 </div>
               </div>
-              <div>
-                {passwordError && (
-                  <p className={styles.errorMessage}>{passwordErrorMessage}</p>
-                )}
-              </div>
             </div>
-          </div>
 
-          {showCritera && (
-            <div>
-              <PasswordConditionsHelper
-                errorCallback={specificPasswordError}
-                updatedPassword={password}
-              />
-            </div>
-          )}
+            {showCritera && (
+              <div>
+                <PasswordConditionsHelper
+                  errorCallback={specificPasswordError}
+                  updatedPassword={password}
+                />
+              </div>
+            )}
+          </div>
           <div>
-            <button type="submit" disabled={disableSubmission}>
+            <button
+              type="submit"
+              disabled={disableSubmission}
+              className={styles.submitButton}
+            >
               Sign Up!
             </button>
           </div>
         </div>
       </form>
-    </>
+    </div>
   );
 };
 

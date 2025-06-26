@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import styles from "../styles/PasswordConditions.module.css";
 
 const PasswordConditionsHelper = (props: {
   errorCallback: (arg1: string) => void;
@@ -11,8 +12,12 @@ const PasswordConditionsHelper = (props: {
   const [specialPresent, setSpecialPresent] = useState(false);
   const [atLeastEight, setAtLeastEight] = useState(false);
 
+  //console.log(props.updatedPassword);
+
   useEffect(() => {
+    console.log("entered useEffect");
     const newPassword = props.updatedPassword;
+    console.log(newPassword);
     let holdMessage = "";
 
     if (newPassword.length < 8) {
@@ -55,14 +60,13 @@ const PasswordConditionsHelper = (props: {
     } else {
       props.errorCallback("Password cannot exceed 72 characters");
     }
-  }, []);
+  }, [props.updatedPassword]);
 
   return (
     <div>
       <div>
         <svg
-          width="85px"
-          height="85px"
+          className={styles.icon}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -99,8 +103,7 @@ const PasswordConditionsHelper = (props: {
 
       <div>
         <svg
-          width="85px"
-          height="85px"
+          className={styles.icon}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -137,8 +140,7 @@ const PasswordConditionsHelper = (props: {
 
       <div>
         <svg
-          width="85px"
-          height="85px"
+          className={styles.icon}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -175,8 +177,7 @@ const PasswordConditionsHelper = (props: {
 
       <div>
         <svg
-          width="85px"
-          height="85px"
+          className={styles.icon}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -213,8 +214,7 @@ const PasswordConditionsHelper = (props: {
 
       <div>
         <svg
-          width="85px"
-          height="85px"
+          className={styles.icon}
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
