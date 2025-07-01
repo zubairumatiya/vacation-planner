@@ -1,9 +1,5 @@
-.container {
-  flex-flow: column;
-}
-
 .error {
-  border: red;
+  border: 1px solid red;
 }
 
 .errorMessage {
@@ -11,23 +7,84 @@
 }
 
 .emailErrIcon {
-  width: 2rem;
-  height: 2rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-left: -2.5rem;
+  padding-top: 0.3rem;
 }
 
-.inputField {
+.field {
+  width: 45%;
+}
+
+.emailDiv {
   display: flex;
   justify-content: center;
+  width: 100%;
+}
+
+.passwordDiv {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.peDiv {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  flex-direction: column;
 }
 
 .peContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+}
+
+.flContainer {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  width: 100%;
+}
+
+.conditionsParent {
+  display: flex;
+  width: 45%;
+}
+
+.submitButton {
+  margin-top: 3vh;
+  width: 45%;
 }
 
 .submitButton:disabled {
   cursor: not-allowed;
   pointer-events: auto;
   border: none;
+}
+
+.fieldsContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  justify-content: center;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  width: 50vw;
+}
+
+.form {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.container {
+  flex-flow: column;
 }

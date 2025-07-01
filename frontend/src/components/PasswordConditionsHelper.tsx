@@ -63,8 +63,8 @@ const PasswordConditionsHelper = (props: {
   }, [props.updatedPassword]);
 
   return (
-    <div>
-      <div>
+    <div className={styles.conditionsContainer}>
+      <div className={styles.condition}>
         <svg
           className={styles.icon}
           viewBox="0 0 24 24"
@@ -98,10 +98,12 @@ const PasswordConditionsHelper = (props: {
             />{" "}
           </g>
         </svg>
-        <p>Lowercase letter</p>
+        <div className={styles.conditionLabel}>
+          <p>Lowercase letter</p>
+        </div>
       </div>
 
-      <div>
+      <div className={styles.condition}>
         <svg
           className={styles.icon}
           viewBox="0 0 24 24"
@@ -135,10 +137,12 @@ const PasswordConditionsHelper = (props: {
             />{" "}
           </g>
         </svg>
-        <p>Uppercase letter</p>
+        <div className={styles.conditionLabel}>
+          <p>Uppercase letter</p>
+        </div>
       </div>
 
-      <div>
+      <div className={styles.condition}>
         <svg
           className={styles.icon}
           viewBox="0 0 24 24"
@@ -172,10 +176,12 @@ const PasswordConditionsHelper = (props: {
             />{" "}
           </g>
         </svg>
-        <p>Number</p>
+        <div className={styles.conditionLabel}>
+          <p>Number</p>
+        </div>
       </div>
 
-      <div>
+      <div className={styles.condition}>
         <svg
           className={styles.icon}
           viewBox="0 0 24 24"
@@ -209,10 +215,12 @@ const PasswordConditionsHelper = (props: {
             />{" "}
           </g>
         </svg>
-        <p>Special character (e.g.!?@#$%^&...)</p>
+        <div className={styles.conditionLabel}>
+          <p>Special character (e.g.!?@#$%^&...)</p>
+        </div>
       </div>
 
-      <div>
+      <div className={styles.condition}>
         <svg
           className={styles.icon}
           viewBox="0 0 24 24"
@@ -246,7 +254,9 @@ const PasswordConditionsHelper = (props: {
             />{" "}
           </g>
         </svg>
-        <p>At least 8 characters</p>
+        <div className={styles.conditionLabel}>
+          <p>At least 8 characters</p>
+        </div>
       </div>
     </div>
   );

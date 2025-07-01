@@ -24,7 +24,31 @@ const SignUp = () => {
     if (isValidPassword(password) && isValidEmail(email)) {
       setDisableSubmission(false);
     }
-  }, [password, email]);
+
+    if (emailMicroing) {
+      console.log("useEffect email: ", email);
+      if (!isValidEmail(email)) {
+        // yes this is necessary to check criteria onBlur (onChange will not trigger onBlur)
+        setEmailError(true);
+      } else {
+        setEmailError(false);
+      }
+    }
+
+    if (passwordMicroing) {
+      if (password.length > 72) {
+        setPasswordError(true);
+      }
+
+      if (!isValidPassword(password)) {
+        setPasswordError(true);
+        // we are using password error messages from two different sources. The red border and ! symbol with this, and the criteria with the pch child.
+        //the setPasswordError is holding it together. I believe my regex is the same for both.
+      } else {
+        setPasswordError(false);
+      }
+    }
+  }, [password, email, emailMicroing, passwordMicroing]);
 
   const handleFormSubmission = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -51,33 +75,14 @@ const SignUp = () => {
 
   const handleEmailBlur = () => {
     setEmailMicroing(true);
-
-    if (!isValidEmail(email)) {
-      setEmailError(true);
-    }
-    //we might need to add error criteria here as well - depends on if setting emailmicroing to true
-    //will execute the onchange function therefore error checking. Pretty confident we will need to
-    //add the error criteria here... stay tuned
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (emailMicroing) {
-      // track changes for every word, make sure email format is correct and display warning
-
-      if (!isValidEmail(email)) {
-        setEmailError(true);
-      } else {
-        if (emailError === true) {
-          setEmailError(false);
-        }
-      }
-    }
+    setEmail(e.target.value); // does this need prev?
   };
 
   const handlePasswordBlur = () => {
     setPasswordMicroing(true);
-
     if (!isValidPassword(password)) {
       setPasswordError(true);
       //micromanage tracking against password criteria and trigger/clear error
@@ -86,20 +91,6 @@ const SignUp = () => {
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
-    if (password.length > 72) {
-      setPasswordError(true);
-    }
-    if (passwordMicroing) {
-      if (!isValidPassword(password)) {
-        setPasswordError(true);
-        // we are using password error messages from two different sources. The red border and ! symbol with this, and the criteria with the pch child.
-        //the setPasswordError is holding it together. I believe my regex is the same for both.
-      } else {
-        if (passwordError === true) {
-          setPasswordError(false);
-        }
-      }
-    }
   };
 
   const specificPasswordError = (message: string): void => {
@@ -120,45 +111,52 @@ const SignUp = () => {
           </p>
         )}
       </div>
-      <form onSubmit={handleFormSubmission}>
+      <form onSubmit={handleFormSubmission} className={styles.form}>
         <div className={styles.formContainer}>
-          <div>
-            <div>
+          <div className={styles.flContainer}>
+            <div className={styles.fieldsContainer}>
               <div>
                 <label htmlFor="firstName">First Name</label>
               </div>
               <div>
-                <input type="text" name="firstName" id="firstName" />
+                <input
+                  className={styles.field}
+                  type="text"
+                  name="firstName"
+                  id="firstName"
+                />
               </div>
             </div>
-            <div>
+            <div className={styles.fieldsContainer}>
               <div>
                 <label htmlFor="lastname">Last Name</label>
               </div>
               <div>
-                <input type="text" name="lastName" id="lastName" />
+                <input
+                  className={styles.field}
+                  type="text"
+                  name="lastName"
+                  id="lastName"
+                />
               </div>
             </div>
-            <div></div>
           </div>
           <div className={styles.peContainer}>
-            <div>
+            <div className={styles.fieldsContainer}>
               <div>
                 <label htmlFor="email">Email</label>
               </div>
-              <div>
-                <div className={styles.inputField}>
-                  <div>
-                    <input
-                      onChange={handleEmailChange}
-                      onBlur={emailMicroing ? undefined : handleEmailBlur}
-                      className={emailError ? styles.error : undefined}
-                      type="email"
-                      name="email"
-                      id="email"
-                      value={email}
-                    />
-                  </div>
+              <div className={styles.peDiv}>
+                <div className={styles.emailDiv}>
+                  <input
+                    onChange={handleEmailChange}
+                    onBlur={emailMicroing ? undefined : handleEmailBlur}
+                    className={`${styles.field} ${emailError && styles.error}`}
+                    type="email"
+                    name="email"
+                    id="email"
+                    value={email}
+                  />
                   <div>
                     {emailError && (
                       <svg
@@ -177,6 +175,7 @@ const SignUp = () => {
                     )}
                   </div>
                 </div>
+
                 <div>
                   {emailError && (
                     <p className={styles.errorMessage}>
@@ -187,26 +186,26 @@ const SignUp = () => {
               </div>
             </div>
 
-            <div>
+            <div className={styles.fieldsContainer}>
               <div>
                 <label htmlFor="password">Password</label>
               </div>
-              <div>
-                <div className={styles.inputField}>
-                  <div>
-                    <input
-                      onChange={handlePasswordChange}
-                      onBlur={passwordMicroing ? undefined : handlePasswordBlur}
-                      onFocus={() => {
-                        setShowCriteria(true);
-                      }}
-                      className={passwordError ? styles.error : undefined}
-                      type="password"
-                      name="password"
-                      id="password"
-                      value={password}
-                    />
-                  </div>
+              <div className={styles.peDiv}>
+                <div className={styles.passwordDiv}>
+                  <input
+                    onChange={handlePasswordChange}
+                    onBlur={passwordMicroing ? undefined : handlePasswordBlur}
+                    onFocus={() => {
+                      setShowCriteria(true);
+                    }}
+                    className={`${styles.field} ${
+                      passwordError ? styles.error : ""
+                    }`}
+                    type="password"
+                    name="password"
+                    id="password"
+                    value={password}
+                  />
                   <div>
                     {passwordError && (
                       <svg
@@ -236,7 +235,7 @@ const SignUp = () => {
             </div>
 
             {showCritera && (
-              <div>
+              <div className={styles.conditionsParent}>
                 <PasswordConditionsHelper
                   errorCallback={specificPasswordError}
                   updatedPassword={password}
