@@ -56,7 +56,6 @@ const SignUp = () => {
       string,
       string
     >; // this makes our form fields into an obj like: {email: "...", password: "...", username: "..."} AND the Record part is shortcut in ts to say: An object where every key is a string, and every value is also a string
-    console.log("Our form info:", dataObj);
 
     const res = await fetch(`${apiUrl}/signup`, {
       method: "POST",
@@ -70,7 +69,13 @@ const SignUp = () => {
       if (res.status === 409) {
         setExistingUserError(`${data.message}`);
       }
-      alert("error creating account - refresh and retry");
+      if (res.status === 302) {
+        alert(data.message);
+        localStorage.setItem("pendingEmail", dataObj.email);
+        navigate("/verify-email");
+      } else {
+        alert("error creating account - refresh and retry");
+      }
     } else {
       localStorage.setItem("pendingEmail", dataObj.email);
       navigate("/verify-email");

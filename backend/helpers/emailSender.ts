@@ -1,6 +1,21 @@
 import Mailgun from "mailgun.js";
 import FormData from "form-data";
 
+/*
+export async function emailSender(
+  userEmail: string,
+  subject: string,
+  text: string,
+  BASE_URL: string,
+  path: string,
+  token: string
+) {
+  new Promise((resolve) => {
+    console.log("fake email sent:", subject, text, BASE_URL, path, token);
+    resolve(null);
+  });
+} */
+
 export async function emailSender(
   userEmail: string,
   subject: string,

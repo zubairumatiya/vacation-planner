@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
-import styles from "../styles/resetPassword.module.css";
+import styles from "../styles/ResetPassword.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 

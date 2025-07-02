@@ -33,7 +33,7 @@ const sendRegistrationEmail = (userEmail: string, passToken: string) =>
   emailSender(
     userEmail,
     registerSubj,
-    "Verification Link:",
+    "Verification Link",
     BACKEND_BASE_URL,
     "verify",
     passToken
@@ -70,18 +70,25 @@ router.post("/signup", async (req, res, next) => {
 
     if (existingUnverifiedEmail.rows.length > 0) {
       // let's change the token to the existing db token and send an email again  --- DONE
+
       token = existingUnverifiedEmail.rows[0].token;
       const now = new Date();
       const lastSent = existingUnverifiedEmail.rows[0].last_email_sent_at;
-      if (now.getTime() - lastSent.getTime() >= 5 * 60 * 1000) {
+      if (now.getTime() - lastSent.getTime() >= 5 * 1000) {
+        // ~~~~~~~~ add * 60 to change back to 5 min ~~~~~~~ TODO
         await sendRegistrationEmail(req.body.email, token); // sendEmail must be awaited since emailSender is async --- DONE
       }
+      res
+        .status(302)
+        .json({ message: "already signed up, needs verification" });
+      return;
       // we might want to add a timer for the next email to be sent, maybe add it to the verify page --- DONE
     } else if (existingActiveEmail.rows.length > 0) {
       res.status(409).json({
         message:
           "An account with this email already exist. Please log in or reset your password",
       });
+      return;
       // active user message with hyperlink for forgot password -- we can prob just produce an error message/ alert and suggest to login or reset password
     } else {
       await db.query(
@@ -117,7 +124,7 @@ router.get("/verify", async (req, res, next) => {
         try {
           await client.query("BEGIN");
           await client.query(
-            "INSERT INTO users (email, password, first_name, last_name) FROM unverified_users WHERE token=$1",
+            "INSERT INTO users (email, password, first_name, last_name) SELECT email, password, first_name, last_name FROM unverified_users WHERE token=$1",
             [token]
           );
           await client.query("DELETE FROM unverified_users WHERE token=$1", [
@@ -130,7 +137,7 @@ router.get("/verify", async (req, res, next) => {
         } finally {
           client.release();
         }
-        res.redirect(200, `${BASE_URL}/verify-email?verified=success`);
+        res.redirect(302, `${BASE_URL}/verify-email?verified=success`);
       }
     } catch (err) {
       next(err);
