@@ -18,6 +18,9 @@ export default function ensureLoggedIn(req, res, next) {
         req.user = user;
     }
     catch (err) {
+        if (err.name === "TokenExpiredError") {
+            return res.status(401).json({ error: "TokenExpired " });
+        }
         next(err);
     }
 }

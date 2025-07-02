@@ -26,7 +26,6 @@ const SignUp = () => {
     }
 
     if (emailMicroing) {
-      console.log("useEffect email: ", email);
       if (!isValidEmail(email)) {
         // yes this is necessary to check criteria onBlur (onChange will not trigger onBlur)
         setEmailError(true);
@@ -53,7 +52,11 @@ const SignUp = () => {
   const handleFormSubmission = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    const dataObj = Object.fromEntries(formData.entries()); // this makes our form fields into an obj like: {email: "...", password: "...", username: "..."}
+    const dataObj = Object.fromEntries(formData.entries()) as Record<
+      string,
+      string
+    >; // this makes our form fields into an obj like: {email: "...", password: "...", username: "..."} AND the Record part is shortcut in ts to say: An object where every key is a string, and every value is also a string
+    console.log("Our form info:", dataObj);
 
     const res = await fetch(`${apiUrl}/signup`, {
       method: "POST",
@@ -69,7 +72,8 @@ const SignUp = () => {
       }
       alert("error creating account - refresh and retry");
     } else {
-      navigate("/verify-email", { state: { email: dataObj.email } });
+      localStorage.setItem("pendingEmail", dataObj.email);
+      navigate("/verify-email");
     }
   };
 

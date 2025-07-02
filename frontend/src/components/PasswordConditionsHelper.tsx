@@ -15,9 +15,7 @@ const PasswordConditionsHelper = (props: {
   //console.log(props.updatedPassword);
 
   useEffect(() => {
-    console.log("entered useEffect");
     const newPassword = props.updatedPassword;
-    console.log(newPassword);
     let holdMessage = "";
 
     if (newPassword.length < 8) {

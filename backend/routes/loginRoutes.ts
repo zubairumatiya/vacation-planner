@@ -2,7 +2,6 @@ import express from "express";
 const router = express.Router();
 import db from "../db/db.js";
 import bcrypt from "bcrypt";
-//import { v4 as createUUID } from "uuid";
 import crypto from "crypto";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
@@ -86,7 +85,7 @@ router.post("/signup", async (req, res, next) => {
       // active user message with hyperlink for forgot password -- we can prob just produce an error message/ alert and suggest to login or reset password
     } else {
       await db.query(
-        "INSERT INTO unverified_users (email, password, first_name, last_name, uuid, expires_at) VALUES ($1, $2, $3, $4, $5, NOW()+ interval '1 hour')",
+        "INSERT INTO unverified_users (email, password, first_name, last_name, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, NOW()+ interval '1 hour', NOW())",
         [req.body.email, hash, req.body.firstName, req.body.lastName, token]
       );
       await sendRegistrationEmail(req.body.email, token);
@@ -190,7 +189,8 @@ router.post("/resend-verification", async (req, res, next) => {
     if (existingUnverifiedUser.rows.length > 0) {
       const now = new Date();
       const lastSent = existingUnverifiedUser.rows[0].last_email_sent_at;
-      if (now.getTime() - lastSent.getTime() >= 5 * 60 * 1000) {
+      if (now.getTime() - lastSent.getTime() >= 5 * 1000) {
+        // change this back in production to 5 minutes!! (just add * 60)
         await sendRegistrationEmail(
           req.body.email,
           existingUnverifiedUser.rows[0].token
@@ -280,6 +280,6 @@ router.post("/reset-passsword", async (req, res, next) => {
   }
 });
 
-router.post("/refresh"); // to - do for refreshing exp auth tokens using refresh token in http cookies.
+//router.post("/refresh"); // to - do for refreshing exp auth tokens using refresh token in http cookies.
 
 export default router;
