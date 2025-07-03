@@ -6,14 +6,45 @@
 
 .rightItems {
   display: flex;
+  align-items: baseline;
 }
 
 .signIn {
   display: flex;
-  margin-right: 1vw;
+  margin-left: 1vw;
   border: 3px solid #00bf55;
 
   padding: 5px;
+}
+
+.loggedIn {
+  display: flex;
+  margin-left: 1vw;
+  padding: 5px;
+}
+
+.sidebar {
+  display: flex;
+  position: fixed;
+  width: 15vw;
+  transition: transform 0.3s ease;
+  transform: translate(-57%, 40%); /* hidden */
+}
+
+.sidebar.open {
+  transform: translateX(0); /* visible */
+}
+
+.profileButton {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addTrip {
+  display: flex;
 }
 
 .linkColor {

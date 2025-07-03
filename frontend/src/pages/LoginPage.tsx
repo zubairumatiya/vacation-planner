@@ -38,7 +38,7 @@ const LoginPage = () => {
       const data = await res.json();
       if (data.token) {
         auth?.login(data.token);
-        navigate("/home");
+        navigate("/");
       }
     }
   };
