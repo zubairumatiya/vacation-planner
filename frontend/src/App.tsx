@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LayoutWithHeader from "./layouts/LayoutWithHeader.tsx";
 import LayoutWithoutHeader from "./layouts/LayoutWithoutHeader.tsx";
-
+import { AuthContext } from "./context/AuthContext.tsx";
+import { useContext } from "react";
 import Home from "./pages/Home.tsx";
 import AddVacation from "./pages/AddVacation.tsx";
 import "./styles/App.css";
@@ -14,6 +15,8 @@ import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 
 function App() {
+  const auth = useContext(AuthContext);
+  if (auth?.loggingOut) return null;
   return (
     <BrowserRouter>
       <Routes>

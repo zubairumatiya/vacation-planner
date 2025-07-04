@@ -220,13 +220,14 @@ router.post("/resend-verification", async (req, res, next) => {
   }
 });
 
-router.post("send-password-reset-link", async (req, res, next) => {
+router.post("/send-password-reset-link", async (req, res, next) => {
   try {
     const email = req.body.email;
     const result = await db.query("SELECT * FROM users WHERE email=$1", [
       email,
     ]);
-    if (result.rows[0].length < 1) {
+
+    if (result.rows.length < 1) {
       res.sendStatus(400);
       return;
     }
@@ -250,10 +251,19 @@ router.post("send-password-reset-link", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-  //does email exists in users db queries
-  // create new crypto token
-  // add to reset password db and a 15 min expiration
-  // send email with a link to the front end reset-password page url should have the token as a query!
+  //does email exists in users db queries -- DONE
+  // create new crypto token -- DONE
+  // add to reset password db and a 15 min expiration -- DONE
+  // send email with a link to the front end reset-password page url should have the token as a query! -- DONE
+});
+
+router.get("/reset-password", async (req, res, next) => {
+  try {
+    const token = req.query.token as string; // this is type assertion "trust me it's a string"
+    //
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post("/reset-passsword", async (req, res, next) => {
@@ -263,7 +273,7 @@ router.post("/reset-passsword", async (req, res, next) => {
       "SELECT * FROM password_reset WHERE token=$1 AND expires_at > NOW()",
       [token]
     );
-    if (existingReset.rows[0].length < 1) {
+    if (existingReset.rows.length < 1) {
       res.sendStatus(400);
       return;
     }

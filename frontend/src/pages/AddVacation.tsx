@@ -93,7 +93,10 @@ const AddVacation = () => {
         className={`${styles.submitButton} ${
           fieldError ? styles.disabledSubmitButton : ""
         }`}
-      ></button>
+      >
+        {" "}
+        Add trip
+      </button>
     </form>
   );
 };

@@ -106,7 +106,7 @@ const LoginPage = () => {
         </p>
       </div>
       <div>
-        <Link to="/reset-password">Forgot password?</Link>
+        <Link to="/send-reset-link-to-email">Forgot password?</Link>
       </div>
     </>
   );

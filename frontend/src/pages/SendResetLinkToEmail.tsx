@@ -5,6 +5,8 @@ const SendResetLinkToEmail = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("enter");
     const formData = new FormData(e.currentTarget);
     const getEmail = formData.get("email");
     const email = typeof getEmail === "string" ? getEmail : "";
@@ -15,7 +17,7 @@ const SendResetLinkToEmail = () => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ email }),
-    }); // finish fetch request
+    });
 
     navigate("/reset-password-wait");
   };
