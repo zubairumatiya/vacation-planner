@@ -194,7 +194,7 @@ router.post("/send-password-reset-link", async (req, res, next) => {
             token,
             email,
         ]);
-        await emailSender(email, `${appName}: Reset Password`, "Password reset link", BASE_URL, "reset-password", token);
+        await emailSender(email, `${appName}: Reset Password`, "Password reset link", BACKEND_BASE_URL, "reset-password", token);
         res.sendStatus(200);
         return;
     }
@@ -205,6 +205,28 @@ router.post("/send-password-reset-link", async (req, res, next) => {
     // create new crypto token -- DONE
     // add to reset password db and a 15 min expiration -- DONE
     // send email with a link to the front end reset-password page url should have the token as a query! -- DONE
+});
+router.get("/reset-password", async (req, res, next) => {
+    try {
+        const token = req.query.token; // this is type assertion "trust me it's a string"
+        const foundUser = await db.query("SELECT * FROM password_reset WHERE token=$1", [token]);
+        const checkExpired = await db.query("SELECT * FROM password_reset WHERE token=$1 AND expires_at > NOW()", [token]);
+        if (foundUser.rows.length < 1) {
+            res.redirect(302, `${BASE_URL}/send-reset-link-to-email?err=failed-verification`);
+        }
+        else {
+            if (checkExpired.rows.length < 1) {
+                const email = foundUser.rows[0].email;
+                res.redirect(302, `${BASE_URL}/send-reset-link-to-email?err=failed-verification&email=${email}`);
+            }
+            else {
+                res.redirect(302, `${BASE_URL}/redirect?status=success`);
+            }
+        }
+    }
+    catch (err) {
+        next(err);
+    }
 });
 router.post("/reset-passsword", async (req, res, next) => {
     const { password, token } = req.body;

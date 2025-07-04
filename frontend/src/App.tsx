@@ -31,11 +31,11 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUp />} />
           <Route
-            path="send-reset-link-to-email"
+            path="/send-reset-link-to-email"
             element={<SendResetLinkToEmail />}
           />
-          <Route path="reset-password-wait" element={<ResetPasswordWait />} />
-          <Route path="reset-password" element={<ResetPassword />} />
+          <Route path="/reset-password-wait" element={<ResetPasswordWait />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
       </Routes>
     </BrowserRouter>

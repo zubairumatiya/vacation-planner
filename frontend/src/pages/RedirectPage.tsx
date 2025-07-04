@@ -7,7 +7,12 @@ const RedirectPage = () => {
   const navigate = useNavigate();
   const message = location.state?.message;
   const [verificationMessage, setVerificationMessage] = useState(false);
-  if (message.startsWith("123")) {
+
+  const resetPasswordMessage = new URLSearchParams(location.search).get(
+    "status"
+  );
+
+  if (message?.startsWith("123")) {
     setVerificationMessage(true);
   }
 
@@ -23,6 +28,8 @@ const RedirectPage = () => {
       <span className={styles.verifMessage}>Successfully verified!</span>
       Redirecting to login...
     </p>
+  ) : resetPasswordMessage ? (
+    <p>Password successfully reset! Redirecting...</p>
   ) : (
     <p>{message}</p>
   );
