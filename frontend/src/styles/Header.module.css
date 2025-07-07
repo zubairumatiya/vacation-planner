@@ -6,15 +6,19 @@
 
 .rightItems {
   display: flex;
-  align-items: baseline;
+  align-items: end;
 }
 
 .signIn {
   display: flex;
   margin-left: 1vw;
   border: 3px solid #00bf55;
+  border-radius: 12px;
+  cursor: pointer;
+}
 
-  padding: 5px;
+.signIn:hover {
+  border-color: #747bff;
 }
 
 .loggedIn {
@@ -49,4 +53,14 @@
 
 .linkColor {
   color: #00bf55;
+  width: 100%;
+  height: 100%;
+  padding: 1vh;
+}
+
+.linkColorHoverBorder {
+  color: #535bf2;
+  width: 100%;
+  height: 100%;
+  padding: 1vh;
 }

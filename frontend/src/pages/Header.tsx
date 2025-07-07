@@ -1,5 +1,5 @@
 import styles from "../styles/Header.module.css";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import placeholderLogo from "../assets/react.svg";
 import addIcon from "../assets/add-icon.svg";
 import { AuthContext } from "../context/AuthContext";
@@ -8,10 +8,13 @@ import profileIcon from "../assets/profile.svg";
 import ProfileSideBar from "../components/ProfileSideBar";
 
 const Header = () => {
+  const navigate = useNavigate();
+
   const auth = useContext(AuthContext);
   const [isSideBarOpen, setSideBarOpen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [hover, setHover] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -38,7 +41,12 @@ const Header = () => {
             <img src={addIcon} alt="Add Icon" />
           </Link>
         </div>
-        <div className={auth?.token ? styles.loggedIn : styles.signIn}>
+        <div
+          className={auth?.token ? styles.loggedIn : styles.signIn}
+          onClick={() => navigate("/login")}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+        >
           {auth?.token ? (
             <button
               ref={buttonRef}
@@ -49,11 +57,15 @@ const Header = () => {
               <img src={profileIcon} alt="Profile" />
             </button>
           ) : (
-            <Link to="login" className={styles.linkColor}>
+            <Link
+              to="login"
+              className={hover ? styles.linkColorHoverBorder : styles.linkColor}
+            >
               Sign in
             </Link>
           )}
         </div>
+
         {isSideBarOpen && (
           <div
             className={`${styles.sidebar} ${
