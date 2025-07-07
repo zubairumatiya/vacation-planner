@@ -7,21 +7,21 @@ const RedirectPage = () => {
   const navigate = useNavigate();
   const message = location.state?.message;
   const [verificationMessage, setVerificationMessage] = useState(false);
-
-  const resetPasswordMessage = new URLSearchParams(location.search).get(
-    "status"
-  );
-
-  if (message?.startsWith("123")) {
-    setVerificationMessage(true);
-  }
+  const [resetPasswordMessage, setResetPasswordMessage] = useState(false);
 
   useEffect(() => {
+    if (message?.startsWith("231")) {
+      setResetPasswordMessage(true);
+    }
+
+    if (message?.startsWith("123")) {
+      setVerificationMessage(true);
+    }
     const timerId = setTimeout(() => {
       navigate("/login");
     }, 2000);
     return () => clearTimeout(timerId);
-  }, [navigate]);
+  }, [navigate, message]);
 
   return verificationMessage ? (
     <p>

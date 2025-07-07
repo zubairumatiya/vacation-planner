@@ -11,11 +11,8 @@ const SendResetLinkToEmail = () => {
   const params = new URLSearchParams(location.search);
   const err = params.get("err");
 
-  console.log("err", err);
-
   useEffect(() => {
     const queryEmail = params.get("email"); // can move this inside since it wont dynamically need to run
-    console.log("email", queryEmail);
     if (queryEmail) {
       setAutoEmail(queryEmail);
     }

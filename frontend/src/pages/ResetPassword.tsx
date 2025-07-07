@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
 import styles from "../styles/ResetPassword.module.css";
@@ -12,29 +12,47 @@ const ResetPassword = () => {
   const [passwordBlur, setPasswordBlur] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitDisabled, setSubmitDisabled] = useState(true);
+  const [submissionErr, setSubmissionErr] = useState("");
+  const [clearFields, setClearFields] = useState(false);
   const navigate = useNavigate();
 
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const token: string = params.get("token") || "";
 
-  const handleResetSubmit = async () => {
+  useEffect(() => {
+    setNewPassword("");
+    setConfirmPassword("");
+  }, [clearFields]);
+
+  const handleResetSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     const res = await fetch(`${apiUrl}/reset-password`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ password: newPassword, token: token }), // gonna have to add token as well from the url queries after user clicks on the email
+      body: JSON.stringify({ password: newPassword, token: token }),
     });
 
     if (res.status !== 200) {
+      setClearFields((prev) => !prev);
       if (res.status === 400) {
-        alert("something went wrong, please refresh and try again");
+        setSubmissionErr("Invalid password criteria, try again");
+      }
+      if (res.status === 401) {
+        //this is for expired tokens / tampered tokens / incorrect tokens
+        const data = await res.json();
+        const email = data?.email || "";
+        navigate(`/send-reset-link-to-email/?err=failed-reset&email=${email}`);
+      }
+      if (res.status === 422) {
+        setSubmissionErr("New password cannot be the same as the old password");
       }
     } else {
       navigate("/redirect", {
         state: {
-          message: "Password successfully reset! Redirecting to login...",
+          message: "231",
         },
       });
     }
@@ -42,17 +60,35 @@ const ResetPassword = () => {
 
   const passwordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewPassword(e.target.value);
+    if (e.target.value !== confirmPassword || e.target.value === "") {
+      setMatch(false);
+      setSubmitDisabled(true);
+    } else {
+      setMatch(true);
+      if (errorMessage) {
+        setSubmitDisabled(true);
+      } else {
+        setSubmitDisabled(false);
+      }
+    }
   };
 
   const handleConfirmationCheck = (e: React.ChangeEvent<HTMLInputElement>) => {
     setConfirmPassword(e.target.value);
     if (e.target.value === newPassword) {
-      setMatch(true);
+      if (e.target.value === "") {
+        setMatch(false);
+      } else {
+        setMatch(true);
+      }
       if (errorMessage === "") {
         setSubmitDisabled(false);
+      } else {
+        setSubmitDisabled(true);
       }
     } else {
       setMatch(false);
+      setSubmitDisabled(true);
     }
   };
 
@@ -63,6 +99,7 @@ const ResetPassword = () => {
   return (
     <div>
       <h2>Reset Password</h2>
+      {submissionErr !== "" && <p className={styles.error}>{submissionErr}</p>}
       <form onSubmit={handleResetSubmit}>
         <div className={styles.container}>
           <div className={styles.fieldsContainer}>
@@ -75,9 +112,7 @@ const ResetPassword = () => {
                 value={newPassword}
                 onChange={passwordChange}
                 className={
-                  errorMessage === "" && passwordBlur === true
-                    ? styles.greenBorder
-                    : styles.errorBorder
+                  errorMessage === "" ? styles.greenBorder : styles.errorBorder
                 }
                 onBlur={() => setPasswordBlur(true)}
               />

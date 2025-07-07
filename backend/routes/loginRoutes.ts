@@ -282,7 +282,7 @@ router.get("/reset-password", async (req, res, next) => {
           `${BASE_URL}/send-reset-link-to-email?err=failed-verification&email=${email}`
         );
       } else {
-        res.redirect(302, `${BASE_URL}/redirect?status=success`);
+        res.redirect(302, `${BASE_URL}/reset-password?token=${token}`);
       }
     }
   } catch (err) {
@@ -290,7 +290,7 @@ router.get("/reset-password", async (req, res, next) => {
   }
 });
 
-router.post("/reset-passsword", async (req, res, next) => {
+router.post("/reset-password", async (req, res, next) => {
   const { password, token } = req.body;
   try {
     const existingReset = await db.query(
@@ -298,22 +298,54 @@ router.post("/reset-passsword", async (req, res, next) => {
       [token]
     );
     if (existingReset.rows.length < 1) {
-      res.sendStatus(400);
+      const expiredEmail = await db.query(
+        "SELECT * FROM password_reset WHERE token=$1",
+        [token]
+      );
+      const sendExpEmail = expiredEmail?.rows[0]?.email || "";
+      res.status(401).json({ email: sendExpEmail });
       return;
     }
+
     const pass: string = password.trim().normalize("NFC");
+
     if (!isValidPassword(pass)) {
       res.sendStatus(400);
       return;
     }
-    const email = existingReset.rows[0].email;
-    const hash = bcrypt.hash(password, 12);
 
-    await db.query("UPDATE users SET password=$1 WHERE email=$2", [
-      hash,
+    const email = existingReset.rows[0].email;
+    const currentUser = await db.query("SELECT * FROM users WHERE email=$1", [
       email,
     ]);
+    const currentHash = currentUser.rows[0].password;
 
+    const samePassword = await bcrypt.compare(pass, currentHash);
+
+    if (samePassword) {
+      res.status(422).json({ message: "Cannot resuse old password" });
+      return;
+    }
+
+    console.log(pass);
+    const hash = await bcrypt.hash(pass, 12);
+    console.log(hash);
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("UPDATE users SET password=$1 WHERE email=$2", [
+        hash,
+        email,
+      ]);
+      await client.query("DELETE FROM password_reset WHERE token=$1", [token]);
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
     res.sendStatus(200);
     return;
   } catch (err) {
