@@ -13,7 +13,7 @@ const LayoutWithHeader = () => {
       </div>
       <div>
         {!auth?.token && (
-          <h1 className={styles.signInWarning}>
+          <h1 className={`${styles.signInWarning} my-4 p-2`}>
             WARNING: You are not signed in, your vacation planning will not be
             saved!
           </h1>
