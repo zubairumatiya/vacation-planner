@@ -6,20 +6,28 @@ export default function ensureLoggedIn(req, res, next) {
     try {
         const token = req.headers.authorization?.split(" ")[1];
         if (!token) {
-            return res.status(401).json({ message: "Token not found" });
+            res.status(401).json({ message: "Token not found" });
+            return;
         }
         if (!SECRET) {
-            return res
+            res
                 .status(501)
                 .json({ message: "Unable to Authenticate Token, check secret" });
+            return;
         }
         const decodedToken = jwt.verify(token, SECRET);
-        const user = decodedToken;
-        req.user = user;
+        if (typeof decodedToken === "object" && "id" in decodedToken) {
+            req.user = decodedToken;
+            next();
+        }
+        else {
+            res.status(401).json({ message: "Invalid token payload" });
+        }
     }
     catch (err) {
         if (err.name === "TokenExpiredError") {
-            return res.status(401).json({ error: "TokenExpired " });
+            res.status(401).json({ error: "TokenExpired " });
+            return;
         }
         next(err);
     }

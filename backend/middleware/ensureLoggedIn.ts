@@ -2,16 +2,9 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
-declare module "express" {
-  interface Request {
-    user?: MyPayload; // adjust to your user shape
-  }
+interface MyPayload {
+  id: number;
 }
-
-type MyPayload = {
-  id: string;
-  name: string;
-};
 
 dotenv.config();
 
@@ -25,19 +18,22 @@ export default function ensureLoggedIn(
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ message: "Token not found" });
+      res.status(401).json({ message: "Token not found" });
+      return;
     }
     if (!SECRET) {
-      return res
+      res
         .status(501)
         .json({ message: "Unable to Authenticate Token, check secret" });
+      return;
     }
     const decodedToken = jwt.verify(token, SECRET);
-    const user = decodedToken as MyPayload;
-    req.user = user;
+    req.user = decodedToken as MyPayload;
+    next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      return res.status(401).json({ error: "TokenExpired " });
+      res.status(401).json({ error: "TokenExpired " });
+      return;
     }
     next(err);
   }

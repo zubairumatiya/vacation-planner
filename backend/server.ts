@@ -7,12 +7,6 @@ import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 
-declare module "express" {
-  interface Request {
-    user?: { id: string; name: string }; // adjust to your user shape
-  }
-}
-
 dotenv.config();
 app.use(cors());
 
