@@ -16,17 +16,12 @@ export default function ensureLoggedIn(req, res, next) {
             return;
         }
         const decodedToken = jwt.verify(token, SECRET);
-        if (typeof decodedToken === "object" && "id" in decodedToken) {
-            req.user = decodedToken;
-            next();
-        }
-        else {
-            res.status(401).json({ message: "Invalid token payload" });
-        }
+        req.user = decodedToken;
+        next();
     }
     catch (err) {
         if (err.name === "TokenExpiredError") {
-            res.status(401).json({ error: "TokenExpired " });
+            res.status(401).json({ error: "TokenExpired" });
             return;
         }
         next(err);

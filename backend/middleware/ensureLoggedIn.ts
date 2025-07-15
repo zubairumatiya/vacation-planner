@@ -32,7 +32,7 @@ export default function ensureLoggedIn(
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
-      res.status(401).json({ error: "TokenExpired " });
+      res.status(401).json({ error: "TokenExpired" });
       return;
     }
     next(err);

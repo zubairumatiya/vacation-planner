@@ -13,6 +13,7 @@ import SignUp from "./pages/SignUp.tsx";
 import SendResetLinkToEmail from "./pages/SendResetLinkToEmail.tsx";
 import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
+import VacationSchedule from "./pages/VacationSchedule.tsx";
 
 function App() {
   const auth = useContext(AuthContext);
@@ -23,6 +24,7 @@ function App() {
         <Route element={<LayoutWithHeader />}>
           <Route path="/" element={<Home />} />
           <Route path="/add-vacation" element={<AddVacation />} />
+          <Route path="/vacation/:tripId" element={<VacationSchedule />} />
         </Route>
 
         <Route element={<LayoutWithoutHeader />}>

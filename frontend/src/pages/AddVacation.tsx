@@ -1,4 +1,5 @@
 import { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import styles from "../styles/AddVacationForm.module.css";
 import { AuthContext } from "../context/AuthContext.tsx";
 import clsx from "clsx";
@@ -10,13 +11,15 @@ const AddVacation = () => {
 
   const today = new Date().toISOString().slice(0, 10);
   const date = new Date();
-  date.setDate(date.getDate() + 1);
-  //const tomorrow = date.toISOString().slice(0, 10);
+  date.setFullYear(date.getFullYear() + 1);
+  const oneYear = date.toISOString().slice(0, 10);
 
+  const navigate = useNavigate();
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [fieldError, setFieldError] = useState(true);
   const [errMessage, setErrMessage] = useState("");
+  const [oneYearRange, setOneYearRange] = useState(oneYear);
 
   const formSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,6 +43,15 @@ const AddVacation = () => {
         setFieldError(true);
         setErrMessage(data.message);
       }
+      if (res.status === 401 && data.error === "TokenExpired") {
+        auth?.logout();
+        navigate("/redirecting", {
+          state: { message: "Token error, redirecting to login" },
+        });
+      }
+      if (res.ok) {
+        navigate("/");
+      }
       console.log(data);
     } else {
       alert("you are not logged in - your trip will not be saved");
@@ -47,13 +59,20 @@ const AddVacation = () => {
   };
 
   const startDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log(e.target.value);
     const start = new Date(e.target.value);
     const end = new Date(endDate);
+    console.log("start:", start, "end", end);
     if (start > end) {
+      console.log("evaluating date");
       const pushEndDate = start.toISOString().slice(0, 10);
       setEndDate(pushEndDate);
     }
     setStartDate(e.target.value);
+
+    start.setFullYear(start.getFullYear() + 1);
+    const oneYear = start.toISOString().slice(0, 10);
+    setOneYearRange(oneYear);
   };
 
   const endDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,10 +88,14 @@ const AddVacation = () => {
 
     const start = new Date(immediateStartDate);
     const end = new Date(immediateEndDate);
-    console.log("start:", start);
-    console.log("end:", end);
 
-    if (!tripname || !location || start > end) {
+    if (
+      !tripname ||
+      !location ||
+      isNaN(start.getTime()) ||
+      isNaN(end.getTime()) ||
+      start > end
+    ) {
       setFieldError(true);
     } else {
       setFieldError(false);
@@ -81,11 +104,11 @@ const AddVacation = () => {
 
   const divs = "flex justify-center my-4 w-full";
   const labels = "flex justify-end ml-4 mr-2 w-1/6";
-  const inputs = "flex justify-start w-4/10";
+  const inputs = "flex justify-start w-4/10 border-2 border-green-500";
 
   return (
     <>
-      <div>{errMessage && <p>{errMessage}</p>}</div>
+      <div>{errMessage && <p className="text-red-500">{errMessage}</p>}</div>
       <div className="flex flex-col items-center justify-around w-full">
         <form
           onChange={formChange}
@@ -98,7 +121,7 @@ const AddVacation = () => {
                 Trip name:{" "}
               </label>
               <input
-                className={inputs}
+                className={clsx(fieldError && styles.dateError, inputs)}
                 type="text"
                 name="tripname"
                 id="tripname"
@@ -110,7 +133,7 @@ const AddVacation = () => {
                 Destination:{" "}
               </label>
               <input
-                className={inputs}
+                className={clsx(fieldError && styles.dateError, inputs)}
                 type="text"
                 name="location"
                 id="location"
@@ -142,6 +165,7 @@ const AddVacation = () => {
                 id="enddate"
                 value={endDate}
                 min={startDate}
+                max={oneYearRange}
                 onChange={endDateChange}
               />
             </div>
