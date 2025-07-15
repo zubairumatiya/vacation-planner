@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Home.module.css";
 
@@ -8,6 +8,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 const Home = () => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
+  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   type Trip = {
@@ -23,6 +24,11 @@ const Home = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
+      if (res.status === 401) {
+        navigate("/redirect", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+      }
       setTrips(data);
       setLoading(false);
     };

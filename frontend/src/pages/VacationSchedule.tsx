@@ -23,8 +23,8 @@ const VacationSchedule = () => {
   const [loading, setLoading] = useState(true);
   const [schedule, setSchedule] = useState<Schedule[]>([]);
   const [title, setTitle] = useState("");
-  const [tripStart, setTripStart] = useState("");
-  const [tripEnd, setTripEnd] = useState("");
+  const [tripStart, setTripStart] = useState<Date>(new Date());
+  const [tripEnd, setTripEnd] = useState<Date>(new Date());
   const [tripLength, setTripLength] = useState(0);
   const [scheduleDayLabels, setScheduleDayLabels] = useState<string[]>([]); // basically each day
   const [addItem, setAddItem] = useState(false);
@@ -32,48 +32,75 @@ const VacationSchedule = () => {
   const [startError, setStartError] = useState(false);
   const [endError, setEndError] = useState(false);
   const [locationError, setLocationError] = useState(false);
+  const [message, setMessage] = useState("Fetching vacation please wait...");
 
   useEffect(() => {
     const getTrip = async () => {
-      const response = await fetch(`${apiURL}/vacation/${tripId}`);
+      const response = await fetch(`${apiURL}/vacation/${tripId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
-      if (response.status === 200) {
+      if (response.status === 401) {
+        navigate("/login", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+      }
+      if (response.status === 404) {
+        setMessage("Error: Trip not found");
+      }
+      if (response.ok) {
+        console.log(
+          "name:",
+          data.tripName,
+          "startdate:",
+          data.startDate,
+          "enddate:",
+          data.endDate
+        );
+        const convertStart = new Date(data.startDate);
+        const convertEnd = new Date(data.endDate);
         setSchedule(data.schedule);
         setTitle(data.tripName);
-        setTripStart(data.startDate.toLocaleDateString());
-        setTripEnd(data.endDate.toLocaleDateString());
+        setTripStart(convertStart);
+        setTripEnd(convertEnd);
 
         const UtcStart = Date.UTC(
-          data.startDate.getFullYear(),
-          data.startDate.getMonth(),
-          data.startDate.getDate()
+          convertStart.getFullYear(),
+          convertStart.getMonth(),
+          convertStart.getDate()
         );
         const UtcEnd = Date.UTC(
-          data.endDate.getFullYear(),
-          data.endDate.getMonth(),
-          data.endDate.getDate()
+          convertEnd.getFullYear(),
+          convertEnd.getMonth(),
+          convertEnd.getDate()
         );
         const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
         setTripLength(length);
         const daysArr: string[] = [];
-        const start = data.startDate;
 
         for (let i = 0; i <= length; i++) {
           if (i === 0) {
-            const day = start.toLocaleDateString("en-us", { weekday: "long" });
-            const date = start.toLocaleDateString("en-us", {
+            const day = convertStart.toLocaleDateString("en-us", {
+              weekday: "long",
+            });
+            const date = convertStart.toLocaleDateString("en-us", {
               year: "numeric",
               month: "short",
               day: "numeric",
             });
             daysArr.push(`${day} - ${date}`);
           } else {
-            start.setDate(start.getDate() + 1);
-            const day = start.toLocaleDateString("en-us", { weekday: "long" });
-            const date = start.toLocaleDateString("en-us", {
+            convertStart.setDate(convertStart.getDate() + 1);
+            const day = convertStart.toLocaleDateString("en-us", {
+              weekday: "long",
+            });
+            const date = convertStart.toLocaleDateString("en-us", {
               year: "numeric",
               month: "short",
-              date: "numeric",
+              day: "numeric",
             });
             daysArr.push(`${day} - ${date}`);
           }
@@ -118,7 +145,7 @@ const VacationSchedule = () => {
         return;
       } else {
         try {
-          const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+          const addingReq = await fetch(`${apiURL}/vacation/${tripId}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -137,6 +164,12 @@ const VacationSchedule = () => {
             const data = await addingReq.json();
             setSchedule((prev) => [...prev, data.addedItem]);
           }
+          if (addingReq.status === 401) {
+            navigate("/redirect", {
+              state: { message: "Session expired, redirecting to log in..." },
+            });
+            // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+          }
         } catch (err) {
           console.log(err);
           return;
@@ -144,7 +177,7 @@ const VacationSchedule = () => {
       }
     } else {
       navigate("/redirect", {
-        state: { message: "Error executing, please sign in again" },
+        state: { message: "Session expired, redirecting to log in..." },
       });
     }
   };
@@ -174,11 +207,12 @@ const VacationSchedule = () => {
   };
 
   return loading ? (
-    <p>Fetching vacation please wait...</p>
+    <p>{message}</p>
   ) : (
     <div>
       <h1>
-        {title}: {tripStart}-{tripEnd} {tripLength} days{" "}
+        {title}: {tripStart.toLocaleDateString()}-{tripEnd.toLocaleDateString()}{" "}
+        {tripLength} days{" "}
         {/*
         <button type="button" onClick={() => setAddItem(true)}>
           Add item

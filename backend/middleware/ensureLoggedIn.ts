@@ -18,6 +18,7 @@ export default function ensureLoggedIn(
   try {
     const token = req.headers.authorization?.split(" ")[1];
     if (!token) {
+      console.log("no token!! ~~~~~ console logging");
       res.status(401).json({ message: "Token not found" });
       return;
     }
@@ -32,6 +33,7 @@ export default function ensureLoggedIn(
     next();
   } catch (err) {
     if (err.name === "TokenExpiredError") {
+      console.log("token expired --- console logging");
       res.status(401).json({ error: "TokenExpired" });
       return;
     }

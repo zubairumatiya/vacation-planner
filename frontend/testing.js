@@ -79,17 +79,10 @@ for (let i = 0; i <= UtcSum; i++) {
   }
 }
 
-let db = new Date("2025-07-10 15:30:00");
-console.log(db.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }));
-db.setDate(db.getDate() + 1);
-db = db.toLocaleDateString();
+const str = "2025-07-15T05:00:00.000Z";
+let db = new Date(str);
+console.log(db.toLocaleDateString());
 
-let date = new Date();
-console.log(date);
-date.setFullYear(date.getFullYear() + 2);
-console.log(date);
-date = date.toISOString().slice(0, 10);
-console.log(date);
 //console.log(db);
 
 //console.log(today);
