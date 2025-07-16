@@ -21,7 +21,11 @@ const ProfileSideBar = () => {
           <Link to="/">Profile</Link>
         </li>
         <li>
-          <button type="button" onClick={handleSignOut}>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className={styles.button}
+          >
             Sign out
           </button>
         </li>

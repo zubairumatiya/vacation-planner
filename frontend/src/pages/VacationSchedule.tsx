@@ -210,6 +210,9 @@ const VacationSchedule = () => {
     <p>{message}</p>
   ) : (
     <div>
+      <button type="button" onClick={() => alert("click")}>
+        Test button
+      </button>
       <h1>
         {title}: {tripStart.toLocaleDateString()}-{tripEnd.toLocaleDateString()}{" "}
         {tripLength} days{" "}
@@ -237,8 +240,8 @@ const VacationSchedule = () => {
         const getDay = day.split("-")[1];
         const dayOfTrip = new Date(getDay).toISOString().split("T")[0];
         return (
-          <>
-            <div key={day}>
+          <div key={day}>
+            <div>
               <h3>{day}</h3>
 
               {schedule
@@ -259,16 +262,17 @@ const VacationSchedule = () => {
                     <div key={item.id}>
                       <p>{`${sTime}-${eTime} - `}</p>
                       <h5>{item.activity}</h5>
+                      <p>{item.cost}</p>
                       <p> - {item.details}</p>
                     </div>
                   );
                 })}
             </div>
-            <button type="button" onClick={() => setAddItem(true)}>
-              Add Item
-            </button>
-
-            {addItem && (
+            {!addItem ? (
+              <button type="button" onClick={() => setAddItem(true)}>
+                Add Item
+              </button>
+            ) : (
               <form onSubmit={submitItem}>
                 <label htmlFor="start">Start</label>
                 <input
@@ -318,7 +322,7 @@ const VacationSchedule = () => {
                 </button>
               </form>
             )}
-          </>
+          </div>
         );
       })}
     </div>
