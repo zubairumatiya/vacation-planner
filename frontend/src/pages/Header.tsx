@@ -43,14 +43,14 @@ const Header = () => {
         </div>
         <div
           className={auth?.token ? styles.loggedIn : styles.signIn}
-          onClick={() => navigate("/login")}
+          //onClick={() => navigate("/login")}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
         >
           {auth?.token ? (
             <button
               ref={buttonRef}
-              className={styles.profileButton}
+              className={`btnPrimary ${styles.profileButton}`}
               type="button"
               onClick={() => setSideBarOpen((prev) => !prev)}
             >

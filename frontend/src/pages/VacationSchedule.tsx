@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
-//import styles from "../styles/Schedule.module.css";
+import styles from "../styles/Schedule.module.css";
+import TimePicker from "react-time-picker";
 const apiURL = import.meta.env.VITE_API_URL;
 
 type Schedule = {
@@ -27,12 +28,13 @@ const VacationSchedule = () => {
   const [tripEnd, setTripEnd] = useState<Date>(new Date());
   const [tripLength, setTripLength] = useState(0);
   const [scheduleDayLabels, setScheduleDayLabels] = useState<string[]>([]); // basically each day
-  const [addItem, setAddItem] = useState(false);
+  const [addItem, setAddItem] = useState<boolean[]>([false]); // buttons for each day will have to have their own boolean to show or not to
   const [itemError, setItemError] = useState(false);
   const [startError, setStartError] = useState(false);
   const [endError, setEndError] = useState(false);
   const [locationError, setLocationError] = useState(false);
   const [message, setMessage] = useState("Fetching vacation please wait...");
+  const [timePick, setTimePick] = useState<string | null>("10:00");
 
   useEffect(() => {
     const getTrip = async () => {
@@ -60,11 +62,12 @@ const VacationSchedule = () => {
           "enddate:",
           data.endDate
         );
+        const convertStartPreserved = new Date(data.startDate);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
         setSchedule(data.schedule);
         setTitle(data.tripName);
-        setTripStart(convertStart);
+        setTripStart(convertStartPreserved);
         setTripEnd(convertEnd);
 
         const UtcStart = Date.UTC(
@@ -106,7 +109,6 @@ const VacationSchedule = () => {
           }
         }
         setScheduleDayLabels(daysArr);
-
         setLoading(false);
       }
     };
@@ -120,9 +122,20 @@ const VacationSchedule = () => {
     }
   }, [startError, endError, locationError]);
 
-  const submitItem = async (e: React.FormEvent<HTMLFormElement>) => {
+  const addItemHelper = (i: number) => {
+    setAddItem((prev) => {
+      const newArr = [...prev];
+      newArr[i] = !newArr[i];
+      return newArr;
+    });
+  };
+
+  const submitItem = async (
+    e: React.FormEvent<HTMLFormElement>,
+    ind: number
+  ) => {
     e.preventDefault();
-    setAddItem(false);
+    addItemHelper(ind);
     if (token) {
       const formData = new FormData(e.currentTarget);
       const start = formData.get("start");
@@ -210,33 +223,18 @@ const VacationSchedule = () => {
     <p>{message}</p>
   ) : (
     <div>
-      <button type="button" onClick={() => alert("click")}>
+      <button
+        className="btnPrimary"
+        type="button"
+        onClick={() => alert("click")}
+      >
         Test button
       </button>
       <h1>
-        {title}: {tripStart.toLocaleDateString()}-{tripEnd.toLocaleDateString()}{" "}
-        {tripLength} days{" "}
-        {/*
-        <button type="button" onClick={() => setAddItem(true)}>
-          Add item
-        </button>
-        <div>
-            {itemError && <p>Error adding item, please make sure input is valid</p>}
-          <form onSubmit={(e) => submitItem(true, e)} >
-            <label htmlFor="start">Start</label>
-            <input type="time" name="start" id="start" />
-            <label htmlFor="end">End</label>
-            <input type="time" name="end" id="end" />
-            <label htmlFor="location">Location</label>
-            <input type="text" name="location" id="location" maxLength={300} />
-            <label htmlFor="details">Details</label>
-            <input type="text" name="details" id="details" maxLength={500} />
-            <button type="submit" disabled={itemError}>Add item</button>
-          </form>
-        </div>
-        */}
+        {title}: {tripStart.toLocaleDateString()} -{" "}
+        {tripEnd.toLocaleDateString()} - {tripLength} days{" "}
       </h1>
-      {scheduleDayLabels.map((day) => {
+      {scheduleDayLabels.map((day, index) => {
         const getDay = day.split("-")[1];
         const dayOfTrip = new Date(getDay).toISOString().split("T")[0];
         return (
@@ -268,26 +266,38 @@ const VacationSchedule = () => {
                   );
                 })}
             </div>
-            {!addItem ? (
-              <button type="button" onClick={() => setAddItem(true)}>
+            {!addItem[index] ? (
+              <button
+                type="button"
+                onClick={() => addItemHelper(index)}
+                className={`${styles.addButton} btnPrimary`}
+              >
                 Add Item
               </button>
             ) : (
-              <form onSubmit={submitItem}>
+              <form onSubmit={(e) => submitItem(e, index)}>
                 <label htmlFor="start">Start</label>
-                <input
+
+                <TimePicker
+                  value={timePick}
+                  onChange={setTimePick}
+                  className={styles.time}
+                />
+                {/*<input
                   type="time"
                   name="start"
                   id="start"
-                  className={`${startError && "border-red-500"}`}
+                  className={`${startError && "border-red-500"} ${
+                    styles.input
+                  }`}
                   onChange={startError ? formChange : undefined}
-                />
+                />*/}
                 <label htmlFor="end">End</label>
                 <input
                   type="time"
                   name="end"
                   id="end"
-                  className={`${endError && "border-red-500"}`}
+                  className={`${endError && "border-red-500"} ${styles.input}`}
                   onChange={endError ? formChange : undefined}
                 />
                 <label htmlFor="location">Location</label>
@@ -296,11 +306,14 @@ const VacationSchedule = () => {
                   name="location"
                   id="location"
                   maxLength={300}
-                  className={`${locationError && "border-red-500"}`}
+                  className={`${locationError && "border-red-500"} ${
+                    styles.input
+                  }`}
                   onChange={locationError ? formChange : undefined}
                 />
                 <label htmlFor="cost">Cost</label>
                 <input
+                  className={styles.input}
                   type="number"
                   name="cost"
                   id="cost"
@@ -310,15 +323,32 @@ const VacationSchedule = () => {
                 <label htmlFor="details">Details</label>
 
                 <input
+                  className={styles.input}
                   type="text"
                   name="details"
                   id="details"
                   maxLength={500}
                 />
                 <label htmlFor="multday">Multi-day</label>
-                <input type="checkbox" name="multiday" id="multiday" />
-                <button type="submit" disabled={itemError}>
+                <input
+                  type="checkbox"
+                  className={styles.input}
+                  name="multiday"
+                  id="multiday"
+                />
+                <button
+                  type="submit"
+                  className={`btnPrimary`}
+                  disabled={itemError}
+                >
                   Add item
+                </button>
+                <button
+                  className={`btnPrimary ${styles.xButton}`}
+                  type="button"
+                  onClick={() => addItemHelper(index)}
+                >
+                  X
                 </button>
               </form>
             )}

@@ -61,7 +61,7 @@ button {
   display: inline-block;
   font-family: Circular, -apple-system, BlinkMacSystemFont, Roboto,
     "Helvetica Neue", sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   line-height: 20px;
   margin: 0;

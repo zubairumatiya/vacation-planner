@@ -1,0 +1,18 @@
+.addButton {
+  line-height: 0;
+  width: fit-content;
+  padding: 2vh 3vh;
+}
+
+.xButton {
+  background-color: red;
+}
+
+.input {
+  border: 0.1rem solid white;
+  margin-left: 1vw;
+}
+
+.time {
+  width: 5vw;
+}
