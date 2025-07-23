@@ -11,8 +11,6 @@
 .input {
   border: 0.1rem solid white;
   margin-left: 1vw;
-}
-
-.time {
-  width: 5vw;
+  width: 7vw;
+  overflow-wrap: anywhere;
 }

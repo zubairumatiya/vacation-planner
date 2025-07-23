@@ -3,6 +3,8 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import TimePicker from "react-time-picker";
+import "react-time-picker/dist/TimePicker.css";
+import "react-clock/dist/Clock.css";
 const apiURL = import.meta.env.VITE_API_URL;
 
 type Schedule = {
@@ -281,17 +283,10 @@ const VacationSchedule = () => {
                 <TimePicker
                   value={timePick}
                   onChange={setTimePick}
-                  className={styles.time}
+                  disableClock={true}
+                  clearIcon={null}
                 />
-                {/*<input
-                  type="time"
-                  name="start"
-                  id="start"
-                  className={`${startError && "border-red-500"} ${
-                    styles.input
-                  }`}
-                  onChange={startError ? formChange : undefined}
-                />*/}
+
                 <label htmlFor="end">End</label>
                 <input
                   type="time"
