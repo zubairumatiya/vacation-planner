@@ -83,6 +83,8 @@ const str = "2025-07-15T05:00:00.000Z";
 let db = new Date(str);
 console.log(db.toLocaleDateString());
 
+console.log(Number("0001"));
+
 //console.log(db);
 
 //console.log(today);
