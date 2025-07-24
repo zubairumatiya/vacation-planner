@@ -2,15 +2,18 @@ import styles from "../styles/CustomTimePicker.module.css";
 import { useState, useRef, useEffect } from "react";
 import dropDownArrow from "../assets/arrow-drop.svg";
 
-const CustomTimePicker = () => {
+const CustomTimePicker = (props) => {
   const [hideHours, setHideHours] = useState(true);
   const [hideMinutes, setHideMinutes] = useState(true);
   const minuteUlRef = useRef<HTMLUListElement>(null);
   const hourUlRef = useRef<HTMLUListElement>(null);
+  const minuteLiRef = useRef<HTMLLIElement>(null);
+  const hourLiRef = useRef<HTMLLIElement>(null);
   const minuteButtonRef = useRef<HTMLButtonElement>(null);
   const hourButtonRef = useRef<HTMLButtonElement>(null);
   const [hourSelection, setHourSelection] = useState("");
   const [minuteSelection, setMinuteSelection] = useState("");
+  const [meridiemSelection, setMeridiemSelection] = useState("");
   const [focusedMinuteIndex, setFocusedMinuteIndex] = useState<null | number>(
     null
   );
@@ -19,6 +22,16 @@ const CustomTimePicker = () => {
   const minuteInputRef = useRef<HTMLInputElement>(null);
   const skipNextHourFocus = useRef(false);
   const skipNextMinuteFocus = useRef(false);
+
+  useEffect(() => {
+    props.onChange(captureHourSelection, captureMinuteSelection);
+  }, [hourSelection, minuteSelection, meridiemSelection]);
+
+  useEffect(() => {
+    if (hourInputRef.current !== null) {
+      hourInputRef.current.scrollIntoView({ block: "nearest" });
+    }
+  }, [hourLiRef]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -69,6 +82,7 @@ const CustomTimePicker = () => {
     const li = e.target as HTMLLIElement;
     console.log(li.innerText);
     setHourSelection(li.innerText);
+    hourLiRef.current = li;
     const toNumber = Number(li.innerText);
     setFocusedHourIndex(toNumber - 1);
     setHideHours((prev) => !prev);
@@ -309,7 +323,13 @@ const CustomTimePicker = () => {
             </div>
           </div>
           <div>
-            <select name="meridiem" id="meridiem">
+            <select
+              name="meridiem"
+              id="meridiem"
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setMeridiemSelection(e.target.value)
+              }
+            >
               <option value="AM">AM</option>
               <option value="PM">PM</option>
             </select>

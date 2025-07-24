@@ -2,23 +2,42 @@ import styles from "../styles/Test.module.css";
 import { useState, useRef, useEffect } from "react";
 import dropDownArrow from "../assets/arrow-drop.svg";
 
-const Test = () => {
+const Test = (props) => {
   const [hideHours, setHideHours] = useState(true);
   const [hideMinutes, setHideMinutes] = useState(true);
-  const minuteUlRef = useRef<HTMLUListElement>(null);
   const hourUlRef = useRef<HTMLUListElement>(null);
-  const minuteButtonRef = useRef<HTMLButtonElement>(null);
+  const minuteUlRef = useRef<HTMLUListElement>(null);
+  const hourLiRef = useRef<HTMLLIElement>(null);
+  const minuteLiRef = useRef<HTMLLIElement>(null);
   const hourButtonRef = useRef<HTMLButtonElement>(null);
+  const minuteButtonRef = useRef<HTMLButtonElement>(null);
   const [hourSelection, setHourSelection] = useState("");
   const [minuteSelection, setMinuteSelection] = useState("");
+  const [meridiemSelection, setMeridiemSelection] = useState("");
+  const [focusedHourIndex, setFocusedHourIndex] = useState<null | number>(null);
   const [focusedMinuteIndex, setFocusedMinuteIndex] = useState<null | number>(
     null
   );
-  const [focusedHourIndex, setFocusedHourIndex] = useState<null | number>(null);
   const hourInputRef = useRef<HTMLInputElement>(null);
   const minuteInputRef = useRef<HTMLInputElement>(null);
   const skipNextHourFocus = useRef(false);
   const skipNextMinuteFocus = useRef(false);
+
+  // useEffect(() => {
+  //   props.onChange(captureHourSelection, captureMinuteSelection);
+  // }, [hourSelection, minuteSelection, meridiemSelection]);
+
+  useEffect(() => {
+    if (hourLiRef.current !== null) {
+      hourLiRef.current.scrollIntoView({ block: "nearest" });
+    }
+  }, [hideHours, hourSelection]);
+
+  useEffect(() => {
+    if (minuteLiRef.current !== null) {
+      minuteLiRef.current.scrollIntoView({ block: "nearest" });
+    }
+  }, [hideMinutes, minuteSelection]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -60,6 +79,7 @@ const Test = () => {
     const li = e.target as HTMLLIElement;
     console.log(li.innerText);
     setMinuteSelection(li.innerText);
+    minuteLiRef.current = li;
     const toNumber = Number(li.innerText);
     setFocusedMinuteIndex(toNumber);
     setHideMinutes((prev) => !prev);
@@ -69,6 +89,7 @@ const Test = () => {
     const li = e.target as HTMLLIElement;
     console.log(li.innerText);
     setHourSelection(li.innerText);
+    hourLiRef.current = li;
     const toNumber = Number(li.innerText);
     setFocusedHourIndex(toNumber - 1);
     setHideHours((prev) => !prev);
@@ -80,6 +101,7 @@ const Test = () => {
       const next =
         focusedHourIndex === null ? 0 : Math.min(focusedHourIndex + 1, 11);
       setFocusedHourIndex(next);
+
       const toString = String(next < 9 ? "0" + (next + 1) : next + 1);
       setHourSelection(toString);
     } else if (e.key === "ArrowUp") {
@@ -87,6 +109,7 @@ const Test = () => {
       const previous =
         focusedHourIndex === null ? 0 : Math.max(focusedHourIndex - 1, 0);
       setFocusedHourIndex(previous);
+
       const toString = String(
         previous < 9 ? "0" + (previous + 1) : previous + 1
       );
@@ -106,13 +129,15 @@ const Test = () => {
       const next =
         focusedMinuteIndex === null ? 0 : Math.min(focusedMinuteIndex + 1, 59);
       setFocusedMinuteIndex(next);
-      const toString = String(next < 9 ? "0" + next : next);
+
+      const toString = String(next < 10 ? "0" + next : next);
       setMinuteSelection(toString);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       const previous =
         focusedMinuteIndex === null ? 0 : Math.max(focusedMinuteIndex - 1, 0);
       setFocusedMinuteIndex(previous);
+
       const toString = String(previous < 9 ? "0" + previous : previous);
       setMinuteSelection(toString);
     } else if (e.code === "Space") {
@@ -138,6 +163,7 @@ const Test = () => {
   };
 
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //NEED TODO - change the scrollinto behavior on the number we type
     const toNumber = Number(e.target.value);
     if (e.target.value === "" || e.target.value === "0") {
       setHourSelection("");
@@ -165,6 +191,7 @@ const Test = () => {
   };
 
   const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    ////NEED TODO - change the scrollinto behavior on the number we type
     const toNumber = Number(e.target.value);
     if (isNaN(toNumber)) {
       return;
@@ -233,6 +260,8 @@ const Test = () => {
                     return (
                       <li
                         key={i}
+                        id={i + ""}
+                        ref={i === focusedHourIndex ? hourLiRef : null}
                         className={`${styles.listItem} ${
                           i === focusedHourIndex && styles.focused
                         }`}
@@ -296,6 +325,8 @@ const Test = () => {
                     return (
                       <li
                         key={i}
+                        id={i + ""}
+                        ref={i === focusedMinuteIndex ? minuteLiRef : null}
                         className={`${styles.listItem} ${
                           i === focusedMinuteIndex && styles.focused
                         }`}
@@ -309,7 +340,13 @@ const Test = () => {
             </div>
           </div>
           <div>
-            <select name="meridiem" id="meridiem">
+            <select
+              name="meridiem"
+              id="meridiem"
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                setMeridiemSelection(e.target.value)
+              }
+            >
               <option value="AM">AM</option>
               <option value="PM">PM</option>
             </select>
