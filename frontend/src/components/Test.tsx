@@ -166,26 +166,33 @@ const Test = (props) => {
     //NEED TODO - change the scrollinto behavior on the number we type
     const toNumber = Number(e.target.value);
     if (e.target.value === "" || e.target.value === "0") {
+      setFocusedHourIndex(0);
       setHourSelection("");
+      return;
     }
     if (isNaN(toNumber)) {
       return;
     }
     if (toNumber > 0 && toNumber < 10) {
+      setFocusedHourIndex(toNumber - 1);
       setHourSelection("0" + toNumber);
       return;
     }
     if (e.target.value.length === 3) {
       if (e.target.value[2] === "0") {
         if (e.target.value[1] === "1") {
+          setFocusedHourIndex(9);
           setHourSelection("10");
         }
         return;
       }
       if (toNumber > 9 && toNumber < 13) {
+        setFocusedHourIndex(toNumber - 1);
         setHourSelection(String(toNumber));
         return;
       }
+      console.log(toNumber);
+      setFocusedHourIndex(Number(e.target.value[2]) - 1);
       setHourSelection("0" + e.target.value[2]);
     }
   };
@@ -197,12 +204,15 @@ const Test = (props) => {
       return;
     }
     if (e.target.value === "" || e.target.value === "0") {
+      setFocusedMinuteIndex(0);
       setMinuteSelection(e.target.value);
     }
     if (toNumber >= 0 && toNumber < 10) {
+      setFocusedMinuteIndex(toNumber);
       setMinuteSelection("0" + toNumber);
     }
     if (toNumber > 9 && toNumber < 60) {
+      setFocusedMinuteIndex(toNumber);
       setMinuteSelection(String(toNumber));
     }
   };
@@ -346,6 +356,9 @@ const Test = (props) => {
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
                 setMeridiemSelection(e.target.value)
               }
+              onFocus={() => {
+                setHideMinutes(true);
+              }}
             >
               <option value="AM">AM</option>
               <option value="PM">PM</option>
