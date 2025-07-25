@@ -98,16 +98,24 @@ const Test = (props) => {
   const handleKeyDownForHour = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      const next =
-        focusedHourIndex === null ? 0 : Math.min(focusedHourIndex + 1, 11);
+      let next;
+      if (focusedHourIndex === 11) {
+        next = 0;
+      } else {
+        next = focusedHourIndex === null ? 0 : focusedHourIndex + 1;
+      }
       setFocusedHourIndex(next);
 
       const toString = String(next < 9 ? "0" + (next + 1) : next + 1);
       setHourSelection(toString);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      const previous =
-        focusedHourIndex === null ? 0 : Math.max(focusedHourIndex - 1, 0);
+      let previous;
+      if (focusedHourIndex === null || focusedHourIndex === 0) {
+        previous = 11;
+      } else {
+        previous = focusedHourIndex - 1;
+      }
       setFocusedHourIndex(previous);
 
       const toString = String(
@@ -126,18 +134,25 @@ const Test = (props) => {
   const handleKeyDownForMinute = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      const next =
-        focusedMinuteIndex === null ? 0 : Math.min(focusedMinuteIndex + 1, 59);
+      let next;
+      if (focusedMinuteIndex === 59) {
+        next = 0;
+      } else {
+        next = focusedMinuteIndex === null ? 0 : focusedMinuteIndex + 1;
+      }
       setFocusedMinuteIndex(next);
 
       const toString = String(next < 10 ? "0" + next : next);
       setMinuteSelection(toString);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      const previous =
-        focusedMinuteIndex === null ? 0 : Math.max(focusedMinuteIndex - 1, 0);
+      let previous = null;
+      if (focusedMinuteIndex === null || focusedMinuteIndex === 0) {
+        previous = 59;
+      } else {
+        previous = focusedMinuteIndex - 1;
+      }
       setFocusedMinuteIndex(previous);
-
       const toString = String(previous < 9 ? "0" + previous : previous);
       setMinuteSelection(toString);
     } else if (e.code === "Space") {

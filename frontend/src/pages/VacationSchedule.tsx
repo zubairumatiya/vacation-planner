@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
-import TimePicker from "react-time-picker";
+import CustomTimePicker from "../components/CustomTimePicker";
 import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 const apiURL = import.meta.env.VITE_API_URL;
@@ -30,13 +30,17 @@ const VacationSchedule = () => {
   const [tripEnd, setTripEnd] = useState<Date>(new Date());
   const [tripLength, setTripLength] = useState(0);
   const [scheduleDayLabels, setScheduleDayLabels] = useState<string[]>([]); // basically each day
-  const [addItem, setAddItem] = useState<boolean[]>([false]); // buttons for each day will have to have their own boolean to show or not to
+  const [addingItem, setAddingItem] = useState<boolean>(false); // buttons for each day will have to have their own boolean to show or not to
+  const [individualAddition, setIndividualAddition] = useState<boolean[]>([
+    false,
+  ]);
   const [itemError, setItemError] = useState(false);
   const [startError, setStartError] = useState(false);
   const [endError, setEndError] = useState(false);
   const [locationError, setLocationError] = useState(false);
   const [message, setMessage] = useState("Fetching vacation please wait...");
-  const [timePick, setTimePick] = useState<string | null>("10:00");
+  const [startTimePick, setStartTimePick] = useState<string | null>(null); // i think we will need two of these for start and end, which means we can't have multiple adding schedules open
+  const [endTimePick, setEndTimePick] = useState<string | null>(null);
 
   useEffect(() => {
     const getTrip = async () => {
@@ -124,12 +128,46 @@ const VacationSchedule = () => {
     }
   }, [startError, endError, locationError]);
 
-  const addItemHelper = (i: number) => {
-    setAddItem((prev) => {
+  const addItemHelper = (i: number, cancel?: string) => {
+    console.log("is there a cancel", cancel);
+    if (cancel) {
+      setAddingItem(false);
+    } else {
+      setAddingItem(true);
+    }
+    setIndividualAddition((prev) => {
       const newArr = [...prev];
       newArr[i] = !newArr[i];
       return newArr;
     });
+  };
+  // was used when i wanted to be able to keep multiple add trips open for multiple days
+
+  const constructDate = (
+    which: "start" | "end",
+    hour: string,
+    minute: string,
+    meridiem: string
+  ) => {
+    if (startError) {
+      if (which === "start") {
+        if (hour && minute && meridiem) {
+          setStartError(false);
+        }
+      }
+    }
+    if (endError) {
+      if (which === "end") {
+        if (hour && minute && meridiem) {
+          setEndError(false);
+        }
+      }
+    }
+    if (which === "start") {
+      setStartTimePick(hour + ":" + minute + " " + meridiem);
+    } else {
+      setEndTimePick(hour + ":" + minute + " " + meridiem);
+    }
   };
 
   const submitItem = async (
@@ -137,18 +175,16 @@ const VacationSchedule = () => {
     ind: number
   ) => {
     e.preventDefault();
-    addItemHelper(ind);
+    setAddingItem(false);
     if (token) {
       const formData = new FormData(e.currentTarget);
-      const start = formData.get("start");
-      const end = formData.get("end");
       const location = formData.get("location");
       let error = false;
-      if (!start) {
+      if (!startTimePick) {
         error = true;
         setStartError(true);
       }
-      if (!end) {
+      if (!endTimePick) {
         error = true;
         setEndError(true);
       }
@@ -167,8 +203,8 @@ const VacationSchedule = () => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              start,
-              end,
+              startTimePick,
+              endTimePick,
               location,
               details: formData.get("details"),
               cost: formData.get("cost"),
@@ -198,20 +234,6 @@ const VacationSchedule = () => {
   };
 
   const formChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (startError) {
-      if (e.target.name === "start") {
-        if (e.target.value) {
-          setStartError(false);
-        }
-      }
-    }
-    if (endError) {
-      if (e.target.name === "end") {
-        if (e.target.value) {
-          setEndError(false);
-        }
-      }
-    }
     if (locationError) {
       if (e.target.name === "location") {
         if (e.target.value) {
@@ -268,9 +290,10 @@ const VacationSchedule = () => {
                   );
                 })}
             </div>
-            {!addItem[index] ? (
+            {!individualAddition[index] ? (
               <button
                 type="button"
+                disabled={addingItem}
                 onClick={() => addItemHelper(index)}
                 className={`${styles.addButton} btnPrimary`}
               >
@@ -278,23 +301,40 @@ const VacationSchedule = () => {
               </button>
             ) : (
               <form onSubmit={(e) => submitItem(e, index)}>
-                <label htmlFor="start">Start</label>
+                <div className={styles.timeWrapper}>
+                  <span>Start </span>
+                  <CustomTimePicker
+                    className={startError ? "border-red-500" : undefined}
+                    onChange={(
+                      hour: string,
+                      minute: string,
+                      meridiem: string
+                    ) => constructDate("start", hour, minute, meridiem)}
+                  />
+                </div>
 
-                <TimePicker
-                  value={timePick}
-                  onChange={setTimePick}
-                  disableClock={true}
-                  clearIcon={null}
-                />
+                <div className={styles.timeWrapper}>
+                  <span>End </span>
+                  <CustomTimePicker
+                    className={startError ? "border-red-500" : undefined}
+                    onChange={(
+                      hour: string,
+                      minute: string,
+                      meridiem: string
+                    ) => constructDate("end", hour, minute, meridiem)}
+                  />
+                </div>
+                {/*
 
-                <label htmlFor="end">End</label>
+                    <label htmlFor="end">End</label>
                 <input
-                  type="time"
-                  name="end"
-                  id="end"
-                  className={`${endError && "border-red-500"} ${styles.input}`}
-                  onChange={endError ? formChange : undefined}
+                type="time"
+                name="end"
+                id="end"
+                className={`${endError && "border-red-500"} ${styles.input}`}
+                onChange={endError ? formChange : undefined}
                 />
+            */}
                 <label htmlFor="location">Location</label>
                 <input
                   type="text"
@@ -341,7 +381,7 @@ const VacationSchedule = () => {
                 <button
                   className={`btnPrimary ${styles.xButton}`}
                   type="button"
-                  onClick={() => addItemHelper(index)}
+                  onClick={() => addItemHelper(index, "cancel")}
                 >
                   X
                 </button>

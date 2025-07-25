@@ -14,3 +14,8 @@
   width: 7vw;
   overflow-wrap: anywhere;
 }
+
+.timeWrapper {
+  display: flex;
+  align-items: baseline;
+}
