@@ -113,8 +113,9 @@ router.post("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
       return;
     }
     const result = await db.query(
-      "INSERT INTO trip_schedule (start_time, end_time, location, cost, details, multi_day) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *",
+      "INSERT INTO trip_schedule (trip_id,start_time, end_time, location, cost, details, multi_day) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
       [
+        match.rows[0].trip_id,
         req.body.start,
         req.body.end,
         req.body.location,

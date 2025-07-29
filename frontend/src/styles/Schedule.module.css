@@ -10,12 +10,96 @@
 
 .input {
   border: 0.1rem solid white;
-  margin-left: 1vw;
-  width: 7vw;
+  border-radius: 5px;
+  margin-left: 0.25rem;
+  padding-left: 0.5rem;
+  width: 3.5rem;
   overflow-wrap: anywhere;
 }
 
 .timeWrapper {
   display: flex;
   align-items: baseline;
+}
+
+.formWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.itemElement {
+  margin: 0 0.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.multiDay {
+  width: auto;
+}
+
+.fakeContainer {
+  position: relative;
+  width: 3.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.textArea {
+  position: relative;
+  z-index: 2;
+  height: 1.75rem;
+
+  margin-left: 0.25rem;
+  resize: none;
+  overflow: hidden;
+}
+
+.textArea:focus {
+  position: absolute;
+  top: -1rem;
+  left: 0;
+  width: 12.5rem;
+  height: 6rem;
+  background-color: white; /* Ensures text is visible */
+  color: black; /* Optional: force contrast */
+  z-index: 3; /* Ensure it's above texture */
+  padding-left: 0.5rem; /* Required for spacing */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Optional: visual elevation */
+}
+
+.textureOverlay::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6rem;
+
+  background-image: url("/your-texture.svg");
+  background-size: cover;
+  opacity: 0.2; /* adjust for subtlety */
+  pointer-events: none; /* so you can still click inputs */
+  z-index: 1;
+}
+
+.textAreaContainer {
+  position: relative;
+  display: flex;
+}
+
+.detailsLabel {
+  margin-bottom: 0;
+}
+
+.tableContainer {
+  display: flex;
+  justify-content: center;
 }

@@ -17,7 +17,21 @@
 //console.log(regex.test("at@s.s"));
 //console.log(passwordRegex.test(`asSsf2da`)); //é
 
-const today = new Date().toISOString().slice(0, 10);
+const today = new Date().toISOString().split("T")[0];
+console.log("oday:", today);
+
+const construct = new Date("2025-07-26 12:35 AM");
+console.log("constructed", construct);
+
+const time = construct.toLocaleTimeString([], {
+  hour: "numeric",
+  minute: "2-digit",
+});
+console.log(time);
+
+const api = new Date("2025-07-15 00:00:00");
+
+console.log(api.toISOString());
 
 const tomorrow = new Date();
 

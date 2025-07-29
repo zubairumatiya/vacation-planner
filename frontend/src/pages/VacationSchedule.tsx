@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import CustomTimePicker from "../components/CustomTimePicker";
@@ -10,7 +10,7 @@ const apiURL = import.meta.env.VITE_API_URL;
 type Schedule = {
   id: number;
   trip_id: number;
-  activity: string;
+  location: string;
   details: string;
   start_time: Date;
   end_time: Date;
@@ -41,6 +41,7 @@ const VacationSchedule = () => {
   const [message, setMessage] = useState("Fetching vacation please wait...");
   const [startTimePick, setStartTimePick] = useState<string | null>(null); // i think we will need two of these for start and end, which means we can't have multiple adding schedules open
   const [endTimePick, setEndTimePick] = useState<string | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const getTrip = async () => {
@@ -129,7 +130,6 @@ const VacationSchedule = () => {
   }, [startError, endError, locationError]);
 
   const addItemHelper = (i: number, cancel?: string) => {
-    console.log("is there a cancel", cancel);
     if (cancel) {
       setAddingItem(false);
     } else {
@@ -172,7 +172,7 @@ const VacationSchedule = () => {
 
   const submitItem = async (
     e: React.FormEvent<HTMLFormElement>,
-    ind: number
+    dateAdded: string
   ) => {
     e.preventDefault();
     setAddingItem(false);
@@ -180,18 +180,42 @@ const VacationSchedule = () => {
       const formData = new FormData(e.currentTarget);
       const location = formData.get("location");
       let error = false;
+      let startDateAssembler;
+      let endDateAssembler;
+      console.log("dateAdded: ", dateAdded);
+      /*
       if (!startTimePick) {
         error = true;
         setStartError(true);
+        alert("start time invalid");
+        return;
+      }*/
+      if (!startTimePick || startTimePick === ": ") {
+        startDateAssembler = new Date(dateAdded);
+      } else {
+        startDateAssembler = new Date(dateAdded + " " + startTimePick);
       }
+      /*
       if (!endTimePick) {
         error = true;
         setEndError(true);
+        alert("end time invalid");
+        return;
+      }*/
+
+      if (!endTimePick || endTimePick === ": ") {
+        endDateAssembler = new Date(dateAdded); // TO-DO this will have to be different for multi-day
+      } else {
+        endDateAssembler = new Date(dateAdded + " " + endTimePick);
       }
       if (!location) {
         error = true;
         setLocationError(true);
+        alert("location invalid value");
+        return;
       }
+      console.log("startTimePick:", startTimePick, "endTimePick:", endTimePick);
+      console.log("start:", startDateAssembler, "end:", endDateAssembler);
       if (error) {
         return;
       } else {
@@ -203,8 +227,8 @@ const VacationSchedule = () => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
-              startTimePick,
-              endTimePick,
+              start: startDateAssembler,
+              end: endDateAssembler,
               location,
               details: formData.get("details"),
               cost: formData.get("cost"),
@@ -243,6 +267,12 @@ const VacationSchedule = () => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      textAreaRef.current!.blur();
+    }
+  };
+
   return loading ? (
     <p>{message}</p>
   ) : (
@@ -263,32 +293,61 @@ const VacationSchedule = () => {
         const dayOfTrip = new Date(getDay).toISOString().split("T")[0];
         return (
           <div key={day}>
-            <div>
-              <h3>{day}</h3>
+            <div className={styles.tableContainer}>
+              <table>
+                <caption>{day}</caption>
+                <thead>
+                  <tr>
+                    <th>Start Time</th>
+                    <th>End Time</th>
+                    <th>Location</th>
+                    <th>Cost</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {schedule
+                    .filter((v: Schedule) => {
+                      const startDay = new Date(v.start_time)
+                        .toISOString()
+                        .split("T")[0];
+                      return startDay === dayOfTrip;
+                    })
+                    .map((item: Schedule) => {
+                      let sTime;
+                      if (item.start_time) {
+                        sTime = new Date(item.start_time).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          }
+                        );
+                      } else {
+                        sTime = "12:00 AM";
+                      }
+                      let eTime;
+                      if (item.end_time) {
+                        eTime = new Date(item.end_time).toLocaleTimeString([], {
+                          hour: "numeric",
+                          minute: "2-digit",
+                        });
+                      } else {
+                        eTime = "12:01 AM";
+                      }
 
-              {schedule
-                .filter(
-                  (v: Schedule) =>
-                    v.start_time.toISOString().split("T")[0] === dayOfTrip
-                )
-                .map((item: Schedule) => {
-                  const sTime = item.start_time.toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  });
-                  const eTime = item.end_time.toLocaleTimeString([], {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  });
-                  return (
-                    <div key={item.id}>
-                      <p>{`${sTime}-${eTime} - `}</p>
-                      <h5>{item.activity}</h5>
-                      <p>{item.cost}</p>
-                      <p> - {item.details}</p>
-                    </div>
-                  );
-                })}
+                      return (
+                        <tr key={item.id} id={item.id + ""}>
+                          <td>{sTime}</td>
+                          <td>{eTime}</td>
+                          <td>{item.location}</td>
+                          <td>{`$${item.cost}`}</td>
+                          <td>{item.details}</td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
             </div>
             {!individualAddition[index] ? (
               <button
@@ -300,31 +359,39 @@ const VacationSchedule = () => {
                 Add Item
               </button>
             ) : (
-              <form onSubmit={(e) => submitItem(e, index)}>
-                <div className={styles.timeWrapper}>
-                  <span>Start </span>
-                  <CustomTimePicker
-                    className={startError ? "border-red-500" : undefined}
-                    onChange={(
-                      hour: string,
-                      minute: string,
-                      meridiem: string
-                    ) => constructDate("start", hour, minute, meridiem)}
-                  />
-                </div>
+              <div className={styles.formWrapper}>
+                <form
+                  className={styles.form}
+                  onSubmit={(e) => submitItem(e, dayOfTrip)}
+                >
+                  <div
+                    className={`${styles.itemElement} ${styles.timeWrapper}`}
+                  >
+                    <span>Start </span>
+                    <CustomTimePicker
+                      className={startError ? "border-red-500" : undefined}
+                      onChange={(
+                        hour: string,
+                        minute: string,
+                        meridiem: string
+                      ) => constructDate("start", hour, minute, meridiem)}
+                    />
+                  </div>
 
-                <div className={styles.timeWrapper}>
-                  <span>End </span>
-                  <CustomTimePicker
-                    className={startError ? "border-red-500" : undefined}
-                    onChange={(
-                      hour: string,
-                      minute: string,
-                      meridiem: string
-                    ) => constructDate("end", hour, minute, meridiem)}
-                  />
-                </div>
-                {/*
+                  <div
+                    className={`${styles.itemElement} ${styles.timeWrapper}`}
+                  >
+                    <span>End </span>
+                    <CustomTimePicker
+                      className={startError ? "border-red-500" : undefined}
+                      onChange={(
+                        hour: string,
+                        minute: string,
+                        meridiem: string
+                      ) => constructDate("end", hour, minute, meridiem)}
+                    />
+                  </div>
+                  {/*
 
                     <label htmlFor="end">End</label>
                 <input
@@ -335,57 +402,79 @@ const VacationSchedule = () => {
                 onChange={endError ? formChange : undefined}
                 />
             */}
-                <label htmlFor="location">Location</label>
-                <input
-                  type="text"
-                  name="location"
-                  id="location"
-                  maxLength={300}
-                  className={`${locationError && "border-red-500"} ${
-                    styles.input
-                  }`}
-                  onChange={locationError ? formChange : undefined}
-                />
-                <label htmlFor="cost">Cost</label>
-                <input
-                  className={styles.input}
-                  type="number"
-                  name="cost"
-                  id="cost"
-                  step="0.01"
-                  min="0"
-                />
-                <label htmlFor="details">Details</label>
-
-                <input
-                  className={styles.input}
-                  type="text"
-                  name="details"
-                  id="details"
-                  maxLength={500}
-                />
-                <label htmlFor="multday">Multi-day</label>
-                <input
-                  type="checkbox"
-                  className={styles.input}
-                  name="multiday"
-                  id="multiday"
-                />
-                <button
-                  type="submit"
-                  className={`btnPrimary`}
-                  disabled={itemError}
-                >
-                  Add item
-                </button>
-                <button
-                  className={`btnPrimary ${styles.xButton}`}
-                  type="button"
-                  onClick={() => addItemHelper(index, "cancel")}
-                >
-                  X
-                </button>
-              </form>
+                  <div className={`${styles.itemElement}`}>
+                    <label htmlFor="location">Location</label>
+                    <input
+                      type="text"
+                      name="location"
+                      id="location"
+                      maxLength={300}
+                      className={`${locationError && "border-red-500"} ${
+                        styles.input
+                      }`}
+                      onChange={locationError ? formChange : undefined}
+                    />
+                  </div>
+                  <div className={`${styles.itemElement}`}>
+                    <label htmlFor="cost">Cost</label>
+                    <input
+                      className={styles.input}
+                      type="number"
+                      name="cost"
+                      id="cost"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+                  <div
+                    className={`${styles.itemElement} ${styles.textAreaContainer} ${styles.textureOverlay}`}
+                  >
+                    <label htmlFor="details" className={styles.detailsLabel}>
+                      Details
+                    </label>
+                    <div className={styles.fakeContainer}>
+                      <textarea
+                        onKeyDown={handleKeyDown}
+                        ref={textAreaRef}
+                        className={`${styles.input} 
+                      ${styles.textArea}`}
+                        rows={4}
+                        cols={50}
+                        name="details"
+                        id="details"
+                        maxLength={500}
+                      />
+                    </div>
+                  </div>
+                  <div className={`${styles.itemElement}`}>
+                    <label htmlFor="multday">Multi-day</label>
+                    <input
+                      type="checkbox"
+                      className={`${styles.input} ${styles.multiDay}`}
+                      name="multiday"
+                      id="multiday"
+                    />
+                  </div>
+                  <div className={`${styles.itemElement}`}>
+                    <button
+                      type="submit"
+                      className={`btnPrimary`}
+                      disabled={itemError}
+                    >
+                      Add item
+                    </button>
+                  </div>
+                  <div className={`${styles.itemElement}`}>
+                    <button
+                      className={`btnPrimary ${styles.xButton}`}
+                      type="button"
+                      onClick={() => addItemHelper(index, "cancel")}
+                    >
+                      X
+                    </button>
+                  </div>
+                </form>
+              </div>
             )}
           </div>
         );
