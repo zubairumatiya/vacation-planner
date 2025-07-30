@@ -33,6 +33,22 @@ const CustomTimePicker = (props: Props) => {
   }, [hourSelection, minuteSelection, meridiemSelection]);
 
   useEffect(() => {
+    if (hourSelection) {
+      if (!minuteSelection) {
+        setMinuteSelection("00");
+      }
+    }
+  }, [hourSelection]);
+
+  useEffect(() => {
+    if (minuteSelection) {
+      if (!hourSelection) {
+        setHourSelection("01");
+      }
+    }
+  }, [minuteSelection]);
+
+  useEffect(() => {
     if (hourLiRef.current !== null) {
       hourLiRef.current.scrollIntoView({ block: "nearest" });
     }

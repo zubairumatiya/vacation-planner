@@ -72,6 +72,14 @@ const VacationSchedule = () => {
         const convertStartPreserved = new Date(data.startDate);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
+
+        for (const i of data.schedule) {
+          i.start_time = new Date(i.start_time);
+        }
+        data.schedule.sort(
+          (a: Schedule, b: Schedule) =>
+            a.start_time.getTime() - b.start_time.getTime()
+        );
         setSchedule(data.schedule);
         setTitle(data.tripName);
         setTripStart(convertStartPreserved);
@@ -164,15 +172,16 @@ const VacationSchedule = () => {
       }
     }
     if (which === "start") {
-      setStartTimePick(hour + ":" + minute + " " + meridiem);
+      setStartTimePick((hour + ":" + minute + " " + meridiem).trim());
     } else {
-      setEndTimePick(hour + ":" + minute + " " + meridiem);
+      setEndTimePick((hour + ":" + minute + " " + meridiem).trim());
     }
   };
 
   const submitItem = async (
     e: React.FormEvent<HTMLFormElement>,
-    dateAdded: string
+    dateAdded: string,
+    index: number
   ) => {
     e.preventDefault();
     setAddingItem(false);
@@ -193,6 +202,7 @@ const VacationSchedule = () => {
       if (!startTimePick || startTimePick === ": ") {
         startDateAssembler = new Date(dateAdded);
       } else {
+        console.log("assembling...");
         startDateAssembler = new Date(dateAdded + " " + startTimePick);
       }
       /*
@@ -238,6 +248,10 @@ const VacationSchedule = () => {
           if (addingReq.ok) {
             const data = await addingReq.json();
             setSchedule((prev) => [...prev, data.addedItem]);
+            setIndividualAddition((prev) => {
+              prev[index] = false;
+              return [...prev];
+            });
           }
           if (addingReq.status === 401) {
             navigate("/redirect", {
@@ -362,7 +376,7 @@ const VacationSchedule = () => {
               <div className={styles.formWrapper}>
                 <form
                   className={styles.form}
-                  onSubmit={(e) => submitItem(e, dayOfTrip)}
+                  onSubmit={(e) => submitItem(e, dayOfTrip, index)}
                 >
                   <div
                     className={`${styles.itemElement} ${styles.timeWrapper}`}

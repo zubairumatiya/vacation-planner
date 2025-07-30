@@ -99,6 +99,12 @@ console.log(db.toLocaleDateString());
 
 console.log(Number("0001"));
 
+const date = "2025-07-15";
+const timez = "02:02 PM";
+
+let assemble = new Date(`${date}T${timez}`);
+console.log(assemble.toISOString());
+
 //console.log(db);
 
 //console.log(today);
