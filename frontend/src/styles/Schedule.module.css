@@ -103,3 +103,30 @@
   display: flex;
   justify-content: center;
 }
+
+.cellHeader {
+  border: 1px solid white;
+}
+
+.dragButton {
+  width: 3rem;
+  height: 2rem;
+  padding: 0;
+
+  border: 1px solid white;
+  border-radius: 5px;
+}
+
+.dragButton:hover {
+  cursor: grab;
+}
+
+.editIcon {
+  border: 1px solid white;
+  border-radius: 5px;
+  margin-left: 2rem;
+}
+
+.editIcon:hover {
+  cursor: pointer;
+}

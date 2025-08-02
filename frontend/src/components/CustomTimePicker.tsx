@@ -5,6 +5,7 @@ import dropDownArrow from "../assets/arrow-drop.svg";
 type Props = {
   onChange: (hour: string, minute: string, meridiem: string) => void;
   className: string | undefined;
+  preTime: string | undefined;
 };
 
 const CustomTimePicker = (props: Props) => {
@@ -31,6 +32,16 @@ const CustomTimePicker = (props: Props) => {
   useEffect(() => {
     props.onChange(hourSelection, minuteSelection, meridiemSelection);
   }, [hourSelection, minuteSelection, meridiemSelection]);
+
+  useEffect(() => {
+    if (props.preTime) {
+      const hourNMinute = props.preTime.split(":");
+      const getMeridiem = props.preTime.split(" ")[1];
+      setHourSelection(hourNMinute[0]);
+      setMinuteSelection(hourNMinute[1]);
+      setMeridiemSelection(getMeridiem);
+    }
+  }, []);
 
   useEffect(() => {
     if (hourSelection) {

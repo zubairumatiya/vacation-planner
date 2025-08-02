@@ -5,6 +5,8 @@ import styles from "../styles/Schedule.module.css";
 import CustomTimePicker from "../components/CustomTimePicker";
 import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
+import editIcon from "../assets/edit-icon.svg";
+import dragIcon from "../assets/dragger.svg";
 const apiURL = import.meta.env.VITE_API_URL;
 
 type Schedule = {
@@ -42,6 +44,11 @@ const VacationSchedule = () => {
   const [startTimePick, setStartTimePick] = useState<string | null>(null); // i think we will need two of these for start and end, which means we can't have multiple adding schedules open
   const [endTimePick, setEndTimePick] = useState<string | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [editLineId, setEditLineId] = useState<number | null>(null);
+  const locationEditRef = useRef<HTMLInputElement>(null);
+  const costEditRef = useRef<HTMLInputElement>(null);
+  const detailEditRef = useRef<HTMLTextAreaElement>(null);
+  const [test, setTest] = useState("");
 
   useEffect(() => {
     const getTrip = async () => {
@@ -151,6 +158,12 @@ const VacationSchedule = () => {
   };
   // was used when i wanted to be able to keep multiple add trips open for multiple days
 
+  useEffect(() => {
+    if (locationEditRef.current) {
+      locationEditRef.current.value = test;
+    }
+  }, [locationEditRef, test]);
+
   const constructDate = (
     which: "start" | "end",
     hour: string,
@@ -203,7 +216,7 @@ const VacationSchedule = () => {
         startDateAssembler = new Date(dateAdded);
       } else {
         console.log("assembling...");
-        startDateAssembler = new Date(dateAdded + " " + startTimePick);
+        startDateAssembler = new Date(dateAdded + " " + startTimePick + "Z");
       }
       /*
       if (!endTimePick) {
@@ -216,7 +229,7 @@ const VacationSchedule = () => {
       if (!endTimePick || endTimePick === ": ") {
         endDateAssembler = new Date(dateAdded); // TO-DO this will have to be different for multi-day
       } else {
-        endDateAssembler = new Date(dateAdded + " " + endTimePick);
+        endDateAssembler = new Date(dateAdded + " " + endTimePick + "Z");
       }
       if (!location) {
         error = true;
@@ -287,6 +300,20 @@ const VacationSchedule = () => {
     }
   };
 
+  const handleEdit = (
+    e: React.MouseEvent,
+    id: number,
+    preFilledLocation: string,
+    preFilledCost: number,
+    preFilledDetails: string
+  ) => {
+    setTest(preFilledLocation);
+    setEditLineId(id);
+    if (locationEditRef.current) {
+      locationEditRef.current.value = preFilledLocation;
+    }
+  };
+
   return loading ? (
     <p>{message}</p>
   ) : (
@@ -312,11 +339,13 @@ const VacationSchedule = () => {
                 <caption>{day}</caption>
                 <thead>
                   <tr>
+                    <th>Drag-hide-this</th>
                     <th>Start Time</th>
                     <th>End Time</th>
-                    <th>Location</th>
+                    <th className={styles.cellHeader}>Location</th>
                     <th>Cost</th>
                     <th>Details</th>
+                    <th>Edit-hide-this</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -352,11 +381,127 @@ const VacationSchedule = () => {
 
                       return (
                         <tr key={item.id} id={item.id + ""}>
-                          <td>{sTime}</td>
-                          <td>{eTime}</td>
-                          <td>{item.location}</td>
-                          <td>{`$${item.cost}`}</td>
-                          <td>{item.details}</td>
+                          {item.id === editLineId ? (
+                            <form>
+                              <td>
+                                <CustomTimePicker
+                                  className={
+                                    startError ? "border-red-500" : undefined
+                                  }
+                                  onChange={(
+                                    hour: string,
+                                    minute: string,
+                                    meridiem: string
+                                  ) =>
+                                    constructDate(
+                                      "start",
+                                      hour,
+                                      minute,
+                                      meridiem
+                                    )
+                                  }
+                                  preTime={sTime}
+                                />
+                              </td>
+
+                              <td>
+                                <CustomTimePicker
+                                  className={
+                                    startError ? "border-red-500" : undefined
+                                  }
+                                  onChange={(
+                                    hour: string,
+                                    minute: string,
+                                    meridiem: string
+                                  ) =>
+                                    constructDate(
+                                      "start",
+                                      hour,
+                                      minute,
+                                      meridiem
+                                    )
+                                  }
+                                  preTime={eTime}
+                                />
+                              </td>
+
+                              <td>
+                                <input
+                                  type="text"
+                                  name="location"
+                                  id="location"
+                                  maxLength={300}
+                                  className={`${
+                                    locationError && "border-red-500"
+                                  } ${styles.input}`}
+                                  ref={locationEditRef}
+                                />
+                              </td>
+
+                              <td>
+                                <input
+                                  className={styles.input}
+                                  type="number"
+                                  name="cost"
+                                  id="cost"
+                                  step="0.01"
+                                  min="0"
+                                  ref={costEditRef}
+                                />
+                              </td>
+
+                              <td>
+                                <div
+                                  className={`${styles.itemElement} ${styles.textAreaContainer} ${styles.textureOverlay}`}
+                                >
+                                  <div className={styles.fakeContainer}>
+                                    <textarea
+                                      onKeyDown={handleKeyDown}
+                                      className={`${styles.input} 
+                      ${styles.textArea}`}
+                                      rows={4}
+                                      cols={50}
+                                      name="details"
+                                      id="details"
+                                      maxLength={500}
+                                      ref={detailEditRef}
+                                    />
+                                  </div>
+                                </div>
+                              </td>
+                            </form>
+                          ) : (
+                            <>
+                              <td>
+                                <img
+                                  className={styles.dragButton}
+                                  src={dragIcon}
+                                  alt="drag"
+                                />
+                              </td>
+                              <td>{sTime}</td>
+                              <td>{eTime}</td>
+                              <td>{item.location}</td>
+                              <td>{`$${item.cost}`}</td>
+                              <td>{item.details}</td>
+                              <td>
+                                <img
+                                  className={styles.editIcon}
+                                  src={editIcon}
+                                  alt="edit-icon"
+                                  onClick={(e) =>
+                                    handleEdit(
+                                      e,
+                                      item.id,
+                                      item.location,
+                                      item.cost,
+                                      item.details
+                                    )
+                                  }
+                                />
+                              </td>
+                            </>
+                          )}
                         </tr>
                       );
                     })}
@@ -389,6 +534,7 @@ const VacationSchedule = () => {
                         minute: string,
                         meridiem: string
                       ) => constructDate("start", hour, minute, meridiem)}
+                      preTime={undefined}
                     />
                   </div>
 
@@ -403,6 +549,7 @@ const VacationSchedule = () => {
                         minute: string,
                         meridiem: string
                       ) => constructDate("end", hour, minute, meridiem)}
+                      preTime={undefined}
                     />
                   </div>
                   {/*
@@ -461,9 +608,10 @@ const VacationSchedule = () => {
                     </div>
                   </div>
                   <div className={`${styles.itemElement}`}>
-                    <label htmlFor="multday">Multi-day</label>
+                    <label htmlFor="multiday">Multi-day</label>
                     <input
                       type="checkbox"
+                      tabIndex={0}
                       className={`${styles.input} ${styles.multiDay}`}
                       name="multiday"
                       id="multiday"
@@ -472,6 +620,7 @@ const VacationSchedule = () => {
                   <div className={`${styles.itemElement}`}>
                     <button
                       type="submit"
+                      tabIndex={0}
                       className={`btnPrimary`}
                       disabled={itemError}
                     >
