@@ -288,7 +288,7 @@ const VacationSchedule = () => {
               location,
               details: formData.get("details"),
               cost: formData.get("cost"),
-              multiday: formData.get("multiday"),
+              multiDay: formData.get("multiday"),
             }),
           });
           if (addingReq.ok) {
@@ -328,15 +328,18 @@ const VacationSchedule = () => {
     if (!startTimePick || startTimePick === ": ") {
       startDateAssembler = new Date(dateAdded);
     } else {
-      console.log("assembling...");
       startDateAssembler = new Date(dateAdded + " " + startTimePick + "Z");
     }
 
     if (!endTimePick || endTimePick === ": ") {
       endDateAssembler = new Date(dateAdded); // TO-DO this will have to be different for multi-day
     } else {
-      endDateAssembler = new Date(dateAdded + " " + endTimePick + "Z");
+      endDateAssembler = new Date(dateAdded + " " + endTimePick + " Z");
     }
+    console.log("dateAdded:", dateAdded);
+    console.log("startTimePick", startTimePick);
+    console.log("endTimePick", endTimePick);
+    console.log("start", startDateAssembler, "end", endDateAssembler);
 
     const details: string = detailEditRef.current
       ? detailEditRef.current.value
@@ -389,6 +392,7 @@ const VacationSchedule = () => {
       if (result.ok) {
         setEditLineId(null);
         setAddingItem(false);
+        // might have to remove from our react schedule item using itemID
       } else {
         console.log("~~~~ error deleting item");
       }
@@ -548,12 +552,7 @@ const VacationSchedule = () => {
                                     minute: string,
                                     meridiem: string
                                   ) =>
-                                    constructDate(
-                                      "start",
-                                      hour,
-                                      minute,
-                                      meridiem
-                                    )
+                                    constructDate("end", hour, minute, meridiem)
                                   }
                                   preTime={eTime}
                                 />

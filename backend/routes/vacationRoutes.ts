@@ -121,11 +121,38 @@ router.post("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
         req.body.location,
         req.body.cost,
         req.body.details,
-        req.body.multiday,
+        req.body.multiDay,
       ]
     );
     res.status(200).json({ addedItem: result.rows[0] });
     return;
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
+  try {
+    await db.query(
+      "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6 WHERE id=$7",
+      [
+        req.body.location,
+        req.body.details,
+        req.body.start,
+        req.body.end,
+        req.body.cost,
+        req.body.multiDay,
+        req.params.id,
+      ]
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
+  try {
+    await db.query("DELETE FROM trip_schedule WHERE id=$1", [req.params.id]);
   } catch (err) {
     next(err);
   }

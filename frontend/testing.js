@@ -1,3 +1,4 @@
-const noTz = new Date("07-31-2025 2:00Z");
-console.log(noTz);
-console.log(noTz.getUTCHours());
+let noTz = new Date("2025-07-15T13:00Z");
+console.log(noTz.toLocaleTimeString());
+
+const customISOTime = (date, hour, minute, meridiem) => {};

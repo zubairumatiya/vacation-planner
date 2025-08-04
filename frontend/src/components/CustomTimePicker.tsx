@@ -45,6 +45,7 @@ const CustomTimePicker = (props: Props) => {
       }
       setMinuteSelection(justMinute);
       setMeridiemSelection(getMeridiem);
+      console.log(getMeridiem);
     }
   }, []);
 
