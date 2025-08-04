@@ -36,9 +36,14 @@ const CustomTimePicker = (props: Props) => {
   useEffect(() => {
     if (props.preTime) {
       const hourNMinute = props.preTime.split(":");
+      const justMinute = hourNMinute[1].split(" ")[0];
       const getMeridiem = props.preTime.split(" ")[1];
-      setHourSelection(hourNMinute[0]);
-      setMinuteSelection(hourNMinute[1]);
+      if (Number(hourNMinute[0]) < 10) {
+        setHourSelection("0" + hourNMinute[0]);
+      } else {
+        setHourSelection(hourNMinute[0]);
+      }
+      setMinuteSelection(justMinute);
       setMeridiemSelection(getMeridiem);
     }
   }, []);

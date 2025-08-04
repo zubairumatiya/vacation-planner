@@ -20,6 +20,13 @@ type Schedule = {
   multi_day: boolean;
 };
 
+type Prefill = {
+  location: string;
+  cost: number;
+  details: string;
+  multiDay: boolean;
+};
+
 const VacationSchedule = () => {
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
@@ -48,7 +55,14 @@ const VacationSchedule = () => {
   const locationEditRef = useRef<HTMLInputElement>(null);
   const costEditRef = useRef<HTMLInputElement>(null);
   const detailEditRef = useRef<HTMLTextAreaElement>(null);
+  const multiDayEditRef = useRef<HTMLInputElement>(null);
   const [test, setTest] = useState("");
+  const [preFill, setPreFill] = useState<Prefill>({
+    location: "",
+    cost: 0,
+    details: "",
+    multiDay: false,
+  });
 
   useEffect(() => {
     const getTrip = async () => {
@@ -191,7 +205,26 @@ const VacationSchedule = () => {
     }
   };
 
-  const submitItem = async (
+  useEffect(() => {
+    if (locationEditRef.current) {
+      locationEditRef.current.value = preFill.location;
+    }
+    if (costEditRef.current) {
+      costEditRef.current.value = String(preFill.cost);
+    }
+    if (detailEditRef.current) {
+      detailEditRef.current.value = preFill.details;
+    }
+    if (preFill.multiDay) {
+      if (multiDayEditRef.current) {
+        multiDayEditRef.current.checked = true;
+      }
+    } else {
+      if (multiDayEditRef.current) multiDayEditRef.current.checked = false;
+    }
+  }, [editLineId]);
+
+  const submitAddItem = async (
     e: React.FormEvent<HTMLFormElement>,
     dateAdded: string,
     index: number
@@ -284,6 +317,86 @@ const VacationSchedule = () => {
     }
   };
 
+  const submitEdit = async (
+    e: React.MouseEvent,
+    dateAdded: string,
+    itemID: number
+  ) => {
+    e.preventDefault();
+    let startDateAssembler;
+    let endDateAssembler;
+    if (!startTimePick || startTimePick === ": ") {
+      startDateAssembler = new Date(dateAdded);
+    } else {
+      console.log("assembling...");
+      startDateAssembler = new Date(dateAdded + " " + startTimePick + "Z");
+    }
+
+    if (!endTimePick || endTimePick === ": ") {
+      endDateAssembler = new Date(dateAdded); // TO-DO this will have to be different for multi-day
+    } else {
+      endDateAssembler = new Date(dateAdded + " " + endTimePick + "Z");
+    }
+
+    const details: string = detailEditRef.current
+      ? detailEditRef.current.value
+      : "";
+    const location: string = locationEditRef.current
+      ? locationEditRef.current.value
+      : "";
+    const cost: string = costEditRef.current ? costEditRef.current.value : "";
+    const multiDay: boolean = multiDayEditRef.current
+      ? multiDayEditRef.current.checked
+      : false;
+
+    try {
+      const response = await fetch(`${apiURL}/schedule/${itemID}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          start: startDateAssembler,
+          end: endDateAssembler,
+          location,
+          cost,
+          details,
+          multiDay,
+        }),
+      });
+      if (response.ok) {
+        setEditLineId(null);
+        setAddingItem(false);
+      } else {
+        console.log("something went wrong editing");
+      }
+    } catch (err) {
+      console.log("failed to update item ~~~~~ ", err);
+    }
+  };
+
+  const submitDelete = async (e: React.MouseEvent, itemID: number) => {
+    e.preventDefault();
+    try {
+      const result = await fetch(`${apiURL}/schedule/${itemID}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (result.ok) {
+        setEditLineId(null);
+        setAddingItem(false);
+      } else {
+        console.log("~~~~ error deleting item");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   const formChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (locationError) {
       if (e.target.name === "location") {
@@ -305,13 +418,24 @@ const VacationSchedule = () => {
     id: number,
     preFilledLocation: string,
     preFilledCost: number,
-    preFilledDetails: string
+    preFilledDetails: string,
+    preFilledMultiDay: boolean
   ) => {
+    e.preventDefault();
     setTest(preFilledLocation);
+    setPreFill({
+      location: preFilledLocation,
+      cost: preFilledCost,
+      details: preFilledDetails,
+      multiDay: preFilledMultiDay,
+    });
     setEditLineId(id);
-    if (locationEditRef.current) {
-      locationEditRef.current.value = preFilledLocation;
-    }
+    setAddingItem(true); // let's not allow adding items when editing an item
+  };
+
+  const cancelAdd = () => {
+    setAddingItem(false);
+    setEditLineId(null);
   };
 
   return loading ? (
@@ -345,6 +469,7 @@ const VacationSchedule = () => {
                     <th className={styles.cellHeader}>Location</th>
                     <th>Cost</th>
                     <th>Details</th>
+                    <th>Multi-day</th>
                     <th>Edit-hide-this</th>
                   </tr>
                 </thead>
@@ -382,7 +507,16 @@ const VacationSchedule = () => {
                       return (
                         <tr key={item.id} id={item.id + ""}>
                           {item.id === editLineId ? (
-                            <form>
+                            <>
+                              <td>
+                                <button
+                                  type="button"
+                                  className={styles.xButton}
+                                  onClick={cancelAdd}
+                                >
+                                  Cancel
+                                </button>
+                              </td>
                               <td>
                                 <CustomTimePicker
                                   className={
@@ -469,7 +603,33 @@ const VacationSchedule = () => {
                                   </div>
                                 </div>
                               </td>
-                            </form>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  name="editMultDay"
+                                  id="editMultiDay"
+                                  ref={multiDayEditRef}
+                                />
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  onClick={(e) =>
+                                    submitEdit(e, dayOfTrip, item.id)
+                                  }
+                                >
+                                  submit edit
+                                </button>
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  onClick={(e) => submitDelete(e, item.id)}
+                                >
+                                  delete
+                                </button>
+                              </td>
+                            </>
                           ) : (
                             <>
                               <td>
@@ -484,6 +644,7 @@ const VacationSchedule = () => {
                               <td>{item.location}</td>
                               <td>{`$${item.cost}`}</td>
                               <td>{item.details}</td>
+                              <td>{item.multi_day ? "yes" : "no"}</td>
                               <td>
                                 <img
                                   className={styles.editIcon}
@@ -495,7 +656,8 @@ const VacationSchedule = () => {
                                       item.id,
                                       item.location,
                                       item.cost,
-                                      item.details
+                                      item.details,
+                                      item.multi_day
                                     )
                                   }
                                 />
@@ -521,7 +683,7 @@ const VacationSchedule = () => {
               <div className={styles.formWrapper}>
                 <form
                   className={styles.form}
-                  onSubmit={(e) => submitItem(e, dayOfTrip, index)}
+                  onSubmit={(e) => submitAddItem(e, dayOfTrip, index)}
                 >
                   <div
                     className={`${styles.itemElement} ${styles.timeWrapper}`}
