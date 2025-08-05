@@ -19,7 +19,7 @@ const CustomTimePicker = (props: Props) => {
   const minuteButtonRef = useRef<HTMLButtonElement>(null);
   const [hourSelection, setHourSelection] = useState("");
   const [minuteSelection, setMinuteSelection] = useState("");
-  const [meridiemSelection, setMeridiemSelection] = useState("");
+  const [meridiemSelection, setMeridiemSelection] = useState("AM");
   const [focusedHourIndex, setFocusedHourIndex] = useState<null | number>(null);
   const [focusedMinuteIndex, setFocusedMinuteIndex] = useState<null | number>(
     null
@@ -45,7 +45,6 @@ const CustomTimePicker = (props: Props) => {
       }
       setMinuteSelection(justMinute);
       setMeridiemSelection(getMeridiem);
-      console.log(getMeridiem);
     }
   }, []);
 

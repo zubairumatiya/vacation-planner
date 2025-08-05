@@ -152,6 +152,18 @@ const VacationSchedule = () => {
     getTrip();
   }, []);
 
+  const reSort = (arr: Array<Schedule>) => {
+    arr.map((v) => {
+      v.start_time = new Date(v.start_time);
+      return v;
+    });
+    arr.sort(
+      (a: Schedule, b: Schedule) =>
+        a.start_time.getTime() - b.start_time.getTime()
+    );
+    return arr;
+  };
+
   useEffect(() => {
     if (!startError && !endError && !locationError) {
       setItemError(false);
@@ -224,6 +236,19 @@ const VacationSchedule = () => {
     }
   }, [editLineId]);
 
+  const customISOTime = (date: string, time: string) => {
+    const timeSplit = time.split(" ");
+    const meridiem = timeSplit[1];
+    const hourNMinutes = timeSplit[0].split(":");
+    let hours = hourNMinutes[0];
+    const minutes = hourNMinutes[1];
+    if (meridiem.toLowerCase() === "pm") {
+      hours = String(Number(hours) + 12);
+    }
+
+    return `${date}T${hours}:${minutes}:00Z`;
+  };
+
   const submitAddItem = async (
     e: React.FormEvent<HTMLFormElement>,
     dateAdded: string,
@@ -246,10 +271,9 @@ const VacationSchedule = () => {
         return;
       }*/
       if (!startTimePick || startTimePick === ": ") {
-        startDateAssembler = new Date(dateAdded);
+        startDateAssembler = customISOTime(dateAdded, "00:00 AM");
       } else {
-        console.log("assembling...");
-        startDateAssembler = new Date(dateAdded + " " + startTimePick + "Z");
+        startDateAssembler = customISOTime(dateAdded, startTimePick);
       }
       /*
       if (!endTimePick) {
@@ -260,9 +284,9 @@ const VacationSchedule = () => {
       }*/
 
       if (!endTimePick || endTimePick === ": ") {
-        endDateAssembler = new Date(dateAdded); // TO-DO this will have to be different for multi-day
+        endDateAssembler = customISOTime(dateAdded, "00:00 AM"); // TO-DO this will have to be different for multi-day
       } else {
-        endDateAssembler = new Date(dateAdded + " " + endTimePick + "Z");
+        endDateAssembler = customISOTime(dateAdded, endTimePick);
       }
       if (!location) {
         error = true;
@@ -293,7 +317,9 @@ const VacationSchedule = () => {
           });
           if (addingReq.ok) {
             const data = await addingReq.json();
-            setSchedule((prev) => [...prev, data.addedItem]);
+            setSchedule((prev) => {
+              return reSort([...prev, data.addedItem]);
+            });
             setIndividualAddition((prev) => {
               prev[index] = false;
               return [...prev];
@@ -326,15 +352,15 @@ const VacationSchedule = () => {
     let startDateAssembler;
     let endDateAssembler;
     if (!startTimePick || startTimePick === ": ") {
-      startDateAssembler = new Date(dateAdded);
+      startDateAssembler = customISOTime(dateAdded, "00:00 AM");
     } else {
-      startDateAssembler = new Date(dateAdded + " " + startTimePick + "Z");
+      startDateAssembler = customISOTime(dateAdded, startTimePick);
     }
 
     if (!endTimePick || endTimePick === ": ") {
-      endDateAssembler = new Date(dateAdded); // TO-DO this will have to be different for multi-day
+      endDateAssembler = customISOTime(dateAdded, "00:00 AM"); // TO-DO this will have to be different for multi-day
     } else {
-      endDateAssembler = new Date(dateAdded + " " + endTimePick + " Z");
+      endDateAssembler = customISOTime(dateAdded, endTimePick);
     }
     console.log("dateAdded:", dateAdded);
     console.log("startTimePick", startTimePick);
@@ -369,8 +395,19 @@ const VacationSchedule = () => {
         }),
       });
       if (response.ok) {
+        console.log("YAHOOOO");
+        const data = await response.json();
         setEditLineId(null);
         setAddingItem(false);
+        setSchedule(
+          (prev) =>
+            reSort(prev.map((v) => (v.id === itemID ? data.updatedData : v))) // yeah, you can stick a whole .map as a param haha really cool, because .map returns and array
+        );
+      } else if (response.status === 401) {
+        navigate("/redirect", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
       } else {
         console.log("something went wrong editing");
       }
@@ -382,17 +419,23 @@ const VacationSchedule = () => {
   const submitDelete = async (e: React.MouseEvent, itemID: number) => {
     e.preventDefault();
     try {
-      const result = await fetch(`${apiURL}/schedule/${itemID}`, {
+      const response = await fetch(`${apiURL}/schedule/${itemID}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-      if (result.ok) {
+      if (response.ok) {
         setEditLineId(null);
         setAddingItem(false);
+        setSchedule((prev) => prev.filter((v) => v.id !== itemID));
         // might have to remove from our react schedule item using itemID
+      } else if (response.status === 401) {
+        navigate("/redirect", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
       } else {
         console.log("~~~~ error deleting item");
       }

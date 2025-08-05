@@ -105,7 +105,7 @@ router.post("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
 });
 router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
     try {
-        await db.query("UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6 WHERE id=$7", [
+        const result = await db.query("UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6 WHERE id=$7 RETURNING *", [
             req.body.location,
             req.body.details,
             req.body.start,
@@ -114,6 +114,10 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
             req.body.multiDay,
             req.params.id,
         ]);
+        if (result.rowCount > 0) {
+            res.status(200).json({ updatedData: result.rows[0] });
+            return;
+        }
     }
     catch (err) {
         next(err);
@@ -121,7 +125,10 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
 });
 router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
     try {
-        await db.query("DELETE FROM trip_schedule WHERE id=$1", [req.params.id]);
+        const result = await db.query("DELETE FROM trip_schedule WHERE id=$1 RETURNING *", [req.params.id]);
+        if (result.rowCount > 0) {
+            res.status(200).json({ deletedData: result.rows[0] });
+        }
     }
     catch (err) {
         next(err);
