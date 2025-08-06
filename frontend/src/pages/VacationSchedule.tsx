@@ -63,7 +63,7 @@ const VacationSchedule = () => {
     details: "",
     multiDay: false,
   });
-  const dragRef = useRef(-1);
+  const dragIndexRef = useRef(-1);
 
   useEffect(() => {
     const getTrip = async () => {
@@ -491,62 +491,35 @@ const VacationSchedule = () => {
     itemID: number,
     index: number
   ) => {
-    dragRef.current = index;
+    dragIndexRef.current = index;
     e.dataTransfer.setData("text/plain", String(itemID));
   };
 
   const handleDragDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    dragRef.current = -1;
 
-    const target = e.target.closest("tr");
+    const target = e.target as HTMLElement;
 
-    setSchedule((prev) => {
-      const draggedRowId: string = e.dataTransfer.getData("text/plain");
-      let payLoadIndex: number = -1;
+    const targetIndex = Number(target.closest("tr")?.dataset.index);
+    const copy = schedule.slice(); // create shallow copy of array but the obj are still references
+    const removedElement = copy.splice(dragIndexRef.current, 1);
 
-      const trPayLoad: Schedule | undefined = prev.find((v, i) => {
-        if (String(v.id) === draggedRowId) {
-          payLoadIndex = i; //get index of payload
-          return true;
-        }
-        return false;
-      }); // this is a Schedule object
-      console.log("payload index:", payLoadIndex);
-      if (payLoadIndex === -1) {
-        alert("Error: payload index is -1");
-        return prev;
-      }
-      prev.splice(payLoadIndex, 1);
-      console.log("prev with payload removed", prev); // lets remove the payload from our prev so we can insert it later w/o a duplicate
+    if (targetIndex === 0) {
+      console.log("place at index 0");
+      setSchedule([removedElement[0], ...copy]);
+    } else if (targetIndex > 0 && targetIndex < schedule.length - 1) {
+      console.log("place in between");
+      setSchedule([
+        ...copy.slice(0, targetIndex),
+        removedElement[0],
+        ...copy.slice(targetIndex),
+      ]);
+    } else if (targetIndex === schedule.length - 1) {
+      console.log("place at end");
+      setSchedule([...copy, removedElement[0]]);
+    }
 
-      if (!trPayLoad) {
-        return prev;
-      }
-      let dropIndex;
-      for (let i = 0; i < prev.length; i++) {
-        if (prev[i].id === Number(target?.id)) {
-          dropIndex = i === 0 ? 0 : i;
-          break;
-        }
-      }
-      if (dropIndex === undefined) {
-        alert("Unauthorized target");
-        return prev;
-      }
-      console.log("dropIndex:", dropIndex);
-      if (dropIndex === 0) {
-        return [trPayLoad, ...prev];
-      } else if (dropIndex > 0 && dropIndex < prev.length) {
-        return [
-          ...prev.slice(0, dropIndex),
-          trPayLoad,
-          ...prev.slice(dropIndex + 1, prev.length - 1),
-        ];
-      } else {
-        return [...prev, trPayLoad];
-      }
-    });
+    dragIndexRef.current = -1;
   };
 
   return loading ? (
@@ -624,9 +597,10 @@ const VacationSchedule = () => {
                         <tr
                           key={item.id}
                           id={item.id + ""}
+                          data-index={index}
                           draggable="true"
                           className={`${
-                            index === dragRef.current && styles.dragging
+                            index === dragIndexRef.current && styles.dragging
                           }`}
                         >
                           {item.id === editLineId ? (
