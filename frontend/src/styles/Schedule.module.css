@@ -130,3 +130,7 @@
 .editIcon:hover {
   cursor: pointer;
 }
+
+.dragging {
+  opacity: 0.65;
+}

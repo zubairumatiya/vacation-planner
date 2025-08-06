@@ -1,388 +1,101 @@
 import styles from "../styles/Test.module.css";
 import { useState, useRef, useEffect } from "react";
-import dropDownArrow from "../assets/arrow-drop.svg";
+import dragger from "../assets/dragger.svg";
 
-const Test = (props) => {
-  const [hideHours, setHideHours] = useState(true);
-  const [hideMinutes, setHideMinutes] = useState(true);
-  const hourUlRef = useRef<HTMLUListElement>(null);
-  const minuteUlRef = useRef<HTMLUListElement>(null);
-  const hourLiRef = useRef<HTMLLIElement>(null);
-  const minuteLiRef = useRef<HTMLLIElement>(null);
-  const hourButtonRef = useRef<HTMLButtonElement>(null);
-  const minuteButtonRef = useRef<HTMLButtonElement>(null);
-  const [hourSelection, setHourSelection] = useState("");
-  const [minuteSelection, setMinuteSelection] = useState("");
-  const [meridiemSelection, setMeridiemSelection] = useState("");
-  const [focusedHourIndex, setFocusedHourIndex] = useState<null | number>(null);
-  const [focusedMinuteIndex, setFocusedMinuteIndex] = useState<null | number>(
-    null
-  );
-  const hourInputRef = useRef<HTMLInputElement>(null);
-  const minuteInputRef = useRef<HTMLInputElement>(null);
-  const skipNextHourFocus = useRef(false);
-  const skipNextMinuteFocus = useRef(false);
+type Item = {
+  id: number;
+  number1: number;
+  number2: number;
+};
 
-  // useEffect(() => {
-  //   props.onChange(captureHourSelection, captureMinuteSelection);
-  // }, [hourSelection, minuteSelection, meridiemSelection]);
+const scheduleFromApi = [
+  { id: 11, number1: 100, number2: 111 },
+  {
+    id: 22,
+    number1: 200,
+    number2: 222,
+  },
+  {
+    id: 33,
+    number1: 300,
+    number2: 333,
+  },
+  { id: 44, number1: 400, number2: 444 },
+  { id: 55, number1: 500, number2: 555 },
+];
 
-  useEffect(() => {
-    if (hourLiRef.current !== null) {
-      hourLiRef.current.scrollIntoView({ block: "nearest" });
-    }
-  }, [hideHours, hourSelection]);
+const Test = () => {
+  const [schedule, setSchedule] = useState<Item[]>(scheduleFromApi);
+  const dragIndexRef = useRef(-1); // hold index of payload we are dragging
 
-  useEffect(() => {
-    if (minuteLiRef.current !== null) {
-      minuteLiRef.current.scrollIntoView({ block: "nearest" });
-    }
-  }, [hideMinutes, minuteSelection]);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        minuteUlRef.current &&
-        hourUlRef.current &&
-        minuteButtonRef.current &&
-        hourButtonRef.current &&
-        !minuteUlRef.current.contains(e.target as Node) &&
-        !hourUlRef.current.contains(e.target as Node) &&
-        !minuteButtonRef.current.contains(e.target as Node) &&
-        !hourButtonRef.current.contains(e.target as Node)
-      ) {
-        setHideHours(true);
-
-        setHideMinutes(true);
-      }
-
-      if (
-        hideMinutes === false &&
-        hourButtonRef.current?.contains(e.target as Node)
-      ) {
-        setHideMinutes((prev) => !prev);
-      }
-
-      if (
-        hideHours === false &&
-        minuteButtonRef.current?.contains(e.target as Node)
-      ) {
-        setHideHours((prev) => !prev);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [hideHours, hideMinutes]);
-
-  const captureMinuteSelection = (e: React.MouseEvent) => {
-    const li = e.target as HTMLLIElement;
-    console.log(li.innerText);
-    setMinuteSelection(li.innerText);
-    minuteLiRef.current = li;
-    const toNumber = Number(li.innerText);
-    setFocusedMinuteIndex(toNumber);
-    setHideMinutes((prev) => !prev);
+  const handleDragStart = (
+    e: React.DragEvent,
+    itemID: number,
+    index: number
+  ) => {
+    console.log("drag started");
+    dragIndexRef.current = index;
+    e.dataTransfer.setData("text/plain", String(itemID));
   };
 
-  const captureHourSelection = (e: React.MouseEvent) => {
-    const li = e.target as HTMLLIElement;
-    console.log(li.innerText);
-    setHourSelection(li.innerText);
-    hourLiRef.current = li;
-    const toNumber = Number(li.innerText);
-    setFocusedHourIndex(toNumber - 1);
-    setHideHours((prev) => !prev);
-  };
+  const handleDragDrop = (e: React.DragEvent) => {
+    console.log("drag dropped");
+    e.preventDefault();
+    const target = e.target as HTMLElement;
 
-  const handleKeyDownForHour = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      let next;
-      if (focusedHourIndex === 11) {
-        next = 0;
-      } else {
-        next = focusedHourIndex === null ? 0 : focusedHourIndex + 1;
-      }
-      setFocusedHourIndex(next);
+    const targetIndex: number = Number(target.closest("tr")?.dataset.index);
+    //const targetId = target.closest("tr")?.id; // might not need this
+    const copy = schedule.slice(); // makes a copy of array but not the objects inside which remail references
+    const removedElement = copy.splice(dragIndexRef.current, 1); // let's remove our drag element from the copy BUT now we will have an array
 
-      const toString = String(next < 9 ? "0" + (next + 1) : next + 1);
-      setHourSelection(toString);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      let previous;
-      if (focusedHourIndex === null || focusedHourIndex === 0) {
-        previous = 11;
-      } else {
-        previous = focusedHourIndex - 1;
-      }
-      setFocusedHourIndex(previous);
-
-      const toString = String(
-        previous < 9 ? "0" + (previous + 1) : previous + 1
-      );
-      setHourSelection(toString);
-    } else if (e.code === "Space") {
-      e.preventDefault();
-      setHideHours((prev) => !prev);
-    } else if (e.key === "Enter" && focusedHourIndex !== null) {
-      e.preventDefault();
-      setHideHours(true);
+    if (targetIndex === 0) {
+      console.log("place at index 0");
+      setSchedule([removedElement[0], ...copy]);
+    } else if (targetIndex > 0 && targetIndex < schedule.length - 1) {
+      console.log("place in between");
+      setSchedule([
+        ...copy.slice(0, targetIndex),
+        removedElement[0],
+        ...copy.slice(targetIndex),
+      ]);
+    } else if (targetIndex === schedule.length - 1) {
+      console.log("place at end");
+      setSchedule([...copy, removedElement[0]]);
     }
-  };
-
-  const handleKeyDownForMinute = (e: React.KeyboardEvent) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      let next;
-      if (focusedMinuteIndex === 59) {
-        next = 0;
-      } else {
-        next = focusedMinuteIndex === null ? 0 : focusedMinuteIndex + 1;
-      }
-      setFocusedMinuteIndex(next);
-
-      const toString = String(next < 10 ? "0" + next : next);
-      setMinuteSelection(toString);
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      let previous = null;
-      if (focusedMinuteIndex === null || focusedMinuteIndex === 0) {
-        previous = 59;
-      } else {
-        previous = focusedMinuteIndex - 1;
-      }
-      setFocusedMinuteIndex(previous);
-      const toString = String(previous < 9 ? "0" + previous : previous);
-      setMinuteSelection(toString);
-    } else if (e.code === "Space") {
-      e.preventDefault();
-      console.log("space");
-      setHideMinutes((prev) => !prev);
-    } else if (e.key === "Enter" && focusedMinuteIndex !== null) {
-      e.preventDefault();
-      setHideMinutes(true);
-    }
-  };
-
-  const handleHourToggleClick = () => {
-    skipNextHourFocus.current = true;
-    hourInputRef.current?.focus();
-    setHideHours((prev) => !prev);
-  };
-
-  const handleMinuteToggleClick = () => {
-    skipNextMinuteFocus.current = true;
-    minuteInputRef.current?.focus();
-    setHideMinutes((prev) => !prev);
-  };
-
-  const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //NEED TODO - change the scrollinto behavior on the number we type
-    const toNumber = Number(e.target.value);
-    if (e.target.value === "" || e.target.value === "0") {
-      setFocusedHourIndex(0);
-      setHourSelection("");
-      return;
-    }
-    if (isNaN(toNumber)) {
-      return;
-    }
-    if (toNumber > 0 && toNumber < 10) {
-      setFocusedHourIndex(toNumber - 1);
-      setHourSelection("0" + toNumber);
-      return;
-    }
-    if (e.target.value.length === 3) {
-      if (e.target.value[2] === "0") {
-        if (e.target.value[1] === "1") {
-          setFocusedHourIndex(9);
-          setHourSelection("10");
-        }
-        return;
-      }
-      if (toNumber > 9 && toNumber < 13) {
-        setFocusedHourIndex(toNumber - 1);
-        setHourSelection(String(toNumber));
-        return;
-      }
-      console.log(toNumber);
-      setFocusedHourIndex(Number(e.target.value[2]) - 1);
-      setHourSelection("0" + e.target.value[2]);
-    }
-  };
-
-  const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    ////NEED TODO - change the scrollinto behavior on the number we type
-    const toNumber = Number(e.target.value);
-    if (isNaN(toNumber)) {
-      return;
-    }
-    if (e.target.value === "" || e.target.value === "0") {
-      setFocusedMinuteIndex(0);
-      setMinuteSelection(e.target.value);
-    }
-    if (toNumber >= 0 && toNumber < 10) {
-      setFocusedMinuteIndex(toNumber);
-      setMinuteSelection("0" + toNumber);
-    }
-    if (toNumber > 9 && toNumber < 60) {
-      setFocusedMinuteIndex(toNumber);
-      setMinuteSelection(String(toNumber));
-    }
+    dragIndexRef.current = -1;
   };
 
   return (
-    <div className="flex">
-      <form>
-        <div className={styles.wrapper}>
-          <div className={styles.inputWrapper}>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="hh"
-              name="hourInput"
-              id="hourInput"
-              value={hourSelection}
-              onChange={handleHourChange} // TODO -- would like to allow specific type of key
-              ref={hourInputRef}
-              onFocus={() => {
-                setHideMinutes(true);
-                if (skipNextHourFocus.current) {
-                  skipNextHourFocus.current = false;
-                  return;
-                }
-                setHideHours(false);
-              }}
-              onKeyDown={handleKeyDownForHour}
-            />
-
-            <div className={styles.dropDownWrapper}>
-              <div>
-                <button
-                  className={styles.hourButton}
-                  ref={hourButtonRef}
-                  type="button"
-                  onClick={handleHourToggleClick}
-                >
-                  <img
-                    src={dropDownArrow}
-                    alt="dropDown"
-                    className={`transition-transform duration-200 ${
-                      hideHours ? "rotate-0" : "rotate-180"
-                    }`}
-                  />
-                </button>
-              </div>
-              <div>
-                <ul
-                  ref={hourUlRef}
-                  hidden={hideHours}
-                  className={styles.scrollContainer}
-                  onMouseDown={captureHourSelection}
-                >
-                  {[...new Array(12)].map((_, i) => {
-                    return (
-                      <li
-                        key={i}
-                        id={i + ""}
-                        ref={i === focusedHourIndex ? hourLiRef : null}
-                        className={`${styles.listItem} ${
-                          i === focusedHourIndex && styles.focused
-                        }`}
-                      >
-                        {i < 9 ? "0" + (i + 1) : i + 1}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div className={styles.inputWrapper}>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="mm"
-              name="minuteInput"
-              id="minuteInput"
-              ref={minuteInputRef}
-              value={minuteSelection}
-              onChange={handleMinuteChange}
-              //onClick={() => setHideMinutes(false)} // can do this if i want it open no matter how many times i click on input
-
-              onFocus={() => {
-                setHideHours(true);
-                if (skipNextMinuteFocus.current) {
-                  skipNextMinuteFocus.current = false;
-                  return;
-                }
-                setHideMinutes(false);
-              }}
-              onKeyDown={handleKeyDownForMinute}
-            />{" "}
-            <div className={styles.dropDownWrapper}>
-              <div>
-                <button
-                  className={styles.minuteButton}
-                  ref={minuteButtonRef}
-                  type="button"
-                  onClick={handleMinuteToggleClick}
-                >
-                  <img
-                    src={dropDownArrow}
-                    alt="dropDown"
-                    className={`transition-transform duration-200 ${
-                      hideMinutes ? "rotate-0" : "rotate-180"
-                    }`}
-                  />
-                </button>
-              </div>
-              <div>
-                <ul
-                  hidden={hideMinutes}
-                  className={styles.scrollContainer}
-                  onClick={captureMinuteSelection}
-                  ref={minuteUlRef}
-                >
-                  {[...new Array(60)].map((_, i) => {
-                    return (
-                      <li
-                        key={i}
-                        id={i + ""}
-                        ref={i === focusedMinuteIndex ? minuteLiRef : null}
-                        className={`${styles.listItem} ${
-                          i === focusedMinuteIndex && styles.focused
-                        }`}
-                      >
-                        {i < 10 ? "0" + i : i}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
-          </div>
-          <div>
-            <select
-              name="meridiem"
-              id="meridiem"
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                setMeridiemSelection(e.target.value)
-              }
-              onFocus={() => {
-                setHideMinutes(true);
-              }}
+    <table
+      className={styles.table}
+      onDrop={(e) => handleDragDrop(e)}
+      onDragOver={(e) => e.preventDefault()}
+    >
+      <thead className={styles.thead}>
+        <tr>
+          <th>Drag-hide-this</th>
+          <th>number1</th>
+          <th>number2</th>
+        </tr>
+      </thead>
+      <tbody>
+        {schedule.map((v, i) => (
+          <tr key={v.id} id={String(v.id)} data-index={i}>
+            <td
+              className={`${styles.td} ${
+                dragIndexRef.current === i && styles.dragging
+              }`}
+              draggable="true"
+              onDragStart={(e) => handleDragStart(e, v.id, i)}
             >
-              <option value="AM">AM</option>
-              <option value="PM">PM</option>
-            </select>
-          </div>
-        </div>
-      </form>
-    </div>
+              <img src={dragger} alt="dragger" className={styles.img} />
+            </td>
+            <td className={styles.td}>{v.number1}</td>
+            <td className={styles.td}>{v.number2}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 };
-
 export default Test;

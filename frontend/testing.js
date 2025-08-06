@@ -16,3 +16,7 @@ const customISOTime = (date, time) => {
 
 const result = customISOTime(dateAdded, startTimePick);
 console.log(result);
+
+const arr = [1, 2, 4, 5];
+
+console.log(arr.slice(3));
