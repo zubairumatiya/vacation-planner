@@ -48,20 +48,20 @@ const Test = () => {
     const copy = schedule.slice(); // makes a copy of array but not the objects inside which remail references
     const removedElement = copy.splice(dragIndexRef.current, 1); // let's remove our drag element from the copy BUT now we will have an array
 
-    if (targetIndex === 0) {
-      console.log("place at index 0");
-      setSchedule([removedElement[0], ...copy]);
-    } else if (targetIndex > 0 && targetIndex < schedule.length - 1) {
-      console.log("place in between");
-      setSchedule([
-        ...copy.slice(0, targetIndex),
-        removedElement[0],
-        ...copy.slice(targetIndex),
-      ]);
-    } else if (targetIndex === schedule.length - 1) {
-      console.log("place at end");
-      setSchedule([...copy, removedElement[0]]);
-    }
+    //if (targetIndex === 0) {
+    //  console.log("place at index 0");
+    //  setSchedule([removedElement[0], ...copy]);
+    //} else if (targetIndex > 0 && targetIndex < schedule.length - 1) {
+    console.log("place in between");
+    setSchedule([
+      ...copy.slice(0, targetIndex),
+      removedElement[0],
+      ...copy.slice(targetIndex),
+    ]);
+    //} else if (targetIndex === schedule.length - 1) {
+    //  console.log("place at end");
+    //  setSchedule([...copy, removedElement[0]]);
+    //}
     dragIndexRef.current = -1;
   };
 

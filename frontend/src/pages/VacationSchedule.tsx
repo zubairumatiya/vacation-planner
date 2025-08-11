@@ -504,22 +504,67 @@ const VacationSchedule = () => {
     const copy = schedule.slice(); // create shallow copy of array but the obj are still references
     const removedElement = copy.splice(dragIndexRef.current, 1);
 
-    if (targetIndex === 0) {
-      console.log("place at index 0");
-      setSchedule([removedElement[0], ...copy]);
-    } else if (targetIndex > 0 && targetIndex < schedule.length - 1) {
-      console.log("place in between");
-      setSchedule([
-        ...copy.slice(0, targetIndex),
-        removedElement[0],
-        ...copy.slice(targetIndex),
-      ]);
-    } else if (targetIndex === schedule.length - 1) {
-      console.log("place at end");
-      setSchedule([...copy, removedElement[0]]);
-    }
+    //if (targetIndex === 0) {
+    //  console.log("place at index 0");
+    //  setSchedule([removedElement[0], ...copy]);
+    //} else if (targetIndex > 0 && targetIndex < schedule.length - 1) {
+    console.log("place in between");
+    const assembleArr: Schedule[] = [
+      ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
+      removedElement[0],
+      ...copy.slice(targetIndex),
+    ];
+
+    const finalArr = changeDropTime(assembleArr, targetIndex);
+
+    setSchedule(finalArr);
+    // } else if (targetIndex === schedule.length - 1) {
+    //   console.log("place at end");
+    //   setSchedule([...copy, removedElement[0]]);
+    // }
 
     dragIndexRef.current = -1;
+  };
+
+  const changeDropTime = (finalArr: Schedule[], targetIndex: number) => {
+    // shockingly all we need is the final arr and target index. Why?? Because our value always becomes the targetIndex whether we go above or below. because we slice where the target is never included but then added immedialtely after which then becomes the targetIndex. It can get confusing because it seems to get added above or below our original target, which visually is true but, we are working with indexes, which make it more simple - it's as simple as hey give me your spot. Especially with the idea of removing an element from the array and then placing it back in, our ideas can turn quickly into whats indexes get shifted where what goes
+    if (targetIndex === 0) {
+      const dateAfter: Date = finalArr[targetIndex + 1].start_time;
+      const newDate = finalArr[targetIndex + 1].start_time
+        .toISOString()
+        .split("T")[0];
+      if (dateAfter.getHours() === 0) {
+        const constructDate = new Date(newDate + "T" + "00:00:00");
+        finalArr[targetIndex].start_time = constructDate;
+        return finalArr;
+      } else {
+        const newHour = dateAfter.getHours() - 1;
+        let preZero: string = "";
+        if (newHour <= 9) {
+          preZero = "0";
+        }
+        const constructDate = new Date(
+          newDate + "T" + preZero + newHour + ":00:00"
+        );
+        finalArr[targetIndex].start_time = constructDate;
+        return finalArr;
+      }
+    } else {
+      const dateBefore: Date = finalArr[targetIndex - 1].start_time;
+      const newDate: string = finalArr[targetIndex - 1].start_time
+        .toISOString()
+        .split("T")[0];
+      const newHour: number = dateBefore.getHours() + 1;
+      let preZero: string = "";
+      if (newHour <= 9) {
+        preZero = "0";
+      }
+      const constructDate = new Date(
+        newDate + "T" + preZero + newHour + ":00:00"
+      );
+      finalArr[targetIndex].start_time = constructDate;
+      return finalArr;
+    }
   };
 
   return loading ? (

@@ -20,3 +20,6 @@ console.log(result);
 const arr = [1, 2, 4, 5];
 
 console.log(arr.slice(3));
+
+const date = new Date("2025-07-23T20:00:00");
+console.log(date.toISOString());
