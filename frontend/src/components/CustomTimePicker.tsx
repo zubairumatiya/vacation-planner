@@ -1,4 +1,4 @@
-import styles from "../styles/Test.module.css";
+import styles from "../styles/CustomTimePicker.module.css";
 import { useState, useRef, useEffect } from "react";
 import dropDownArrow from "../assets/arrow-drop.svg";
 

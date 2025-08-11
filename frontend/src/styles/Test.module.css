@@ -1,18 +1,63 @@
-.table {
+.wrapper {
+  display: flex;
+  align-items: baseline;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.input {
+  margin: 0.25rem;
+  width: 3.5rem;
   border: 1px solid white;
-  width: 40%;
+  height: 2rem;
+  padding-left: 0.1rem;
+  border-radius: 5px;
 }
 
-.td {
-  border: 1px solid white;
-  padding: 3px;
-  text-align: center;
+.dropDownWrapper {
+  position: absolute;
+  top: 20%;
+  left: 54%;
+  z-index: 10;
 }
 
-.img {
-  padding-left: 40%;
+.scrollContainer {
+  max-height: 30vh;
+  overflow-y: auto;
+  border: 1px solid rgb(24, 223, 104);
+  scrollbar-width: none;
+  position: absolute;
+  top: 100%;
+
+  z-index: 10;
+
+  box-shadow: 0 2px 5px rgb(11, 168, 87);
 }
 
-.dragging {
-  opacity: 25%;
+.listItem {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.listItem:hover {
+  background-color: rgb(120, 120, 120);
+}
+
+.focused {
+  background-color: rgba(120, 120, 120, 0.506);
+}
+
+.minuteButton,
+.hourButton {
+  padding: 0;
+  background-color: rgb(3, 3, 3);
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.minuteButton:active,
+.hourButton:active {
+  background-color: black;
 }

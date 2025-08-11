@@ -526,42 +526,45 @@ const VacationSchedule = () => {
     dragIndexRef.current = -1;
   };
 
+  const prefixZero = (x: number): string => {
+    if (x <= 9) {
+      return "0" + x;
+    }
+    return "" + x;
+  };
+
+  const getLocalDate = (toBeConverted: Date): string => {
+    const year = toBeConverted.getFullYear();
+    const month = prefixZero(toBeConverted.getMonth() + 1);
+    const day = prefixZero(toBeConverted.getDate());
+    return year + "-" + month + "-" + day;
+  };
+
   const changeDropTime = (finalArr: Schedule[], targetIndex: number) => {
     // shockingly all we need is the final arr and target index. Why?? Because our value always becomes the targetIndex whether we go above or below. because we slice where the target is never included but then added immedialtely after which then becomes the targetIndex. It can get confusing because it seems to get added above or below our original target, which visually is true but, we are working with indexes, which make it more simple - it's as simple as hey give me your spot. Especially with the idea of removing an element from the array and then placing it back in, our ideas can turn quickly into whats indexes get shifted where what goes
     if (targetIndex === 0) {
       const dateAfter: Date = finalArr[targetIndex + 1].start_time;
-      const newDate = finalArr[targetIndex + 1].start_time
-        .toISOString()
-        .split("T")[0];
+      const newDate = getLocalDate(finalArr[targetIndex + 1].start_time);
       if (dateAfter.getHours() === 0) {
         const constructDate = new Date(newDate + "T" + "00:00:00");
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
       } else {
         const newHour = dateAfter.getHours() - 1;
-        let preZero: string = "";
-        if (newHour <= 9) {
-          preZero = "0";
-        }
-        const constructDate = new Date(
-          newDate + "T" + preZero + newHour + ":00:00"
-        );
+        const newHourMod = prefixZero(newHour);
+        const constructDate = new Date(newDate + "T" + newHourMod + ":00:00");
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
       }
     } else {
       const dateBefore: Date = finalArr[targetIndex - 1].start_time;
-      const newDate: string = finalArr[targetIndex - 1].start_time
-        .toISOString()
-        .split("T")[0];
-      const newHour: number = dateBefore.getHours() + 1;
-      let preZero: string = "";
-      if (newHour <= 9) {
-        preZero = "0";
-      }
-      const constructDate = new Date(
-        newDate + "T" + preZero + newHour + ":00:00"
+      const newDate: string = getLocalDate(
+        finalArr[targetIndex - 1].start_time
       );
+      const newHour: number = dateBefore.getHours() + 1;
+      const newHourMod: string = prefixZero(newHour);
+
+      const constructDate = new Date(newDate + "T" + newHourMod + ":00:00");
       finalArr[targetIndex].start_time = constructDate;
       return finalArr;
     }

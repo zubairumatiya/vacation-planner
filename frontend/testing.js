@@ -21,5 +21,16 @@ const arr = [1, 2, 4, 5];
 
 console.log(arr.slice(3));
 
-const date = new Date("2025-07-23T20:00:00");
-console.log(date.toISOString());
+const prefixZero = (x) => {
+  if (x <= 9) {
+    return "0" + x;
+  }
+  return "" + x;
+};
+
+const date = new Date("2025-07-02T20:00:00");
+const year = date.getFullYear();
+const month = prefixZero(date.getMonth() + 1);
+const day = prefixZero(date.getDate());
+console.log("Correcto:", year + "-" + month + "-" + day);
+console.log(date.toISOString().split("T")[0]);
