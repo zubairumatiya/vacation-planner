@@ -134,3 +134,13 @@
 .dragging {
   opacity: 0.65;
 }
+
+.pageWrapper {
+  scroll-behavior: auto;
+  overflow: auto;
+}
+
+.testWrapper {
+  scroll-behavior: auto;
+  overflow: auto;
+}

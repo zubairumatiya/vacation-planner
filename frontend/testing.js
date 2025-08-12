@@ -28,9 +28,14 @@ const prefixZero = (x) => {
   return "" + x;
 };
 
-const date = new Date("2025-07-02T20:00:00");
-const year = date.getFullYear();
-const month = prefixZero(date.getMonth() + 1);
-const day = prefixZero(date.getDate());
-console.log("Correcto:", year + "-" + month + "-" + day);
-console.log(date.toISOString().split("T")[0]);
+const getLocalDate = (toBeConverted) => {
+  const year = toBeConverted.getFullYear();
+  const month = prefixZero(toBeConverted.getMonth() + 1);
+  const day = prefixZero(toBeConverted.getDate());
+  return year + "-" + month + "-" + day;
+};
+
+const day = "Wednesday - Jul 16, 2025";
+
+const date = new Date(day);
+console.log(getLocalDate(date));

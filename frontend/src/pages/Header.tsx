@@ -1,5 +1,5 @@
 import styles from "../styles/Header.module.css";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import placeholderLogo from "../assets/react.svg";
 import addIcon from "../assets/add-icon.svg";
 import { AuthContext } from "../context/AuthContext";
@@ -8,7 +8,7 @@ import profileIcon from "../assets/profile.svg";
 import ProfileSideBar from "../components/ProfileSideBar";
 
 const Header = () => {
-  const navigate = useNavigate();
+  //const navigate = useNavigate();
 
   const auth = useContext(AuthContext);
   const [isSideBarOpen, setSideBarOpen] = useState(false);

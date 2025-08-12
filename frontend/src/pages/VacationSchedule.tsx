@@ -499,30 +499,82 @@ const VacationSchedule = () => {
     e.preventDefault();
 
     const target = e.target as HTMLElement;
-
     const targetIndex = Number(target.closest("tr")?.dataset.index);
-    const copy = schedule.slice(); // create shallow copy of array but the obj are still references
+    console.log("targetIndex: " + targetIndex);
+    console.log("originIndex: ", dragIndexRef.current);
+    const copy = schedule.slice();
     const removedElement = copy.splice(dragIndexRef.current, 1);
+    let finalArr: Schedule[] = schedule;
+    if (isNaN(targetIndex)) {
+      console.log("confirmed NaN");
+      //if we drag to an empty day
+      const tableTarget = String(target.closest("table")?.id);
+      console.log("tableTarget", tableTarget);
+      const dropDay: Date = new Date(tableTarget);
+      console.log("dropDay:", dropDay);
+      /*
+      const UTCDestination: number = Date.UTC(
+        dropDay.getFullYear(),
+        dropDay.getMonth(),
+        dropDay.getDate()
+      );*/
 
-    //if (targetIndex === 0) {
-    //  console.log("place at index 0");
-    //  setSchedule([removedElement[0], ...copy]);
-    //} else if (targetIndex > 0 && targetIndex < schedule.length - 1) {
-    console.log("place in between");
-    const assembleArr: Schedule[] = [
-      ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
-      removedElement[0],
-      ...copy.slice(targetIndex),
-    ];
+      const UTCOrigin: number = Date.UTC(
+        removedElement[0].start_time.getFullYear(),
+        removedElement[0].start_time.getMonth(),
+        removedElement[0].start_time.getDate()
+      );
 
-    const finalArr = changeDropTime(assembleArr, targetIndex);
+      // find the spot where it elipses the date we are trying to place it in and the hop back one index
+      let targetIndex: number =
+        schedule.findIndex(
+          (v) =>
+            Date.UTC(
+              v.start_time.getFullYear(),
+              v.start_time.getMonth(),
+              v.start_time.getDate()
+            ) > UTCOrigin
+        ) - 1;
+      if (targetIndex === -2) {
+        //this will trigger if we are placing it at the bottom of schedule since there is no item that will be > UTCOrigin so it returns -1
+        targetIndex = schedule.length - 1;
+      }
+      console.log("targetIndex: " + targetIndex);
+      const assembleArr: Schedule[] = [
+        ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
+        removedElement[0],
+        ...copy.slice(targetIndex),
+      ];
+      finalArr = changeDropTime(assembleArr, targetIndex, true, dropDay);
+      //const difference = UTCDestination - UTCOrigin;
+      /*if (difference >= 0) {
+        //place at the end
+        const assembleArr: Schedule[] = [...copy, removedElement[0]];
+        finalArr = changeDropTime(
+          assembleArr,
+          assembleArr.length - 1,
+          true,
+          dropDay
+        );
+      } else {
+        //place at beginning
+        const assembleArr: Schedule[] = [removedElement[0], ...copy];
+        finalArr = changeDropTime(assembleArr, 0, true, dropDay);
+      }*/
+    } else {
+      // create shallow copy of array but the obj are still references
 
+      console.log("place in between");
+      const assembleArr: Schedule[] = [
+        ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
+        removedElement[0],
+        ...copy.slice(targetIndex),
+      ];
+      finalArr = changeDropTime(assembleArr, targetIndex);
+    }
+
+    //TODO send edit to API
     setSchedule(finalArr);
-    // } else if (targetIndex === schedule.length - 1) {
-    //   console.log("place at end");
-    //   setSchedule([...copy, removedElement[0]]);
-    // }
-
     dragIndexRef.current = -1;
   };
 
@@ -540,8 +592,26 @@ const VacationSchedule = () => {
     return year + "-" + month + "-" + day;
   };
 
-  const changeDropTime = (finalArr: Schedule[], targetIndex: number) => {
+  const changeDropTime = (
+    finalArr: Schedule[],
+    targetIndex: number,
+    emptyTable?: boolean,
+    newDay?: Date
+  ) => {
     // shockingly all we need is the final arr and target index. Why?? Because our value always becomes the targetIndex whether we go above or below. because we slice where the target is never included but then added immedialtely after which then becomes the targetIndex. It can get confusing because it seems to get added above or below our original target, which visually is true but, we are working with indexes, which make it more simple - it's as simple as hey give me your spot. Especially with the idea of removing an element from the array and then placing it back in, our ideas can turn quickly into whats indexes get shifted where what goes
+    if (emptyTable) {
+      if (!newDay) {
+        console.log("error in finding new date to place on");
+        return schedule;
+      }
+      const time = finalArr[targetIndex].start_time
+        .toTimeString()
+        .split(" ")[0]; // 00:00:00
+      const date = getLocalDate(newDay);
+      const constructDate = new Date(date + "T" + time);
+      finalArr[targetIndex].start_time = constructDate;
+      return finalArr;
+    }
     if (targetIndex === 0) {
       const dateAfter: Date = finalArr[targetIndex + 1].start_time;
       const newDate = getLocalDate(finalArr[targetIndex + 1].start_time);
@@ -573,7 +643,7 @@ const VacationSchedule = () => {
   return loading ? (
     <p>{message}</p>
   ) : (
-    <div>
+    <div className={styles.pageWrapper}>
       <button
         className="btnPrimary"
         type="button"
@@ -594,6 +664,7 @@ const VacationSchedule = () => {
               <table
                 onDrop={(e) => handleDragDrop(e)}
                 onDragOver={(e) => e.preventDefault()}
+                id={day}
               >
                 <caption>{day}</caption>
                 <thead>
@@ -610,16 +681,20 @@ const VacationSchedule = () => {
                 </thead>
                 <tbody>
                   {schedule
-                    .filter((v: Schedule) => {
-                      const startDay = new Date(v.start_time)
+                    .map((v, i): { value: Schedule; index: number } => ({
+                      value: v,
+                      index: i,
+                    })) // this is a wrapper so we can use the original index after the filter
+                    .filter(({ value }) => {
+                      const startDay = new Date(value.start_time)
                         .toISOString()
                         .split("T")[0];
                       return startDay === dayOfTrip;
                     })
-                    .map((item: Schedule, index: number) => {
+                    .map(({ value, index }) => {
                       let sTime;
-                      if (item.start_time) {
-                        sTime = new Date(item.start_time).toLocaleTimeString(
+                      if (value.start_time) {
+                        sTime = new Date(value.start_time).toLocaleTimeString(
                           [],
                           {
                             hour: "numeric",
@@ -630,11 +705,14 @@ const VacationSchedule = () => {
                         sTime = "12:00 AM";
                       }
                       let eTime;
-                      if (item.end_time) {
-                        eTime = new Date(item.end_time).toLocaleTimeString([], {
-                          hour: "numeric",
-                          minute: "2-digit",
-                        });
+                      if (value.end_time) {
+                        eTime = new Date(value.end_time).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "numeric",
+                            minute: "2-digit",
+                          }
+                        );
                       } else {
                         eTime = "12:01 AM";
                       }
@@ -643,15 +721,15 @@ const VacationSchedule = () => {
 
                       return (
                         <tr
-                          key={item.id}
-                          id={item.id + ""}
+                          key={value.id}
+                          id={value.id + ""}
                           data-index={index}
                           draggable="true"
                           className={`${
                             index === dragIndexRef.current && styles.dragging
                           }`}
                         >
-                          {item.id === editLineId ? (
+                          {value.id === editLineId ? (
                             <>
                               <td>
                                 <button
@@ -755,7 +833,7 @@ const VacationSchedule = () => {
                                 <button
                                   type="button"
                                   onClick={(e) =>
-                                    submitEdit(e, dayOfTrip, item.id)
+                                    submitEdit(e, dayOfTrip, value.id)
                                   }
                                 >
                                   submit edit
@@ -764,7 +842,7 @@ const VacationSchedule = () => {
                               <td>
                                 <button
                                   type="button"
-                                  onClick={(e) => submitDelete(e, item.id)}
+                                  onClick={(e) => submitDelete(e, value.id)}
                                 >
                                   delete
                                 </button>
@@ -777,7 +855,7 @@ const VacationSchedule = () => {
                               <td
                                 draggable="true"
                                 onDragStart={(e) =>
-                                  handleDragStart(e, item.id, index)
+                                  handleDragStart(e, value.id, index)
                                 }
                               >
                                 <img
@@ -788,10 +866,10 @@ const VacationSchedule = () => {
                               </td>
                               <td>{sTime}</td>
                               <td>{eTime}</td>
-                              <td>{item.location}</td>
-                              <td>{`$${item.cost}`}</td>
-                              <td>{item.details}</td>
-                              <td>{item.multi_day ? "yes" : "no"}</td>
+                              <td>{value.location}</td>
+                              <td>{`$${value.cost}`}</td>
+                              <td>{value.details}</td>
+                              <td>{value.multi_day ? "yes" : "no"}</td>
                               <td>
                                 <img
                                   className={styles.editIcon}
@@ -800,11 +878,11 @@ const VacationSchedule = () => {
                                   onClick={(e) =>
                                     handleEdit(
                                       e,
-                                      item.id,
-                                      item.location,
-                                      item.cost,
-                                      item.details,
-                                      item.multi_day
+                                      value.id,
+                                      value.location,
+                                      value.cost,
+                                      value.details,
+                                      value.multi_day
                                     )
                                   }
                                 />
