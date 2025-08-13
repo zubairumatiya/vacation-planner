@@ -154,6 +154,20 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
+router.patch("/update-time/:id", ensureLoggedIn, async (req, res, next) => {
+  try {
+    const result = await db.query(
+      "UPDATE trip_schedule SET start_time=$1 WHERE id=$2 RETURNING *",
+      [req.body.start, req.params.id]
+    );
+    if (result.rowCount > 0) {
+      res.status(200).json({ updatedData: result.rows[0] });
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(

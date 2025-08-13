@@ -495,29 +495,18 @@ const VacationSchedule = () => {
     e.dataTransfer.setData("text/plain", String(itemID));
   };
 
-  const handleDragDrop = (e: React.DragEvent) => {
+  const handleDragDrop = async (e: React.DragEvent) => {
     e.preventDefault();
 
     const target = e.target as HTMLElement;
-    const targetIndex = Number(target.closest("tr")?.dataset.index);
-    console.log("targetIndex: " + targetIndex);
-    console.log("originIndex: ", dragIndexRef.current);
+    let targetIndex = Number(target.closest("tr")?.dataset.index);
     const copy = schedule.slice();
     const removedElement = copy.splice(dragIndexRef.current, 1);
     let finalArr: Schedule[] = schedule;
     if (isNaN(targetIndex)) {
-      console.log("confirmed NaN");
       //if we drag to an empty day
       const tableTarget = String(target.closest("table")?.id);
-      console.log("tableTarget", tableTarget);
       const dropDay: Date = new Date(tableTarget);
-      console.log("dropDay:", dropDay);
-      /*
-      const UTCDestination: number = Date.UTC(
-        dropDay.getFullYear(),
-        dropDay.getMonth(),
-        dropDay.getDate()
-      );*/
 
       const UTCOrigin: number = Date.UTC(
         removedElement[0].start_time.getFullYear(),
@@ -526,7 +515,7 @@ const VacationSchedule = () => {
       );
 
       // find the spot where it elipses the date we are trying to place it in and the hop back one index
-      let targetIndex: number =
+      targetIndex =
         schedule.findIndex(
           (v) =>
             Date.UTC(
@@ -546,24 +535,7 @@ const VacationSchedule = () => {
         ...copy.slice(targetIndex),
       ];
       finalArr = changeDropTime(assembleArr, targetIndex, true, dropDay);
-      //const difference = UTCDestination - UTCOrigin;
-      /*if (difference >= 0) {
-        //place at the end
-        const assembleArr: Schedule[] = [...copy, removedElement[0]];
-        finalArr = changeDropTime(
-          assembleArr,
-          assembleArr.length - 1,
-          true,
-          dropDay
-        );
-      } else {
-        //place at beginning
-        const assembleArr: Schedule[] = [removedElement[0], ...copy];
-        finalArr = changeDropTime(assembleArr, 0, true, dropDay);
-      }*/
     } else {
-      // create shallow copy of array but the obj are still references
-
       console.log("place in between");
       const assembleArr: Schedule[] = [
         ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
@@ -573,8 +545,20 @@ const VacationSchedule = () => {
       finalArr = changeDropTime(assembleArr, targetIndex);
     }
 
-    //TODO send edit to API
-    setSchedule(finalArr);
+    const updatedItem = finalArr[targetIndex];
+    const result = await fetch(`${apiURL}/update-time/${updatedItem.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ start: updatedItem.start_time }),
+    });
+    if (result.ok) {
+      setSchedule(finalArr);
+    } else {
+      alert("error processing change");
+    }
     dragIndexRef.current = -1;
   };
 
