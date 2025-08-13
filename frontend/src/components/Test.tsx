@@ -381,6 +381,13 @@ const Test = (props) => {
           </div>
         </div>
       </form>
+      <input
+        type="date"
+        name="date"
+        id="dateInput"
+        value={"2025-07-15"}
+        onChange={() => undefined}
+      />
     </div>
   );
 };

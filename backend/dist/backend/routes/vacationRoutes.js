@@ -48,6 +48,54 @@ router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
+router.patch("/add-vacation", ensureLoggedIn, async (req, res, next) => {
+    if (!req.body.tripname ||
+        !req.body.location ||
+        !req.body.startDate ||
+        !req.body.endDate) {
+        res
+            .status(403)
+            .json({ message: "Invalid input - make sure all the fields are filled" });
+        return;
+    }
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
+    if (startDate > endDate) {
+        res
+            .status(403)
+            .json({ message: "Invalid date - End date cannot be before start date" });
+        return;
+    }
+    try {
+        const result = await db.query("UPDATE trips SET trip_name=$1 start_date=$2 end_date=$3 location=$4 WHERE id=$5 RETURNING *", [
+            req.body.tripname,
+            req.body.startDate,
+            req.body.endDate,
+            req.body.location,
+            req.body.id,
+        ]);
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: "success" });
+            return;
+        }
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.delete("/delete-vacation/:id", ensureLoggedIn, async (req, res, next) => {
+    console.log("ENTERRR");
+    try {
+        const result = await db.query("DELETE FROM trips WHERE id=$1 RETURNING *", [req.params.id]);
+        if (result.rowCount > 0) {
+            res.status(200).json({ message: "success" });
+            return;
+        }
+    }
+    catch (err) {
+        next(err);
+    }
+});
 router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
     try {
         const result = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2", [req.user.id, req.params.id]);

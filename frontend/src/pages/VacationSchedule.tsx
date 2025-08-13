@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
@@ -183,7 +183,6 @@ const VacationSchedule = () => {
       return newArr;
     });
   };
-  // was used when i wanted to be able to keep multiple add trips open for multiple days
 
   useEffect(() => {
     if (locationEditRef.current) {
@@ -628,6 +627,11 @@ const VacationSchedule = () => {
     <p>{message}</p>
   ) : (
     <div className={styles.pageWrapper}>
+      <div className={styles.backWrapper}>
+        <Link to="/" className={styles.backButton}>
+          &#60;
+        </Link>
+      </div>
       <button
         className="btnPrimary"
         type="button"
