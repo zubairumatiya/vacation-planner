@@ -25,6 +25,7 @@ const Home = () => {
   const [submitButtonDisabled, setSubmitButtonDisabled] =
     useState<boolean>(false);
   const [submitClicked, setSubmitClicked] = useState<boolean>(false);
+  const [updateList, setUpdateList] = useState<boolean>(false);
 
   useEffect(() => {
     const getTrips = async () => {
@@ -42,9 +43,9 @@ const Home = () => {
     };
     // add error handling for like expired tokens where we send a refresh token
     getTrips();
-  }, []);
+  }, [updateList]);
 
-  const editTrip = (e: React.MouseEvent, tripId: string) => {
+  const editTrip = (tripId: string) => {
     setEditing(true);
     setEditingId(tripId);
   };
@@ -61,6 +62,15 @@ const Home = () => {
   const formSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitClicked(true);
+  };
+
+  const checkSubmission = (result: boolean) => {
+    if (result) {
+      setUpdateList((prev) => !prev);
+      setEditingId("");
+      setEditing(false);
+      setSubmitClicked(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -115,11 +125,12 @@ const Home = () => {
                     <VacationForm
                       preFill={{
                         trip_name: v.trip_name,
-                        destination: v.location,
+                        location: v.location,
                         start_date: v.start_date,
                         end_date: v.end_date,
                         id: v.id,
                       }}
+                      sendSubmissionResult={checkSubmission}
                       disableOrNah={checkError}
                       submit={submitClicked}
                       method="PATCH"
@@ -157,7 +168,7 @@ const Home = () => {
                       </Link>
                       <div
                         className={styles.editIcon}
-                        onClick={(e) => editTrip(e, v.id)}
+                        onClick={() => editTrip(v.id)}
                       >
                         {editing ? undefined : (
                           <img src={editIcon} alt="editIcon" />

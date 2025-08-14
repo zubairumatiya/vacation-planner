@@ -8,7 +8,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 type Props = {
   preFill?: {
     trip_name: string;
-    destination: string;
+    location: string;
     start_date: string;
     end_date: string;
     id: string;
@@ -16,6 +16,7 @@ type Props = {
   disableOrNah: (fieldError: boolean) => void;
   submit: boolean;
   method?: string;
+  sendSubmissionResult?: (result: boolean) => void;
 };
 const VacationForm = (props?: Props) => {
   const auth = useContext(AuthContext);
@@ -62,7 +63,7 @@ const VacationForm = (props?: Props) => {
   const [errMessage, setErrMessage] = useState("");
   const [oneYearRange, setOneYearRange] = useState(oneYear);
   const [tripName, setTripName] = useState(props?.preFill?.trip_name ?? "");
-  const [location, setLocation] = useState(props?.preFill?.trip_name ?? "");
+  const [location, setLocation] = useState(props?.preFill?.location ?? "");
 
   useEffect(() => {
     props?.disableOrNah(fieldError);
@@ -89,6 +90,7 @@ const VacationForm = (props?: Props) => {
     if (props?.submit === true) {
       const formSubmit = async () => {
         let method = "POST";
+        let url: string = `${apiUrl}/add-vacation`;
         const bodyObject: {
           tripname: string;
           location: string;
@@ -104,10 +106,11 @@ const VacationForm = (props?: Props) => {
         if (props?.method === "PATCH") {
           method = "PATCH";
           bodyObject.id = props?.preFill?.id;
+          url = url + "/" + bodyObject.id;
         }
 
         if (token) {
-          const res = await fetch(`${apiUrl}/add-vacation`, {
+          const res = await fetch(url, {
             method: method,
             headers: {
               "Content-Type": "application/json",
@@ -128,6 +131,9 @@ const VacationForm = (props?: Props) => {
           }
           if (res.ok) {
             navigate("/");
+            if (props.sendSubmissionResult) {
+              props.sendSubmissionResult(true);
+            }
           }
           console.log(data);
         } else {
@@ -137,7 +143,7 @@ const VacationForm = (props?: Props) => {
 
       formSubmit();
     }
-  });
+  }, [props?.submit]);
 
   const startDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log(e.target.value);
@@ -215,7 +221,7 @@ const VacationForm = (props?: Props) => {
                 name="startdate"
                 id="startdate"
                 value={startDate}
-                min={today}
+                min={props?.method === "PATCH" ? undefined : today}
                 onChange={startDateChange}
               />
             </div>

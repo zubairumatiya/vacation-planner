@@ -35,7 +35,10 @@ const getLocalDate = (toBeConverted) => {
   return year + "-" + month + "-" + day;
 };
 
-const day = "Jul 16, 2025";
+const day = "2025-07-16T05:00:00Z";
 
-const date = getLocalDate(new Date(day));
+const date = new Date(day);
 console.log(date);
+
+const display = new Date(date);
+console.log(display);

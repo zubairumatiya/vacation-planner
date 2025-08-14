@@ -513,7 +513,7 @@ const VacationSchedule = () => {
         removedElement[0].start_time.getDate()
       );
 
-      // find the spot where it elipses the date we are trying to place it in and the hop back one index
+      // find the spot where it eclipses the date we are trying to place it in and the hop back one index
       targetIndex =
         schedule.findIndex(
           (v) =>
@@ -545,6 +545,7 @@ const VacationSchedule = () => {
     }
 
     const updatedItem = finalArr[targetIndex];
+    console.log(new Date(updatedItem.start_time).toLocaleString());
     const result = await fetch(`${apiURL}/update-time/${updatedItem.id}`, {
       method: "PATCH",
       headers: {
@@ -591,7 +592,7 @@ const VacationSchedule = () => {
         .toTimeString()
         .split(" ")[0]; // 00:00:00
       const date = getLocalDate(newDay);
-      const constructDate = new Date(date + "T" + time);
+      const constructDate = new Date(`${date}T${time}Z`);
       finalArr[targetIndex].start_time = constructDate;
       return finalArr;
     }
@@ -599,13 +600,13 @@ const VacationSchedule = () => {
       const dateAfter: Date = finalArr[targetIndex + 1].start_time;
       const newDate = getLocalDate(finalArr[targetIndex + 1].start_time);
       if (dateAfter.getHours() === 0) {
-        const constructDate = new Date(newDate + "T" + "00:00:00");
+        const constructDate = new Date(`${newDate}T00:00:00Z`);
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
       } else {
         const newHour = dateAfter.getHours() - 1;
         const newHourMod = prefixZero(newHour);
-        const constructDate = new Date(newDate + "T" + newHourMod + ":00:00");
+        const constructDate = new Date(`${newDate}T${newHourMod}:00:00Z`);
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
       }
@@ -617,7 +618,8 @@ const VacationSchedule = () => {
       const newHour: number = dateBefore.getHours() + 1;
       const newHourMod: string = prefixZero(newHour);
 
-      const constructDate = new Date(newDate + "T" + newHourMod + ":00:00");
+      const constructDate = new Date(`${newDate}T${newHourMod}:00:00Z`);
+      console.log(constructDate);
       finalArr[targetIndex].start_time = constructDate;
       return finalArr;
     }
