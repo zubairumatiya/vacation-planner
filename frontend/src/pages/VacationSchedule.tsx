@@ -96,7 +96,10 @@ const VacationSchedule = () => {
         const convertEnd = new Date(data.endDate);
 
         for (const i of data.schedule) {
+          console.log("from DB time: " + i.start_time);
           i.start_time = new Date(i.start_time);
+          i.end_time = new Date(i.end_time);
+          console.log(i.start_time.toISOString());
         }
         data.schedule.sort(
           (a: Schedule, b: Schedule) =>
@@ -156,6 +159,7 @@ const VacationSchedule = () => {
   const reSort = (arr: Array<Schedule>) => {
     arr.map((v) => {
       v.start_time = new Date(v.start_time);
+      v.end_time = new Date(v.end_time);
       return v;
     });
     arr.sort(
@@ -545,7 +549,7 @@ const VacationSchedule = () => {
     }
 
     const updatedItem = finalArr[targetIndex];
-    console.log(new Date(updatedItem.start_time).toLocaleString());
+    console.log(updatedItem.start_time);
     const result = await fetch(`${apiURL}/update-time/${updatedItem.id}`, {
       method: "PATCH",
       headers: {
@@ -569,12 +573,30 @@ const VacationSchedule = () => {
     return "" + x;
   };
 
-  const getLocalDate = (toBeConverted: Date): string => {
-    const year = toBeConverted.getFullYear();
-    const month = prefixZero(toBeConverted.getMonth() + 1);
-    const day = prefixZero(toBeConverted.getDate());
-    return year + "-" + month + "-" + day;
+  const addMeridiem = (militaryTime: string) => {
+    let hour = Number(militaryTime.split(":")[0]);
+    const minute = militaryTime.split(":")[1];
+    let meridiem;
+    if (hour > 11) {
+      if (hour !== 12) {
+        hour = hour - 12;
+      }
+      meridiem = "PM";
+    } else {
+      if (hour === 0) {
+        hour = 12;
+      }
+      meridiem = "AM";
+    }
+    return `${hour}:${minute} ${meridiem}`;
   };
+  /*
+  const getLocalDate = (toBeConverted: Date): string => {
+    const year = toBeConverted.getUTCFullYear();
+    const month = prefixZero(toBeConverted.getUTCMonth() + 1);
+    const day = prefixZero(toBeConverted.getUTCDate());
+    return year + "-" + month + "-" + day;
+  };*/
 
   const changeDropTime = (
     finalArr: Schedule[],
@@ -588,37 +610,46 @@ const VacationSchedule = () => {
         console.log("error in finding new date to place on");
         return schedule;
       }
-      const time = finalArr[targetIndex].start_time
-        .toTimeString()
-        .split(" ")[0]; // 00:00:00
-      const date = getLocalDate(newDay);
-      const constructDate = new Date(`${date}T${time}Z`);
+      const constructDate = new Date(
+        finalArr[targetIndex].start_time.toISOString()
+      );
       finalArr[targetIndex].start_time = constructDate;
       return finalArr;
     }
     if (targetIndex === 0) {
       const dateAfter: Date = finalArr[targetIndex + 1].start_time;
-      const newDate = getLocalDate(finalArr[targetIndex + 1].start_time);
-      if (dateAfter.getHours() === 0) {
+      const newDate = finalArr[targetIndex + 1].start_time
+        .toISOString()
+        .split("T")[0];
+      if (dateAfter.getUTCHours() === 0) {
         const constructDate = new Date(`${newDate}T00:00:00Z`);
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
       } else {
-        const newHour = dateAfter.getHours() - 1;
+        const newHour = dateAfter.getUTCHours() - 1;
         const newHourMod = prefixZero(newHour);
-        const constructDate = new Date(`${newDate}T${newHourMod}:00:00Z`);
+        const minutes: string = prefixZero(
+          finalArr[targetIndex].start_time.getUTCMinutes()
+        );
+        const constructDate = new Date(
+          `${newDate}T${newHourMod}:${minutes}:00Z`
+        );
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
       }
     } else {
       const dateBefore: Date = finalArr[targetIndex - 1].start_time;
-      const newDate: string = getLocalDate(
-        finalArr[targetIndex - 1].start_time
-      );
-      const newHour: number = dateBefore.getHours() + 1;
-      const newHourMod: string = prefixZero(newHour);
+      const newDate: string = finalArr[targetIndex - 1].start_time
+        .toISOString()
+        .split("T")[0];
 
-      const constructDate = new Date(`${newDate}T${newHourMod}:00:00Z`);
+      const newHour: number = dateBefore.getUTCHours() + 1;
+      const newHourMod: string = prefixZero(newHour);
+      const minutes: string = prefixZero(
+        finalArr[targetIndex].start_time.getUTCMinutes()
+      );
+
+      const constructDate = new Date(`${newDate}T${newHourMod}:${minutes}:00Z`);
       console.log(constructDate);
       finalArr[targetIndex].start_time = constructDate;
       return finalArr;
@@ -684,24 +715,16 @@ const VacationSchedule = () => {
                     .map(({ value, index }) => {
                       let sTime;
                       if (value.start_time) {
-                        sTime = new Date(value.start_time).toLocaleTimeString(
-                          [],
-                          {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          }
+                        sTime = addMeridiem(
+                          value.start_time.toUTCString().slice(-12, -7)
                         );
                       } else {
                         sTime = "12:00 AM";
                       }
                       let eTime;
                       if (value.end_time) {
-                        eTime = new Date(value.end_time).toLocaleTimeString(
-                          [],
-                          {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          }
+                        eTime = addMeridiem(
+                          value.end_time.toUTCString().slice(-12, -7)
                         );
                       } else {
                         eTime = "12:01 AM";
