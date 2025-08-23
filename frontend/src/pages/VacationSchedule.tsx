@@ -96,10 +96,8 @@ const VacationSchedule = () => {
         const convertEnd = new Date(data.endDate);
 
         for (const i of data.schedule) {
-          console.log("from DB time: " + i.start_time);
           i.start_time = new Date(i.start_time);
           i.end_time = new Date(i.end_time);
-          console.log(i.start_time.toISOString());
         }
         data.schedule.sort(
           (a: Schedule, b: Schedule) =>
@@ -112,7 +110,7 @@ const VacationSchedule = () => {
 
         const UtcStart = Date.UTC(
           convertStart.getFullYear(),
-          convertStart.getMonth(),
+          convertStart.getMonth(), //FIX
           convertStart.getDate()
         );
         const UtcEnd = Date.UTC(
@@ -127,6 +125,7 @@ const VacationSchedule = () => {
         for (let i = 0; i <= length; i++) {
           if (i === 0) {
             const day = convertStart.toLocaleDateString("en-us", {
+              // FIX
               weekday: "long",
             });
             const date = convertStart.toLocaleDateString("en-us", {
@@ -148,6 +147,7 @@ const VacationSchedule = () => {
             daysArr.push(`${day} - ${date}`);
           }
         }
+        console.log("days Arr", daysArr);
         setScheduleDayLabels(daysArr);
         setLoading(false);
       }
@@ -218,6 +218,31 @@ const VacationSchedule = () => {
       setStartTimePick((hour + ":" + minute + " " + meridiem).trim());
     } else {
       setEndTimePick((hour + ":" + minute + " " + meridiem).trim());
+    }
+  };
+
+  const setEndDate = (newStartTime: Date, currentEndTime: Date): Date => {
+    const difference =
+      (currentEndTime.getTime() - newStartTime.getTime()) / (1000 * 60 * 60);
+
+    if (currentEndTime.getTime() < newStartTime.getTime()) {
+      const newEndHour = prefixZero(newStartTime.getUTCHours() + 1);
+      const sameEndMinutes = prefixZero(currentEndTime.getUTCMinutes());
+      const extractNewDate = newStartTime.toISOString().split("T")[0];
+      console.log(
+        "end is less than start",
+        new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`)
+      );
+      return new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`);
+    } else if (difference > 24) {
+      console.log(
+        "greater than 24 hours",
+        new Date(newStartTime.getTime() + 23 * 60 * 60 * 1000)
+      );
+      return new Date(newStartTime.getTime() + 23 * 60 * 60 * 1000);
+    } else {
+      console.log("no change needed", currentEndTime);
+      return currentEndTime;
     }
   };
 
@@ -506,46 +531,55 @@ const VacationSchedule = () => {
     const copy = schedule.slice();
     const removedElement = copy.splice(dragIndexRef.current, 1);
     let finalArr: Schedule[] = schedule;
+
+    const tableTarget = String(target.closest("table")?.id);
+    const dropDay: Date = new Date(tableTarget);
+
     if (isNaN(targetIndex)) {
       //if we drag to an empty day
-      const tableTarget = String(target.closest("table")?.id);
-      const dropDay: Date = new Date(tableTarget);
 
-      const UTCOrigin: number = Date.UTC(
-        removedElement[0].start_time.getFullYear(),
-        removedElement[0].start_time.getMonth(),
-        removedElement[0].start_time.getDate()
+      const UTCDestination: number = Date.UTC(
+        dropDay.getUTCFullYear(),
+        dropDay.getUTCMonth(),
+        dropDay.getUTCDate()
       );
 
       // find the spot where it eclipses the date we are trying to place it in and the hop back one index
       targetIndex =
         schedule.findIndex(
+          // do we need thiss? why not just use drop day and paste the time
           (v) =>
             Date.UTC(
-              v.start_time.getFullYear(),
+              v.start_time.getFullYear(), //FIX to get UTC
               v.start_time.getMonth(),
               v.start_time.getDate()
-            ) > UTCOrigin
+            ) > UTCDestination
         ) - 1;
       if (targetIndex === -2) {
         //this will trigger if we are placing it at the bottom of schedule since there is no item that will be > UTCOrigin so it returns -1
         targetIndex = schedule.length - 1;
       }
-      console.log("targetIndex: " + targetIndex);
+
       const assembleArr: Schedule[] = [
         ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
         removedElement[0],
         ...copy.slice(targetIndex),
       ];
       finalArr = changeDropTime(assembleArr, targetIndex, true, dropDay);
+    } else if (targetIndex === dragIndexRef.current) {
+      //if some one picks it up but doesn't drop it elsewhere
+      dragIndexRef.current = -1;
+      return;
     } else {
       console.log("place in between");
+      console.log("targetIndex: " + targetIndex);
       const assembleArr: Schedule[] = [
         ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
         removedElement[0],
         ...copy.slice(targetIndex),
       ];
-      finalArr = changeDropTime(assembleArr, targetIndex);
+      console.log("assemble", assembleArr);
+      finalArr = changeDropTime(assembleArr, targetIndex, false, dropDay);
     }
 
     const updatedItem = finalArr[targetIndex];
@@ -556,7 +590,7 @@ const VacationSchedule = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ start: updatedItem.start_time }),
+      body: JSON.stringify({ start: updatedItem.start_time }), //TODO - WILL HAVE TO INCORPORATE END TIME HERE
     });
     if (result.ok) {
       setSchedule(finalArr);
@@ -610,10 +644,19 @@ const VacationSchedule = () => {
         console.log("error in finding new date to place on");
         return schedule;
       }
-      const constructDate = new Date(
-        finalArr[targetIndex].start_time.toISOString()
-      );
+      const preserveTime = finalArr[targetIndex].start_time
+        .toISOString()
+        .split("T")[1];
+      const day = newDay.toISOString().split("T")[0];
+
+      const constructDate = new Date(`${day}T${preserveTime}`);
+      console.log("TESTING: " + constructDate);
       finalArr[targetIndex].start_time = constructDate;
+      finalArr[targetIndex].end_time = setEndDate(
+        constructDate,
+        finalArr[targetIndex].end_time
+      );
+      console.log("end date:" + finalArr[targetIndex].end_time);
       return finalArr;
     }
     if (targetIndex === 0) {
@@ -623,6 +666,10 @@ const VacationSchedule = () => {
         .split("T")[0];
       if (dateAfter.getUTCHours() === 0) {
         const constructDate = new Date(`${newDate}T00:00:00Z`);
+        finalArr[targetIndex].end_time = setEndDate(
+          constructDate,
+          finalArr[targetIndex].end_time
+        );
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
       } else {
@@ -635,10 +682,14 @@ const VacationSchedule = () => {
           `${newDate}T${newHourMod}:${minutes}:00Z`
         );
         finalArr[targetIndex].start_time = constructDate;
+        finalArr[targetIndex].end_time = setEndDate(
+          constructDate,
+          finalArr[targetIndex].end_time
+        );
         return finalArr;
       }
     } else {
-      const dateBefore: Date = finalArr[targetIndex - 1].start_time;
+      const dateBefore: Date = finalArr[targetIndex - 1].start_time; //TODO hmm we have a dilemma. I think we can always get the day correct from the table becasue of newDay, but the problem now is placement within a table, as it currently stands, any newly dropped "in between" items derive their time from above so if i drop something from a later day into a day with one item, it will grab the time from the one above which is a different day. So in this case we would need a new time as well
       const newDate: string = finalArr[targetIndex - 1].start_time
         .toISOString()
         .split("T")[0];
@@ -652,6 +703,10 @@ const VacationSchedule = () => {
       const constructDate = new Date(`${newDate}T${newHourMod}:${minutes}:00Z`);
       console.log(constructDate);
       finalArr[targetIndex].start_time = constructDate;
+      finalArr[targetIndex].end_time = setEndDate(
+        constructDate,
+        finalArr[targetIndex].end_time
+      );
       return finalArr;
     }
   };
@@ -673,12 +728,15 @@ const VacationSchedule = () => {
         Test button
       </button>
       <h1>
-        {title}: {tripStart.toLocaleDateString()} -{" "}
+        {title}: {tripStart.toLocaleDateString()} - {/* FIX */}
         {tripEnd.toLocaleDateString()} - {tripLength} days{" "}
       </h1>
       {scheduleDayLabels.map((day, index) => {
+        // day = Tuesday - Jul 15, 2025
+        // all of these are local times as of now
         const getDay = day.split("-")[1];
-        const dayOfTrip = new Date(getDay).toISOString().split("T")[0];
+        console.log("getday", getDay);
+        const dayOfTrip = new Date(getDay).toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01
         return (
           <div key={day}>
             <div className={styles.tableContainer}>
@@ -705,11 +763,15 @@ const VacationSchedule = () => {
                     .map((v, i): { value: Schedule; index: number } => ({
                       value: v,
                       index: i,
-                    })) // this is a wrapper so we can use the original index after the filter
-                    .filter(({ value }) => {
+                    })) // this is a wrapper so we can use the original index after the filter so we can drag and drop as a whole array rather than an array for each day
+                    .filter(({ value }, i) => {
                       const startDay = new Date(value.start_time)
                         .toISOString()
                         .split("T")[0];
+                      if (i === 0) {
+                        // this is all for testing
+                        console.log(dayOfTrip);
+                      }
                       return startDay === dayOfTrip;
                     })
                     .map(({ value, index }) => {

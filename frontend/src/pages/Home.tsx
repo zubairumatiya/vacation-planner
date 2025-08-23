@@ -26,6 +26,20 @@ const Home = () => {
     useState<boolean>(false);
   const [submitClicked, setSubmitClicked] = useState<boolean>(false);
   const [updateList, setUpdateList] = useState<boolean>(false);
+  const monthsArray = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   useEffect(() => {
     const getTrips = async () => {
@@ -109,6 +123,7 @@ const Home = () => {
             ) : (
               trips.map((v: Trip) => {
                 const start = new Date(v.start_date);
+                let AddErr;
                 const startFormat = start.toLocaleDateString("en-us", {
                   year: "numeric",
                   month: "short",

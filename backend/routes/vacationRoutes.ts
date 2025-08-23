@@ -211,6 +211,7 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
       res.status(200).json({ updatedData: result.rows[0] });
       return;
     }
+    // will have to update last-modified field in trips as well
   } catch (err) {
     next(err);
   }
