@@ -65,6 +65,21 @@ const VacationSchedule = () => {
   });
   const dragIndexRef = useRef(-1);
 
+  const monthsArr = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
   useEffect(() => {
     const getTrip = async () => {
       const response = await fetch(`${apiURL}/vacation/${tripId}`, {
@@ -108,46 +123,40 @@ const VacationSchedule = () => {
         setTripStart(convertStartPreserved);
         setTripEnd(convertEnd);
 
-        const UtcStart = Date.UTC(
-          convertStart.getFullYear(),
-          convertStart.getMonth(), //FIX
-          convertStart.getDate()
-        );
-        const UtcEnd = Date.UTC(
-          convertEnd.getFullYear(),
-          convertEnd.getMonth(),
-          convertEnd.getDate()
-        );
+        const UtcStart = convertStart.getTime();
+        const UtcEnd = convertEnd.getTime();
         const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
         setTripLength(length);
         const daysArr: string[] = [];
 
         for (let i = 0; i <= length; i++) {
           if (i === 0) {
-            const day = convertStart.toLocaleDateString("en-us", {
-              // FIX
+            const day = new Intl.DateTimeFormat("en-us", {
               weekday: "long",
-            });
-            const date = convertStart.toLocaleDateString("en-us", {
+              timeZone: "UTC",
+            }).format(convertStart);
+            const date = new Intl.DateTimeFormat("en-us", {
               year: "numeric",
               month: "short",
               day: "numeric",
-            });
+              timeZone: "UTC",
+            }).format(convertStart);
             daysArr.push(`${day} - ${date}`);
           } else {
-            convertStart.setDate(convertStart.getDate() + 1);
-            const day = convertStart.toLocaleDateString("en-us", {
+            convertStart.setDate(convertStart.getDate() + 1); // a day is a day whether local or UTC, this doesn't change the timezone even tho they are local timezone methods
+            const day = new Intl.DateTimeFormat("en-us", {
               weekday: "long",
-            });
-            const date = convertStart.toLocaleDateString("en-us", {
+              timeZone: "UTC",
+            }).format(convertStart);
+            const date = new Intl.DateTimeFormat("en-us", {
               year: "numeric",
               month: "short",
               day: "numeric",
-            });
+              timeZone: "UTC",
+            }).format(convertStart);
             daysArr.push(`${day} - ${date}`);
           }
         }
-        console.log("days Arr", daysArr);
         setScheduleDayLabels(daysArr);
         setLoading(false);
       }
@@ -223,9 +232,10 @@ const VacationSchedule = () => {
 
   const setEndDate = (newStartTime: Date, currentEndTime: Date): Date => {
     const difference =
-      (currentEndTime.getTime() - newStartTime.getTime()) / (1000 * 60 * 60);
+      (currentEndTime.getTime() - newStartTime.getTime()) / (1000 * 60 * 60); // where i left off let's double check i am using the right timezone and if there isn't an easier way to do what i am doing, maybe
 
     if (currentEndTime.getTime() < newStartTime.getTime()) {
+      /*
       const newEndHour = prefixZero(newStartTime.getUTCHours() + 1);
       const sameEndMinutes = prefixZero(currentEndTime.getUTCMinutes());
       const extractNewDate = newStartTime.toISOString().split("T")[0];
@@ -233,7 +243,8 @@ const VacationSchedule = () => {
         "end is less than start",
         new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`)
       );
-      return new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`);
+      return new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`); LET's test the below*/
+      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
     } else if (difference > 24) {
       console.log(
         "greater than 24 hours",
@@ -538,22 +549,13 @@ const VacationSchedule = () => {
     if (isNaN(targetIndex)) {
       //if we drag to an empty day
 
-      const UTCDestination: number = Date.UTC(
-        dropDay.getUTCFullYear(),
-        dropDay.getUTCMonth(),
-        dropDay.getUTCDate()
-      );
+      const UTCDestination: number = dropDay.getTime();
 
       // find the spot where it eclipses the date we are trying to place it in and the hop back one index
       targetIndex =
         schedule.findIndex(
           // do we need thiss? why not just use drop day and paste the time
-          (v) =>
-            Date.UTC(
-              v.start_time.getFullYear(), //FIX to get UTC
-              v.start_time.getMonth(),
-              v.start_time.getDate()
-            ) > UTCDestination
+          (v) => v.start_time.getTime() > UTCDestination
         ) - 1;
       if (targetIndex === -2) {
         //this will trigger if we are placing it at the bottom of schedule since there is no item that will be > UTCOrigin so it returns -1
@@ -728,15 +730,36 @@ const VacationSchedule = () => {
         Test button
       </button>
       <h1>
-        {title}: {tripStart.toLocaleDateString()} - {/* FIX */}
-        {tripEnd.toLocaleDateString()} - {tripLength} days{" "}
+        {title}:{" "}
+        {tripStart.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          timeZone: "UTC",
+        })}{" "}
+        - {/* FIX */}
+        {tripEnd.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          timeZone: "UTC",
+        })}{" "}
+        - {tripLength} days{" "}
       </h1>
       {scheduleDayLabels.map((day, index) => {
         // day = Tuesday - Jul 15, 2025
         // all of these are local times as of now
-        const getDay = day.split("-")[1];
-        console.log("getday", getDay);
-        const dayOfTrip = new Date(getDay).toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01
+        const getDay = day.split("-")[1].trim();
+        const splits = getDay.split(" ");
+        const month = monthsArr.findIndex((v) => splits[0] === v) + 1;
+        const zeroAddedMonth = prefixZero(month);
+        const dayOf = splits[1].slice(0, 2);
+        const year = splits[2];
+
+        const UTCDayOfTrip = new Date(
+          `${year}-${zeroAddedMonth}-${dayOf}T00:00:00Z`
+        );
+        const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01 THIS HAS TO BE FIXED because it is treting the raw date as local time and turning it into UTC, which results in day shifts depending on local time
         return (
           <div key={day}>
             <div className={styles.tableContainer}>
@@ -764,14 +787,10 @@ const VacationSchedule = () => {
                       value: v,
                       index: i,
                     })) // this is a wrapper so we can use the original index after the filter so we can drag and drop as a whole array rather than an array for each day
-                    .filter(({ value }, i) => {
+                    .filter(({ value }) => {
                       const startDay = new Date(value.start_time)
                         .toISOString()
                         .split("T")[0];
-                      if (i === 0) {
-                        // this is all for testing
-                        console.log(dayOfTrip);
-                      }
                       return startDay === dayOfTrip;
                     })
                     .map(({ value, index }) => {
