@@ -88,7 +88,7 @@ router.patch("/add-vacation/:id", ensureLoggedIn, async (req, res, next) => {
 
   try {
     const result = await db.query(
-      "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4 WHERE id=$5 RETURNING *",
+      "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, last_modified=NOW() WHERE id=$5 RETURNING *",
       [
         req.body.tripname,
         req.body.startDate,

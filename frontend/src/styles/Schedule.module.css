@@ -125,13 +125,64 @@
   margin-bottom: 0;
 }
 
+.dragHeader {
+  visibility: hidden;
+}
+
+.dragCells {
+  display: flex;
+  justify-content: end;
+  padding-right: 1rem;
+}
+.startTimeHeader {
+  width: 6vw;
+}
+
+.endTimeHeader {
+  width: 6vw;
+}
+
+.locationHeader {
+  border: 1px solid white;
+  width: 10rem;
+}
+
+.costHeader {
+  width: 8rem;
+}
+
+.detailsHeader {
+  width: 12rem;
+}
+
+.editFieldHeader {
+  visibility: hidden;
+}
+
+.tableRow .editIcon {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.tableRow:hover .editIcon {
+  opacity: 1;
+}
+
+.table {
+  width: 100%;
+}
+
 .tableContainer {
   display: flex;
   justify-content: center;
+  width: 80vw;
 }
 
-.cellHeader {
-  border: 1px solid white;
+.tableNButtonContainer {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
 }
 
 .dragButton {
@@ -145,6 +196,9 @@
 
 .dragButton:hover {
   cursor: grab;
+}
+.dragButton:active {
+  cursor: grabbing;
 }
 
 .editIcon {

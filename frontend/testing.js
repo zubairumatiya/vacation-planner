@@ -64,15 +64,6 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-// FIX the drag drop by looking at the adjacent indexes and seeing which one is on the same as the drop day, i think the problem is only for the index zero of days because it grabs the time above, so we can do this by looking at adjacent times
-
-// FIX days arrs from locale time to UTC format
-
-// FIX all .gets since they use local time, ensure getUTC is being  used instead, better yet, might be better to use getTime() altogether.
-
-// TEST - we need to see what happens when we pull a date type field into out JS and convert it to a date. Unless i can put it into JS as UTC with Z.
-// --- hmm it would seem when inserting just a plain old date, it keeps it as is and converts it to UTC as is. GOOD!
-
-// ADD last modified field updates upon patches
-
-//SWITCH locales to Intl.DateTimeFormat and force UTC
+// make edit pencil appear on hover
+// make td a standard size depending on the column maybe changing the th will do
+//incorporate multi-day

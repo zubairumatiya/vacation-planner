@@ -532,6 +532,11 @@ const VacationSchedule = () => {
   ) => {
     dragIndexRef.current = index;
     e.dataTransfer.setData("text/plain", String(itemID));
+    const cell = e.currentTarget as HTMLTableCellElement;
+    const row = cell.closest("tr") as HTMLTableRowElement;
+    const x = e.nativeEvent.offsetX;
+    const y = e.nativeEvent.offsetY;
+    e.dataTransfer.setDragImage(row, x, y);
   };
 
   const handleDragDrop = async (e: React.DragEvent) => {
@@ -574,13 +579,11 @@ const VacationSchedule = () => {
       return;
     } else {
       console.log("place in between");
-      console.log("targetIndex: " + targetIndex);
       const assembleArr: Schedule[] = [
         ...copy.slice(0, targetIndex), // explanation here - our target index is now going to look different in an array with one less element (for any elements that come after the one we remove)
         removedElement[0],
         ...copy.slice(targetIndex),
       ];
-      console.log("assemble", assembleArr);
       finalArr = changeDropTime(assembleArr, targetIndex, false, dropDay);
     }
 
@@ -652,7 +655,6 @@ const VacationSchedule = () => {
       const day = newDay.toISOString().split("T")[0];
 
       const constructDate = new Date(`${day}T${preserveTime}`);
-      console.log("TESTING: " + constructDate);
       finalArr[targetIndex].start_time = constructDate;
       finalArr[targetIndex].end_time = setEndDate(
         constructDate,
@@ -691,19 +693,33 @@ const VacationSchedule = () => {
         return finalArr;
       }
     } else {
-      const dateBefore: Date = finalArr[targetIndex - 1].start_time; //TODO hmm we have a dilemma. I think we can always get the day correct from the table becasue of newDay, but the problem now is placement within a table, as it currently stands, any newly dropped "in between" items derive their time from above so if i drop something from a later day into a day with one item, it will grab the time from the one above which is a different day. So in this case we would need a new time as well
-      const newDate: string = finalArr[targetIndex - 1].start_time
-        .toISOString()
-        .split("T")[0];
+      const dateBefore: Date = finalArr[targetIndex - 1]?.start_time; // we will be comparing adjacent days of the target to make sure it gets placed in the right day and not the day above
+      const dateAfter: Date = finalArr[targetIndex + 1]?.start_time;
 
-      const newHour: number = dateBefore.getUTCHours() + 1;
+      const dayDrop = newDay?.toISOString().split("T")[0];
+      let dayReference;
+      let newHour: number | null = null;
+      if (dateAfter && dateBefore) {
+        if (
+          dateAfter.toISOString().split("T")[0] === dayDrop &&
+          dateBefore.toISOString().split("T")[0] === dayDrop
+        ) {
+          dayReference = dateBefore;
+        } else if (dateBefore.toISOString().split("T")[0] === dayDrop) {
+          dayReference = dateBefore;
+        } else {
+          dayReference = dateAfter;
+          newHour = dayReference.getUTCHours() - 1;
+        }
+      } else {
+        dayReference = dateBefore;
+      }
+      const newDate: string = dayReference.toISOString().split("T")[0];
+      newHour = newHour ?? dayReference.getUTCHours() + 1;
       const newHourMod: string = prefixZero(newHour);
-      const minutes: string = prefixZero(
-        finalArr[targetIndex].start_time.getUTCMinutes()
-      );
+      const minutes: string = prefixZero(dayReference.getUTCMinutes());
 
       const constructDate = new Date(`${newDate}T${newHourMod}:${minutes}:00Z`);
-      console.log(constructDate);
       finalArr[targetIndex].start_time = constructDate;
       finalArr[targetIndex].end_time = setEndDate(
         constructDate,
@@ -755,30 +771,31 @@ const VacationSchedule = () => {
         const zeroAddedMonth = prefixZero(month);
         const dayOf = splits[1].slice(0, 2);
         const year = splits[2];
-
+        const combined = `${year}-${zeroAddedMonth}-${dayOf}`;
         const UTCDayOfTrip = new Date(
           `${year}-${zeroAddedMonth}-${dayOf}T00:00:00Z`
         );
         const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01 THIS HAS TO BE FIXED because it is treting the raw date as local time and turning it into UTC, which results in day shifts depending on local time
         return (
-          <div key={day}>
+          <div key={day} className={styles.tableNButtonContainer}>
             <div className={styles.tableContainer}>
               <table
                 onDrop={(e) => handleDragDrop(e)}
                 onDragOver={(e) => e.preventDefault()}
-                id={day}
+                className={styles.table}
+                id={combined}
               >
                 <caption>{day}</caption>
                 <thead>
                   <tr>
-                    <th>Drag-hide-this</th>
-                    <th>Start Time</th>
-                    <th>End Time</th>
-                    <th className={styles.cellHeader}>Location</th>
-                    <th>Cost</th>
-                    <th>Details</th>
-                    <th>Multi-day</th>
-                    <th>Edit-hide-this</th>
+                    <th className={styles.dragHeader}>Drag-hide-this</th>
+                    <th className={styles.startTimeHeader}>Start Time</th>
+                    <th className={styles.endTimeHeader}>End Time</th>
+                    <th className={styles.locationHeader}>Location</th>
+                    <th className={styles.costHeader}>Cost</th>
+                    <th className={styles.detailsHeader}>Details</th>
+                    <th className={styles.multiDayHeader}>Multi-day</th>
+                    <th className={styles.editFieldHeader}>Edit-hide-this</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -821,7 +838,7 @@ const VacationSchedule = () => {
                           draggable="true"
                           className={`${
                             index === dragIndexRef.current && styles.dragging
-                          }`}
+                          } ${styles.tableRow}`}
                         >
                           {value.id === editLineId ? (
                             <>
@@ -943,7 +960,7 @@ const VacationSchedule = () => {
                               </td>
                             </>
                           ) : (
-                            //          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Editing divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                            //          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Editing above : divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                             <>
                               <td
@@ -951,6 +968,7 @@ const VacationSchedule = () => {
                                 onDragStart={(e) =>
                                   handleDragStart(e, value.id, index)
                                 }
+                                className={styles.dragCells}
                               >
                                 <img
                                   className={styles.dragButton}
