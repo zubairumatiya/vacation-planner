@@ -244,6 +244,8 @@ const VacationSchedule = () => {
         new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`)
       );
       return new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`); LET's test the below*/
+      console.log("end time below");
+      console.log(new Date(newStartTime.getTime() + 60 * 60 * 1000));
       return new Date(newStartTime.getTime() + 60 * 60 * 1000);
     } else if (difference > 24) {
       console.log(
@@ -534,8 +536,9 @@ const VacationSchedule = () => {
     e.dataTransfer.setData("text/plain", String(itemID));
     const cell = e.currentTarget as HTMLTableCellElement;
     const row = cell.closest("tr") as HTMLTableRowElement;
+    const rect = row.getBoundingClientRect();
+    const y = e.clientY - rect.top;
     const x = e.nativeEvent.offsetX;
-    const y = e.nativeEvent.offsetY;
     e.dataTransfer.setDragImage(row, x, y);
   };
 
@@ -709,12 +712,18 @@ const VacationSchedule = () => {
           dayReference = dateBefore;
         } else {
           dayReference = dateAfter;
-          newHour = dayReference.getUTCHours() - 1;
+          newHour =
+            dayReference.getUTCHours() === 0
+              ? 0
+              : dayReference.getUTCHours() - 1;
         }
       } else {
         dayReference = dateBefore;
       }
       const newDate: string = dayReference.toISOString().split("T")[0];
+      if (dayReference.getUTCHours() === 23) {
+        newHour = 23;
+      }
       newHour = newHour ?? dayReference.getUTCHours() + 1;
       const newHourMod: string = prefixZero(newHour);
       const minutes: string = prefixZero(dayReference.getUTCMinutes());
@@ -835,7 +844,6 @@ const VacationSchedule = () => {
                           key={value.id}
                           id={value.id + ""}
                           data-index={index}
-                          draggable="true"
                           className={`${
                             index === dragIndexRef.current && styles.dragging
                           } ${styles.tableRow}`}

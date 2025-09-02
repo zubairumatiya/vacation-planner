@@ -64,10 +64,8 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-// make details cell wrap with a constrained width`
-// make details scrollable for a smaller height
-// center drag img depending on height of row
-// add end time to db query
+// FIX edit visual because time is cramped at the moment
 // TEST end time function
+// add end time to db query
 //incorporate multi-day
 // anki deck for react
