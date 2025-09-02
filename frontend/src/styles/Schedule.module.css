@@ -121,6 +121,17 @@
   display: flex;
 }
 
+.detailsTd {
+  width: 200px; /* now enforced */
+  word-wrap: break-word; /* or overflow-wrap */
+  white-space: normal;
+}
+
+.detailsTd div {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
 .detailsLabel {
   margin-bottom: 0;
 }
@@ -129,11 +140,16 @@
   visibility: hidden;
 }
 
+.dragButton {
+  display: block; /* prevents tiny spacing issues */
+  margin-left: auto; /* pushes it to the right */
+  margin-right: 0;
+}
+
 .dragCells {
-  display: flex;
-  justify-content: end;
   padding-right: 1rem;
 }
+
 .startTimeHeader {
   width: 6vw;
 }
@@ -168,8 +184,16 @@
   opacity: 1;
 }
 
+.tableRow {
+  height: 3rem;
+  align-items: center;
+}
+
 .table {
   width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
 }
 
 .tableContainer {

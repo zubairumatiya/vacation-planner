@@ -980,7 +980,9 @@ const VacationSchedule = () => {
                               <td>{eTime}</td>
                               <td>{value.location}</td>
                               <td>{`$${value.cost}`}</td>
-                              <td>{value.details}</td>
+                              <td className={styles.detailsTd}>
+                                <div>{value.details}</div>
+                              </td>
                               <td>{value.multi_day ? "yes" : "no"}</td>
                               <td>
                                 <img

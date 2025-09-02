@@ -64,6 +64,10 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-// make edit pencil appear on hover
-// make td a standard size depending on the column maybe changing the th will do
+// make details cell wrap with a constrained width`
+// make details scrollable for a smaller height
+// center drag img depending on height of row
+// add end time to db query
+// TEST end time function
 //incorporate multi-day
+// anki deck for react
