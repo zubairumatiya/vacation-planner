@@ -502,6 +502,13 @@ const VacationSchedule = () => {
     }
   };
 
+  const handleTextInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+    const MAX_HEIGHT = 5 * 16;
+    const el = e.currentTarget;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, MAX_HEIGHT) + "px";
+  };
+
   const handleEdit = (
     e: React.MouseEvent,
     id: number,
@@ -911,7 +918,7 @@ const VacationSchedule = () => {
 
                               <td>
                                 <input
-                                  className={styles.input}
+                                  className={`${styles.input} ${styles.costEditInput}`}
                                   type="number"
                                   name="cost"
                                   id="cost"
@@ -922,16 +929,16 @@ const VacationSchedule = () => {
                               </td>
 
                               <td>
+                                {/* 
                                 <div
                                   className={`${styles.itemElement} ${styles.textAreaContainer} ${styles.textureOverlay}`}
                                 >
                                   <div className={styles.fakeContainer}>
                                     <textarea
-                                      onKeyDown={handleKeyDown}
-                                      className={`${styles.input} 
-                      ${styles.textArea}`}
-                                      rows={4}
-                                      cols={50}
+                                      onKeyDown={handleTextInput}
+                                      className={`${styles.input} ${styles.textArea}`}
+                                      rows={50}
+                                      cols={5}
                                       name="details"
                                       id="details"
                                       maxLength={500}
@@ -939,6 +946,19 @@ const VacationSchedule = () => {
                                     />
                                   </div>
                                 </div>
+                                    */}
+
+                                <textarea
+                                  onInput={handleTextInput}
+                                  onKeyDown={handleKeyDown}
+                                  className={`${styles.textArea}`}
+                                  rows={50}
+                                  cols={5}
+                                  name="details"
+                                  id="details"
+                                  maxLength={500}
+                                  ref={detailEditRef}
+                                />
                               </td>
                               <td>
                                 <input
@@ -948,6 +968,7 @@ const VacationSchedule = () => {
                                   ref={multiDayEditRef}
                                 />
                               </td>
+
                               <td>
                                 <button
                                   type="button"
@@ -957,8 +978,6 @@ const VacationSchedule = () => {
                                 >
                                   submit edit
                                 </button>
-                              </td>
-                              <td>
                                 <button
                                   type="button"
                                   onClick={(e) => submitDelete(e, value.id)}
@@ -1106,6 +1125,7 @@ const VacationSchedule = () => {
                     </label>
                     <div className={styles.fakeContainer}>
                       <textarea
+                        onInput={handleTextInput}
                         onKeyDown={handleKeyDown}
                         ref={textAreaRef}
                         className={`${styles.input} 

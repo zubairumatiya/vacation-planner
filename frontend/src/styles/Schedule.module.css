@@ -39,8 +39,14 @@
   border-radius: 5px;
   margin-left: 0.25rem;
   padding-left: 0.5rem;
-  width: 3.5rem;
+  width: auto; /* shrink to content */
+  min-width: 3rem; /* don’t get too tiny */
+  max-width: 100%; /* don’t exceed the td */
+  box-sizing: border-box;
   overflow-wrap: anywhere;
+}
+
+.costEditInput {
 }
 
 .timeWrapper {
@@ -80,27 +86,28 @@
 }
 
 .textArea {
-  position: relative;
-  z-index: 2;
-  height: 1.75rem;
-
   margin-left: 0.25rem;
+  overflow-y: auto;
   resize: none;
-  overflow: hidden;
+  width: 95%;
+  box-sizing: border-box;
+  margin-left: 1rem;
+  border: 1px solid white;
 }
 
+/*
 .textArea:focus {
   position: absolute;
   top: -1rem;
   left: 0;
   width: 12.5rem;
   height: 6rem;
-  background-color: white; /* Ensures text is visible */
-  color: black; /* Optional: force contrast */
-  z-index: 3; /* Ensure it's above texture */
-  padding-left: 0.5rem; /* Required for spacing */
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Optional: visual elevation */
-}
+  background-color: white; /
+  color: black; 
+  z-index: 3; 
+  padding-left: 0.5rem; 
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+}*/
 
 .textureOverlay::before {
   content: "";
@@ -128,7 +135,7 @@
 }
 
 .detailsTd div {
-  max-height: 100px;
+  max-height: 16vh;
   overflow-y: auto;
 }
 
@@ -151,11 +158,9 @@
 }
 
 .startTimeHeader {
-  width: 6vw;
 }
 
 .endTimeHeader {
-  width: 6vw;
 }
 
 .locationHeader {
@@ -182,6 +187,9 @@
 
 .tableRow:hover .editIcon {
   opacity: 1;
+}
+
+.table td {
 }
 
 .tableRow {

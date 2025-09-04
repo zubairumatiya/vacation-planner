@@ -64,8 +64,11 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-// FIX edit visual because time is cramped at the moment
+//FIX details during edit so it grows while typing
+// FIX responsive design
 // TEST end time function
 // add end time to db query
+// ADD date to edit
+// make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too
 //incorporate multi-day
 // anki deck for react
