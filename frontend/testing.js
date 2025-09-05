@@ -64,11 +64,14 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-//FIX details during edit so it grows while typing
 // FIX responsive design
+// not showing table when no items are in there
 // TEST end time function
 // add end time to db query
 // ADD date to edit
 // make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too
 //incorporate multi-day
+// add cost total
+// add during trip cost trackers
 // anki deck for react
+// nice to have  -  maybe add deletion warning on if something

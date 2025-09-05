@@ -46,6 +46,12 @@
   background-color: rgb(120, 120, 120);
 }
 
+.meridiem {
+  border: 1px solid white;
+  border-radius: 5px;
+  padding-left: 3px;
+}
+
 .focused {
   background-color: rgba(120, 120, 120, 0.506);
 }

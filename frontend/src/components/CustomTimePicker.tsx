@@ -404,6 +404,7 @@ const CustomTimePicker = (props: Props) => {
           <select
             name="meridiem"
             id="meridiem"
+            className={styles.meridiem}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
               setMeridiemSelection(e.target.value)
             }

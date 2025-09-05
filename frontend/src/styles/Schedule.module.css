@@ -34,14 +34,34 @@
   background-color: red;
 }
 
+.submitEditButton {
+  background-color: lightgreen;
+}
+
+.cancelButton {
+  font-weight: 400;
+}
+
+.buttonsWhileEditing {
+  padding: 0.25rem 0.5rem;
+  flex: 1;
+}
+
+.editButtonCluster {
+  width: 100%;
+  height: 5rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .input {
   border: 0.1rem solid white;
   border-radius: 5px;
   margin-left: 0.25rem;
   padding-left: 0.5rem;
-  width: auto; /* shrink to content */
+  width: 5rem;
   min-width: 3rem; /* don’t get too tiny */
-  max-width: 100%; /* don’t exceed the td */
+  max-width: 90%; /* don’t exceed the td */
   box-sizing: border-box;
   overflow-wrap: anywhere;
 }
@@ -86,46 +106,19 @@
 }
 
 .textArea {
+  height: 5rem;
   margin-left: 0.25rem;
   overflow-y: auto;
   resize: none;
   width: 95%;
   box-sizing: border-box;
-  margin-left: 1rem;
   border: 1px solid white;
+  border-radius: 5px;
+  padding: 5px;
 }
 
-/*
-.textArea:focus {
-  position: absolute;
-  top: -1rem;
-  left: 0;
-  width: 12.5rem;
-  height: 6rem;
-  background-color: white; /
-  color: black; 
-  z-index: 3; 
-  padding-left: 0.5rem; 
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
-}*/
-
-.textureOverlay::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 6rem;
-
-  background-image: url("/your-texture.svg");
-  background-size: cover;
-  opacity: 0.2; /* adjust for subtlety */
-  pointer-events: none; /* so you can still click inputs */
-  z-index: 1;
-}
-
-.textAreaContainer {
-  position: relative;
-  display: flex;
+.addTextArea {
+  width: 10rem;
 }
 
 .detailsTd {
