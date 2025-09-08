@@ -65,6 +65,7 @@ console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
 // FIX responsive design
+// FIX hover for edit since that's not a thing for touch screen!
 // not showing table when no items are in there
 // TEST end time function
 // add end time to db query

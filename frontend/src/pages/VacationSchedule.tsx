@@ -1002,8 +1002,12 @@ const VacationSchedule = () => {
                               </td>
                               <td>{sTime}</td>
                               <td>{eTime}</td>
-                              <td>{value.location}</td>
-                              <td>{`$${value.cost}`}</td>
+                              <td className={styles.locationTd}>
+                                {value.location}
+                              </td>
+                              <td
+                                className={styles.costTd}
+                              >{`$${value.cost}`}</td>
                               <td className={styles.detailsTd}>
                                 <div>{value.details}</div>
                               </td>
