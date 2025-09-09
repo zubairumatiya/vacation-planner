@@ -64,8 +64,7 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-// FIX responsive design
-// FIX hover for edit since that's not a thing for touch screen!
+//test dragging with new responsive design
 // not showing table when no items are in there
 // TEST end time function
 // add end time to db query
@@ -74,5 +73,14 @@ console.log(new Date(d).toISOString().split("T")[0]);
 //incorporate multi-day
 // add cost total
 // add during trip cost trackers
+// add want to see list
+// add google maps API window
 // anki deck for react
-// nice to have  -  maybe add deletion warning on if something
+// nice to have - can add a bunch of things to the todo from google maps
+// nice to have - can show pins from the items in the todo into google maps (will prob need some sort of ai interprettur on locations that can't be found)
+// nice to have - can automate all the planning given the items in the want to see list and add it to the schedule
+// nice to have - can also add things to the trip like popular destiantions if option is selected
+// nice to have - plan it for me feature where user gives destinations, length of time, must see sights, activity levels, budget, hotel fanciness, focus(history, art, live events, etc)
+// nice to have - ease the booking process by sending users to the links of places that need booking, would be nice if we can go through up until the confirm booking page (maybe we can utilize browser information like credit card, user info, and address)
+// nice to have - and can house confirmation number maybe
+// nice to have  -  maybe add deletion warning on if something has a lot of details

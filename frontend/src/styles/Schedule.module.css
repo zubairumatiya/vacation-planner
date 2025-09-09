@@ -147,7 +147,6 @@
 }
 
 .dragHeader {
-  visibility: hidden;
 }
 
 .dragButton {
@@ -182,13 +181,29 @@
   visibility: hidden;
 }
 
-.tableRow .editIcon {
-  opacity: 0;
-  transition: opacity 0.15s ease;
+@media (hover: hover) and (pointer: fine) {
+  .tableRow .editIcon {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .tableRow:hover .editIcon {
+    opacity: 1;
+  }
 }
 
-.tableRow:hover .editIcon {
-  opacity: 1;
+.tableCaption {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 1rem;
+  font-size: large;
+}
+
+.dragHeader,
+.dragCells {
+  position: sticky;
+  left: 0;
+  background-color: var(--app-bg);
 }
 
 .table th,
@@ -204,13 +219,14 @@
 .table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: separate;
+  border-collapse: collapse;
   border-spacing: 0 0.5rem;
+  min-width: 800px;
 }
 
 .tableContainer {
-  display: flex;
-  justify-content: center;
+  /*display: flex;
+  justify-content: center;*/
   width: 80vw;
   overflow-x: auto; /* enables horizontal scrolling */
   -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */

@@ -788,6 +788,7 @@ const VacationSchedule = () => {
         const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01 THIS HAS TO BE FIXED because it is treting the raw date as local time and turning it into UTC, which results in day shifts depending on local time
         return (
           <div key={day} className={styles.tableNButtonContainer}>
+            <div className={styles.tableCaption}>{day}</div>
             <div className={styles.tableContainer}>
               <table
                 onDrop={(e) => handleDragDrop(e)}
@@ -795,17 +796,18 @@ const VacationSchedule = () => {
                 className={styles.table}
                 id={combined}
               >
-                <caption>{day}</caption>
                 <thead>
                   <tr>
-                    <th className={styles.dragHeader}>Drag-hide-this</th>
+                    <th
+                      className={editLineId ? undefined : styles.dragHeader}
+                    ></th>
                     <th className={styles.startTimeHeader}>Start Time</th>
                     <th className={styles.endTimeHeader}>End Time</th>
                     <th className={styles.locationHeader}>Location</th>
                     <th className={styles.costHeader}>Cost</th>
                     <th className={styles.detailsHeader}>Details</th>
                     <th className={styles.multiDayHeader}>Multi-day</th>
-                    <th className={styles.editFieldHeader}>Edit-hide-this</th>
+                    <th className={styles.editFieldHeader}></th>
                   </tr>
                 </thead>
                 <tbody>
