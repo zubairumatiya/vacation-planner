@@ -64,7 +64,8 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-//test dragging with new responsive design
+console.log(new Date("2025-08-01T02:00:00.000Z").getTime());
+// make dragging responsive to all platforms
 // not showing table when no items are in there
 // TEST end time function
 // add end time to db query
@@ -75,7 +76,8 @@ console.log(new Date(d).toISOString().split("T")[0]);
 // add during trip cost trackers
 // add want to see list
 // add google maps API window
-// anki deck for react
+
+// nice to have -  anki deck for react
 // nice to have - can add a bunch of things to the todo from google maps
 // nice to have - can show pins from the items in the todo into google maps (will prob need some sort of ai interprettur on locations that can't be found)
 // nice to have - can automate all the planning given the items in the want to see list and add it to the schedule

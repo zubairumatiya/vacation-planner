@@ -114,6 +114,7 @@ const VacationSchedule = () => {
           i.start_time = new Date(i.start_time);
           i.end_time = new Date(i.end_time);
         }
+        console.log(data.schedule);
         data.schedule.sort(
           (a: Schedule, b: Schedule) =>
             a.start_time.getTime() - b.start_time.getTime()
