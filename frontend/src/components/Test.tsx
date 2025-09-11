@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DndContext,
   closestCenter,
@@ -9,16 +9,40 @@ import {
 } from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   verticalListSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-function SortableRow({ id, cells }: { id: string; cells: string[] }) {
+type Schedule = {
+  id: number;
+  trip_id: number;
+  location: string;
+  details: string;
+  start_time: string;
+  end_time: string;
+  cost: string;
+  multi_day: boolean;
+};
+type innerObject = { index: number; cells: Schedule }[];
+type MasterObject = {
+  [key: string]: innerObject; // values must be arrays of any type
+};
+
+function SortableRow({
+  id,
+  cells,
+  index,
+  day,
+}: {
+  id: string;
+  cells: Schedule;
+  index: string;
+  day: string;
+}) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
+    useSortable({ id, data: { index, day } });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -28,16 +52,20 @@ function SortableRow({ id, cells }: { id: string; cells: string[] }) {
 
   return (
     <tr ref={setNodeRef} style={style}>
-      {cells.map((cell, index) => {
+      {Object.values(cells).map((value, index) => {
         if (index === 0) {
           return (
             <td
               key={index}
-              {...attributes}
-              {...listeners}
-              style={{ padding: "8px", border: "1px solid gray" }}
+              {...attributes} // we are adding these towo to the first td only because they are will be the only cells we are able to drag with
+              {...listeners} // we are adding these towo to the first td only because they are will be the only cells we are able to drag with
+              style={{
+                padding: "8px",
+                overflow: "clip",
+                border: "1px solid gray",
+              }}
             >
-              {cell}
+              {value}
             </td>
           );
         } else {
@@ -46,7 +74,7 @@ function SortableRow({ id, cells }: { id: string; cells: string[] }) {
               key={index}
               style={{ padding: "8px", border: "1px solid gray" }}
             >
-              {cell}
+              {value}
             </td>
           );
         }
@@ -56,16 +84,6 @@ function SortableRow({ id, cells }: { id: string; cells: string[] }) {
 }
 
 export default function App() {
-  type Schedule = {
-    id: number;
-    trip_id: number;
-    location: string;
-    details: string;
-    start_time: string;
-    end_time: string;
-    cost: string;
-    multi_day: boolean;
-  };
   const dataFromDb: Schedule[] = [
     {
       id: 27,
@@ -109,53 +127,74 @@ export default function App() {
       multi_day: false,
     },
   ];
+  const [allData, setAllData] = useState<MasterObject>({});
 
-  //we will have this precalculated
-  const length = 3;
+  useEffect(() => {
+    //we will have this precalculated
+    //const length = 3;
 
-  // we will have the days selected
-  const day = [15, 16, 17];
+    // we will have the days selected
+    const day = [15, 16, 17];
 
-  // sort so that the index is properly assigned -
-  dataFromDb.sort(
-    (a, b) =>
-      new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
-  );
+    // sort so that the index is properly assigned -
+    dataFromDb.sort(
+      (a, b) =>
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+    );
 
-  //make a prefilled object of the days
-  type MasterObject = {
-    [key: string]: { index: number; cells: Schedule }[]; // values must be arrays of any type
-  };
-  const masterObj: MasterObject = {};
-  day.forEach((v) => (masterObj[v + ""] = []));
+    //make a prefilled object of the days
 
-  Object.entries(masterObj).map(([key]) => {
-    dataFromDb.forEach((v, i) => {
-      const startTime = new Date(v.start_time);
-      if (key === String(startTime.getUTCDate()))
-        masterObj[key].push({ index: i, cells: v });
+    const masterObj: MasterObject = {};
+    day.forEach((v) => (masterObj[v + ""] = []));
+
+    Object.entries(masterObj).map(([key]) => {
+      dataFromDb.forEach((v, i) => {
+        const startTime = new Date(v.start_time);
+        if (key === String(startTime.getUTCDate()))
+          masterObj[key].push({ index: i, cells: v });
+      });
     });
-  });
+    setAllData(masterObj);
+  }, []);
 
   // for next time - i need to see how i can iterate over this to make a table per day, but when dragging it uses the unified index for the dragover animation
   // will need to have some way to do active.index
 
-  const [rows, setRows] = useState([
+  /* const [rows, setRows] = useState([
     { id: "row1", cells: ["A1", "B1", "C1"] },
     { id: "row2", cells: ["A2", "B2", "C2"] },
     { id: "row3", cells: ["A3", "B3", "C3"] },
     { id: "row4", cells: ["A4", "B4", "C4"] },
     { id: "row5", cells: ["A5", "B5", "C5"] },
-  ]);
+  ]);*/
 
   const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
-      const oldIndex = rows.findIndex((r) => r.id === active.id);
-      const newIndex = rows.findIndex((r) => r.id === over.id);
-      setRows(arrayMove(rows, oldIndex, newIndex));
+      const oldIndex = active.data.current?.index;
+      const newIndex = over.data.current?.index;
+      const oldTable = active.data.current?.day;
+      const newTable = over.data.current?.day;
+      setAllData((prev) => {
+        const oldLocalIndex = prev[oldTable].findIndex(
+          (v) => v.index === oldIndex
+        );
+        const newLocalIndex = prev[newTable].findIndex(
+          (v) => v.index === newIndex
+        );
+        const movingItem = prev[oldTable][oldLocalIndex];
+        return {
+          ...prev,
+          [oldTable]: [...prev[oldTable].filter((v) => v.index !== oldIndex)],
+          [newTable]: [
+            ...prev[newTable].slice(0, newLocalIndex),
+            movingItem,
+            ...prev[newTable].slice(newLocalIndex),
+          ],
+        };
+      }); // will this mess up the order of the tables
     }
   };
 
@@ -165,52 +204,74 @@ export default function App() {
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
-      <table
-        style={{ borderCollapse: "collapse", width: "100%", minWidth: "600px" }}
-      >
-        <thead>
-          <tr>
-            <th style={{ border: "1px solid gray", padding: "8px" }}>Col A</th>
-            <th style={{ border: "1px solid gray", padding: "8px" }}>Col B</th>
-            <th style={{ border: "1px solid gray", padding: "8px" }}>Col C</th>
-          </tr>
-        </thead>
-        <SortableContext
-          items={rows.map((r) => r.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <tbody>
-            {rows
-              .filter((_, index) => index >= 0 && index <= 2)
-              .map((row) => (
-                <SortableRow key={row.id} id={row.id} cells={row.cells} />
-              ))}
-          </tbody>
-        </SortableContext>
-      </table>
-      <table
-        style={{ borderCollapse: "collapse", width: "100%", minWidth: "600px" }}
-      >
-        <thead>
-          <tr>
-            <th style={{ border: "1px solid gray", padding: "8px" }}>Col A</th>
-            <th style={{ border: "1px solid gray", padding: "8px" }}>Col B</th>
-            <th style={{ border: "1px solid gray", padding: "8px" }}>Col C</th>
-          </tr>
-        </thead>
-        <SortableContext
-          items={rows.map((r) => r.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <tbody>
-            {rows
-              .filter((_, index) => index >= 3 && index <= 4)
-              .map((row) => (
-                <SortableRow key={row.id} id={row.id} cells={row.cells} />
-              ))}
-          </tbody>
-        </SortableContext>
-      </table>
+      {Object.entries(allData).flatMap(
+        (
+          [key, value] // for next time: we need to see how we are going sort the schedule items into the right tables, we already did it so it should work, but how will we ensure it stays in the right buckets?
+        ) => (
+          <table
+            key={key}
+            id={key}
+            style={{
+              borderCollapse: "collapse",
+              tableLayout: "fixed",
+              width: "100%",
+              minWidth: "600px",
+              marginTop: "20px",
+            }}
+          >
+            <caption>{key}</caption>
+            <thead>
+              <tr>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>id</th>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>
+                  trip_id
+                </th>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>
+                  location
+                </th>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>
+                  details
+                </th>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>
+                  start_time
+                </th>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>
+                  end_time
+                </th>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>
+                  cost
+                </th>
+                <th style={{ border: "1px solid gray", padding: "8px" }}>
+                  multi-day
+                </th>
+              </tr>
+            </thead>
+            <SortableContext
+              items={value.map((v) => {
+                console.log(v.cells.id);
+                return v.cells.id;
+              })}
+              strategy={verticalListSortingStrategy}
+            >
+              <tbody>
+                {value.map(
+                  (
+                    v // the rows should be rendered per day (table) not all days on each table
+                  ) => (
+                    <SortableRow
+                      key={v.cells.id}
+                      id={String(v.cells.id)}
+                      cells={v.cells}
+                      index={String(v.index)}
+                      day={key}
+                    />
+                  )
+                )}
+              </tbody>
+            </SortableContext>
+          </table>
+        )
+      )}
     </DndContext>
   );
 }

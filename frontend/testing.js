@@ -64,7 +64,32 @@ const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
 console.log(sp.toISOString().split("T")[0]);
 console.log(new Date(d).toISOString().split("T")[0]);
 
-console.log(new Date("2025-08-01T02:00:00.000Z").getTime());
+const boern = {
+  id: 37,
+  trip_id: 1,
+  location: "eh",
+  details: "beh",
+  start_time: "2025-07-16T00:00:00.000Z",
+  end_time: "2025-07-16T08:00:00.000Z",
+  cost: "3.00",
+  multi_day: false,
+};
+
+const s = {
+  "jul 15": [
+    { index: 1, cells: boern },
+    { index: 2, cells: boern },
+  ],
+  "jul 16": [
+    { index: 3, cells: boern },
+    { index: 4, cells: boern },
+  ],
+};
+
+Object.values(s)
+  .flatMap((value) => value)
+  .map((v) => console.log(v.cells.id));
+
 // make dragging responsive to all platforms
 // not showing table when no items are in there
 // TEST end time function
