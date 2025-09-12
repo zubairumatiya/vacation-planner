@@ -255,6 +255,7 @@ const VacationSchedule = () => {
       console.log(new Date(newStartTime.getTime() + 60 * 60 * 1000));
       return new Date(newStartTime.getTime() + 60 * 60 * 1000);
     } else if (difference > 24) {
+      // this can be on two different days just fyi
       console.log(
         "greater than 24 hours",
         new Date(newStartTime.getTime() + 23 * 60 * 60 * 1000)
@@ -599,7 +600,6 @@ const VacationSchedule = () => {
     }
 
     const updatedItem = finalArr[targetIndex];
-    console.log(updatedItem.start_time);
     const result = await fetch(`${apiURL}/update-time/${updatedItem.id}`, {
       method: "PATCH",
       headers: {
