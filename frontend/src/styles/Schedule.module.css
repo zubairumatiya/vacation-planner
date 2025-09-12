@@ -151,13 +151,12 @@
 
 .dragButton {
   display: block; /* prevents tiny spacing issues */
-  margin-left: auto; /* pushes it to the right */
+  margin-left: 0.5rem; /* pushes it to the right */
   margin-right: 0;
   min-width: 1rem;
 }
 
 .dragCells {
-  padding-right: 1rem;
 }
 
 .startTimeHeader {
@@ -216,6 +215,10 @@
   align-items: center;
 }
 
+.dragCol {
+  width: 4rem;
+}
+
 .table {
   width: 100%;
   table-layout: fixed;
@@ -243,7 +246,7 @@
   width: 3rem;
   height: 2rem;
   padding: 0;
-
+  min-width: 3rem;
   border: 1px solid white;
   border-radius: 5px;
 }
@@ -267,7 +270,12 @@
 }
 
 .dragging {
-  opacity: 0.65;
+  opacity: 0.7;
+}
+
+.dnd-poly-drag-image {
+  pointer-events: none;
+  opacity: 1;
 }
 
 .pageWrapper {

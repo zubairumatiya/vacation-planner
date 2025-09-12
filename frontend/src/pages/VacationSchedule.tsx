@@ -7,6 +7,12 @@ import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
 import editIcon from "../assets/edit-icon.svg";
 import dragIcon from "../assets/dragger.svg";
+import { polyfill } from "mobile-drag-drop";
+import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
+
+polyfill({
+  dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+});
 const apiURL = import.meta.env.VITE_API_URL;
 
 type Schedule = {
@@ -794,9 +800,13 @@ const VacationSchedule = () => {
               <table
                 onDrop={(e) => handleDragDrop(e)}
                 onDragOver={(e) => e.preventDefault()}
+                onDragEnter={(e) => e.preventDefault()}
                 className={styles.table}
                 id={combined}
               >
+                <colgroup>
+                  <col className={styles.dragCol} />
+                </colgroup>
                 <thead>
                   <tr>
                     <th
@@ -847,6 +857,7 @@ const VacationSchedule = () => {
                         <tr
                           key={value.id}
                           id={value.id + ""}
+                          onDragOver={(e) => e.preventDefault()}
                           data-index={index}
                           className={`${
                             index === dragIndexRef.current && styles.dragging
