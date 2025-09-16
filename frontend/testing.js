@@ -1,6 +1,6 @@
 const nextDay = new Date("2025-08-01T02:00:00.000Z");
 
-console.log(nextDay.toISOString().slice(11, 19));
+console.log(nextDay.toISOString());
 
 console.log(
   Date.UTC(
@@ -10,92 +10,22 @@ console.log(
     nextDay.getUTCHours()
   )
 );
-
+console.log("BELOW!");
 console.log(nextDay.toUTCString());
 
 const test = new Date("2025-08-01"); // test is now in UTC 00:00Z -> great
-console.log(test);
-
-console.log(new Date("2025-07-15"));
-
-console.log(nextDay.toLocaleDateString());
-console.log();
-console.log(nextDay.toLocaleDateString("en-GB"));
-
-let options = {
-  weekday: "long",
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  timeZone: "UTC",
-};
-
-const dayy = new Intl.DateTimeFormat("en-US", {
-  weekday: "long",
-  timeZone: "UTC",
-}).format(nextDay);
-const intl = new Intl.DateTimeFormat("en-US", options).format(nextDay);
-console.log(intl);
-console.log(dayy);
-
-const monthsArr = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-const d = "Aug 01, 2025";
-const splits = d.split(" ");
-const month = monthsArr.findIndex((v) => splits[0] === v) + 1;
-const day = splits[1].slice(0, 2);
-const year = splits[2];
-
-console.log(d);
-console.log(year, month, day);
-const sp = new Date(`${year}-0${month}-${day}T00:00:00Z`);
-console.log(sp.toISOString().split("T")[0]);
-console.log(new Date(d).toISOString().split("T")[0]);
-
-const boern = {
-  id: 37,
-  trip_id: 1,
-  location: "eh",
-  details: "beh",
-  start_time: "2025-07-16T00:00:00.000Z",
-  end_time: "2025-07-16T08:00:00.000Z",
-  cost: "3.00",
-  multi_day: false,
-};
-
-const s = {
-  "jul 15": [
-    { index: 1, cells: boern },
-    { index: 2, cells: boern },
-  ],
-  "jul 16": [
-    { index: 3, cells: boern },
-    { index: 4, cells: boern },
-  ],
-};
-
-Object.values(s)
-  .flatMap((value) => value)
-  .map((v) => console.log(v.cells.id));
+console.log(test.toISOString());
 
 // make dragging responsive to all platforms // NEEDS TESTING
-// TEST end time function // IT WORKS , BUT it will allow the end time to be on a different day than the start time. Some options: display
-//the date only if the end is on a different day than the start. We can just always make the end an hour later.
+// should i just make end time an hour later upon drag and drop?
 // Thinking more about how users will use drag and drop, i wonder if i should just keep the same time and let them change it when they want.
 //Maybe it's more annoying to have the time you want forcefully changed than to do more work to purposefully change it.
 //Because the way planning works is, it's more scrambled than beginning to finish right? Let's think more about this.
+
+// ADD date when start day and end day are diff
+
+// we need to add date when editing but limit going greater than 24 hours -- which means
+
 // add end time to db query
 // ADD date to edit
 // make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too

@@ -70,6 +70,10 @@ const VacationSchedule = () => {
     multiDay: false,
   });
   const dragIndexRef = useRef(-1);
+  const [editStartDate, setEditStartDate] = useState<string>("");
+  const [editEndDate, setEditEndDate] = useState<string>("");
+  const startDateEditRef = useRef<HTMLInputElement>(null);
+  const endDateEditRef = useRef<HTMLInputElement>(null);
 
   const monthsArr = [
     "Jan",
@@ -401,16 +405,21 @@ const VacationSchedule = () => {
     e.preventDefault();
     let startDateAssembler;
     let endDateAssembler;
+
+    const startDateHold: string = startDateEditRef.current?.value ?? dateAdded;
+
+    const endDateHold: string = endDateEditRef.current?.value ?? dateAdded;
+
     if (!startTimePick || startTimePick === ": ") {
-      startDateAssembler = customISOTime(dateAdded, "00:00 AM");
+      startDateAssembler = customISOTime(startDateHold, "00:00 AM");
     } else {
-      startDateAssembler = customISOTime(dateAdded, startTimePick);
+      startDateAssembler = customISOTime(startDateHold, startTimePick);
     }
 
     if (!endTimePick || endTimePick === ": ") {
-      endDateAssembler = customISOTime(dateAdded, "00:00 AM"); // TO-DO this will have to be different for multi-day
+      endDateAssembler = customISOTime(endDateHold, "00:00 AM"); // TO-DO this will have to be different for multi-day
     } else {
-      endDateAssembler = customISOTime(dateAdded, endTimePick);
+      endDateAssembler = customISOTime(endDateHold, endTimePick);
     }
     console.log("dateAdded:", dateAdded);
     console.log("startTimePick", startTimePick);
@@ -517,7 +526,9 @@ const VacationSchedule = () => {
     preFilledLocation: string,
     preFilledCost: number,
     preFilledDetails: string,
-    preFilledMultiDay: boolean
+    preFilledMultiDay: boolean,
+    startDate: string,
+    endDate: string
   ) => {
     e.preventDefault();
     setTest(preFilledLocation);
@@ -529,6 +540,8 @@ const VacationSchedule = () => {
     });
     setEditLineId(id);
     setAddingItem(true); // let's not allow adding items when editing an item
+    setEditStartDate(startDate);
+    setEditEndDate(endDate);
   };
 
   const cancelAdd = () => {
@@ -851,6 +864,20 @@ const VacationSchedule = () => {
                         eTime = "12:01 AM";
                       }
 
+                      const startDate: string = value.start_time
+                        .toISOString()
+                        .split("T")[0];
+
+                      const endDate: string = value.end_time
+                        .toISOString()
+                        .split("T")[0];
+
+                      const endDateFormatted: string = `${prefixZero(
+                        value.end_time.getUTCMonth() + 1
+                      )}-${prefixZero(
+                        value.end_time.getUTCDate()
+                      )}-${value.end_time.getUTCFullYear()}`;
+
                       //        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Iterate divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                       return (
@@ -875,6 +902,18 @@ const VacationSchedule = () => {
                                 </button>
                               </td>
                               <td>
+                                {
+                                  <input
+                                    type="date"
+                                    name="startDate"
+                                    id="startDate"
+                                    value={editStartDate}
+                                    onChange={(e) =>
+                                      setEditStartDate(e.target.value)
+                                    }
+                                    ref={startDateEditRef}
+                                  />
+                                }
                                 <CustomTimePicker
                                   className={
                                     startError ? "border-red-500" : undefined
@@ -896,6 +935,18 @@ const VacationSchedule = () => {
                               </td>
 
                               <td>
+                                {
+                                  <input
+                                    type="date"
+                                    name="endDate"
+                                    id="endDate"
+                                    value={editEndDate}
+                                    onChange={(e) =>
+                                      setEditEndDate(e.target.value)
+                                    }
+                                    ref={endDateEditRef}
+                                  />
+                                }
                                 <CustomTimePicker
                                   className={
                                     startError ? "border-red-500" : undefined
@@ -1015,7 +1066,15 @@ const VacationSchedule = () => {
                                 />
                               </td>
                               <td>{sTime}</td>
-                              <td>{eTime}</td>
+                              {startDate !== endDate ? (
+                                <td>
+                                  {endDateFormatted}
+                                  <br />
+                                  {eTime}
+                                </td>
+                              ) : (
+                                <td>{eTime}</td>
+                              )}
                               <td className={styles.locationTd}>
                                 {value.location}
                               </td>
@@ -1038,7 +1097,9 @@ const VacationSchedule = () => {
                                       value.location,
                                       value.cost,
                                       value.details,
-                                      value.multi_day
+                                      value.multi_day,
+                                      startDate,
+                                      endDate
                                     )
                                   }
                                 />

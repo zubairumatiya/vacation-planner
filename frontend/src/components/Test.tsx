@@ -272,6 +272,7 @@ export default function App() {
           </table>
         )
       )}
+      <input type="date" name="" id="" value={"07-15-2025"} />
     </DndContext>
   );
 }
