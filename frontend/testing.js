@@ -17,19 +17,22 @@ const test = new Date("2025-08-01"); // test is now in UTC 00:00Z -> great
 console.log(test.toISOString());
 
 // make dragging responsive to all platforms // NEEDS TESTING
-// should i just make end time an hour later upon drag and drop?
+// should i just make end time an hour later upon drag and drop?  -- i think i should - DONE
+
 // Thinking more about how users will use drag and drop, i wonder if i should just keep the same time and let them change it when they want.
 //Maybe it's more annoying to have the time you want forcefully changed than to do more work to purposefully change it.
-//Because the way planning works is, it's more scrambled than beginning to finish right? Let's think more about this.
+//Because the way planning works is, it's more scrambled than beginning to finish right? Let's think more about this. -- HOLD OFF
 
-// ADD date when start day and end day are diff
+// ADD date when start day and end day are diff -- DONE
 
 // we need to add date when editing but limit going greater than 24 hours -- which means
 
-// add end time to db query
-// ADD date to edit
+// add end time to db query --DONE
+// ADD date to edit -- DONE
+// fix time not blurring properly even on clicking outside
 // make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too
 //incorporate multi-day
+// add double click to edit
 // add cost total
 // add during trip cost trackers
 // add want to see list

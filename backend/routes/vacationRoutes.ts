@@ -220,8 +220,8 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
 router.patch("/update-time/:id", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "UPDATE trip_schedule SET start_time=$1 WHERE id=$2 RETURNING *",
-      [req.body.start, req.params.id]
+      "UPDATE trip_schedule SET start_time=$1, end_time=$2 WHERE id=$3 RETURNING *",
+      [req.body.start, req.body.end, req.params.id]
     );
     if (result.rowCount > 0) {
       res.status(200).json({ updatedData: result.rows[0] });

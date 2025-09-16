@@ -1,5 +1,6 @@
 import styles from "../styles/CustomTimePicker.module.css";
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import dropDownArrow from "../assets/arrow-drop.svg";
 
 type Props = {
@@ -28,6 +29,9 @@ const CustomTimePicker = (props: Props) => {
   const minuteInputRef = useRef<HTMLInputElement>(null);
   const skipNextHourFocus = useRef(false);
   const skipNextMinuteFocus = useRef(false);
+  const hourImageRef = useRef<HTMLImageElement>(null);
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [hourAnchor, setHourAnchor] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
     props.onChange(hourSelection, minuteSelection, meridiemSelection);
@@ -77,6 +81,14 @@ const CustomTimePicker = (props: Props) => {
   }, [hideMinutes, minuteSelection]);
 
   useEffect(() => {
+    setAnchor(hideMinutes ? null : minuteButtonRef.current);
+  }, [hideMinutes]);
+
+  useEffect(() => {
+    setHourAnchor(hideHours ? null : hourButtonRef.current);
+  }, [hideHours]);
+
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
         minuteUlRef.current &&
@@ -89,7 +101,6 @@ const CustomTimePicker = (props: Props) => {
         !hourButtonRef.current.contains(e.target as Node)
       ) {
         setHideHours(true);
-
         setHideMinutes(true);
       }
 
@@ -111,6 +122,32 @@ const CustomTimePicker = (props: Props) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [hideHours, hideMinutes]);
+
+  function Dropdown({
+    anchorEl,
+    children,
+  }: {
+    anchorEl: HTMLElement | null;
+    children: React.ReactNode;
+  }) {
+    if (!anchorEl) return null;
+
+    const rect = anchorEl.getBoundingClientRect();
+
+    return createPortal(
+      <div
+        style={{
+          position: "absolute",
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+          zIndex: 9999,
+        }}
+      >
+        {children} {/* your preexisting <ul> goes here */}
+      </div>,
+      document.body
+    );
+  }
 
   const captureMinuteSelection = (e: React.MouseEvent) => {
     const li = e.target as HTMLLIElement;
@@ -206,6 +243,7 @@ const CustomTimePicker = (props: Props) => {
     skipNextHourFocus.current = true;
     hourInputRef.current?.focus();
     setHideHours((prev) => !prev);
+    setAnchor(anchor ? null : minuteButtonRef.current);
   };
 
   const handleMinuteToggleClick = () => {
@@ -307,31 +345,34 @@ const CustomTimePicker = (props: Props) => {
                   className={`transition-transform duration-200 ${
                     hideHours ? "rotate-0" : "rotate-180"
                   }`}
+                  ref={hourImageRef}
                 />
               </button>
             </div>
             <div>
-              <ul
-                ref={hourUlRef}
-                hidden={hideHours}
-                className={styles.scrollContainer}
-                onMouseDown={captureHourSelection}
-              >
-                {[...new Array(12)].map((_, i) => {
-                  return (
-                    <li
-                      key={i}
-                      id={i + ""}
-                      ref={i === focusedHourIndex ? hourLiRef : null}
-                      className={`${styles.listItem} ${
-                        i === focusedHourIndex && styles.focused
-                      }`}
-                    >
-                      {i < 9 ? "0" + (i + 1) : i + 1}
-                    </li>
-                  );
-                })}
-              </ul>
+              <Dropdown anchorEl={hourAnchor}>
+                <ul
+                  ref={hourUlRef}
+                  hidden={hideHours}
+                  className={styles.scrollContainer}
+                  onMouseDown={captureHourSelection}
+                >
+                  {[...new Array(12)].map((_, i) => {
+                    return (
+                      <li
+                        key={i}
+                        id={i + ""}
+                        ref={i === focusedHourIndex ? hourLiRef : null}
+                        className={`${styles.listItem} ${
+                          i === focusedHourIndex && styles.focused
+                        }`}
+                      >
+                        {i < 9 ? "0" + (i + 1) : i + 1}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Dropdown>
             </div>
           </div>
         </div>
@@ -356,6 +397,7 @@ const CustomTimePicker = (props: Props) => {
               }
               setHideMinutes(false);
             }}
+            onBlur={() => setHideMinutes(true)}
             onKeyDown={handleKeyDownForMinute}
           />{" "}
           <div className={styles.dropDownWrapper}>
@@ -364,7 +406,9 @@ const CustomTimePicker = (props: Props) => {
                 className={styles.minuteButton}
                 ref={minuteButtonRef}
                 type="button"
-                onClick={handleMinuteToggleClick}
+                onClick={() => {
+                  handleMinuteToggleClick();
+                }}
               >
                 <img
                   src={dropDownArrow}
@@ -376,27 +420,29 @@ const CustomTimePicker = (props: Props) => {
               </button>
             </div>
             <div>
-              <ul
-                hidden={hideMinutes}
-                className={styles.scrollContainer}
-                onClick={captureMinuteSelection}
-                ref={minuteUlRef}
-              >
-                {[...new Array(60)].map((_, i) => {
-                  return (
-                    <li
-                      key={i}
-                      id={i + ""}
-                      ref={i === focusedMinuteIndex ? minuteLiRef : null}
-                      className={`${styles.listItem} ${
-                        i === focusedMinuteIndex && styles.focused
-                      }`}
-                    >
-                      {i < 10 ? "0" + i : i}
-                    </li>
-                  );
-                })}
-              </ul>
+              <Dropdown anchorEl={anchor}>
+                <ul
+                  hidden={hideMinutes}
+                  className={styles.scrollContainer}
+                  onClick={captureMinuteSelection}
+                  ref={minuteUlRef}
+                >
+                  {[...new Array(60)].map((_, i) => {
+                    return (
+                      <li
+                        key={i}
+                        id={i + ""}
+                        ref={i === focusedMinuteIndex ? minuteLiRef : null}
+                        className={`${styles.listItem} ${
+                          i === focusedMinuteIndex && styles.focused
+                        }`}
+                      >
+                        {i < 10 ? "0" + i : i}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Dropdown>
             </div>
           </div>
         </div>

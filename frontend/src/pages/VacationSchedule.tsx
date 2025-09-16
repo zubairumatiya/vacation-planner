@@ -242,24 +242,15 @@ const VacationSchedule = () => {
   };
 
   const setEndDate = (newStartTime: Date, currentEndTime: Date): Date => {
+    /*
     const difference =
       (currentEndTime.getTime() - newStartTime.getTime()) / (1000 * 60 * 60); // where i left off let's double check i am using the right timezone and if there isn't an easier way to do what i am doing, maybe
-
+    
     if (currentEndTime.getTime() < newStartTime.getTime()) {
-      /*
-      const newEndHour = prefixZero(newStartTime.getUTCHours() + 1);
-      const sameEndMinutes = prefixZero(currentEndTime.getUTCMinutes());
-      const extractNewDate = newStartTime.toISOString().split("T")[0];
-      console.log(
-        "end is less than start",
-        new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`)
-      );
-      return new Date(`${extractNewDate}T${newEndHour}:${sameEndMinutes}:00Z`); LET's test the below*/
       console.log("end time below");
       console.log(new Date(newStartTime.getTime() + 60 * 60 * 1000));
       return new Date(newStartTime.getTime() + 60 * 60 * 1000);
     } else if (difference > 24) {
-      // this can be on two different days just fyi
       console.log(
         "greater than 24 hours",
         new Date(newStartTime.getTime() + 23 * 60 * 60 * 1000)
@@ -268,7 +259,8 @@ const VacationSchedule = () => {
     } else {
       console.log("no change needed", currentEndTime);
       return currentEndTime;
-    }
+    }*/
+    return new Date(newStartTime.getTime() + 60 * 60 * 1000);
   };
 
   useEffect(() => {
@@ -619,7 +611,10 @@ const VacationSchedule = () => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ start: updatedItem.start_time }), //TODO - WILL HAVE TO INCORPORATE END TIME HERE
+      body: JSON.stringify({
+        start: updatedItem.start_time,
+        end: updatedItem.end_time,
+      }), //TODO - WILL HAVE TO INCORPORATE END TIME HERE
     });
     if (result.ok) {
       setSchedule(finalArr);
