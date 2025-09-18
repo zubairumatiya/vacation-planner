@@ -32,6 +32,8 @@ const CustomTimePicker = (props: Props) => {
   const hourImageRef = useRef<HTMLImageElement>(null);
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [hourAnchor, setHourAnchor] = useState<HTMLElement | null>(null);
+  const [minuteBlurCheck, setMinuteBlurCheck] = useState<boolean>(false);
+  const [hourBlurCheck, setHourBlurCheck] = useState<boolean>(false);
 
   useEffect(() => {
     props.onChange(hourSelection, minuteSelection, meridiemSelection);
@@ -243,7 +245,6 @@ const CustomTimePicker = (props: Props) => {
     skipNextHourFocus.current = true;
     hourInputRef.current?.focus();
     setHideHours((prev) => !prev);
-    setAnchor(anchor ? null : minuteButtonRef.current);
   };
 
   const handleMinuteToggleClick = () => {
@@ -328,6 +329,10 @@ const CustomTimePicker = (props: Props) => {
               }
               setHideHours(false);
             }}
+            onBlur={() => {
+              setHideHours((prev) => !prev);
+              setHourBlurCheck(true);
+            }}
             onKeyDown={handleKeyDownForHour}
           />
 
@@ -337,7 +342,14 @@ const CustomTimePicker = (props: Props) => {
                 className={styles.hourButton}
                 ref={hourButtonRef}
                 type="button"
-                onClick={handleHourToggleClick}
+                tabIndex={-1}
+                onClick={() => {
+                  if (hourBlurCheck) {
+                    setHourBlurCheck(false);
+                  } else {
+                    handleHourToggleClick();
+                  }
+                }}
               >
                 <img
                   src={dropDownArrow}
@@ -397,7 +409,10 @@ const CustomTimePicker = (props: Props) => {
               }
               setHideMinutes(false);
             }}
-            onBlur={() => setHideMinutes(true)}
+            onBlur={() => {
+              setHideMinutes((prev) => !prev);
+              setMinuteBlurCheck(true);
+            }}
             onKeyDown={handleKeyDownForMinute}
           />{" "}
           <div className={styles.dropDownWrapper}>
@@ -406,8 +421,13 @@ const CustomTimePicker = (props: Props) => {
                 className={styles.minuteButton}
                 ref={minuteButtonRef}
                 type="button"
+                tabIndex={-1}
                 onClick={() => {
-                  handleMinuteToggleClick();
+                  if (minuteBlurCheck) {
+                    setMinuteBlurCheck(false);
+                  } else {
+                    handleMinuteToggleClick();
+                  }
                 }}
               >
                 <img
