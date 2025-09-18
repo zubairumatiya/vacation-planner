@@ -25,14 +25,14 @@ console.log(test.toISOString());
 
 // ADD date when start day and end day are diff -- DONE
 
-// we need to add date when editing but limit going greater than 24 hours -- which means
-
 // add end time to db query --DONE
 // ADD date to edit -- DONE
-// fix time not blurring properly even on clicking outside
+// add double click to edit -- DONE
+// fix time not blurring properly even on clicking outside -- DONE
+
+// need to add 24 hour limit when editing times --
 // make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too
 //incorporate multi-day
-// add double click to edit
 // add cost total
 // add during trip cost trackers
 // add want to see list

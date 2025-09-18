@@ -74,6 +74,8 @@ const VacationSchedule = () => {
   const [editEndDate, setEditEndDate] = useState<string>("");
   const startDateEditRef = useRef<HTMLInputElement>(null);
   const endDateEditRef = useRef<HTMLInputElement>(null);
+  const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
+  const dayOfTripRef = useRef<string>("");
 
   const monthsArr = [
     "Jan",
@@ -213,6 +215,22 @@ const VacationSchedule = () => {
       locationEditRef.current.value = test;
     }
   }, [locationEditRef, test]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && editLineId && !textAreaFocus) {
+        console.log("pressed enter");
+        submitEdit(dayOfTripRef.current, editLineId);
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancelAdd();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editLineId, textAreaFocus, dayOfTripRef]);
 
   const constructDate = (
     which: "start" | "end",
@@ -390,11 +408,11 @@ const VacationSchedule = () => {
   };
 
   const submitEdit = async (
-    e: React.MouseEvent,
     dateAdded: string,
-    itemID: number
+    itemID: number,
+    e?: React.MouseEvent
   ) => {
-    e.preventDefault();
+    e?.preventDefault();
     let startDateAssembler;
     let endDateAssembler;
 
@@ -520,7 +538,8 @@ const VacationSchedule = () => {
     preFilledDetails: string,
     preFilledMultiDay: boolean,
     startDate: string,
-    endDate: string
+    endDate: string,
+    dayOfTrip: string
   ) => {
     e.preventDefault();
     setTest(preFilledLocation);
@@ -534,6 +553,7 @@ const VacationSchedule = () => {
     setAddingItem(true); // let's not allow adding items when editing an item
     setEditStartDate(startDate);
     setEditEndDate(endDate);
+    dayOfTripRef.current = dayOfTrip;
   };
 
   const cancelAdd = () => {
@@ -884,6 +904,19 @@ const VacationSchedule = () => {
                           className={`${
                             index === dragIndexRef.current && styles.dragging
                           } ${styles.tableRow}`}
+                          onDoubleClick={(e) =>
+                            handleEdit(
+                              e,
+                              value.id,
+                              value.location,
+                              value.cost,
+                              value.details,
+                              value.multi_day,
+                              startDate,
+                              endDate,
+                              dayOfTrip
+                            )
+                          }
                         >
                           {value.id === editLineId ? (
                             <>
@@ -1011,6 +1044,8 @@ const VacationSchedule = () => {
                                   id="details"
                                   maxLength={500}
                                   ref={detailEditRef}
+                                  onFocus={() => setTextAreaFocus(true)}
+                                  onBlur={() => setTextAreaFocus(false)}
                                 />
                               </td>
                               <td>
@@ -1035,7 +1070,7 @@ const VacationSchedule = () => {
                                     type="button"
                                     className={`${styles.buttonsWhileEditing} ${styles.submitEditButton}`}
                                     onClick={(e) =>
-                                      submitEdit(e, dayOfTrip, value.id)
+                                      submitEdit(dayOfTrip, value.id, e)
                                     }
                                   >
                                     Submit
@@ -1094,7 +1129,8 @@ const VacationSchedule = () => {
                                       value.details,
                                       value.multi_day,
                                       startDate,
-                                      endDate
+                                      endDate,
+                                      dayOfTrip
                                     )
                                   }
                                 />
