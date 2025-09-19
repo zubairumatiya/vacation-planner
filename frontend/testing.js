@@ -14,7 +14,8 @@ console.log("BELOW!");
 console.log(nextDay.toUTCString());
 
 const test = new Date("2025-08-01"); // test is now in UTC 00:00Z -> great
-console.log(test.toISOString());
+const test2 = new Date("2025-08-01T23:59:59Z");
+console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 
 // make dragging responsive to all platforms // NEEDS TESTING
 // should i just make end time an hour later upon drag and drop?  -- i think i should - DONE
@@ -38,6 +39,7 @@ console.log(test.toISOString());
 // add want to see list
 // add google maps API window
 
+// nice to have - pressing enter while focused on customTimePicker does not submit the edit item
 // nice to have -  anki deck for react
 // nice to have - can add a bunch of things to the todo from google maps
 // nice to have - can show pins from the items in the todo into google maps (will prob need some sort of ai interprettur on locations that can't be found)

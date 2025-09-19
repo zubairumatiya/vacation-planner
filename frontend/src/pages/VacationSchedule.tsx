@@ -33,6 +33,12 @@ type Prefill = {
   multiDay: boolean;
 };
 
+type timeObj = {
+  hour: string;
+  minute: string;
+  meridiem: string;
+};
+
 const VacationSchedule = () => {
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
@@ -76,6 +82,12 @@ const VacationSchedule = () => {
   const endDateEditRef = useRef<HTMLInputElement>(null);
   const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
   const dayOfTripRef = useRef<string>("");
+  const [editEndTimeObject, setEditEndTimeObject] = useState<timeObj>(
+    {} as timeObj
+  );
+  const [editStartTimeObject, setEditStartTimeObject] = useState<timeObj>(
+    {} as timeObj
+  );
 
   const monthsArr = [
     "Jan",
@@ -774,6 +786,55 @@ const VacationSchedule = () => {
     }
   };
 
+  const testLessThan24 = (obj: {
+    which: string;
+    date: string | undefined;
+    hour: string;
+    minute: string;
+    meridiem: string;
+  }) => {
+    let startISO: string = "";
+    let endISO: string = "";
+    if (
+      obj.date &&
+      obj.hour &&
+      obj.minute &&
+      obj.meridiem &&
+      obj.which === "start"
+    ) {
+      startISO = customISOTime(
+        obj.date,
+        `${obj.hour}:${obj.minute} ${obj.meridiem}`
+      );
+      console.log(obj);
+    }
+    if (
+      obj.date &&
+      obj.hour &&
+      obj.minute &&
+      obj.meridiem &&
+      obj.which === "end"
+    ) {
+      endISO = customISOTime(
+        obj.date,
+        `${obj.hour}:${obj.minute} ${obj.meridiem}`
+      );
+    }
+    if (startISO && endISO) {
+      const startD: Date = new Date(startISO);
+      const endD: Date = new Date(endISO);
+      if (endD.getTime() < startD.getTime()) {
+        // trigger error styling, red borders, err message, and disabled submit
+      }
+      const differenceInHours: number = Math.floor(
+        (endD.getTime() - startD.getTime()) / (1000 * 60 * 60)
+      );
+      if (differenceInHours >= 24) {
+        // trigger error styling, red borders, err message, and disabled submit
+      }
+    }
+  };
+
   return loading ? (
     <p>{message}</p>
   ) : (
@@ -935,10 +996,16 @@ const VacationSchedule = () => {
                                     type="date"
                                     name="startDate"
                                     id="startDate"
+                                    className={`${styles.dateEditInput} border-red-500 border 1px`}
                                     value={editStartDate}
-                                    onChange={(e) =>
-                                      setEditStartDate(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                      setEditStartDate(e.target.value);
+                                      testLessThan24({
+                                        which: "start",
+                                        date: e.target.value,
+                                        ...editStartTimeObject,
+                                      });
+                                    }}
                                     ref={startDateEditRef}
                                   />
                                 }
@@ -950,14 +1017,26 @@ const VacationSchedule = () => {
                                     hour: string,
                                     minute: string,
                                     meridiem: string
-                                  ) =>
+                                  ) => {
                                     constructDate(
                                       "start",
                                       hour,
                                       minute,
                                       meridiem
-                                    )
-                                  }
+                                    );
+                                    setEditStartTimeObject({
+                                      hour,
+                                      minute,
+                                      meridiem,
+                                    });
+                                    testLessThan24({
+                                      which: "start",
+                                      date: startDateEditRef?.current?.value,
+                                      hour,
+                                      minute,
+                                      meridiem,
+                                    });
+                                  }}
                                   preTime={sTime}
                                 />
                               </td>
@@ -969,9 +1048,15 @@ const VacationSchedule = () => {
                                     name="endDate"
                                     id="endDate"
                                     value={editEndDate}
-                                    onChange={(e) =>
-                                      setEditEndDate(e.target.value)
-                                    }
+                                    className={`${styles.dateEditInput}`}
+                                    onChange={(e) => {
+                                      setEditEndDate(e.target.value);
+                                      testLessThan24({
+                                        which: "end",
+                                        date: e.target.value,
+                                        ...editEndTimeObject,
+                                      });
+                                    }}
                                     ref={endDateEditRef}
                                   />
                                 }
@@ -983,9 +1068,26 @@ const VacationSchedule = () => {
                                     hour: string,
                                     minute: string,
                                     meridiem: string
-                                  ) =>
-                                    constructDate("end", hour, minute, meridiem)
-                                  }
+                                  ) => {
+                                    constructDate(
+                                      "end",
+                                      hour,
+                                      minute,
+                                      meridiem
+                                    );
+                                    setEditEndTimeObject({
+                                      hour,
+                                      minute,
+                                      meridiem,
+                                    });
+                                    testLessThan24({
+                                      which: "end",
+                                      date: endDateEditRef?.current?.value,
+                                      hour,
+                                      minute,
+                                      meridiem,
+                                    });
+                                  }}
                                   preTime={eTime}
                                 />
                               </td>

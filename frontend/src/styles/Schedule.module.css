@@ -143,6 +143,11 @@
   overflow-y: auto;
 }
 
+.dateEditInput {
+  border: 1px solid white;
+  border-radius: 5px;
+}
+
 .detailsLabel {
   margin-bottom: 0;
 }
