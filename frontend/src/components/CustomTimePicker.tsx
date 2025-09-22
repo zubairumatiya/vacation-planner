@@ -158,7 +158,7 @@ const CustomTimePicker = (props: Props) => {
     minuteLiRef.current = li;
     const toNumber = Number(li.innerText);
     setFocusedMinuteIndex(toNumber);
-    setHideMinutes((prev) => !prev);
+    //setHideMinutes((prev) => !prev);
   };
 
   const captureHourSelection = (e: React.MouseEvent) => {
@@ -168,8 +168,10 @@ const CustomTimePicker = (props: Props) => {
     hourLiRef.current = li;
     const toNumber = Number(li.innerText);
     setFocusedHourIndex(toNumber - 1);
-    setHideHours((prev) => !prev);
+    //setHideHours((prev) => !prev);
   };
+  //TODO when i select a time and then i click the drop down, the first click does not register.
+  // TODO why does the time component shake when i select numbers from it
 
   const handleKeyDownForHour = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
@@ -444,7 +446,7 @@ const CustomTimePicker = (props: Props) => {
                 <ul
                   hidden={hideMinutes}
                   className={styles.scrollContainer}
-                  onClick={captureMinuteSelection}
+                  onMouseDown={captureMinuteSelection}
                   ref={minuteUlRef}
                 >
                   {[...new Array(60)].map((_, i) => {

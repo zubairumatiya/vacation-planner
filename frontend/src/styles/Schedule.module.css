@@ -166,9 +166,11 @@
 }
 
 .startTimeHeader {
+  width: 135px;
 }
 
 .endTimeHeader {
+  width: 135px;
 }
 
 .locationHeader {
@@ -221,6 +223,11 @@
   align-items: center;
 }
 
+.errDiv {
+  width: max-content;
+  margin-left: 5vw;
+}
+
 .dragCol {
   width: 4rem;
 }
@@ -228,7 +235,7 @@
 .table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: collapse;
+  border-collapse: separate;
   border-spacing: 0 0.5rem;
   min-width: 800px;
 }
