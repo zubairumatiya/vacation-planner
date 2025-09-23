@@ -99,6 +99,10 @@
   width: auto;
 }
 
+.checkBoxHighlight {
+  outline: 3px solid yellow;
+}
+
 .fakeContainer {
   position: relative;
   width: 3.5rem;
@@ -174,7 +178,6 @@
 }
 
 .locationHeader {
-  border: 1px solid white;
 }
 
 .costHeader {

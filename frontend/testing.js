@@ -13,14 +13,11 @@ console.log(
 console.log("BELOW!");
 console.log(nextDay.toUTCString());
 
-const test = new Date("2025-08-01"); // test is now in UTC 00:00Z -> great
-const test2 = new Date("2025-08-01T23:59:59Z");
+const test = new Date("2025-07-16T00:00:00Z"); // test is now in UTC 00:00Z -> great
+const test2 = new Date("2025-07-16T01:00:00Z");
+console.log(test);
+console.log(test2);
 console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
-
-const a = true;
-const b = false;
-
-console.log(a || b);
 
 // make dragging responsive to all platforms // NEEDS TESTING
 // should i just make end time an hour later upon drag and drop?  -- i think i should - DONE
@@ -36,14 +33,16 @@ console.log(a || b);
 // add double click to edit -- DONE
 // fix time not blurring properly even on clicking outside -- DONE
 
-// need to add 24 hour limit when editing times --
-// for the 24 hour limit make sure to reset styling after, deletion, submission, or cancellation
+// need to add 24 hour limit when editing times -- DONE
+// for the 24 hour limit make sure to reset styling after, deletion, submission, or cancellation - DONE
+// expired value in custom time component -- TODO
 // make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too
-//incorporate multi-day
+// incorporate multi-day
 // add cost total
 // add during trip cost trackers
 // add want to see list
 // add google maps API window
+// add a calender view different than editing view we already have
 
 // nice to have - pressing enter while focused on customTimePicker does not submit the edit item
 // nice to have -  anki deck for react

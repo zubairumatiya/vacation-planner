@@ -91,6 +91,8 @@ const VacationSchedule = () => {
   const [holdEndTime, setHoldEndTime] = useState("");
   const [holdStartTime, setHoldStartTime] = useState("");
   const [errMessage, setErrMessage] = useState("");
+  const [multiDayStyle, setMultiDayStyle] = useState(false);
+  const editSubmitButtonRef = useRef<HTMLButtonElement>(null);
 
   const monthsArr = [
     "Jan",
@@ -233,9 +235,18 @@ const VacationSchedule = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && editLineId && !textAreaFocus) {
-        console.log("pressed enter");
+      /*
+      if (
+        e.key === "Enter" &&
+        editLineId &&
+        !textAreaFocus &&
+        !endError &&
+        !startError
+      ) {
         submitEdit(dayOfTripRef.current, editLineId);
+      }*/
+      if (e.key === "Enter") {
+        editSubmitButtonRef?.current?.focus();
       }
       if (e.key === "Escape") {
         e.preventDefault();
@@ -245,7 +256,7 @@ const VacationSchedule = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editLineId, textAreaFocus, dayOfTripRef]);
+  }, [editLineId, textAreaFocus, dayOfTripRef, endError, startError]);
 
   const constructDate = (
     which: "start" | "end",
@@ -321,8 +332,12 @@ const VacationSchedule = () => {
     const hourNMinutes = timeSplit[0].split(":");
     let hours = hourNMinutes[0];
     const minutes = hourNMinutes[1];
-    if (meridiem.toLowerCase() === "pm") {
+    console.log(meridiem);
+    if (meridiem.toLowerCase() === "pm" && hours !== "12") {
       hours = String(Number(hours) + 12);
+    }
+    if (meridiem.toLowerCase() === "am" && hours === "12") {
+      hours = "00";
     }
 
     return `${date}T${hours}:${minutes}:00Z`;
@@ -425,16 +440,16 @@ const VacationSchedule = () => {
   const submitEdit = async (
     dateAdded: string,
     itemID: number,
-    e?: React.MouseEvent
+    e?: React.MouseEvent | React.KeyboardEvent
   ) => {
     e?.preventDefault();
-    let startDateAssembler;
-    let endDateAssembler;
 
-    const startDateHold: string = startDateEditRef.current?.value ?? dateAdded;
+    console.log("startTime", holdStartTime);
+    const startDateAssembler = holdStartTime;
 
-    const endDateHold: string = endDateEditRef.current?.value ?? dateAdded;
-
+    console.log("endTime", holdEndTime);
+    const endDateAssembler = holdEndTime;
+    /*
     if (!startTimePick || startTimePick === ": ") {
       startDateAssembler = customISOTime(startDateHold, "00:00 AM");
     } else {
@@ -446,10 +461,7 @@ const VacationSchedule = () => {
     } else {
       endDateAssembler = customISOTime(endDateHold, endTimePick);
     }
-    console.log("dateAdded:", dateAdded);
-    console.log("startTimePick", startTimePick);
-    console.log("endTimePick", endTimePick);
-    console.log("start", startDateAssembler, "end", endDateAssembler);
+      */
 
     const details: string = detailEditRef.current
       ? detailEditRef.current.value
@@ -651,7 +663,7 @@ const VacationSchedule = () => {
       body: JSON.stringify({
         start: updatedItem.start_time,
         end: updatedItem.end_time,
-      }), //TODO - WILL HAVE TO INCORPORATE END TIME HERE
+      }),
     });
     if (result.ok) {
       setSchedule(finalArr);
@@ -795,32 +807,30 @@ const VacationSchedule = () => {
     if (holdStartTime && holdEndTime) {
       const startD: Date = new Date(holdStartTime);
       const endD: Date = new Date(holdEndTime);
-      if (endD.getTime() < startD.getTime()) {
-        // trigger error styling, red borders -- DONE
-        //err message, and disabled submit -- DONE
-        setEndError(true);
-        setStartError(true);
-        setErrMessage("Error, end time cannot be before start time");
-      } else {
-        setEndError(false);
-        setStartError(false);
-        setErrMessage("");
-      }
       const differenceInHours: number = Math.floor(
         (endD.getTime() - startD.getTime()) / (1000 * 60 * 60)
       );
-      if (differenceInHours >= 24) {
-        console.log("multi day");
+      if (endD.getTime() < startD.getTime() || differenceInHours >= 24) {
+        // trigger error styling, red borders -- DONE
+        //err message, and disabled submit -- DONE
+        console.log("end time err");
+        console.log("start", holdStartTime);
+        console.log("end", holdEndTime);
         setEndError(true);
         setStartError(true);
-        setErrMessage(
-          "Error, event greater than 24 hours, please select multi-day"
-        );
-        // trigger error styling, red borders, err message, and disabled submit, highlight the multi-day box
+        if (endD.getTime() < startD.getTime()) {
+          setErrMessage("Error, end time cannot be before start time");
+        } else {
+          setErrMessage(
+            "Error, event greater than 24 hours, please select multi-day"
+          );
+          setMultiDayStyle(true);
+        }
       } else {
         setEndError(false);
         setStartError(false);
         setErrMessage("");
+        setMultiDayStyle(false);
       }
     }
   }, [holdEndTime, holdStartTime]);
@@ -1174,6 +1184,9 @@ const VacationSchedule = () => {
                                 <td>
                                   <input
                                     type="checkbox"
+                                    className={`${
+                                      multiDayStyle && styles.checkBoxHighlight
+                                    }`}
                                     name="editMultDay"
                                     id="editMultiDay"
                                     ref={multiDayEditRef}
@@ -1202,6 +1215,10 @@ const VacationSchedule = () => {
                                         submitEdit(dayOfTrip, value.id, e)
                                       }
                                       disabled={endError || startError}
+                                      ref={editSubmitButtonRef}
+                                      onKeyUp={(e) => {
+                                        submitEdit(dayOfTrip, editLineId, e);
+                                      }}
                                     >
                                       Submit
                                     </button>
