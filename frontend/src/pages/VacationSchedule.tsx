@@ -1019,8 +1019,10 @@ const VacationSchedule = () => {
                                   </button>
                                 </td>
                                 <td
-                                  className={`${
-                                    startError && "border-2 border-red-500"
+                                  className={`border-2 ${
+                                    startError
+                                      ? " border-red-500"
+                                      : "border-transparent"
                                   }`}
                                 >
                                   {
@@ -1074,8 +1076,10 @@ const VacationSchedule = () => {
                                 </td>
 
                                 <td
-                                  className={`${
-                                    endError && "border-2 border-red-500"
+                                  className={`border-2 ${
+                                    endError
+                                      ? " border-red-500"
+                                      : "border-transparent"
                                   }`}
                                 >
                                   {

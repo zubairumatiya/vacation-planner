@@ -170,8 +170,6 @@ const CustomTimePicker = (props: Props) => {
     setFocusedHourIndex(toNumber - 1);
     //setHideHours((prev) => !prev);
   };
-  //TODO when i select a time and then i click the drop down, the first click does not register.
-  // TODO why does the time component shake when i select numbers from it
 
   const handleKeyDownForHour = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") {
@@ -334,6 +332,9 @@ const CustomTimePicker = (props: Props) => {
             onBlur={() => {
               setHideHours((prev) => !prev);
               setHourBlurCheck(true);
+              setTimeout(() => {
+                setHourBlurCheck(false);
+              }, 250);
             }}
             onKeyDown={handleKeyDownForHour}
           />
@@ -414,6 +415,9 @@ const CustomTimePicker = (props: Props) => {
             onBlur={() => {
               setHideMinutes((prev) => !prev);
               setMinuteBlurCheck(true);
+              setTimeout(() => {
+                setMinuteBlurCheck(false);
+              }, 250);
             }}
             onKeyDown={handleKeyDownForMinute}
           />{" "}
