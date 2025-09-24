@@ -35,7 +35,6 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 
 // need to add 24 hour limit when editing times -- DONE
 // for the 24 hour limit make sure to reset styling after, deletion, submission, or cancellation - DONE
-// expired value in custom time component -- TODO
 // make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too
 // incorporate multi-day
 // add cost total
@@ -54,3 +53,9 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 // nice to have - ease the booking process by sending users to the links of places that need booking, would be nice if we can go through up until the confirm booking page (maybe we can utilize browser information like credit card, user info, and address)
 // nice to have - and can house confirmation number maybe
 // nice to have  -  maybe add deletion warning on if something has a lot of details
+
+/* revolutionary: what is fun about planning a vacation? The destinations, finding gems, finding cool spots, getting recommendations that rock! 
+What sucks? the logistics: travel, the order and sequence things have to happen. 
+Sooo what if we have the fun part: we just have a page with a map and a list, we have AI that gives recommendations from google reviews, reddit, etc,
+we can even give recommendation of trails at parks, foods at restaurants, etc. THEN 
+we can plan all of it via proximity, and plan the route. The user will have to say what they are comfortable with, renting a car, public transport, etc.  */

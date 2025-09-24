@@ -93,6 +93,7 @@ const VacationSchedule = () => {
   const [errMessage, setErrMessage] = useState("");
   const [multiDayStyle, setMultiDayStyle] = useState(false);
   const editSubmitButtonRef = useRef<HTMLButtonElement>(null);
+  const [editMultiDay, setEditMultiDay] = useState(false);
 
   const monthsArr = [
     "Jan",
@@ -285,7 +286,11 @@ const VacationSchedule = () => {
     }
   };
 
-  const setEndDate = (newStartTime: Date, currentEndTime: Date): Date => {
+  const setEndDate = (
+    newStartTime: Date,
+    currentEndTime: Date,
+    multiDayCheck: boolean
+  ): Date => {
     /*
     const difference =
       (currentEndTime.getTime() - newStartTime.getTime()) / (1000 * 60 * 60); // where i left off let's double check i am using the right timezone and if there isn't an easier way to do what i am doing, maybe
@@ -304,7 +309,11 @@ const VacationSchedule = () => {
       console.log("no change needed", currentEndTime);
       return currentEndTime;
     }*/
-    return new Date(newStartTime.getTime() + 60 * 60 * 1000);
+    if (multiDayCheck) {
+      return new Date(newStartTime.getTime() + 60 * 60 * 24 * 1000);
+    } else {
+      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
+    }
   };
 
   useEffect(() => {
@@ -317,12 +326,8 @@ const VacationSchedule = () => {
     if (detailEditRef.current) {
       detailEditRef.current.value = preFill.details;
     }
-    if (preFill.multiDay) {
-      if (multiDayEditRef.current) {
-        multiDayEditRef.current.checked = true;
-      }
-    } else {
-      if (multiDayEditRef.current) multiDayEditRef.current.checked = false;
+    if (multiDayEditRef.current) {
+      setEditMultiDay(preFill.multiDay);
     }
   }, [editLineId]);
 
@@ -332,7 +337,6 @@ const VacationSchedule = () => {
     const hourNMinutes = timeSplit[0].split(":");
     let hours = hourNMinutes[0];
     const minutes = hourNMinutes[1];
-    console.log(meridiem);
     if (meridiem.toLowerCase() === "pm" && hours !== "12") {
       hours = String(Number(hours) + 12);
     }
@@ -612,6 +616,7 @@ const VacationSchedule = () => {
     let targetIndex = Number(target.closest("tr")?.dataset.index);
     const copy = schedule.slice();
     const removedElement = copy.splice(dragIndexRef.current, 1);
+    const multiDayCheck = removedElement[0].multi_day;
     let finalArr: Schedule[] = schedule;
 
     const tableTarget = String(target.closest("table")?.id);
@@ -638,7 +643,13 @@ const VacationSchedule = () => {
         removedElement[0],
         ...copy.slice(targetIndex),
       ];
-      finalArr = changeDropTime(assembleArr, targetIndex, true, dropDay);
+      finalArr = changeDropTime(
+        assembleArr,
+        targetIndex,
+        multiDayCheck,
+        true,
+        dropDay
+      );
     } else if (targetIndex === dragIndexRef.current) {
       //if some one picks it up but doesn't drop it elsewhere
       dragIndexRef.current = -1;
@@ -650,7 +661,13 @@ const VacationSchedule = () => {
         removedElement[0],
         ...copy.slice(targetIndex),
       ];
-      finalArr = changeDropTime(assembleArr, targetIndex, false, dropDay);
+      finalArr = changeDropTime(
+        assembleArr,
+        targetIndex,
+        multiDayCheck,
+        false,
+        dropDay
+      );
     }
 
     const updatedItem = finalArr[targetIndex];
@@ -708,6 +725,7 @@ const VacationSchedule = () => {
   const changeDropTime = (
     finalArr: Schedule[],
     targetIndex: number,
+    multiDayCheck: boolean,
     emptyTable?: boolean,
     newDay?: Date
   ) => {
@@ -726,7 +744,8 @@ const VacationSchedule = () => {
       finalArr[targetIndex].start_time = constructDate;
       finalArr[targetIndex].end_time = setEndDate(
         constructDate,
-        finalArr[targetIndex].end_time
+        finalArr[targetIndex].end_time,
+        multiDayCheck
       );
       console.log("end date:" + finalArr[targetIndex].end_time);
       return finalArr;
@@ -740,7 +759,8 @@ const VacationSchedule = () => {
         const constructDate = new Date(`${newDate}T00:00:00Z`);
         finalArr[targetIndex].end_time = setEndDate(
           constructDate,
-          finalArr[targetIndex].end_time
+          finalArr[targetIndex].end_time,
+          multiDayCheck
         );
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
@@ -756,7 +776,8 @@ const VacationSchedule = () => {
         finalArr[targetIndex].start_time = constructDate;
         finalArr[targetIndex].end_time = setEndDate(
           constructDate,
-          finalArr[targetIndex].end_time
+          finalArr[targetIndex].end_time,
+          multiDayCheck
         );
         return finalArr;
       }
@@ -797,7 +818,8 @@ const VacationSchedule = () => {
       finalArr[targetIndex].start_time = constructDate;
       finalArr[targetIndex].end_time = setEndDate(
         constructDate,
-        finalArr[targetIndex].end_time
+        finalArr[targetIndex].end_time,
+        multiDayCheck
       );
       return finalArr;
     }
@@ -807,33 +829,46 @@ const VacationSchedule = () => {
     if (holdStartTime && holdEndTime) {
       const startD: Date = new Date(holdStartTime);
       const endD: Date = new Date(holdEndTime);
+      let oneProblemAtATime = 0;
       const differenceInHours: number = Math.floor(
         (endD.getTime() - startD.getTime()) / (1000 * 60 * 60)
       );
-      if (endD.getTime() < startD.getTime() || differenceInHours >= 24) {
-        // trigger error styling, red borders -- DONE
-        //err message, and disabled submit -- DONE
-        console.log("end time err");
-        console.log("start", holdStartTime);
-        console.log("end", holdEndTime);
+      if (endD.getTime() < startD.getTime()) {
         setEndError(true);
         setStartError(true);
-        if (endD.getTime() < startD.getTime()) {
-          setErrMessage("Error, end time cannot be before start time");
-        } else {
-          setErrMessage(
-            "Error, event greater than 24 hours, please select multi-day"
-          );
-          setMultiDayStyle(true);
-        }
+        setErrMessage("Error, end time cannot be before start time");
+        oneProblemAtATime++;
       } else {
         setEndError(false);
         setStartError(false);
         setErrMessage("");
         setMultiDayStyle(false);
       }
+
+      if (!oneProblemAtATime) {
+        if (differenceInHours >= 24) {
+          console.log("checked:", editMultiDay);
+          if (!editMultiDay) {
+            setEndError(true);
+            setStartError(true);
+            setErrMessage(
+              "Error, event greater than 24 hours, please select multi-day"
+            );
+            setMultiDayStyle(true);
+          }
+        } else if (differenceInHours < 24 && editMultiDay) {
+          setErrMessage("Error, item is not multiple days");
+          setEndError(true);
+          setMultiDayStyle(true);
+        } else {
+          setEndError(false);
+          setStartError(false);
+          setErrMessage("");
+          setMultiDayStyle(false);
+        }
+      }
     }
-  }, [holdEndTime, holdStartTime]);
+  }, [holdEndTime, holdStartTime, editMultiDay]);
 
   const testLessThan24 = (obj: {
     which: string;
@@ -1189,6 +1224,10 @@ const VacationSchedule = () => {
                                     }`}
                                     name="editMultDay"
                                     id="editMultiDay"
+                                    checked={editMultiDay}
+                                    onChange={(e) =>
+                                      setEditMultiDay(e.target.checked)
+                                    }
                                     ref={multiDayEditRef}
                                   />
                                 </td>
