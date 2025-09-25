@@ -1,0 +1,318 @@
+.backWrapper {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.backButton {
+  display: flex;
+  border: 2px solid white;
+  border-radius: 5px;
+  font-weight: 600;
+  font-size: x-large;
+  width: 2rem;
+  height: 2rem;
+  line-height: 1;
+  padding-left: 0.35rem;
+}
+.backButton:hover {
+  transform: scale(1.04);
+}
+.backButton:active {
+  transform: scale(1);
+}
+
+.addButton {
+  line-height: 0;
+  width: fit-content;
+  padding: 2vh 3vh;
+}
+
+.xButton {
+  background-color: red;
+  padding: 7px;
+}
+
+.submitEditButton {
+  background-color: lightgreen;
+}
+
+.cancelButton {
+  font-weight: 400;
+}
+
+.buttonsWhileEditing {
+  padding: 0.25rem 0.5rem;
+  flex: 1;
+}
+
+.editButtonCluster {
+  width: 100%;
+  height: 5rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.input {
+  border: 0.1rem solid white;
+  border-radius: 5px;
+  margin-left: 0.25rem;
+  padding-left: 0.5rem;
+  width: 5rem;
+  min-width: 3rem; /* don’t get too tiny */
+  max-width: 90%; /* don’t exceed the td */
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+.costEditInput {
+}
+
+.timeWrapper {
+  display: flex;
+  align-items: baseline;
+}
+
+.formWrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.form {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.itemElement {
+  margin: 0 0.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.multiDay {
+  width: auto;
+}
+
+.checkBoxHighlight {
+  outline: 3px solid yellow;
+}
+
+.fakeContainer {
+  position: relative;
+  width: 3.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.textArea {
+  height: 5rem;
+  margin-left: 0.25rem;
+  overflow-y: auto;
+  resize: none;
+  width: 95%;
+  box-sizing: border-box;
+  border: 1px solid white;
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.addTextArea {
+  width: 10rem;
+}
+
+.locationTd {
+  white-space: normal;
+  /*word-break: break-word;*/
+}
+
+.costTd {
+  white-space: normal;
+  /*word-break: break-word;*/
+}
+
+.detailsTd {
+  width: 200px; /* now enforced */
+  word-wrap: break-word; /* or overflow-wrap */
+  white-space: normal;
+}
+
+.detailsTd div {
+  max-height: 16vh;
+  overflow-y: auto;
+}
+
+.dateEditInput {
+  border: 1px solid white;
+  border-radius: 5px;
+}
+
+.detailsLabel {
+  margin-bottom: 0;
+}
+
+.dragHeader {
+}
+
+.dragButton {
+  display: block; /* prevents tiny spacing issues */
+  margin-left: 0.5rem; /* pushes it to the right */
+  margin-right: 0;
+  min-width: 1rem;
+}
+
+.dragCells {
+}
+
+.startTimeHeader {
+  width: 135px;
+}
+
+.endTimeHeader {
+  width: 135px;
+}
+
+.locationHeader {
+}
+
+.costHeader {
+}
+
+.detailsHeader {
+  width: 12rem;
+}
+
+.editFieldHeader {
+  visibility: hidden;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tableRow .editIcon {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .tableRow:hover .editIcon {
+    opacity: 1;
+  }
+}
+
+.tableCaption {
+  text-align: center;
+  font-weight: bold;
+  margin-top: 1rem;
+  font-size: large;
+}
+
+.dragHeader,
+.dragCells {
+  position: sticky;
+  left: 0;
+  background-color: var(--app-bg);
+}
+
+.costWrapper {
+  border: 1px solid white;
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 5px;
+}
+
+.backAndTotal {
+  display: flex;
+  justify-content: space-between;
+}
+
+.table th,
+.table td {
+  min-width: 120px;
+}
+
+.tableRow {
+  height: 3rem;
+  align-items: center;
+}
+
+.errDiv {
+  width: max-content;
+  margin-left: 5vw;
+}
+
+.dragCol {
+  width: 4rem;
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+  min-width: 800px;
+}
+
+.tableContainer {
+  /*display: flex;
+  justify-content: center;*/
+  width: 80vw;
+  overflow-x: auto; /* enables horizontal scrolling */
+  -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+}
+
+.tableNButtonContainer {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dragButton {
+  width: 3rem;
+  height: 2rem;
+  padding: 0;
+  min-width: 3rem;
+  border: 1px solid white;
+  border-radius: 5px;
+}
+
+.dragButton:hover {
+  cursor: grab;
+}
+.dragButton:active {
+  cursor: grabbing;
+}
+
+.editIcon {
+  border: 1px solid white;
+  border-radius: 5px;
+  margin-left: 2rem;
+  min-width: 1rem;
+}
+
+.editIcon:hover {
+  cursor: pointer;
+}
+
+.dragging {
+  opacity: 0.7;
+}
+
+.dnd-poly-drag-image {
+  pointer-events: none;
+  opacity: 1;
+}
+
+.pageWrapper {
+  scroll-behavior: auto;
+  overflow: auto;
+}
+
+.testWrapper {
+  scroll-behavior: auto;
+  overflow: auto;
+}
