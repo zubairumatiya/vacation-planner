@@ -5,6 +5,34 @@
   align-items: baseline;
 }
 
+.navWrapper {
+  display: flex;
+  width: 400px;
+  margin-bottom: -50px;
+}
+.navPills {
+  width: 200px;
+  display: flex;
+}
+.navItem {
+  width: 50%;
+}
+.navPills .navLink {
+  font-weight: bold;
+  padding-top: 13px;
+  text-align: center;
+  background: #343436;
+  color: #fff;
+  border-radius: 25px;
+  height: 90px;
+  width: 100%;
+  display: inline-block;
+  border: 1px solid white;
+}
+.navPills .navLinkActive {
+  background: #fff;
+  color: #000;
+}
 .title {
   font-weight: bold;
   font-size: x-large;

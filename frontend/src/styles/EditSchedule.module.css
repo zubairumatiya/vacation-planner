@@ -310,6 +310,8 @@
 .pageWrapper {
   scroll-behavior: auto;
   overflow: auto;
+  background-color: #242424;
+  position: relative;
 }
 
 .testWrapper {
