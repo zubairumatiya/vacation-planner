@@ -178,6 +178,7 @@
 }
 
 .locationHeader {
+  width: 135px;
 }
 
 .costHeader {
@@ -248,6 +249,21 @@
   width: 4rem;
 }
 
+.costCol {
+  width: 7rem;
+}
+
+.detailCol {
+}
+
+.multiDayCol {
+  width: 4rem;
+}
+
+.editCol {
+  width: 3rem;
+}
+
 .table {
   width: 100%;
   table-layout: fixed;
@@ -259,9 +275,16 @@
 .tableContainer {
   /*display: flex;
   justify-content: center;*/
-  width: 80vw;
+  width: 60vw;
+
   overflow-x: auto; /* enables horizontal scrolling */
   -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+}
+
+@media (max-width: 768px) {
+  .tableContainer {
+    width: 100%; /* full width on smaller screens */
+  }
 }
 
 .tableNButtonContainer {
@@ -290,8 +313,8 @@
 .editIcon {
   border: 1px solid white;
   border-radius: 5px;
-  margin-left: 2rem;
   min-width: 1rem;
+  margin-left: 1rem;
 }
 
 .editIcon:hover {
@@ -312,6 +335,10 @@
   overflow: auto;
   background-color: #242424;
   position: relative;
+  z-index: 2;
+  border: 1px solid white;
+  border-radius: 10px;
+  padding: 1rem;
 }
 
 .testWrapper {

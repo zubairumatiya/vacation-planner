@@ -1,0 +1,4 @@
+.pageWrapper {
+  display: flex;
+  flex-wrap: wrap;
+}

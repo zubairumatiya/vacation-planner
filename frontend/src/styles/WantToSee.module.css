@@ -1,0 +1,44 @@
+.pageWrapper {
+  height: auto;
+  min-height: 33vh;
+  width: 32%;
+  background-color: ivory;
+  border: 1px solid white;
+  border-radius: 10px;
+  overflow-y: scroll;
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .pageWrapper {
+    width: 100%; /* full width on smaller screens */
+  }
+}
+
+.pageWrapper ul {
+  list-style: disc;
+  padding-left: 2rem;
+}
+.pageWrapper ul li {
+  list-style-type: disc;
+  color: black;
+  list-style-position: outside;
+  font-size: x-large;
+}
+
+.title {
+  color: rgb(60, 58, 58);
+  font-size: larger;
+  font-weight: bold;
+  padding: 2rem 0 1rem 0;
+}
+
+.pageWrapper hr {
+  border: 2px solid rgb(60, 58, 58);
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  background-color: black;
+  width: 100%;
+}
