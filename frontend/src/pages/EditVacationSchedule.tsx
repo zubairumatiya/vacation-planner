@@ -1,7 +1,7 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useState, useEffect, useContext, useRef, Fragment } from "react";
 import { AuthContext } from "../context/AuthContext";
-import styles from "../styles/Schedule.module.css";
+import styles from "../styles/EditSchedule.module.css";
 import CustomTimePicker from "../components/CustomTimePicker";
 import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
@@ -39,7 +39,7 @@ type timeObj = {
   meridiem: string;
 };
 
-const VacationSchedule = () => {
+const EditVacationSchedule = (props: { loadFirst: () => void }) => {
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -59,7 +59,7 @@ const VacationSchedule = () => {
   const [startError, setStartError] = useState(false);
   const [endError, setEndError] = useState(false);
   const [locationError, setLocationError] = useState(false);
-  const [message, setMessage] = useState("Fetching vacation please wait...");
+  const [message, setMessage] = useState("");
   const [startTimePick, setStartTimePick] = useState<string | null>(null); // i think we will need two of these for start and end, which means we can't have multiple adding schedules open
   const [endTimePick, setEndTimePick] = useState<string | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
@@ -68,7 +68,6 @@ const VacationSchedule = () => {
   const costEditRef = useRef<HTMLInputElement>(null);
   const detailEditRef = useRef<HTMLTextAreaElement>(null);
   const multiDayEditRef = useRef<HTMLInputElement>(null);
-  const [test, setTest] = useState("");
   const [preFill, setPreFill] = useState<Prefill>({
     location: "",
     cost: 0,
@@ -193,6 +192,7 @@ const VacationSchedule = () => {
         }
         setScheduleDayLabels(daysArr);
         setLoading(false);
+        props.loadFirst();
       }
     };
 
@@ -230,12 +230,6 @@ const VacationSchedule = () => {
       return newArr;
     });
   };
-
-  useEffect(() => {
-    if (locationEditRef.current) {
-      locationEditRef.current.value = test;
-    }
-  }, [locationEditRef, test]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -582,7 +576,7 @@ const VacationSchedule = () => {
     dayOfTrip: string
   ) => {
     e.preventDefault();
-    setTest(preFilledLocation);
+
     setPreFill({
       location: preFilledLocation,
       cost: preFilledCost,
@@ -920,41 +914,6 @@ const VacationSchedule = () => {
     <p>{message}</p>
   ) : (
     <div className={styles.pageWrapper}>
-      <div className={styles.backAndTotal}>
-        <div className={styles.backWrapper}>
-          <Link to="/" className={styles.backButton}>
-            &#60;
-          </Link>
-        </div>
-        <div className={styles.costWrapper}>
-          <h3 className="font-bold">Total Cost: ${costTotal}</h3>
-        </div>
-      </div>
-      <button
-        className="btnPrimary"
-        type="button"
-        onClick={() => alert("click")}
-      >
-        Test button
-      </button>
-      <h1>
-        {title}:{" "}
-        {tripStart.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          timeZone: "UTC",
-        })}{" "}
-        - {/* FIX */}
-        {tripEnd.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-          timeZone: "UTC",
-        })}{" "}
-        - {tripLength} days{" "}
-      </h1>
-
       {scheduleDayLabels.map((day, index) => {
         // day = Tuesday - Jul 15, 2025
         // all of these are local times as of now
@@ -982,6 +941,11 @@ const VacationSchedule = () => {
               >
                 <colgroup>
                   <col className={styles.dragCol} />
+                  <col span={3} />
+                  <col className={styles.costCol} />
+                  <col className={styles.detailsCol} />
+                  <col className={styles.multiDayCol} />
+                  <col className={editLineId ? "w-20" : styles.editCol} />
                 </colgroup>
                 <thead>
                   <tr>
@@ -1507,4 +1471,4 @@ const VacationSchedule = () => {
   );
 };
 
-export default VacationSchedule;
+export default EditVacationSchedule;

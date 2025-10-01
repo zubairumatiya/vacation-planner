@@ -1,7 +1,7 @@
 .pageWrapper {
   height: auto;
   min-height: 33vh;
-  width: 32%;
+  width: 31%;
   background-color: ivory;
   border: 1px solid white;
   border-radius: 10px;
@@ -18,12 +18,15 @@
 .pageWrapper ul {
   list-style: disc;
   padding-left: 2rem;
+  text-align: left;
 }
 .pageWrapper ul li {
   list-style-type: disc;
-  color: black;
+  color: rgb(60, 58, 58);
   list-style-position: outside;
   font-size: x-large;
+  line-height: 1.5rem;
+  margin-bottom: 0.6rem;
 }
 
 .title {
@@ -41,4 +44,6 @@
 .input {
   background-color: black;
   width: 100%;
+  color: white;
+  border-radius: 5px;
 }

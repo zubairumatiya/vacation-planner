@@ -35,13 +35,20 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 
 // need to add 24 hour limit when editing times -- DONE
 // for the 24 hour limit make sure to reset styling after, deletion, submission, or cancellation - DONE
-// make multi-day mode for when editing a multiday where it shows only date and not time ehh actually maybe time too
-// incorporate multi-day
-// add cost total
-// add during trip cost trackers
+// incorporate multi-day -- DONE (i think)
+// add cost total - DONE
+
 // add want to see list
+// -- add double click to edit, and delete button on appears over the bullet?
+// -- add delete
+// -- add data structure of {id:0, value:""}
+// -- add token
+// -- add api endpoint for list
+// -- add db table for list
 // add google maps API window
 // add a calender view different than editing view we already have
+// refresh token
+// maybe find a way to log person out before they have make an api request
 
 // nice to have - pressing enter while focused on customTimePicker does not submit the edit item
 // nice to have -  anki deck for react
@@ -53,6 +60,7 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 // nice to have - ease the booking process by sending users to the links of places that need booking, would be nice if we can go through up until the confirm booking page (maybe we can utilize browser information like credit card, user info, and address)
 // nice to have - and can house confirmation number maybe
 // nice to have  -  maybe add deletion warning on if something has a lot of details
+// nice to have - add during trip cost trackers
 
 /* revolutionary: what is fun about planning a vacation? The destinations, finding gems, finding cool spots, getting recommendations that rock! 
 What sucks? the logistics: travel, the order and sequence things have to happen. 

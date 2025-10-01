@@ -14,6 +14,8 @@ import SendResetLinkToEmail from "./pages/SendResetLinkToEmail.tsx";
 import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import VacationSchedule from "./pages/VacationSchedule.tsx";
+import EditCanvas from "./pages/EditCanvas.tsx";
+import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
 
 function App() {
@@ -25,7 +27,10 @@ function App() {
         <Route element={<LayoutWithHeader />}>
           <Route path="/" element={<Home />} />
           <Route path="/add-vacation" element={<AddVacation />} />
-          <Route path="/vacation/:tripId" element={<VacationSchedule />} />
+          <Route path="/vacation/:tripId" element={<VacationSchedule />}>
+            <Route index element={<ViewVacationSchedule />} />
+            <Route path="edit" element={<EditCanvas />} />
+          </Route>
           <Route path="/test" element={<Test />} />
         </Route>
 
