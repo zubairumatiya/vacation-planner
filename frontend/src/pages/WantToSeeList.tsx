@@ -1,5 +1,6 @@
 import styles from "../styles/WantToSee.module.css";
 import { useState, useRef, useEffect } from "react";
+import trashIcon from "../assets/trash-icon.svg";
 
 const WantToSeeList = () => {
   const [list, setList] = useState<string[]>([]);
@@ -19,7 +20,7 @@ const WantToSeeList = () => {
     if (!raw || typeof raw !== "string") {
       return;
     }
-    const item: string = raw;
+    const item: string = raw.trim();
 
     // insert backend query here - it will return our added item so we can use the DB ID as our key. We will have to make our data structure an array with objects inside
 
@@ -38,7 +39,7 @@ const WantToSeeList = () => {
     if (!raw || typeof raw !== "string") {
       return;
     }
-    const item: string = raw;
+    const item: string = raw.trim();
 
     // insert backend query here - it will return our added item so we can use the DB ID as our key. We will have to make our data structure an array with objects inside
 
@@ -59,6 +60,15 @@ const WantToSeeList = () => {
     setNewItem(list[itemId]);
   };
 
+  const handleDeleteItem = (e: React.MouseEvent, i: number) => {
+    e.preventDefault();
+    //add api request
+    setList((prev) => prev.filter((_, index) => index !== i));
+    setEditItemId(-1);
+    setNewItem("");
+    setNewItemSwitch(true);
+  };
+
   return (
     <div className={styles.pageWrapper}>
       <h3 className={styles.title}>Want to See</h3>
@@ -68,18 +78,33 @@ const WantToSeeList = () => {
           (v, i) =>
             i === editItemId ? (
               <li key={i}>
-                <form onSubmit={(e) => handleEditItem(e, i)}>
-                  <input
-                    className={styles.input}
-                    type="text"
-                    name="newItem"
-                    autoComplete="off"
-                    ref={inputRef}
-                    value={newItem}
-                    onChange={(e) => setNewItem(e.target.value)}
-                    id="newItem"
-                  />
-                </form>
+                <div className={styles.editItemWrapper}>
+                  <form onSubmit={(e) => handleEditItem(e, i)}>
+                    <input
+                      className={styles.input}
+                      type="text"
+                      name="newItem"
+                      autoComplete="off"
+                      ref={inputRef}
+                      value={newItem}
+                      onChange={(e) => setNewItem(e.target.value)}
+                      id="newItem"
+                    />
+                  </form>
+                  <button
+                    type="button"
+                    className={styles.trashButton}
+                    onClick={(e) => {
+                      handleDeleteItem(e, i);
+                    }}
+                  >
+                    <img
+                      src={trashIcon}
+                      className={styles.trashIcon}
+                      alt="trashIcon"
+                    />
+                  </button>
+                </div>
               </li>
             ) : (
               <li key={i} id={String(i)} onDoubleClick={(e) => editItem(e, i)}>

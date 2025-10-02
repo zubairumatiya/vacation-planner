@@ -41,9 +41,23 @@
   margin-bottom: 0.5rem;
 }
 
+.editItemWrapper {
+  display: flex;
+  align-items: center;
+}
+
 .input {
   background-color: black;
   width: 100%;
   color: white;
   border-radius: 5px;
+}
+
+.trashButton {
+  padding: 5px;
+  border: 2px solid black;
+  margin-left: 5px;
+}
+
+.trashIcon {
 }
