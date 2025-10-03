@@ -62,7 +62,7 @@ const WantToSeeList = () => {
     const item: string = raw.trim();
 
     // insert backend query here - it will return our added item so we can use the DB ID as our key. We will have to make our data structure an array with objects inside
-    const response = await fetch(`${apiURL}list/${tripId}`, {
+    const response = await fetch(`${apiURL}/list/${tripId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -79,8 +79,8 @@ const WantToSeeList = () => {
       alert("Error: List not found");
     }
     if (response.ok) {
-      const data: Item[] = await response.json();
-      setList((prev) => [...prev, data[0]]); // rmr our list items are now objects
+      const apiData: { data: Item } = await response.json();
+      setList((prev) => [...prev, apiData.data]); // rmr our list items are now objects
       setEditItemId(-1);
       setNewItem("");
     }
@@ -100,8 +100,8 @@ const WantToSeeList = () => {
     const item: string = raw.trim();
 
     // insert backend query here - it will return our added item so we can use the DB ID as our key. We will have to make our data structure an array with objects inside
-    const response = await fetch(`${apiURL}list/${itemId}`, {
-      method: "POST",
+    const response = await fetch(`${apiURL}/list/${itemId}`, {
+      method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -139,13 +139,31 @@ const WantToSeeList = () => {
     setNewItem(list[index].value);
   };
 
-  const handleDeleteItem = (e: React.MouseEvent, i: number) => {
+  const handleDeleteItem = async (e: React.MouseEvent, itemId: number) => {
     e.preventDefault();
-    //add api request
-    setList((prev) => prev.filter((_, index) => index !== i));
-    setEditItemId(-1);
-    setNewItem("");
-    setAddingNewItem(true);
+
+    const response = await fetch(`${apiURL}/list/${itemId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 401) {
+      navigate("/login", {
+        state: { message: "Session expired, redirecting to log in..." },
+      });
+    }
+    if (response.status === 404) {
+      alert("Error: List not found");
+    }
+    if (response.ok) {
+      setList((prev) => prev.filter((v) => v.id !== itemId));
+      setEditItemId(-1);
+      setNewItem("");
+      setAddingNewItem(true);
+    }
   };
 
   const clickAwayToCancel = (e: React.MouseEvent) => {
@@ -163,49 +181,47 @@ const WantToSeeList = () => {
       <h3 className={styles.title}>Want to See</h3>
       <hr />
       <ul>
-        {list.map(
-          (v, i) =>
-            i === editItemId ? (
-              <li key={i}>
-                <div className={styles.editItemWrapper}>
-                  <form onSubmit={(e) => handleEditItem(e, i, v.id)}>
-                    <input
-                      className={styles.input}
-                      type="text"
-                      name="newItem"
-                      autoComplete="off"
-                      ref={inputRef}
-                      value={newItem}
-                      onChange={(e) => setNewItem(e.target.value)}
-                      id="newItem"
-                    />
-                  </form>
-                  <button
-                    type="button"
-                    className={styles.trashButton}
-                    onClick={(e) => {
-                      handleDeleteItem(e, i);
-                    }}
-                  >
-                    <img
-                      src={trashIcon}
-                      className={styles.trashIcon}
-                      alt="trashIcon"
-                    />
-                  </button>
-                </div>
-              </li>
-            ) : (
-              <li
-                key={i}
-                id={String(i)}
-                onDoubleClick={(e) => editItem(e, i, v.id)}
-              >
-                {v.value}
-              </li>
-            ) // will have to change the key here to id, once i get it from the DB
+        {list.map((v, i) =>
+          v.id === editItemId ? (
+            <li key={v.id} id={String(v.id)}>
+              <div className={styles.editItemWrapper}>
+                <form onSubmit={(e) => handleEditItem(e, i, v.id)}>
+                  <input
+                    className={styles.input}
+                    type="text"
+                    name="newItem"
+                    autoComplete="off"
+                    ref={inputRef}
+                    value={newItem}
+                    onChange={(e) => setNewItem(e.target.value)}
+                    id="newItem"
+                  />
+                </form>
+                <button
+                  type="button"
+                  className={styles.trashButton}
+                  onClick={(e) => {
+                    handleDeleteItem(e, v.id);
+                  }}
+                >
+                  <img
+                    src={trashIcon}
+                    className={styles.trashIcon}
+                    alt="trashIcon"
+                  />
+                </button>
+              </div>
+            </li>
+          ) : (
+            <li
+              key={v.id}
+              id={String(v.id)}
+              onDoubleClick={(e) => editItem(e, i, v.id)}
+            >
+              {v.value}
+            </li>
+          )
         )}{" "}
-        {/* soooo would it look better of just hiding this instead of disabling it?? */}
         {addingNewItem && (
           <li>
             <form onSubmit={handleSubmitItem}>

@@ -177,6 +177,7 @@ router.patch("/update-time/:id", ensureLoggedIn, async (req, res, next) => {
         const result = await db.query("UPDATE trip_schedule SET start_time=$1, end_time=$2 WHERE id=$3 RETURNING *", [req.body.start, req.body.end, req.params.id]);
         if (result.rowCount > 0) {
             res.status(200).json({ updatedData: result.rows[0] });
+            return;
         }
     }
     catch (err) {
@@ -188,7 +189,48 @@ router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
         const result = await db.query("DELETE FROM trip_schedule WHERE id=$1 RETURNING *", [req.params.id]);
         if (result.rowCount > 0) {
             res.status(200).json({ deletedData: result.rows[0] });
+            return;
         }
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
+    try {
+        const result = await db.query("SELECT id, value FROM trip_list WHERE trip_id=$1", [req.params.tripId]);
+        res.status(200).json({ data: result.rows });
+        return;
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.post("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
+    try {
+        const result = await db.query("INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value", [req.params.tripId, req.body.value]);
+        res.status(200).json({ data: result.rows[0] });
+        return;
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.patch("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
+    try {
+        const result = await db.query("UPDATE trip_list SET value=$1 WHERE id=$2 RETURNING *", [req.body.value, req.params.itemId]);
+        res.status(200).json({ data: result.rows });
+        return;
+    }
+    catch (err) {
+        next(err);
+    }
+});
+router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
+    try {
+        const result = await db.query("DELETE FROM trip_list WHERE id=$1 RETURNING *", [req.params.itemId]);
+        res.status(200).json({ deletedData: result.rows });
+        return;
     }
     catch (err) {
         next(err);
