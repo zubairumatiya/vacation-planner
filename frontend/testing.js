@@ -39,8 +39,6 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 // add cost total - DONE
 
 // add want to see list
-// -- add double click to edit, and delete button on appears over the bullet?
-// -- add delete
 // -- add data structure of {id:0, value:""}
 // -- add clicking outside of edit text but inside of wanttosee component cancels the edit
 // -- add token

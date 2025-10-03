@@ -245,4 +245,64 @@ router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
+router.get(
+  "/list/:tripId",
+  /*ensureLoggedIn,*/ async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "SELECT id, value FROM trip_list WHERE trip_id=$1",
+        [req.params.tripId]
+      );
+      res.status(200).json({ data: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.post(
+  "/list/:tripId",
+  /*ensureLoggedIn,*/ async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING *",
+        [req.params.tripId, req.body.value]
+      );
+      res.status(200).json({ data: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.patch(
+  "/list/:itemId",
+  /*ensureLoggedIn,*/ async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "UPDATE trip_list SET value=$1 WHERE id=$2 RETURNING *",
+        [req.body.value, req.params.itemId]
+      );
+      res.status(200).json({ data: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  "/list/:itemId",
+  /*ensureLoggedIn,*/ async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "DELETE FROM trip_list WHERE id=$1 RETURNING *",
+        [req.params.itemId]
+      );
+      res.status(200).json({ deletedData: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
 export default router;
