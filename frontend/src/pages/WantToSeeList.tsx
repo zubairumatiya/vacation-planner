@@ -167,10 +167,13 @@ const WantToSeeList = () => {
   };
 
   const clickAwayToCancel = (e: React.MouseEvent) => {
-    e.preventDefault();
-    setEditItemId(-1);
-    setNewItem("");
-    setAddingNewItem(true);
+    // prettier-ignore
+    if (!(e.target instanceof HTMLImageElement || e.target instanceof HTMLButtonElement)) {
+      e.preventDefault();
+      setEditItemId(-1);
+      setNewItem("");
+      setAddingNewItem(true);
+    }
   };
 
   return (

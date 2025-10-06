@@ -37,13 +37,8 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 // for the 24 hour limit make sure to reset styling after, deletion, submission, or cancellation - DONE
 // incorporate multi-day -- DONE (i think)
 // add cost total - DONE
+// add want to see list - DONE
 
-// add want to see list
-// -- enable ensuredLoggedIn
-// -- add clicking outside of edit text but inside of wanttosee component cancels the edit
-// -- add token
-// -- add api endpoint for list
-// -- add db table for list
 // add google maps API window
 // add a calender view different than editing view we already have
 // refresh token
