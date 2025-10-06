@@ -85,11 +85,11 @@ const VacationSchedule = () => {
           <h3 className="font-bold">Total Cost: ${costTotal}</h3>
         </div>
       </div>
-
       <header className={styles.header}>
         <h2 className={styles.title}>{title}&nbsp;</h2>
         <h3 className={styles.length}>- {tripLength} days</h3>
       </header>
+
       <nav className={styles.navWrapper}>
         <ul className={`${styles.nav} ${styles.navPills}`} role="tablist">
           <li className={styles.navItem}>

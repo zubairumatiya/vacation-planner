@@ -40,6 +40,7 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 // add want to see list - DONE
 
 // add google maps API window
+// -- add from google maps directly to want to see list OR schedule
 // add a calender view different than editing view we already have
 // refresh token
 // maybe find a way to log person out before they have make an api request

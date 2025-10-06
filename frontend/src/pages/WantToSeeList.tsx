@@ -11,7 +11,11 @@ type Item = {
   value: string;
 };
 
-const WantToSeeList = () => {
+type WantToSeeListProps = {
+  loadSecond: () => void;
+};
+
+const WantToSeeList = (props: WantToSeeListProps) => {
   const { tripId } = useParams();
   const [list, setList] = useState<Item[]>([]);
   const [newItem, setNewItem] = useState<string>("");
@@ -41,6 +45,7 @@ const WantToSeeList = () => {
       }
       if (response.ok) {
         setList(data.data);
+        props.loadSecond();
         console.log(data.data);
       }
     };
