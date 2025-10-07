@@ -41,9 +41,14 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 
 // add google maps API window
 // -- add from google maps directly to want to see list OR schedule
+// -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
+// -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.
+// -- Set usage limits in Google Cloud Console - You can restrict the number of requests per day per key.
 // add a calender view different than editing view we already have
+// -- add token check when getting schedule
 // refresh token
 // maybe find a way to log person out before they have make an api request
+// mailgun email styling
 
 // nice to have - pressing enter while focused on customTimePicker does not submit the edit item
 // nice to have -  anki deck for react

@@ -11,10 +11,6 @@ type Item = {
   value: string;
 };
 
-type WantToSeeListProps = {
-  loadSecond: () => void;
-};
-
 const WantToSeeList = (props: WantToSeeListProps) => {
   const { tripId } = useParams();
   const [list, setList] = useState<Item[]>([]);
