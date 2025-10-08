@@ -1,7 +1,5 @@
 // src/types/google-maps-webcomponents.d.ts
 
-import type * as React from "react"; // <-- add this
-
 export {}; // ensures it's a module
 
 declare global {
@@ -17,33 +15,89 @@ declare global {
     "ongmp-select"?: (event: GmpSelectEvent) => void;
   }
 
-  namespace JSX {
+  interface PlaceDetailsMarkerProps {
+    place: google.maps.places.Place;
+    selected: boolean;
+    onClick: (placeId: string | null) => void;
+    detailsSize: "FULL";
+  }
+
+  interface PlaceSearchProps {
+    onPlaceSelect: (place: google.maps.places.Place | null) => void;
+    setPlaces: (markers: google.maps.places.Place[]) => void;
+    locationId: string | null;
+    placeType: string | null;
+  }
+
+  type PlaceSearchElement = HTMLElement & {
+    readonly places: google.maps.places.Place[];
+  };
+
+  type PlaceNearbySearchRequestElement = HTMLElement & {
+    locationRestriction: { center: google.maps.LatLng; radius: number };
+    includedPrimaryTypes?: Array<string>;
+    maxResultCount: number;
+  };
+
+  interface GmpPlaceSearchAttributes
+    // @ts-expect-error PlaceSearchElement not in official types yet
+    extends React.HTMLAttributes<google.maps.places.PlaceSearchElement> {
+    selectable?: boolean;
+    "truncation-preferred"?: boolean;
+    orientation?: "HORIZONTAL" | "VERTICAL";
+  }
+
+  interface GmpPlaceNearbySearchRequestAttributes
+    // @ts-expect-error PlaceSearchElement not in official types yet
+    extends React.HTMLAttributes<google.maps.places.PlaceNearbySearchRequestElement> {
+    "location-restriction"?: string;
+    "included-primary-types"?: string;
+  }
+
+  interface SearchBarProps {
+    setLocationId: (placeId: string | null) => void;
+    placeType: PlaceType;
+    setPlaceType: (placeType: PlaceType) => void;
+  }
+
+  interface PlaceTypeOption {
+    value: PlaceType;
+    label: string;
+  }
+}
+
+declare module "react/jsx-runtime" {
+  export namespace JSX {
     interface IntrinsicElements {
       "gmp-basic-place-autocomplete": React.DetailedHTMLProps<
         GmpBasicPlaceAutocomplete,
         HTMLElement
       >;
       "gmp-place-details": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          size?: "FULL" | "COMPACT";
-        },
+        React.HTMLAttributes<HTMLElement> & { size?: "FULL" | "COMPACT" },
         HTMLElement
       >;
       "gmp-place-details-compact": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          size?: "FULL" | "COMPACT";
-        },
+        React.HTMLAttributes<HTMLElement> & { size?: "FULL" | "COMPACT" },
         HTMLElement
       >;
       "gmp-place-details-place-request": React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement> & {
-          place: string;
-        },
+        React.HTMLAttributes<HTMLElement> & { place: string },
         HTMLElement
       >;
       "gmp-place-all-content": React.DetailedHTMLProps<
         React.HTMLAttributes<HTMLElement>,
         HTMLElement
+      >;
+      "gmp-place-search": React.DetailedHTMLProps<
+        GmpPlaceSearchAttributes,
+        // @ts-expect-error PlaceSearchElement not in official types yet
+        google.maps.places.PlaceSearchElement
+      >;
+      "gmp-place-nearby-search-request": React.DetailedHTMLProps<
+        GmpPlaceNearbySearchRequestAttributes,
+        // @ts-expect-error TODO not in official types yet
+        google.maps.places.PlaceNearbySearchRequestElement
       >;
     }
   }

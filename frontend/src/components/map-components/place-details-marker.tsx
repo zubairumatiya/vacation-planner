@@ -6,14 +6,7 @@ import {
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
 
-import { DetailsSize } from "../app";
-
-interface PlaceDetailsMarkerProps {
-  place: google.maps.places.Place;
-  selected: boolean;
-  onClick: (placeId: string | null) => void;
-  detailsSize: DetailsSize;
-}
+//import { DetailsSize } from "../app";
 
 export const PlaceDetailsMarker = memo(
   ({ place, selected, onClick, detailsSize }: PlaceDetailsMarkerProps) => {

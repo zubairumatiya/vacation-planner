@@ -1,7 +1,6 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
-
-/// <reference path="../types/google-maps-webcomponents.d.ts" />
+import styles from "../../styles/Map.module.css";
 
 interface Props {
   onPlaceSelect: (place: google.maps.places.Place | null) => void;
@@ -49,7 +48,7 @@ export const AutocompleteWebComponent = ({ onPlaceSelect }: Props) => {
   //   In React before v19, you'd have to use a ref, or use the BasicPlaceAutocompleteElement
   //   constructor instead.
   return (
-    <div className="autocomplete-container">
+    <div className={styles.autocompleteContainer}>
       {/* 
         gmp-place-autocomplete is a Google Maps Web Component that provides a search box
         with automatic place suggestions as the user types.
