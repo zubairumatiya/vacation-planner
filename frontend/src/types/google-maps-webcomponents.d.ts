@@ -6,6 +6,13 @@ declare global {
   interface WantToSeeListProps {
     loadSecond: () => void;
   }
+
+  type PlaceType =
+    | "restaurant"
+    | "cafe"
+    | "electric_vehicle_charging_station"
+    | null;
+
   interface GmpSelectEvent {
     place: google.maps.places.Place;
   }

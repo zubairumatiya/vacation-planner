@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from "react";
 import { AutocompleteWebComponent } from "./autocomplete-webcomponent";
-import { PlaceType } from "../app";
 import styles from "../../styles/Map.module.css";
 
 export const SearchBar = memo(function SearchBar({

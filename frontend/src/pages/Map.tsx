@@ -17,12 +17,6 @@ if (!API_KEY) {
   console.error("Missing Google Maps API key");
 }
 
-export type PlaceType =
-  | "restaurant"
-  | "cafe"
-  | "electric_vehicle_charging_station"
-  | null;
-
 export type DetailsSize = "FULL" | "COMPACT";
 export type ColorScheme = "light" | "dark";
 
