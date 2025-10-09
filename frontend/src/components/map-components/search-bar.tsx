@@ -28,14 +28,17 @@ export const SearchBar = memo(function SearchBar({
       role="search"
       aria-label="Location search"
     >
-      <label htmlFor="place-type-select">Find</label>
+      <label className={styles.label} htmlFor="place-type-select">
+        Find
+      </label>
       <select
         id="place-type-select"
-        value={placeType ?? ""}
+        value={placeType}
         onChange={handlePlaceTypeChange}
+        className={styles.select}
       >
         {placeTypeOptions.map((option) => (
-          <option key={option.value} value={option.value || ""}>
+          <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}

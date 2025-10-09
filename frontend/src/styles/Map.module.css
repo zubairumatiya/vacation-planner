@@ -11,6 +11,28 @@
   overflow-y: hidden;
 }
 
+.placeListWrapper {
+  height: 40vw;
+}
+
+.autocompleteContainer {
+  border: 1px solid black;
+  border-radius: 3px;
+}
+
+.label {
+  color: black;
+}
+
+.select {
+  color-scheme: light;
+  color: black;
+  border: 0.5px solid black;
+  border-radius: 2px;
+  background-color: gainsboro;
+  padding: 5px;
+}
+
 .placesUiKit .placeListContainer {
   height: 0;
   flex: 1;
@@ -55,13 +77,13 @@
   border-radius: 10px;
 }
 
-gmp-place-details,
-gmp-place-details-compact,
-gmp-place-search,
-gmp-basic-place-autocomplete {
+:global(gmp-place-details),
+:global(gmp-place-details-compact),
+:global(gmp-place-search),
+:global(gmp-basic-place-autocomplete) {
   color-scheme: inherit;
 }
 
-select {
-  color-scheme: light;
+:global(gmp-place-details) {
+  height: 300px;
 }
