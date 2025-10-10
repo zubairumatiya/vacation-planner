@@ -2,22 +2,35 @@ const nextDay = new Date("2025-08-01T02:00:00.000Z");
 
 console.log(nextDay.toISOString());
 
-console.log(
-  Date.UTC(
-    nextDay.getUTCFullYear(),
-    nextDay.getUTCMonth(),
-    nextDay.getUTCDate(),
-    nextDay.getUTCHours()
-  )
-);
-console.log("BELOW!");
-console.log(nextDay.toUTCString());
+const apiKey = "AIzaSyCniKprqPB06h2CWrWI45AAZfFkvlDIygw";
+const query = "restaurants near austin";
 
-const test = new Date("2025-07-16T00:00:00Z"); // test is now in UTC 00:00Z -> great
-const test2 = new Date("2025-07-16T01:00:00Z");
-console.log(test);
-console.log(test2);
-console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
+const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
+  query
+)}&key=${apiKey}`;
+
+async function getPlaces() {
+  try {
+    const res = await fetch(url); // can add in the request body the number of stars (minRating)
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    const storeNames = data.results.map((v) => console.log(v.name));
+    if (data.next_page_token) {
+      console.log(data.next_page_token);
+      await new Promise((r) => setTimeout(r, 2000));
+      const res2 = await fetch(`${url}&pagetoken=${data.next_page_token}`);
+      const data2 = await res2.json();
+      console.log(
+        "\n\n\n\n\n~~~~~~~~~~~~~  NEW PAGE ~~~~~~~~~~~~~~~\n\n\n\n\n\n"
+      );
+      const storeNames2 = data2.results.map((v) => console.log(v.name));
+    }
+  } catch (err) {
+    console.error("Error fetching places:", err);
+  }
+}
+
+getPlaces();
 
 // make dragging responsive to all platforms // NEEDS TESTING
 // should i just make end time an hour later upon drag and drop?  -- i think i should - DONE
@@ -40,6 +53,16 @@ console.log(Math.floor((test2.getTime() - test.getTime()) / (1000 * 60 * 60)));
 // add want to see list - DONE
 
 // add google maps API window
+// -- need to add more selection criteria, categories, ratings, reviews,etc
+// -- -- running into a bit of a problem, search nearby doesn't allow for filtering by stars and ratings. So the best practical method is probably to retirieve a lot
+// -- -- of places and then filter by our filters and sort descending. But still this will not pull all the places within our criteria, a fix i can think of is having
+// -- -- a next button or something that sends another request, but then i would have to retrieve another set that is not similar to my first retrieval (UNKNOWN)
+// -- -- this would be complex. Another maybe even more complex thing would be to do a text retrieval of every place (UNKNOWN), filter with our criteria, not sure if
+// -- -- i would even be able to access the star and rating count fields of places (UNKNOWN), keep the id's, then do a mass id array search to put pins on places (UNKNOWN)
+// -- -- simplest option would prob be to rank by popularity and retrieve a lot more spots to hopefully get all the good places to cancel the bad. AN IDEA:
+// -- -- we could pull a large pool using the rank by popularity but still maintain the ability to filter. 20 is the MAX actually. Let's see how we can make multiple
+// -- -- requests in batches of 20 and then we can either add the filters or just keep the POPULAR results
+// -- auto load a place depending on the location of our vacation spot
 // -- add from google maps directly to want to see list OR schedule
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.

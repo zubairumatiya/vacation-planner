@@ -7,7 +7,7 @@ declare global {
     loadSecond: () => void;
   }
 
-  type PlaceType = "restaurant" | "cafe" | "electric_vehicle_charging_station";
+  type PlaceType = "restaurant" | "cafe" | "museum";
 
   interface GmpSelectEvent {
     place: google.maps.places.Place;
@@ -40,6 +40,12 @@ declare global {
     locationRestriction: { center: google.maps.LatLng; radius: number };
     includedPrimaryTypes?: Array<string>;
     maxResultCount: number;
+    rankPreference: string;
+    pageSize: number;
+  };
+
+  type PlaceTextSearchRequestElement = HTMLElement & {
+    locationRestriction: { center: google.maps.LatLng; radius: number };
   };
 
   interface GmpPlaceSearchAttributes
@@ -55,6 +61,15 @@ declare global {
     extends React.HTMLAttributes<google.maps.places.PlaceNearbySearchRequestElement> {
     "location-restriction"?: string;
     "included-primary-types"?: string;
+    "max-result-count"?: number;
+    "rank-preference"?: string;
+    "page-size"?: number;
+  }
+
+  interface GmpPlaceTextSearchRequestAttributes
+    // @ts-expect-error PlaceSearchElement not in official types yet
+    extends React.HTMLAttributes<google.maps.places.PlaceTextSearchRequestElement> {
+    "location-restriction"?: string;
   }
 
   interface SearchBarProps {
@@ -101,6 +116,10 @@ declare module "react/jsx-runtime" {
         GmpPlaceNearbySearchRequestAttributes,
         // @ts-expect-error TODO not in official types yet
         google.maps.places.PlaceNearbySearchRequestElement
+      >;
+      "gmp-place-text-search-request": React.DetailedHTMLProps<
+        GmpPlaceTextSearchRequestAttributes,
+        google.maps.places.PlaceTextSearchRequestElement
       >;
     }
   }

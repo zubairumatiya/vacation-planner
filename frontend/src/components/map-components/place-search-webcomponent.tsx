@@ -16,8 +16,9 @@ export const PlaceSearchWebComponent = ({
 
   // Use ref to interact with the DOM Web Component
   const placeSearchRef = useRef<PlaceSearchElement | null>(null);
-  const placeNearbySearchRequestRef =
-    useRef<PlaceNearbySearchRequestElement | null>(null);
+
+  const placeTextSearchRequestRef =
+    useRef<PlaceTextSearchRequestElement | null>(null);
 
   // Calculate a circular region based on the map's current bounds
   // This is used to restrict the places search to the visible map area
@@ -44,23 +45,26 @@ export const PlaceSearchWebComponent = ({
       !placesLib ||
       !geoLib ||
       !placeSearchRef.current ||
-      !placeNearbySearchRequestRef.current ||
+      !placeTextSearchRequestRef.current ||
       !map
     ) {
       return;
     }
 
-    const placeNearbySearchRequest = placeNearbySearchRequestRef.current;
+    const placeTextSearchRequest = placeTextSearchRequestRef.current;
 
     const bounds = map.getBounds();
     const circle = getContainingCircle(bounds);
 
     if (!circle) return;
+    //placeTextSearchRequest.pageSize = 60;
+    //placeTextSearchRequest.maxResultCount = 20;
+    //placeTextSearchRequest.rankPreference = "POPULARITY";
+    placeTextSearchRequest.locationRestriction = circle;
 
-    placeNearbySearchRequest.locationRestriction = circle;
-    placeNearbySearchRequest.includedPrimaryTypes = placeType
-      ? [placeType]
-      : undefined;
+    //placeTextSearchRequest.includedPrimaryTypes = placeType
+    //  ? [placeType]
+    //  : undefined;
   }, [placesLib, geoLib, map, placeType, getContainingCircle, locationId]);
 
   // Return the Google Maps Place List Web Component
@@ -72,7 +76,7 @@ export const PlaceSearchWebComponent = ({
         - 'selectable' enables click-to-select functionality
         - When a place is selected, the ongmp-placeselect event is fired
       */}
-      <gmp-place-search
+      <gmp-place-search // i think this is where ideally we can filter via stars and # of ratings - google.maps.places.Place.userRatingCount -- google.maps.places.Place.rating
         selectable
         truncation-preferred
         ref={placeSearchRef}
@@ -83,9 +87,12 @@ export const PlaceSearchWebComponent = ({
           setPlaces(event.target.places);
         }}
       >
-        <gmp-place-nearby-search-request
+        {/*<gmp-place-nearby-search-request
           ref={placeNearbySearchRequestRef}
-        ></gmp-place-nearby-search-request>
+        ></gmp-place-nearby-search-request>*/}
+        <gmp-place-text-search-request
+          ref={placeTextSearchRequestRef}
+        ></gmp-place-text-search-request>
         <gmp-place-all-content></gmp-place-all-content>
       </gmp-place-search>
     </div>

@@ -11,7 +11,7 @@ export const SearchBar = memo(function SearchBar({
     () => [
       { value: "restaurant", label: "Restaurants" },
       { value: "cafe", label: "Cafes" },
-      { value: "electric_vehicle_charging_station", label: "EV Charging" },
+      { value: "museum", label: "Museums" },
     ],
     []
   );
@@ -43,7 +43,7 @@ export const SearchBar = memo(function SearchBar({
           </option>
         ))}
       </select>
-      <span>near</span>
+      <span className={styles.span}>near</span>
       <AutocompleteWebComponent
         onPlaceSelect={(place) => setLocationId(place?.id ?? null)}
       />
