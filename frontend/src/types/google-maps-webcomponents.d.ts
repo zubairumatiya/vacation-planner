@@ -29,6 +29,7 @@ declare global {
     onPlaceSelect: (place: google.maps.places.Place | null) => void;
     setPlaces: (markers: google.maps.places.Place[]) => void;
     locationId: string | null;
+    locationName: string | null;
     placeType: string | null;
   }
 
@@ -46,7 +47,17 @@ declare global {
 
   type PlaceTextSearchRequestElement = HTMLElement & {
     locationRestriction: { center: google.maps.LatLng; radius: number };
+    locationBias: { center: google.maps.LatLng; radius: number };
+    textQuery: string;
   };
+
+  interface PlacesTextSearchResponseEventDetail {
+    results: google.maps.places.PlaceResult[];
+    status: google.maps.places.PlacesServiceStatus;
+  }
+
+  type PlacesTextSearchResponseEvent =
+    CustomEvent<PlacesTextSearchResponseEventDetail>;
 
   interface GmpPlaceSearchAttributes
     // @ts-expect-error PlaceSearchElement not in official types yet
@@ -67,15 +78,16 @@ declare global {
   }
 
   interface GmpPlaceTextSearchRequestAttributes
-    // @ts-expect-error PlaceSearchElement not in official types yet
     extends React.HTMLAttributes<google.maps.places.PlaceTextSearchRequestElement> {
-    "location-restriction"?: string;
+    "location-bias"?: string;
+    "text-query"?: string;
   }
 
   interface SearchBarProps {
     setLocationId: (placeId: string | null) => void;
     placeType: PlaceType;
     setPlaceType: (placeType: PlaceType) => void;
+    setLocationName: (placeDisplayName: string | null) => void;
   }
 
   interface PlaceTypeOption {

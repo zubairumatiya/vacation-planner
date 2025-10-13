@@ -42,7 +42,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       if (response.ok) {
         setList(data.data);
         props.loadSecond();
-        console.log(data.data);
+        //console.log(data.data);
       }
     };
 

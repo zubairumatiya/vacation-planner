@@ -19,7 +19,7 @@ export const AutocompleteWebComponent = ({ onPlaceSelect }: Props) => {
       try {
         // Fetch location and viewport data for the selected place
         await place.fetchFields({
-          fields: ["location", "viewport"],
+          fields: ["displayName", "location", "viewport"],
         });
 
         // If the place has a viewport (area boundaries), adjust the map to show it

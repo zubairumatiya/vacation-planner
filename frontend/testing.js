@@ -62,6 +62,7 @@ getPlaces();
 // -- -- simplest option would prob be to rank by popularity and retrieve a lot more spots to hopefully get all the good places to cancel the bad. AN IDEA:
 // -- -- we could pull a large pool using the rank by popularity but still maintain the ability to filter. 20 is the MAX actually. Let's see how we can make multiple
 // -- -- requests in batches of 20 and then we can either add the filters or just keep the POPULAR results
+// -- -- will require changing the search query into a single query instead of type. Although text does include types, still need to think of format.
 // -- auto load a place depending on the location of our vacation spot
 // -- add from google maps directly to want to see list OR schedule
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.

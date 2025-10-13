@@ -42,14 +42,6 @@ const VacationSchedule = () => {
         alert("Error: Trip not found");
       }
       if (response.ok) {
-        console.log(
-          "name:",
-          data.tripName,
-          "startdate:",
-          data.startDate,
-          "enddate:",
-          data.endDate
-        );
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
         let costTotal = 0;
@@ -59,7 +51,6 @@ const VacationSchedule = () => {
           costTotal += Number(i.cost);
         }
         setCostTotal(costTotal);
-        console.log(data.schedule);
         data.schedule.sort(
           (a: Schedule, b: Schedule) =>
             a.start_time.getTime() - b.start_time.getTime()

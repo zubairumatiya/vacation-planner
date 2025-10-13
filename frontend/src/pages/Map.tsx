@@ -7,6 +7,7 @@ import { APIProvider, Map } from "@vis.gl/react-google-maps";
 import { PlaceDetailsMarker } from "../components/map-components/place-details-marker";
 import { PlaceSearchWebComponent } from "../components/map-components/place-search-webcomponent";
 import { SearchBar } from "../components/map-components/search-bar";
+// This registers ALL `<gmp-...>` components globally
 
 //import ControlPanel from '../components/map-components/place-details-marker';
 import styles from "../styles/Map.module.css";
@@ -22,7 +23,7 @@ export type ColorScheme = "light" | "dark";
 
 const MAP_CONFIG = {
   defaultZoom: 15,
-  defaultCenter: { lat: 53.55, lng: 9.99 },
+  defaultCenter: { lat: 30.26, lng: -97.74 },
   mapId: "49ae42fed52588c3",
   gestureHandling: "greedy" as const,
   disableDefaultUI: true,
@@ -33,6 +34,7 @@ const MyMapComponent = () => {
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [locationId, setLocationId] = useState<string | null>(null);
+  const [locationName, setLocationName] = useState<string | null>("Austin");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
@@ -65,6 +67,7 @@ const MyMapComponent = () => {
           <PlaceSearchWebComponent
             placeType={placeType}
             locationId={locationId}
+            locationName={locationName}
             setPlaces={setPlaces}
             onPlaceSelect={(place) => setSelectedPlaceId(place?.id ?? null)}
           />
@@ -88,6 +91,7 @@ const MyMapComponent = () => {
             placeType={placeType}
             setPlaceType={setPlaceType}
             setLocationId={setLocationId}
+            setLocationName={setLocationName}
           />
 
           {/*

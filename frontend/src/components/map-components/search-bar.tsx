@@ -6,6 +6,7 @@ export const SearchBar = memo(function SearchBar({
   placeType,
   setPlaceType,
   setLocationId,
+  setLocationName,
 }: SearchBarProps) {
   const placeTypeOptions: PlaceTypeOption[] = useMemo(
     () => [
@@ -45,7 +46,10 @@ export const SearchBar = memo(function SearchBar({
       </select>
       <span className={styles.span}>near</span>
       <AutocompleteWebComponent
-        onPlaceSelect={(place) => setLocationId(place?.id ?? null)}
+        onPlaceSelect={(place) => {
+          setLocationId(place?.id ?? null);
+          setLocationName(place?.displayName ?? null);
+        }}
       />
     </div>
   );

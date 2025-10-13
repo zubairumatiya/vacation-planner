@@ -6,6 +6,7 @@ export const PlaceSearchWebComponent = ({
   onPlaceSelect,
   setPlaces,
   locationId,
+  locationName,
   placeType,
 }: PlaceSearchProps) => {
   // Load required Google Maps libraries
@@ -41,6 +42,29 @@ export const PlaceSearchWebComponent = ({
   );
 
   useEffect(() => {
+    const el = placeTextSearchRequestRef.current;
+    if (!el) return;
+
+    function handleResponse(event: PlacesTextSearchResponseEvent) {
+      console.log("Text Search API response:", event.detail);
+      // event.detail contains:
+      // { results, status }
+    }
+
+    el.addEventListener(
+      "gmp-placestextsearchresponse",
+      handleResponse as EventListener
+    );
+
+    return () => {
+      el.removeEventListener(
+        "gmp-placestextsearchresponse",
+        handleResponse as EventListener
+      );
+    };
+  }, [locationId, locationName]);
+
+  useEffect(() => {
     if (
       !placesLib ||
       !geoLib ||
@@ -48,6 +72,7 @@ export const PlaceSearchWebComponent = ({
       !placeTextSearchRequestRef.current ||
       !map
     ) {
+      console.log("fail!: ");
       return;
     }
 
@@ -57,15 +82,22 @@ export const PlaceSearchWebComponent = ({
     const circle = getContainingCircle(bounds);
 
     if (!circle) return;
-    //placeTextSearchRequest.pageSize = 60;
-    //placeTextSearchRequest.maxResultCount = 20;
-    //placeTextSearchRequest.rankPreference = "POPULARITY";
-    placeTextSearchRequest.locationRestriction = circle;
-
+    placeTextSearchRequest.locationBias = circle;
+    console.log(`${placeType}s near ${locationName}`);
+    placeTextSearchRequest.textQuery = `${placeType}s near ${locationName}`;
+    console.log(placeTextSearchRequestRef.current.textQuery);
     //placeTextSearchRequest.includedPrimaryTypes = placeType
     //  ? [placeType]
     //  : undefined;
-  }, [placesLib, geoLib, map, placeType, getContainingCircle, locationId]);
+  }, [
+    placesLib,
+    geoLib,
+    map,
+    placeType,
+    getContainingCircle,
+    locationId,
+    locationName,
+  ]);
 
   // Return the Google Maps Place List Web Component
   // This component is rendered as a custom HTML element (Web Component) provided by Google
@@ -76,7 +108,7 @@ export const PlaceSearchWebComponent = ({
         - 'selectable' enables click-to-select functionality
         - When a place is selected, the ongmp-placeselect event is fired
       */}
-      <gmp-place-search // i think this is where ideally we can filter via stars and # of ratings - google.maps.places.Place.userRatingCount -- google.maps.places.Place.rating
+      <gmp-place-search
         selectable
         truncation-preferred
         ref={placeSearchRef}
@@ -87,11 +119,11 @@ export const PlaceSearchWebComponent = ({
           setPlaces(event.target.places);
         }}
       >
-        {/*<gmp-place-nearby-search-request
-          ref={placeNearbySearchRequestRef}
-        ></gmp-place-nearby-search-request>*/}
         <gmp-place-text-search-request
           ref={placeTextSearchRequestRef}
+          ongmp-load={(event: { target: PlaceTextSearchRequestElement }) => {
+            console.log("ongmp loadz:", event.target);
+          }}
         ></gmp-place-text-search-request>
         <gmp-place-all-content></gmp-place-all-content>
       </gmp-place-search>

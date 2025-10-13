@@ -128,14 +128,14 @@ const EditVacationSchedule = (props: { loadFirst: () => void }) => {
         setMessage("Error: Trip not found");
       }
       if (response.ok) {
-        console.log(
-          "name:",
-          data.tripName,
-          "startdate:",
-          data.startDate,
-          "enddate:",
-          data.endDate
-        );
+        //console.log(
+        //  "name:",
+        //  data.tripName,
+        //  "startdate:",
+        //  data.startDate,
+        //  "enddate:",
+        //  data.endDate
+        //);
         const convertStartPreserved = new Date(data.startDate);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
@@ -146,7 +146,7 @@ const EditVacationSchedule = (props: { loadFirst: () => void }) => {
           costTotal += Number(i.cost);
         }
         setCostTotal(costTotal);
-        console.log(data.schedule);
+        //console.log(data.schedule);
         data.schedule.sort(
           (a: Schedule, b: Schedule) =>
             a.start_time.getTime() - b.start_time.getTime()
