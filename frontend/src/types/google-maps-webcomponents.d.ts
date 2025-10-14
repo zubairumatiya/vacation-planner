@@ -49,6 +49,7 @@ declare global {
     locationRestriction: { center: google.maps.LatLng; radius: number };
     locationBias: { center: google.maps.LatLng; radius: number };
     textQuery: string;
+    readonly places: google.maps.places.Place[];
   };
 
   interface PlacesTextSearchResponseEventDetail {

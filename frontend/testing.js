@@ -3,7 +3,7 @@ const nextDay = new Date("2025-08-01T02:00:00.000Z");
 console.log(nextDay.toISOString());
 
 const apiKey = "AIzaSyCniKprqPB06h2CWrWI45AAZfFkvlDIygw";
-const query = "restaurants near austin";
+const query = "coffee in Austin";
 
 const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
   query
@@ -15,7 +15,9 @@ async function getPlaces() {
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
     const storeNames = data.results.map((v) => console.log(v.name));
-    if (data.next_page_token) {
+    console.log(data.results[0].geometry.location);
+    if (!data.next_page_token) {
+      // turned it off with ! to avoid extra use
       console.log(data.next_page_token);
       await new Promise((r) => setTimeout(r, 2000));
       const res2 = await fetch(`${url}&pagetoken=${data.next_page_token}`);
@@ -53,6 +55,8 @@ getPlaces();
 // add want to see list - DONE
 
 // add google maps API window
+// -- for next time: can i get events from gmp text? how does gmp place search work, like do i just need a nested list of place ID's, is gmp text necessary?
+// -- -- an idea: it seems like setting places ongmp load only works on gmp place search, so what if i am able to see what kind of event.target it is and replicate it with a noraml fetch request
 // -- need to add more selection criteria, categories, ratings, reviews,etc
 // -- -- running into a bit of a problem, search nearby doesn't allow for filtering by stars and ratings. So the best practical method is probably to retirieve a lot
 // -- -- of places and then filter by our filters and sort descending. But still this will not pull all the places within our criteria, a fix i can think of is having

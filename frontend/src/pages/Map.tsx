@@ -113,3 +113,40 @@ const MyMapComponent = () => {
   );
 };
 export default MyMapComponent;
+
+{
+  /*
+    import { APIProvider } from "@vis.gl/react-google-maps";
+    
+    const API_KEY = import.meta.env.VITE_MAPS_API_KEY;
+    
+    export const PlaceTextSearchMinimal = () => {
+        return (
+            <APIProvider apiKey={API_KEY} version="beta" libraries={["places"]}>
+            <div style={{ padding: "1rem", border: "1px solid gray" }}>
+            <h2>Text Search Minimal</h2>
+            
+            <gmp-place-search
+            ongmp-load={(e: any) => {
+                console.log("✅ gmp-place-search loaded");
+            }}
+            // Listen for text search responses at the parent
+            onGmpPlacestextsearchresponse={(ev: any) =>
+            console.log("✅ Text search response (bubbled):", ev.detail)
+        }
+        >
+        <gmp-place-text-search-request
+        text-query="coffee in Austin"
+        ></gmp-place-text-search-request>
+        
+        <gmp-place-all-content></gmp-place-all-content>
+        </gmp-place-search>
+        </div>
+        </APIProvider>
+    );
+};
+
+export default PlaceTextSearchMinimal;
+
+*/
+}

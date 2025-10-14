@@ -2,6 +2,10 @@ import express from "express";
 const router = express.Router();
 import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+const API_KEY = process.env.MAPS_API_KEY;
 
 router.get("/home", ensureLoggedIn, async (req, res, next) => {
   try {
@@ -293,6 +297,23 @@ router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
       [req.params.itemId]
     );
     res.status(200).json({ deletedData: result.rows });
+    return;
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/map", async (req, res, next) => {
+  try {
+    const query = "coffee in Austin";
+
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
+      query
+    )}&key=${API_KEY}`;
+    const result = await fetch(url); // can add in the request body the number of stars (minRating)
+    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+    const data = await result.json();
+    res.status(200).json(data);
     return;
   } catch (err) {
     next(err);
