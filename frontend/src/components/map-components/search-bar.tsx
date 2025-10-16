@@ -47,8 +47,8 @@ export const SearchBar = memo(function SearchBar({
       <span className={styles.span}>near</span>
       <AutocompleteWebComponent
         onPlaceSelect={(place) => {
-          setLocationId(place?.place_id ?? null);
-          setLocationName(place?.name ?? null);
+          setLocationId(place?.id ?? undefined);
+          setLocationName(place?.displayName ?? null);
         }}
       />
     </div>

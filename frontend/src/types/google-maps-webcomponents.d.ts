@@ -10,7 +10,7 @@ declare global {
   type PlaceType = "restaurant" | "cafe" | "museum";
 
   interface GmpSelectEvent {
-    place: google.maps.places.PlaceResult;
+    place: google.maps.places.Place;
   }
 
   interface GmpBasicPlaceAutocomplete
@@ -19,15 +19,15 @@ declare global {
   }
 
   interface PlaceDetailsMarkerProps {
-    place: google.maps.places.PlaceResult;
+    place: google.maps.places.Place;
     selected: boolean;
     onClick: (placeId: string | undefined) => void;
     detailsSize: "FULL";
   }
 
   interface PlaceSearchProps {
-    onPlaceSelect: (place: google.maps.places.PlaceResult | undefined) => void;
-    setPlaces: (markers: google.maps.places.PlaceResult[]) => void;
+    onPlaceSelect: (place: google.maps.places.Place | undefined) => void;
+    setPlaces: (markers: google.maps.places.Place[]) => void;
     locationId: string | undefined;
     locationName: string | null;
     placeType: string | null;
@@ -53,7 +53,7 @@ declare global {
   };
 
   interface PlacesTextSearchResponseEventDetail {
-    results: google.maps.places.PlaceResult[];
+    results: google.maps.places.Place[];
     status: google.maps.places.PlacesServiceStatus;
   }
 

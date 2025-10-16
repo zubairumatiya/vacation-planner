@@ -1,3 +1,4 @@
+import fs from "fs";
 const nextDay = new Date("2025-08-01T02:00:00.000Z");
 
 console.log(nextDay.toISOString());
@@ -5,21 +6,22 @@ console.log(nextDay.toISOString());
 const apiKey = "AIzaSyCniKprqPB06h2CWrWI45AAZfFkvlDIygw";
 const query = "coffee in Austin";
 
+const controller = new AbortController();
+
 fetch("https://places.googleapis.com/v1/places:searchText", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-Goog-Api-Key": `${apiKey}`,
-    "X-Goog-FieldMask":
-      "places.displayName,places.rating,places.userRatingCount,nextPageToken",
+    "X-Goog-Api-Key": apiKey,
+    "X-Goog-FieldMask": "places.id",
   },
-  body: JSON.stringify({
-    textQuery: `${query}`,
-  }),
+  body: JSON.stringify({ textQuery: query, pageSize: 1 }),
+  signal: controller.signal,
 })
   .then((res) => res.json())
-  .then((data) => console.log(data))
-  .catch((err) => console.error(err));
+  .then((data) => console.log(data.places[0].id))
+  .catch((err) => console.error(err))
+  .finally(() => controller.abort());
 
 // make dragging responsive to all platforms // NEEDS TESTING
 // should i just make end time an hour later upon drag and drop?  -- i think i should - DONE

@@ -1,0 +1,947 @@
+{
+  "places": [
+    {
+      "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E",
+      "id": "ChIJa7zfoiDLRIYR1Sb-iOrB62E",
+      "types": [
+        "cafe",
+        "food",
+        "point_of_interest",
+        "establishment"
+      ],
+      "nationalPhoneNumber": "(737) 325-2700",
+      "internationalPhoneNumber": "+1 737-325-2700",
+      "formattedAddress": "609 Clayton Ln Suite 100, Austin, TX 78752, USA",
+      "addressComponents": [
+        {
+          "longText": "Suite 100",
+          "shortText": "Suite 100",
+          "types": [
+            "subpremise"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "609",
+          "shortText": "609",
+          "types": [
+            "street_number"
+          ],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Clayton Lane",
+          "shortText": "Clayton Ln",
+          "types": [
+            "route"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Highland",
+          "shortText": "Highland",
+          "types": [
+            "neighborhood",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Austin",
+          "shortText": "Austin",
+          "types": [
+            "locality",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Travis County",
+          "shortText": "Travis County",
+          "types": [
+            "administrative_area_level_2",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Texas",
+          "shortText": "TX",
+          "types": [
+            "administrative_area_level_1",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": [
+            "country",
+            "political"
+          ],
+          "languageCode": "en"
+        },
+        {
+          "longText": "78752",
+          "shortText": "78752",
+          "types": [
+            "postal_code"
+          ],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "862487FP+JM",
+        "compoundCode": "87FP+JM Austin, TX, USA"
+      },
+      "location": {
+        "latitude": 30.3240076,
+        "longitude": -97.71334809999999
+      },
+      "viewport": {
+        "low": {
+          "latitude": 30.322675169708504,
+          "longitude": -97.7146978802915
+        },
+        "high": {
+          "latitude": 30.3253731302915,
+          "longitude": -97.71199991970849
+        }
+      },
+      "rating": 4.6,
+      "googleMapsUri": "https://maps.google.com/?cid=7055946454270879445&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+      "websiteUri": "https://damcoffee.hayven.ai/",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 19,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 19,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 19,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 19,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 19,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 9,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 7:00 PM",
+          "Tuesday: 8:00 AM – 7:00 PM",
+          "Wednesday: 8:00 AM – 7:00 PM",
+          "Thursday: 8:00 AM – 7:00 PM",
+          "Friday: 8:00 AM – 7:00 PM",
+          "Saturday: 9:00 AM – 5:00 PM",
+          "Sunday: 9:00 AM – 5:00 PM"
+        ],
+        "nextCloseTime": "2025-10-17T00:00:00Z"
+      },
+      "utcOffsetMinutes": -300,
+      "adrFormatAddress": "<span class=\"street-address\">609 Clayton Ln Suite 100</span>, <span class=\"locality\">Austin</span>, <span class=\"region\">TX</span> <span class=\"postal-code\">78752</span>, <span class=\"country-name\">USA</span>",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 52,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/cafe_pinlet",
+      "iconBackgroundColor": "#FF9E67",
+      "displayName": {
+        "text": "đậm coffee bar",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Cafe",
+        "languageCode": "en-US"
+      },
+      "takeout": true,
+      "delivery": false,
+      "dineIn": true,
+      "curbsidePickup": false,
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 9,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 19
+              }
+            },
+            "close": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 19
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 20
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 19,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 20
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 21
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 19,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 21
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 22
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 19,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 22
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 16
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 19,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 16
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 17
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 19,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 17
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 9,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 18
+              }
+            },
+            "close": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2025,
+                "month": 10,
+                "day": 18
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 7:00 PM",
+          "Tuesday: 8:00 AM – 7:00 PM",
+          "Wednesday: 8:00 AM – 7:00 PM",
+          "Thursday: 8:00 AM – 7:00 PM",
+          "Friday: 8:00 AM – 7:00 PM",
+          "Saturday: 9:00 AM – 5:00 PM",
+          "Sunday: 9:00 AM – 5:00 PM"
+        ],
+        "nextCloseTime": "2025-10-17T00:00:00Z"
+      },
+      "primaryType": "cafe",
+      "shortFormattedAddress": "609 Clayton Ln Suite 100, Austin",
+      "reviews": [
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT2paNVlsRXRVSEZsY0V4ZmVtaHdibTVsTlhrMlNYYxAB",
+          "relativePublishTimeDescription": "a month ago",
+          "rating": 5,
+          "text": {
+            "text": "Love how warm and welcoming the atmosphere of this new business is. Very cozy place to come in and study, though noise levels can get a bit high during peak service times. The coffee is a lot stronger than I’m used to, which was a surprise, but once I knew what to expect I thought it tasted great! The owners and people behind the counter have all been extremely friendly as well, and I’ve consistently felt very welcomed in the space. I’ll definitely be a repeat customer here! :)",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Love how warm and welcoming the atmosphere of this new business is. Very cozy place to come in and study, though noise levels can get a bit high during peak service times. The coffee is a lot stronger than I’m used to, which was a surprise, but once I knew what to expect I thought it tasted great! The owners and people behind the counter have all been extremely friendly as well, and I’ve consistently felt very welcomed in the space. I’ll definitely be a repeat customer here! :)",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Kayleigh Malik",
+            "uri": "https://www.google.com/maps/contrib/102187748343544964127/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWxbJAR7LqitUKW-4LvDXuUIaW_VNp0N_vbVqux9x4OkPVSwvD6=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2025-08-24T15:35:29.072772368Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT2paNVlsRXRVSEZsY0V4ZmVtaHdibTVsTlhrMlNYYxAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2paNVlsRXRVSEZsY0V4ZmVtaHdibTVsTlhrMlNYYxAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT2pVNU5ESkNXbTh6T1dkcFNYRnhNek5LZWpjMmNuYxAB",
+          "relativePublishTimeDescription": "a month ago",
+          "rating": 4,
+          "text": {
+            "text": "The variety of drinks is good, and the drink flavors are pretty solid. The staff is nice. This place used to be a different boba shop, and I didn’t notice any major improvements to the interior—hence my 3-star rating for atmosphere.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "The variety of drinks is good, and the drink flavors are pretty solid. The staff is nice. This place used to be a different boba shop, and I didn’t notice any major improvements to the interior—hence my 3-star rating for atmosphere.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Kris Mittapalli",
+            "uri": "https://www.google.com/maps/contrib/109390862680930089893/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjVQcjYmkaYpb_wPfVpWc0xtdH_qq7OkC6WSucPldriIrfG_OjFqkQ=s128-c0x00000000-cc-rp-mo-ba5"
+          },
+          "publishTime": "2025-08-20T23:51:04.357497349Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT2pVNU5ESkNXbTh6T1dkcFNYRnhNek5LZWpjMmNuYxAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pVNU5ESkNXbTh6T1dkcFNYRnhNek5LZWpjMmNuYxAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT2pCWGNqRlliRE5MYmtSRVFXbFVkWHByUzA5NExYYxAB",
+          "relativePublishTimeDescription": "2 months ago",
+          "rating": 5,
+          "text": {
+            "text": "Their soft opening week was very busy! It took about 45 minutes waiting in line to get drinks. We ordered Vietnamese coffee and a pistachio latte. Both were delicious! They did a good job redecorating the interior and making the seating area cozy. It's great to see a new coffee shop getting lots of business, but I'd strongly recommend going during their non busy hours if you're looking to just grab a coffee and go.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Their soft opening week was very busy! It took about 45 minutes waiting in line to get drinks. We ordered Vietnamese coffee and a pistachio latte. Both were delicious! They did a good job redecorating the interior and making the seating area cozy. It's great to see a new coffee shop getting lots of business, but I'd strongly recommend going during their non busy hours if you're looking to just grab a coffee and go.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Melissa Steinke",
+            "uri": "https://www.google.com/maps/contrib/108636054135431651163/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXm33oy8A8nQQuIgae3FnYwqCYMeoJWGQqrnZXaAdGUVK8HGQAw=s128-c0x00000000-cc-rp-mo-ba2"
+          },
+          "publishTime": "2025-08-11T17:07:18.235148471Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT2pCWGNqRlliRE5MYmtSRVFXbFVkWHByUzA5NExYYxAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2pCWGNqRlliRE5MYmtSRVFXbFVkWHByUzA5NExYYxAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT2psUlZHVkdVV1YzU21oWFpqVlZVbVJXYTBsVVNsRRAB",
+          "relativePublishTimeDescription": "2 months ago",
+          "rating": 5,
+          "text": {
+            "text": "I had such a wonderful experience at this coffee shop! The staff here are incredibly polite and genuinely friendly. Even when they weren’t officially setup to open yet, they went out of their way to help our group make drinks, which I really appreciated. The coffee is excellent, rich and smooth, and their matcha is just as impressive, perfectly balanced and not too sweet. It’s rare to find a spot that combines great drinks with such thoughtful, welcoming service. Highly recommend!",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I had such a wonderful experience at this coffee shop! The staff here are incredibly polite and genuinely friendly. Even when they weren’t officially setup to open yet, they went out of their way to help our group make drinks, which I really appreciated. The coffee is excellent, rich and smooth, and their matcha is just as impressive, perfectly balanced and not too sweet. It’s rare to find a spot that combines great drinks with such thoughtful, welcoming service. Highly recommend!",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Shashi Kranth",
+            "uri": "https://www.google.com/maps/contrib/117323672495516463324/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWdHj2mvmvQ2ccXL-e65RYYcaDZgzK3ZpAor09_s1uJg1X74n8giw=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2025-08-06T19:10:41.021795569Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT2psUlZHVkdVV1YzU21oWFpqVlZVbVJXYTBsVVNsRRAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2psUlZHVkdVV1YzU21oWFpqVlZVbVJXYTBsVVNsRRAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT2psMVFUQlFkMVYyZUV0NlEzZDNUMFJTVFc1cmVVRRAB",
+          "relativePublishTimeDescription": "a month ago",
+          "rating": 5,
+          "text": {
+            "text": "I recently visited Dâm Coffee Bar because I have been a little obsessed with oat milk matcha with a pump of vanilla, and I am on the hunt for the best one in Austin. This spot simply won me over. The place is beautiful, very calm, and comfortable to work from, and the matcha was absolutely divine. The service could be better, but overall I really enjoyed my visit. Definitely coming back!",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I recently visited Dâm Coffee Bar because I have been a little obsessed with oat milk matcha with a pump of vanilla, and I am on the hunt for the best one in Austin. This spot simply won me over. The place is beautiful, very calm, and comfortable to work from, and the matcha was absolutely divine. The service could be better, but overall I really enjoyed my visit. Definitely coming back!",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Heysel Requena",
+            "uri": "https://www.google.com/maps/contrib/112877507710693927482/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjVM423Pvem5hIRx-Vju3DgsRAHhgA3CunVs8VZ_KPbkEpNIAglk=s128-c0x00000000-cc-rp-mo-ba5"
+          },
+          "publishTime": "2025-09-16T01:18:43.087446949Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT2psMVFUQlFkMVYyZUV0NlEzZDNUMFJTVFc1cmVVRRAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2psMVFUQlFkMVYyZUV0NlEzZDNUMFJTVFc1cmVVRRAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        }
+      ],
+      "photos": [
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2dwovt2OCiDW33sLeGkR6xZYqLJJgseedoObZ6tS14E0RuF288sDTOOgenn5aFw1MnW09VCs7rBd54oPW_IPFWC6_376VZe5bSLramAiK2Tpr_XtJ9Z_icAkkVDDItCG7ehffcUfMMdfqwZkKXRsR1HhDDsPERe9r6BO5vVwojWVKoJOjiMJWmd3_Z-yQGxsZz4tBvCYQ69s7FHZQQ_DmmPrUAZ0o5hGTQAQhou7XNTtTx53V20D_9t6nE7lUVNce9K1Wur5T7ijGFDYQDa4DRWPk6T7vLTP9HGsTPdzAJJVA",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipNZnVhhgCt-j30icBoCYb5G1w_LKCghnuFedglD&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipNZnVhhgCt-j30icBoCYb5G1w_LKCghnuFedglD!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2e67XJdXRgjquvi893FputaDygsUZyJISuwzu3tIr9vouSkaASjvuD84FiDOzIjQSyRFa3jyZxljcfhUw6xhtbmNS6MMUc_TvulNWJ2IL_JJwjyjqcI470czgtNtQ5RYrwvmydnqTrM7DhLVms6guAh7TWf88VZyrUyNLWXAfgo_Pbt1_ABlLpEUyyeGZh0Pm2KKX-ASAza0PzYAa1-FN-IZugV_jEYOleweEcyhJB5n9pvOZ5NFnnIklnbWWaKO_QvTauY82cNAklfssc5E6r85tXjtTMCy7GtW33SpcPEtw",
+          "widthPx": 2048,
+          "heightPx": 900,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipPOuwIeZ_5DoaxHu0Nl2W2k21oGw2q9SRoVYhKg&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipPOuwIeZ_5DoaxHu0Nl2W2k21oGw2q9SRoVYhKg!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2coA29AqdLXk1sykhUdUWvrwpGtF_bALS-9aiqqvCurOgpUSEuu41CfDZPg-a0Yt7SX8sMDru7Q8LLK-MPiSLy4BjAM4ddOe2ue-mAa3UJMJRpN-1v1DVB2XQHekK8m0cRYV3atvPsmHGeX1_AVFlJ6b-gUB6YqFWoiruZobPSTsbAbbtHXrA7L_gxGPDGJ0Zo9TBS0z5Tsm9By--_o5kbutpPQpHPyOzorGMJWUMErZUhc8vmJCFRLC16oHpZ_kS9aV5EuCfuGaELYnAKO5qgBYNeAqQ_KNMA3dz-dOlil5A",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipMlMTV_L2ALvfHOAVXLrV3Vpxao8nWCabsZuBDq&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipMlMTV_L2ALvfHOAVXLrV3Vpxao8nWCabsZuBDq!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2cQD_fzv3lpkf021sGczQ1AKczArJ9hiBARbHofexhK2sHYyN1HaEXAMJN_gyJtM_wvbgUJh4jJiRnijN7v-wMbabqhWYliEdWoKD-DyDSD_7m_qnQRA2Y09H8HP4gVLERRy4iPzYq2saOfYK7biGs1tslNWWlS5--ZFtsliDS5bE8OPT5dCdX77CgGQktvyr5zOqvlf1RgrJ7dN9jmioCTAuO4BODHmNcvyml9BHGMP7-gguq-kEzhf_svIAZwgCETIoB21X4Pl-A6MjISWHyfruu7VQkFXQ_FwqvO7Sc1Fg",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipPOa2GtUEm5-o8aK8Pgd63U_2EWGUq8nD5bfAhv&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipPOa2GtUEm5-o8aK8Pgd63U_2EWGUq8nD5bfAhv!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2fcPGRXzoFiptKLNdnbE5K9LMlbdwVrQbAC2t9Sj2zRZQY0UeRZa_eJ7KHMLZ1cdgJSD7cus7NCKI5Q7rRc9FV7v2UNleog2gIb2T-CZJ9CdqdTNSU1ntHNqqZJf4qg-oRdNlJA05gTAZX7to3xe9F01c1fbO-cURgpaV4i_YNBjlU3M9w6suIr-itn_VnOtwOSqtVCMxFoSIx480hZokikNB9e8LyHsxXT2KrnpziF02piCDg9MnXCh1HOzpcPw9uOzEUt6XxE4Vr-0jKsqyoIMV8irdqxAiET-oE2yVm8_sX7zIzvPAOri00n7dcJ5jGvAcOBbTIEc0d-Q2HzgmmolLEIvSf_ejMwYr6a4wcvLy5Ad58Gg_Yhz9NDV_Xf9MHFiAl0NrF4pdQXEehvDmqibI1qHlCAW0fOwj6QqEhBJLkmen2XAao8fPC3_aKw",
+          "widthPx": 4800,
+          "heightPx": 3600,
+          "authorAttributions": [
+            {
+              "displayName": "Tri Dinh",
+              "uri": "https://maps.google.com/maps/contrib/107083704998190248686",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjVIWipQxUBEahQg_roSmScVZpkq9LsKuTkVPNa6Xcu9VSun-dM=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sCIABIhDT8MIVLitGfiUsW-iyJcZG&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sCIABIhDT8MIVLitGfiUsW-iyJcZG!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2cS-_gGmbuFDr6Ax4iHnGW_Y_m7PkvTuClpXvSkYUqLubTWNN_lcHuYRhBRPTUYGzgfpbZDX0xTmtrzdmEUV8qWVmYwGcsez3gAR9ah8YKE52KrXIvRVD3_U5Dwyo_TI46svlt7gBpLbS5qdoBpp_20l1moKvIkXg7Sk0sNcoRRlzNDVh3uR9RcXEiC2dXN_JXqAFH5Fh3J8alMaM8f6tW5Hv28Rj64JxQfBKeI0RN0R2tWO2ncnZk8DKsbK_KHH78y97glvIq9tvPFhfPabbXYQ1SEpy-RupFI0-WLPmok9w",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipPIDamZ0wtBvoAZ9ARQToVi5AS_Mo_bhkIFLjlv&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipPIDamZ0wtBvoAZ9ARQToVi5AS_Mo_bhkIFLjlv!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2eQpVx9GgPIhps-sWvWPzG3aJNBqaCSXYrY6Wum8O63NLJ1taS7H4jHOm8exs3fFWGiW4AgcmDFrYXTMhVt1D6WFb5FZUxKS9v9NpM8BCF7QcQfv6V6DD6auTEjn1g7dteuEyxl6k_ZTpBz4EjIZiln6r1LmooEwvpuZshCjP7HtO81ZSKa5_i5os11hyNDZ_QpLWUImxxZwwK4G-QsNA3ojMGNpfrdYtK6I8Pvm-CdTOKPuhgcqjM3p7MEC_RE4K3P2viyRbHNhNj6mNqyFih_ZMlgfm74FX4hRokDUxpXmg",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipPm62mY5UAvCi0954PHyQHJ9_7_wHfFzJLIEBnJ&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipPm62mY5UAvCi0954PHyQHJ9_7_wHfFzJLIEBnJ!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2c2NuVEAfjwy_4lL3FY2MlSn_CBd2fEN2uNtmhPndxE_h4hp9xP4K1DCJNDdLNfYde0SDyWTugd4fAk0-EX-h9HjQ1hukEZ_KMySStAvpLirZDkRJun4uwsp1GXb4CPkh2z7fWX_uEJ_reQeKkBCNTsspBVGWWt2UBZWm_ENaZUdNIBIqcHFaUOHaIo6xyaBTEOEBJ8ron_nm569A9ZqYraZsSqqpjtQNoCUTJHkUPr-o0Fi1XhRGjuXBGYTL6J1TQ-3yHaOincBRvvgsIT0usqeehHiiFNJsZcOMjtZtS4Nt6XUif_vqV9CpCLqa_6sttvVWfZx6FOYBcTaZXNYMKckZJmMpgYw3vYGE1H164mvmAlpHY9KPvZVIBG8uIbKUsCW795hSAwC9edp33kL-tD7rEjQxftWi_3KGZuNuSlFlrlrULBxyHH7EA2baif",
+          "widthPx": 4800,
+          "heightPx": 3600,
+          "authorAttributions": [
+            {
+              "displayName": "Kris Mittapalli",
+              "uri": "https://maps.google.com/maps/contrib/109390862680930089893",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjVQcjYmkaYpb_wPfVpWc0xtdH_qq7OkC6WSucPldriIrfG_OjFqkQ=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sCIABIhA0nlW7FxSK2ERlTfCpI6kG&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sCIABIhA0nlW7FxSK2ERlTfCpI6kG!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2cm0Dwo1Gd8wQftnI4tfWXqMTJUqhzZqy-8_Jba3oEQuC8gPufIgDd1OJpLed2sp42Vx6tRlr5wVSXPnodiTix-hKJ2TqCTnLFSidwoLfV8IknKoKMDNtiBZCpTpHTNBc0kdfNI6SVc0dKkrqQZNTfyskXfZSEPhUobioViOs3F25WslUNyHOv4kb0UEiF1FJl2m_HIIV-4uP5DNCxYXOrNaHa-PobbPQb9BHiEQT_dKOECmz4a3lBTa7G_qoCrQF3DOi7XTsK-Jlhc8NN8rlQTslGX5_2aXYi81NNMfd1PBA",
+          "widthPx": 1290,
+          "heightPx": 1816,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipPXg3aesgBJf9yDZjR1om1mfE735Ag6CuWmJfeO&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipPXg3aesgBJf9yDZjR1om1mfE735Ag6CuWmJfeO!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2clRBAHzBsBYVaGy84ZajEXxqv8wIHC3khigs4hubtN6NMREBeNpjg2BOuHNfAinJ_Lh8TqQ4PMfmxQBfioc5OkDz2vpRmgxkCHo9OAsDWZERHTcBGVQDB0AiWKBG2gTW30RbmviymuIzzWopzTWq2kZv4iER8pGoL5-aGL95qKym9wH51414FduMEz3YtcGLnzXC5DQj4voJ8coz4H3SCcGKCw012LllKWbaiFw08n6EU8kVImtUNcPKGPGWoySVeZ1KMnTGdt3jEVlB77DmvayoBSeWuyOlKvZxoUuI-RTw",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places.places_api&image_key=!1e10!2sAF1QipOgDjssdgZ_aTzqlhYrlpmLDWNTeS52Ea4DktAr&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipOgDjssdgZ_aTzqlhYrlpmLDWNTeS52Ea4DktAr!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        }
+      ],
+      "servesCoffee": true,
+      "parkingOptions": {
+        "freeStreetParking": true,
+        "freeGarageParking": true
+      },
+      "addressDescriptor": {
+        "landmarks": [
+          {
+            "name": "places/ChIJg9eVloK1RIYRu_NnxtQCJjQ",
+            "placeId": "ChIJg9eVloK1RIYRu_NnxtQCJjQ",
+            "displayName": {
+              "text": "Austin PBS",
+              "languageCode": "en"
+            },
+            "types": [
+              "establishment",
+              "point_of_interest"
+            ],
+            "spatialRelationship": "ACROSS_THE_ROAD",
+            "straightLineDistanceMeters": 54.616653,
+            "travelDistanceMeters": 26.842491
+          },
+          {
+            "name": "places/ChIJP0zrkhfKRIYR3jAF_gSph_M",
+            "placeId": "ChIJP0zrkhfKRIYR3jAF_gSph_M",
+            "displayName": {
+              "text": "Ella Parkside",
+              "languageCode": "en"
+            },
+            "types": [
+              "establishment",
+              "point_of_interest",
+              "real_estate_agency"
+            ],
+            "spatialRelationship": "BESIDE",
+            "straightLineDistanceMeters": 48.14273,
+            "travelDistanceMeters": 20.97567
+          },
+          {
+            "name": "places/ChIJowlRwRfKRIYRsdUsIEfdn9U",
+            "placeId": "ChIJowlRwRfKRIYRsdUsIEfdn9U",
+            "displayName": {
+              "text": "Holiday Inn Austin Midtown by IHG",
+              "languageCode": "en"
+            },
+            "types": [
+              "establishment",
+              "lodging",
+              "point_of_interest"
+            ],
+            "straightLineDistanceMeters": 240.42722,
+            "travelDistanceMeters": 287.58484
+          },
+          {
+            "name": "places/ChIJYZZAJTzKRIYRRtYKXDxf5us",
+            "placeId": "ChIJYZZAJTzKRIYRRtYKXDxf5us",
+            "displayName": {
+              "text": "Austin Community College: Highland Campus",
+              "languageCode": "en"
+            },
+            "types": [
+              "establishment",
+              "point_of_interest",
+              "school",
+              "university"
+            ],
+            "spatialRelationship": "AROUND_THE_CORNER",
+            "straightLineDistanceMeters": 197.13405,
+            "travelDistanceMeters": 460.00867
+          },
+          {
+            "name": "places/ChIJJ5LQesjLRIYRt-ulI8ZYejo",
+            "placeId": "ChIJJ5LQesjLRIYRt-ulI8ZYejo",
+            "displayName": {
+              "text": "The Pho Asian Fusion",
+              "languageCode": "en"
+            },
+            "types": [
+              "establishment",
+              "food",
+              "point_of_interest",
+              "restaurant"
+            ],
+            "spatialRelationship": "DOWN_THE_ROAD",
+            "straightLineDistanceMeters": 48.14273,
+            "travelDistanceMeters": 66.11495
+          }
+        ],
+        "areas": [
+          {
+            "name": "places/ChIJM2J4KDrKRIYRZdJWKVl3S2E",
+            "placeId": "ChIJM2J4KDrKRIYRZdJWKVl3S2E",
+            "displayName": {
+              "text": "Highland",
+              "languageCode": "en"
+            },
+            "containment": "WITHIN"
+          }
+        ]
+      },
+      "googleMapsLinks": {
+        "directionsUri": "https://www.google.com/maps/dir//''/data=!4m7!4m6!1m1!4e2!1m2!1m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5!3e0?g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+        "placeUri": "https://maps.google.com/?cid=7055946454270879445&g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+        "writeAReviewUri": "https://www.google.com/maps/place//data=!4m3!3m2!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5!12e1?g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+        "reviewsUri": "https://www.google.com/maps/place//data=!4m4!3m3!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5!9m1!1b1?g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA",
+        "photosUri": "https://www.google.com/maps/place//data=!4m3!3m2!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5!10e5?g_mp=Cidnb29nbGUubWFwcy5wbGFjZXMudjEuUGxhY2VzLlNlYXJjaFRleHQQAhgEIAA"
+      },
+      "priceRange": {
+        "startPrice": {
+          "currencyCode": "USD",
+          "units": "1"
+        },
+        "endPrice": {
+          "currencyCode": "USD",
+          "units": "10"
+        }
+      },
+      "reviewSummary": {
+        "text": {
+          "text": "People say this cafe offers delicious Hue salted coffee, matcha, and pistachio lattes. They highlight the cozy, welcoming vibe and the friendly, attentive staff. They also like the clean and comfortable atmosphere, perfect for studying, working, or hanging out with friends.",
+          "languageCode": "en-US"
+        },
+        "flagContentUri": "https://www.google.com/local/review/rap/report?postId=5%401:CAIQACodChtyc19oOkc5aU1aa0xkV2lpNEVqSEpKRmFBZ0E%7CCAIQACorChtyc19oOkc5aU1aa0xkV2lpNEVqSEpKRmFBZ0ESDAiu2KnHBhCQ5ojFAw&d=17924085&t=8",
+        "disclosureText": {
+          "text": "Summarized with Gemini",
+          "languageCode": "en-US"
+        },
+        "reviewsUri": "https://www.google.com/maps/place//data=!4m4!3m3!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5!9m1!1b1"
+      },
+      "timeZone": {
+        "id": "America/Chicago"
+      },
+      "postalAddress": {
+        "regionCode": "US",
+        "languageCode": "en-US",
+        "postalCode": "78752",
+        "administrativeArea": "Texas",
+        "locality": "Austin",
+        "addressLines": [
+          "609 Clayton Ln Suite 100"
+        ]
+      }
+    }
+  ],
+  "contextualContents": [
+    {
+      "reviews": [
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT2psUlZHVkdVV1YzU21oWFpqVlZVbVJXYTBsVVNsRRAB",
+          "relativePublishTimeDescription": "2 months ago",
+          "rating": 5,
+          "text": {
+            "text": "I had such a wonderful experience at this coffee shop! The staff here are incredibly polite and genuinely friendly. Even when they weren’t officially setup to open yet, they went out of their way to help our group make drinks, which I really appreciated. The coffee is excellent, rich and smooth, and their matcha is just as impressive, perfectly balanced and not too sweet. It’s rare to find a spot that combines great drinks with such thoughtful, welcoming service. Highly recommend!",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I had such a wonderful experience at this coffee shop! The staff here are incredibly polite and genuinely friendly. Even when they weren’t officially setup to open yet, they went out of their way to help our group make drinks, which I really appreciated. The coffee is excellent, rich and smooth, and their matcha is just as impressive, perfectly balanced and not too sweet. It’s rare to find a spot that combines great drinks with such thoughtful, welcoming service. Highly recommend!",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Shashi Kranth",
+            "uri": "https://www.google.com/maps/contrib/117323672495516463324/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWdHj2mvmvQ2ccXL-e65RYYcaDZgzK3ZpAor09_s1uJg1X74n8giw=s128-c-c0x00000000-cc-rp-mo-br100"
+          },
+          "publishTime": "2025-08-06T19:10:41Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT2psUlZHVkdVV1YzU21oWFpqVlZVbVJXYTBsVVNsRRAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2psUlZHVkdVV1YzU21oWFpqVlZVbVJXYTBsVVNsRRAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT25SbU9VNDFjUzFaYm5CdmEwOWxOV2RWTnpGS1JHYxAB",
+          "relativePublishTimeDescription": "2 months ago",
+          "rating": 5,
+          "text": {
+            "text": "I stopped by ĐẬM Coffee Bar during their soft opening and was blown away! The space has such a cool, industrial-urban vibe — perfect for studying, working, or just hanging out with friends.\n\nI tried their iced matcha latte and it was incredible — smooth, perfectly balanced, and not too sweet. You can really taste the quality of their ingredients. The baristas were friendly, fast, and clearly passionate about what they do.\n\nIt’s such a great addition to the neighborhood, and I can already tell this will be my go-to spot for coffee and matcha. Highly recommend checking it out!",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I stopped by ĐẬM Coffee Bar during their soft opening and was blown away! The space has such a cool, industrial-urban vibe — perfect for studying, working, or just hanging out with friends.\n\nI tried their iced matcha latte and it was incredible — smooth, perfectly balanced, and not too sweet. You can really taste the quality of their ingredients. The baristas were friendly, fast, and clearly passionate about what they do.\n\nIt’s such a great addition to the neighborhood, and I can already tell this will be my go-to spot for coffee and matcha. Highly recommend checking it out!",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Quan Do",
+            "uri": "https://www.google.com/maps/contrib/103599271097845348418/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocKUaUHn0T8V3EsSfOrMGXy2NN1C5MgnJ6v-4DRMfzydZE5cUP0=s128-c-c0x00000000-cc-rp-mo-br100"
+          },
+          "publishTime": "2025-08-09T20:35:51Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT25SbU9VNDFjUzFaYm5CdmEwOWxOV2RWTnpGS1JHYxAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT25SbU9VNDFjUzFaYm5CdmEwOWxOV2RWTnpGS1JHYxAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/reviews/Ci9DQUlRQUNvZENodHljRjlvT2xOaU9VbGZZVFZxTjJONmIzZE5ZbE5MTUdZd0xWRRAB",
+          "relativePublishTimeDescription": "2 months ago",
+          "rating": 5,
+          "text": {
+            "text": "Highly recommend! The coffee is delicious and unique, and the atmosphere is so cozy.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Highly recommend! The coffee is delicious and unique, and the atmosphere is so cozy.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Khrystyna Oksina",
+            "uri": "https://www.google.com/maps/contrib/110375827970684005577/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWvkgwZiSWjD517YTXRj6hRePUpALGb-etBkBvJtvJGebHwK6uINw=s128-c-c0x00000000-cc-rp-mo-ba4-br100"
+          },
+          "publishTime": "2025-08-12T18:54:43Z",
+          "flagContentUri": "https://www.google.com/local/review/rap/report?postId=Ci9DQUlRQUNvZENodHljRjlvT2xOaU9VbGZZVFZxTjJONmIzZE5ZbE5MTUdZd0xWRRAB&d=17924085&t=1",
+          "googleMapsUri": "https://www.google.com/maps/reviews/data=!4m6!14m5!1m4!2m3!1sCi9DQUlRQUNvZENodHljRjlvT2xOaU9VbGZZVFZxTjJONmIzZE5ZbE5MTUdZd0xWRRAB!2m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        }
+      ],
+      "photos": [
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2dtURhQ9tIE2gCUxjYfshkenVINKOYDPiVasKYD9_yDINhC-UnpVnlorUeYMzSzE-5yAGbABi7mWzCkwF9buZ7jd9mYtJI7L8hV4yq7SHFsS4cidWFSsrT7B2riF0PX-gtMa3N1-sG8T9tXa7A644mchTaYNi3LFZ0qfsQmYID8aLEBcVTUTfdRSFXjl4nGDUcIa6-nZGO7ZVMvjQaofPSG-IUtwOIGc1LcBRimB4-NunSJprwE_oDe38CLxBNNd3ouKZl4A-ULdcG9-QuxbVKFNKT5OoH3FQ",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places&image_key=!1e10!2sAF1QipMSCRQafIW1eH4DQORMbBW_MO1qb4QEUnSeF0Qx&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipMSCRQafIW1eH4DQORMbBW_MO1qb4QEUnSeF0Qx!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2cfQwC5kv7wRH6jiK6zx1WU-0arx9GbExkiO934JVqvcm-F5RysDuAPkrRMqUhW6ViyfZ_esu2amG_jycyaWjOGTCZtvKmlyMikfX1IDQ02Qi2McInJZqLzf4zUuASJUtvSdFrRxE6JQaTs2qEV0DX_cD8-l8c_6TXkjSDyXQ1sVgUnHB8vJxw9gcBv-WSEYadC9HassikrznD9fUSmEIhOlmBR_olBb_WnjIJtp-spZLon2lxff9cZLmUK9aRzSCVrPAg5fMI8qlQOlQhzzMxkj3gC3dphzQ",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places&image_key=!1e10!2sAF1QipMlMTV_L2ALvfHOAVXLrV3Vpxao8nWCabsZuBDq&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipMlMTV_L2ALvfHOAVXLrV3Vpxao8nWCabsZuBDq!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2djFp7AqacVLru-vqpleTH-uLCLSS_UIqCMgSaZcYe3vu4BcL61erkUCgelQxowURhq1i1q2MshsxfDz3GF1xjmkzLLZuwoGkT1W-zvloVk43LFAGtGzAuir2pwJSCTyjYp_hYyVV8nOWa5gtaUDUb4misVOueV2aHPgl4mJk4_lwyjFxh3FVMQKelu-2-DcnSJ5s5DmwBw0JPbnEBAquSHpgcRsAfwbbDVXT6ZvYdbOcA7JR_qVEDqpwx4b5vyb5N3lgA8cE3Y7qr_se0nNi_svZ8QccrLIg",
+          "widthPx": 2048,
+          "heightPx": 900,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places&image_key=!1e10!2sAF1QipPOuwIeZ_5DoaxHu0Nl2W2k21oGw2q9SRoVYhKg&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipPOuwIeZ_5DoaxHu0Nl2W2k21oGw2q9SRoVYhKg!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2fTKNR4AZqUCYDgDWRlieVZ1Is6sX9KAMZh2EYfTs89fcpcD7WFdMTk5bvq9_DYwaJkLE5euz1PScnYk6UAs3DH5A99eySqlSDjBahw3nKj8Uo-zMUoPmQaok-Xmqs96Io0jyl1VfLJKew4jKPydTh1uRf4keJ0rDGHT10m617NfeAieaW4zBWT9uliDmrLzOA7_orx4aXnMJf3fi8kC2rjCallnkGoYnuIo75EsCxOO63QjySKwMMBQBdFtok0x1hBdrNyn93T0uscn4316mrhPBsMrkuPUg",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places&image_key=!1e10!2sAF1QipMvOgxpn-hawu9eTThAudWFZ60wKdWz8e8JpnTM&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipMvOgxpn-hawu9eTThAudWFZ60wKdWz8e8JpnTM!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        },
+        {
+          "name": "places/ChIJa7zfoiDLRIYR1Sb-iOrB62E/photos/AciIO2enXShofE_Jd-7qcTRQ6dTW3moX_PZllR1vX4eTbf13Wa_uhlxiTv4nu5LvGXFqsGTgsFKO0lGdIEekoT6Y-lGBNtdIc2W_WkH6yujC89mb3VOdzAZSAX0HVYmCZNLYayxAT9PyRAcg4jzqI1g1h_2BtPXKsOv0SYbmkp-s35FAzmLLxWwrcn-qsnjOqo2U8Qi49ehXSJVDnHagyRdpxXsJkj970uBF5KuR_htyHbvfE_szXPaUOCDSt_0hZqjnKOFJ3TrlQrv2KfabaqiTIYic-60FEDtTkQ",
+          "widthPx": 1080,
+          "heightPx": 1350,
+          "authorAttributions": [
+            {
+              "displayName": "đậm coffee bar",
+              "uri": "https://maps.google.com/maps/contrib/107111417240772778406",
+              "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWJVPoyiVY7woRtabFYTHWIb5Pwfe_876dyqA7zMCKCuTfggTc=s100-p-k-no-mo"
+            }
+          ],
+          "flagContentUri": "https://www.google.com/local/imagery/report/?cb_client=maps_api_places&image_key=!1e10!2sAF1QipMirhBZDVnp63D2jKPJJzVvHgFBk6d5xjpBK8Lg&hl=en-US",
+          "googleMapsUri": "https://www.google.com/maps/place//data=!3m4!1e2!3m2!1sAF1QipMirhBZDVnp63D2jKPJJzVvHgFBk6d5xjpBK8Lg!2e10!4m2!3m1!1s0x8644cb20a2dfbc6b:0x61ebc1ea88fe26d5"
+        }
+      ],
+      "justifications": [
+        {
+          "businessAvailabilityAttributesJustification": {
+            "takeout": true,
+            "dineIn": true
+          }
+        }
+      ]
+    }
+  ],
+  "nextPageToken": "AciIO2cfzu1eDui5oCJapPecLHb5T6jtCM14zAsY87l1kz9yKltcZh4EK7hxZYL4kyLN30PJQrBWKaF0xi3267MjZ7uNGAIsBSCETWYgj3IIOPu0",
+  "searchUri": "https://www.google.com/maps/search/coffee+in+Austin"
+}

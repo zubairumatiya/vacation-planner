@@ -16,7 +16,7 @@ export const PlaceSearchWebComponent = ({
   const reviewCountRef = useRef<HTMLSelectElement>(null);
   const [newParams, setNewParams] = useState<boolean>(false);
   const [disabled, setDisabled] = useState<boolean>(true);
-  const [results, setResults] = useState<google.maps.places.PlaceResult[]>([]);
+  const [results, setResults] = useState<google.maps.places.Place[]>([]);
   const [rememberFilter, setRememberFilter] = useState({
     rating: "",
     reviews: "",
@@ -37,8 +37,8 @@ export const PlaceSearchWebComponent = ({
             reviews: reviewCountRef?.current?.value,
           });
         }
-        setResults(data.results);
-        setPlaces(data.results);
+        setResults(data.places);
+        setPlaces(data.places);
       } catch (err) {
         console.error("Error fetching places:", err);
       }
@@ -113,7 +113,7 @@ export const PlaceSearchWebComponent = ({
 
           return (
             <div
-              key={place.place_id}
+              key={place.id}
               className={styles.placeCard}
               onClick={() => {
                 onPlaceSelect(place);
@@ -125,15 +125,17 @@ export const PlaceSearchWebComponent = ({
               className={styles.placePhoto}
             />*/}
               <div className={styles.placeDetails}>
-                <h3 className={styles.placeName}>{place.name}</h3>
+                <h3 className={styles.placeName}>
+                  {place?.displayName?.text ?? "undefined"}
+                </h3>
                 <div className={styles.placeRating}>
                   ⭐ {place.rating ?? "—"}{" "}
                   <span className={styles.ratingCount}>
-                    ({place.user_ratings_total ?? 0})
+                    ({place.userRatingCount ?? 0})
                   </span>
                 </div>
                 <div className={styles.placeAddress}>
-                  {place.formatted_address}
+                  {place.formattedAddress}
                 </div>
               </div>
             </div>

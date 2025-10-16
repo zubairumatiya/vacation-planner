@@ -16,8 +16,8 @@ export const PlaceDetailsMarker = memo(
 
     // Handle marker click to select this place
     const handleMarkerClick = useCallback(() => {
-      onClick(place?.place_id);
-    }, [onClick, place.place_id]);
+      onClick(place?.id);
+    }, [onClick, place.id]);
 
     // Handle info window close by deselecting this place
     const handleCloseClick = useCallback(() => {
@@ -28,7 +28,7 @@ export const PlaceDetailsMarker = memo(
       <>
         <AdvancedMarker
           ref={markerRef}
-          position={place?.geometry?.location}
+          position={place.location}
           onClick={handleMarkerClick}
         />
         {selected && (
@@ -51,14 +51,14 @@ export const PlaceDetailsMarker = memo(
             {detailsSize === "FULL" ? (
               <gmp-place-details>
                 <gmp-place-details-place-request
-                  place={place.place_id ?? ""}
+                  place={place.id ?? ""}
                 ></gmp-place-details-place-request>
                 <gmp-place-all-content></gmp-place-all-content>
               </gmp-place-details>
             ) : (
               <gmp-place-details-compact>
                 <gmp-place-details-place-request
-                  place={place.place_id ?? ""}
+                  place={place.id ?? ""}
                 ></gmp-place-details-place-request>
                 <gmp-place-all-content></gmp-place-all-content>
               </gmp-place-details-compact>

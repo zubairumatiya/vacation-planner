@@ -307,10 +307,22 @@ router.get("/map", async (req, res, next) => {
   try {
     const query = "coffee in Austin";
 
-    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
-      query
-    )}&key=${API_KEY}`;
-    const result = await fetch(url); // can add in the request body the number of stars (minRating)
+    const result = await fetch(
+      "https://places.googleapis.com/v1/places:searchText",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": `${API_KEY}`,
+          "X-Goog-FieldMask": "places.id,nextPageToken,places.name",
+          //"places.displayName,places.rating,places.userRatingCount,places.location,nextPageToken",
+        },
+        body: JSON.stringify({
+          textQuery: `${query}`,
+          pageSize: 3,
+        }),
+      }
+    );
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data = await result.json();
     res.status(200).json(data);

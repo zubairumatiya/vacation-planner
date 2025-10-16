@@ -31,7 +31,7 @@ const MAP_CONFIG = {
 };
 
 const MyMapComponent = () => {
-  const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([]);
+  const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined
   );
@@ -47,10 +47,10 @@ const MyMapComponent = () => {
     return places.map((place, index) => (
       <PlaceDetailsMarker
         detailsSize={"FULL"}
-        key={place.place_id || index}
-        selected={place.place_id === selectedPlaceId}
+        key={place.id || index}
+        selected={place.id === selectedPlaceId}
         place={place}
-        onClick={() => setSelectedPlaceId(place.place_id)}
+        onClick={() => setSelectedPlaceId(place.id)}
       />
     ));
   }, [places, selectedPlaceId, detailsSize]);
@@ -72,7 +72,7 @@ const MyMapComponent = () => {
             locationName={locationName}
             setPlaces={setPlaces}
             onPlaceSelect={(place) =>
-              setSelectedPlaceId(place?.place_id ?? undefined)
+              setSelectedPlaceId(place?.id ?? undefined)
             }
           />
         </div>
