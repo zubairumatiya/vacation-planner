@@ -29,7 +29,7 @@ export const PlaceSearchWebComponent = ({
         const res = await fetch(`${apiURL}/map`); // can add in the request body the number of stars (minRating)
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        console.log(data.results.length);
+        console.log(data.places.length);
         console.log(reviewCountRef?.current?.value);
         if (ratingRef.current && reviewCountRef.current) {
           setRememberFilter({

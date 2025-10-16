@@ -314,8 +314,9 @@ router.get("/map", async (req, res, next) => {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": "places.id,nextPageToken,places.name",
-          //"places.displayName,places.rating,places.userRatingCount,places.location,nextPageToken",
+          //"places.id,nextPageToken,places.name",
+          "X-Goog-FieldMask":
+            "places.id,places.displayName,places.rating,places.userRatingCount,places.location,places.shortFormattedAddress,nextPageToken",
         },
         body: JSON.stringify({
           textQuery: `${query}`,
