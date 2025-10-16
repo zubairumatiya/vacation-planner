@@ -20,7 +20,7 @@ const MAP_CONFIG = {
 
 export const Test = () => {
   const [results, setResults] = useState<google.maps.places.PlaceResult[]>([]);
-  console.log("poop");
+
   useMapsLibrary("places");
   useEffect(() => {
     async function getPlaces() {

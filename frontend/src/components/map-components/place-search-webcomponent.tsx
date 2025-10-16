@@ -1,133 +1,146 @@
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 
+const apiURL = import.meta.env.VITE_API_URL;
+
 export const PlaceSearchWebComponent = ({
+  //FOR NEXT TIME: let's get cards set up that are scrollable and selectable with a page button
   onPlaceSelect,
   setPlaces,
   locationId,
   locationName,
   placeType,
 }: PlaceSearchProps) => {
-  // Load required Google Maps libraries
-  const placesLib = useMapsLibrary("places");
-  const geoLib = useMapsLibrary("geometry");
+  const ratingRef = useRef<HTMLSelectElement>(null);
+  const reviewCountRef = useRef<HTMLSelectElement>(null);
+  const [newParams, setNewParams] = useState<boolean>(false);
+  const [disabled, setDisabled] = useState<boolean>(true);
+  const [results, setResults] = useState<google.maps.places.PlaceResult[]>([]);
+  const [rememberFilter, setRememberFilter] = useState({
+    rating: "",
+    reviews: "",
+  });
 
-  const map = useMap();
-
-  // Use ref to interact with the DOM Web Component
-  const placeSearchRef = useRef<PlaceSearchElement | null>(null);
-
-  const placeTextSearchRequestRef =
-    useRef<PlaceTextSearchRequestElement | null>(null);
-
-  // Calculate a circular region based on the map's current bounds
-  // This is used to restrict the places search to the visible map area
-  const getContainingCircle = useCallback(
-    (bounds?: google.maps.LatLngBounds) => {
-      if (!bounds || !geoLib) return undefined;
-
-      // Calculate diameter between the northeast and southwest corners of the bounds
-      const diameter = geoLib.spherical.computeDistanceBetween(
-        bounds.getNorthEast(),
-        bounds.getSouthWest()
-      );
-      const calculatedRadius = diameter / 2;
-
-      // Cap the radius at 50km to avoid exceeding Google Maps API limits
-      const cappedRadius = Math.min(calculatedRadius, 50000);
-      return { center: bounds.getCenter(), radius: cappedRadius };
-    },
-    [geoLib]
-  );
-
+  // on change of filters resubmit, on next button send new request()
   useEffect(() => {
-    const el = placeTextSearchRequestRef.current;
-    if (!el) return;
-
-    function handleResponse(event: PlacesTextSearchResponseEvent) {
-      console.log("Text Search API response:", event.detail);
-      // event.detail contains:
-      // { results, status }
+    async function getPlaces() {
+      try {
+        const res = await fetch(`${apiURL}/map`); // can add in the request body the number of stars (minRating)
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        console.log(data.results.length);
+        console.log(reviewCountRef?.current?.value);
+        if (ratingRef.current && reviewCountRef.current) {
+          setRememberFilter({
+            rating: ratingRef?.current?.value,
+            reviews: reviewCountRef?.current?.value,
+          });
+        }
+        setResults(data.results);
+        setPlaces(data.results);
+      } catch (err) {
+        console.error("Error fetching places:", err);
+      }
     }
 
-    el.addEventListener(
-      "gmp-placestextsearchresponse",
-      handleResponse as EventListener
-    );
+    getPlaces();
+  }, [newParams]);
 
-    return () => {
-      el.removeEventListener(
-        "gmp-placestextsearchresponse",
-        handleResponse as EventListener
-      );
-    };
-  }, [locationId, locationName]);
-
-  useEffect(() => {
+  const checkDifferentSelection = () => {
     if (
-      !placesLib ||
-      !geoLib ||
-      !placeSearchRef.current ||
-      !placeTextSearchRequestRef.current ||
-      !map
+      rememberFilter.rating !== ratingRef?.current?.value ||
+      rememberFilter.reviews !== reviewCountRef?.current?.value
     ) {
-      console.log("fail!: ");
-      return;
+      setDisabled(false);
+    } else {
+      setDisabled(true);
     }
-
-    const placeTextSearchRequest = placeTextSearchRequestRef.current;
-
-    const bounds = map.getBounds();
-    const circle = getContainingCircle(bounds);
-
-    if (!circle) return;
-    placeTextSearchRequest.locationBias = circle;
-    console.log(`${placeType}s near ${locationName}`);
-    placeTextSearchRequest.textQuery = `${placeType}s near ${locationName}`;
-    console.log(placeTextSearchRequestRef.current.textQuery);
-    //placeTextSearchRequest.includedPrimaryTypes = placeType
-    //  ? [placeType]
-    //  : undefined;
-  }, [
-    placesLib,
-    geoLib,
-    map,
-    placeType,
-    getContainingCircle,
-    locationId,
-    locationName,
-  ]);
+  };
 
   // Return the Google Maps Place List Web Component
   // This component is rendered as a custom HTML element (Web Component) provided by Google
   return (
-    <div className={styles.placeListContainer}>
-      {/* 
-        gmp-place-list is a Google Maps Platform Web Component that displays a list of places
-        - 'selectable' enables click-to-select functionality
-        - When a place is selected, the ongmp-placeselect event is fired
-      */}
-      <gmp-place-search
-        selectable
-        truncation-preferred
-        ref={placeSearchRef}
-        ongmp-select={(event: { place: google.maps.places.Place | null }) => {
-          onPlaceSelect(event.place);
-        }}
-        ongmp-load={(event: { target: PlaceSearchElement }) => {
-          setPlaces(event.target.places);
-        }}
-      >
-        <gmp-place-text-search-request
-          ref={placeTextSearchRequestRef}
-          ongmp-load={(event: { target: PlaceTextSearchRequestElement }) => {
-            console.log("ongmp loadz:", event.target);
-          }}
-        ></gmp-place-text-search-request>
-        <gmp-place-all-content></gmp-place-all-content>
-      </gmp-place-search>
-    </div>
+    <>
+      <div className={styles.filterContainer}>
+        <p>Filters</p>
+        <label htmlFor="mininmum-rating" className={styles.filterLabel}>
+          Min. Rating:
+        </label>
+        <select
+          name="min-rating"
+          id="min-rating"
+          className={styles.select}
+          ref={ratingRef}
+          onChange={checkDifferentSelection}
+        >
+          <option value="none">-</option>
+          <option value="4">4 Stars</option>
+          <option value="3">3 Stars</option>
+        </select>
+        <label htmlFor="number-of-reviews" className={styles.filterLabel}>
+          # of Reviews:
+        </label>
+        <select
+          name="min-reviews"
+          id="min-reviews"
+          className={styles.select}
+          ref={reviewCountRef}
+          onChange={checkDifferentSelection}
+        >
+          <option value="none">-</option>
+          <option value="1000">1000</option>
+          <option value="500">500</option>
+          <option value="250">250</option>
+          <option value="100">100</option>
+        </select>
+        <div>
+          <button
+            type="button"
+            onClick={() => {
+              setNewParams((prev) => !prev);
+            }}
+            disabled={disabled}
+          >
+            Submit
+          </button>
+        </div>
+      </div>
+      <div className={styles.placesContainer}>
+        {results.map((place) => {
+          //const photoUrl =
+          //  place.photos?.[0]?.getUrl() ?? "https://via.placeholder.com/80";
+
+          return (
+            <div
+              key={place.place_id}
+              className={styles.placeCard}
+              onClick={() => {
+                onPlaceSelect(place);
+              }}
+            >
+              {/*<img
+              src={photoUrl}
+              alt={place.name}
+              className={styles.placePhoto}
+            />*/}
+              <div className={styles.placeDetails}>
+                <h3 className={styles.placeName}>{place.name}</h3>
+                <div className={styles.placeRating}>
+                  ⭐ {place.rating ?? "—"}{" "}
+                  <span className={styles.ratingCount}>
+                    ({place.user_ratings_total ?? 0})
+                  </span>
+                </div>
+                <div className={styles.placeAddress}>
+                  {place.formatted_address}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 };
 

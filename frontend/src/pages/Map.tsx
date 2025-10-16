@@ -31,9 +31,11 @@ const MAP_CONFIG = {
 };
 
 const MyMapComponent = () => {
-  const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
-  const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
-  const [locationId, setLocationId] = useState<string | null>(null);
+  const [places, setPlaces] = useState<google.maps.places.PlaceResult[]>([]);
+  const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
+    undefined
+  );
+  const [locationId, setLocationId] = useState<string | undefined>(undefined);
   const [locationName, setLocationName] = useState<string | null>("Austin");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
@@ -45,10 +47,10 @@ const MyMapComponent = () => {
     return places.map((place, index) => (
       <PlaceDetailsMarker
         detailsSize={"FULL"}
-        key={place.id || index}
-        selected={place.id === selectedPlaceId}
+        key={place.place_id || index}
+        selected={place.place_id === selectedPlaceId}
         place={place}
-        onClick={() => setSelectedPlaceId(place.id)}
+        onClick={() => setSelectedPlaceId(place.place_id)}
       />
     ));
   }, [places, selectedPlaceId, detailsSize]);
@@ -69,7 +71,9 @@ const MyMapComponent = () => {
             locationId={locationId}
             locationName={locationName}
             setPlaces={setPlaces}
-            onPlaceSelect={(place) => setSelectedPlaceId(place?.id ?? null)}
+            onPlaceSelect={(place) =>
+              setSelectedPlaceId(place?.place_id ?? undefined)
+            }
           />
         </div>
 
@@ -78,7 +82,7 @@ const MyMapComponent = () => {
             The Map component renders the Google Map
             Clicking on the map background will deselect any selected place
           */}
-          <Map {...MAP_CONFIG} onClick={() => setSelectedPlaceId(null)}>
+          <Map {...MAP_CONFIG} onClick={() => setSelectedPlaceId(undefined)}>
             {placeMarkers}
           </Map>
 

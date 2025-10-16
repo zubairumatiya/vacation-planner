@@ -11,25 +11,24 @@ import {
 export const PlaceDetailsMarker = memo(
   ({ place, selected, onClick, detailsSize }: PlaceDetailsMarkerProps) => {
     const [markerRef, marker] = useAdvancedMarkerRef();
-
     // Load required Google Maps library for places
     useMapsLibrary("places");
 
     // Handle marker click to select this place
     const handleMarkerClick = useCallback(() => {
-      onClick(place.id);
-    }, [onClick, place.id]);
+      onClick(place?.place_id);
+    }, [onClick, place.place_id]);
 
     // Handle info window close by deselecting this place
     const handleCloseClick = useCallback(() => {
-      onClick(null);
+      onClick(undefined);
     }, [onClick]);
 
     return (
       <>
         <AdvancedMarker
           ref={markerRef}
-          position={place.location}
+          position={place?.geometry?.location}
           onClick={handleMarkerClick}
         />
         {selected && (
@@ -52,14 +51,14 @@ export const PlaceDetailsMarker = memo(
             {detailsSize === "FULL" ? (
               <gmp-place-details>
                 <gmp-place-details-place-request
-                  place={place?.id ?? ""}
+                  place={place.place_id ?? ""}
                 ></gmp-place-details-place-request>
                 <gmp-place-all-content></gmp-place-all-content>
               </gmp-place-details>
             ) : (
               <gmp-place-details-compact>
                 <gmp-place-details-place-request
-                  place={place?.id ?? ""}
+                  place={place.place_id ?? ""}
                 ></gmp-place-details-place-request>
                 <gmp-place-all-content></gmp-place-all-content>
               </gmp-place-details-compact>

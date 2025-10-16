@@ -91,3 +91,70 @@
 :global(gmp-place-details) {
   height: 300px;
 }
+
+.placesContainer {
+  display: flex;
+  flex-direction: column;
+  max-height: 500px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: 1px solid #888;
+  resize: both;
+  overflow: auto;
+}
+
+.placeCard {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: #1f1f1f;
+  border: 1px;
+  border-style: solid;
+  border-color: #888;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.placePhoto {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.placeDetails {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: #888;
+}
+
+.placeName {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  color: white;
+}
+
+.placeRating {
+  font-size: 14px;
+  color: #888;
+  margin: 4px 0;
+}
+
+.ratingCount {
+  color: #888;
+}
+
+.placeAddress {
+  font-size: 14px;
+  color: #888;
+}
+
+.filterLabel {
+  margin-right: 0.25rem;
+}
+
+.filterContainer :nth-child(4) {
+  margin-left: 0.5rem;
+}

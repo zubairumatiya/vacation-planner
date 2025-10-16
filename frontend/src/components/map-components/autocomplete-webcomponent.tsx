@@ -3,7 +3,7 @@ import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 
 interface Props {
-  onPlaceSelect: (place: google.maps.places.Place | null) => void;
+  onPlaceSelect: (place: google.maps.places.PlaceResult | null) => void;
 }
 
 export const AutocompleteWebComponent = ({ onPlaceSelect }: Props) => {
@@ -15,19 +15,19 @@ export const AutocompleteWebComponent = ({ onPlaceSelect }: Props) => {
   // Handle the selection of a place from the autocomplete component
   // This fetches additional place details and adjusts the map view
   const handlePlaceSelect = useCallback(
-    async (place: google.maps.places.Place) => {
+    async (placeResult: google.maps.places.PlaceResult) => {
       try {
         // Fetch location and viewport data for the selected place
-        await place.fetchFields({
-          fields: ["displayName", "location", "viewport"],
-        });
+        // await placeResult.fetchFields({
+        //   fields: ["displayName", "location", "viewport"],
+        // });
 
         // If the place has a viewport (area boundaries), adjust the map to show it
-        if (place?.viewport) {
-          map?.fitBounds(place.viewport);
+        if (placeResult?.geometry?.viewport) {
+          map?.fitBounds(placeResult.geometry.viewport);
         }
 
-        onPlaceSelect(place);
+        onPlaceSelect(placeResult);
       } catch (error) {
         console.error("Error fetching place fields:", error);
         onPlaceSelect(null);

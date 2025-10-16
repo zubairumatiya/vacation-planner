@@ -5,34 +5,21 @@ console.log(nextDay.toISOString());
 const apiKey = "AIzaSyCniKprqPB06h2CWrWI45AAZfFkvlDIygw";
 const query = "coffee in Austin";
 
-const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(
-  query
-)}&key=${apiKey}`;
-
-async function getPlaces() {
-  try {
-    const res = await fetch(url); // can add in the request body the number of stars (minRating)
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    const data = await res.json();
-    const storeNames = data.results.map((v) => console.log(v.name));
-    console.log(data.results[0].geometry.location);
-    if (!data.next_page_token) {
-      // turned it off with ! to avoid extra use
-      console.log(data.next_page_token);
-      await new Promise((r) => setTimeout(r, 2000));
-      const res2 = await fetch(`${url}&pagetoken=${data.next_page_token}`);
-      const data2 = await res2.json();
-      console.log(
-        "\n\n\n\n\n~~~~~~~~~~~~~  NEW PAGE ~~~~~~~~~~~~~~~\n\n\n\n\n\n"
-      );
-      const storeNames2 = data2.results.map((v) => console.log(v.name));
-    }
-  } catch (err) {
-    console.error("Error fetching places:", err);
-  }
-}
-
-getPlaces();
+fetch("https://places.googleapis.com/v1/places:searchText", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-Goog-Api-Key": `${apiKey}`,
+    "X-Goog-FieldMask":
+      "places.displayName,places.rating,places.userRatingCount,nextPageToken",
+  },
+  body: JSON.stringify({
+    textQuery: `${query}`,
+  }),
+})
+  .then((res) => res.json())
+  .then((data) => console.log(data))
+  .catch((err) => console.error(err));
 
 // make dragging responsive to all platforms // NEEDS TESTING
 // should i just make end time an hour later upon drag and drop?  -- i think i should - DONE
@@ -55,8 +42,7 @@ getPlaces();
 // add want to see list - DONE
 
 // add google maps API window
-// -- for next time: can i get events from gmp text? how does gmp place search work, like do i just need a nested list of place ID's, is gmp text necessary?
-// -- -- an idea: it seems like setting places ongmp load only works on gmp place search, so what if i am able to see what kind of event.target it is and replicate it with a noraml fetch request
+// -- tweak viewport maybe, pins are landing way north of viewport
 // -- need to add more selection criteria, categories, ratings, reviews,etc
 // -- -- running into a bit of a problem, search nearby doesn't allow for filtering by stars and ratings. So the best practical method is probably to retirieve a lot
 // -- -- of places and then filter by our filters and sort descending. But still this will not pull all the places within our criteria, a fix i can think of is having
