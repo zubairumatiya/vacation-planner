@@ -4,6 +4,8 @@ import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
 
+import storedData from "../../debug.json" with { type: "json" };
+
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
 
@@ -303,7 +305,7 @@ router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
-router.get("/map", async (req, res, next) => {
+router.get("/mapp", async (req, res, next) => {
   try {
     const query = "coffee in Austin";
 
@@ -327,6 +329,15 @@ router.get("/map", async (req, res, next) => {
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data = await result.json();
     res.status(200).json(data);
+    return;
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/map", async (req, res, next) => {
+  try {
+    res.status(200).json(storedData);
     return;
   } catch (err) {
     next(err);

@@ -28,7 +28,10 @@ export const PlaceDetailsMarker = memo(
       <>
         <AdvancedMarker
           ref={markerRef}
-          position={place.location}
+          position={{
+            lat: place?.location?.latitude ?? 0,
+            lng: place?.location?.longitude ?? 0,
+          }}
           onClick={handleMarkerClick}
         />
         {selected && (

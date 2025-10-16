@@ -13,13 +13,19 @@ fetch("https://places.googleapis.com/v1/places:searchText", {
   headers: {
     "Content-Type": "application/json",
     "X-Goog-Api-Key": apiKey,
-    "X-Goog-FieldMask": "places.id",
+    "X-Goog-FieldMask": "*",
   },
-  body: JSON.stringify({ textQuery: query, pageSize: 1 }),
+  body: JSON.stringify({ textQuery: query, pageSize: 21 }),
   signal: controller.signal,
 })
   .then((res) => res.json())
-  .then((data) => console.log(data.places[0].id))
+  .then((data) => {
+    /*
+    fs.writeFileSync("debug.json", JSON.stringify(data, null, 2));
+    console.log("Saved as debug.json");
+    */
+    console.log(data);
+  })
   .catch((err) => console.error(err))
   .finally(() => controller.abort());
 
