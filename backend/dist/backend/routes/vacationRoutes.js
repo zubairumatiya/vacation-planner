@@ -3,8 +3,8 @@ const router = express.Router();
 import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
+///prettier-ignore
 import storedData from "../../debug.json" with { type: "json" };
-//import storedData from "../../debug.json" assert { type: "json" };
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
 router.get("/home", ensureLoggedIn, async (req, res, next) => {
@@ -241,7 +241,7 @@ router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
-router.get("/mapp", async (req, res, next) => {
+router.post("/mapp", async (req, res, next) => {
     try {
         const query = "coffee in Austin";
         const result = await fetch("https://places.googleapis.com/v1/places:searchText", {
@@ -267,7 +267,7 @@ router.get("/mapp", async (req, res, next) => {
         next(err);
     }
 });
-router.get("/map", async (req, res, next) => {
+router.post("/map", async (req, res, next) => {
     try {
         res.status(200).json(storedData);
         return;

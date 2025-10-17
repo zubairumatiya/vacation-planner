@@ -3,7 +3,7 @@ const router = express.Router();
 import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
-
+///prettier-ignore
 import storedData from "../../debug.json" with { type: "json" };
 
 dotenv.config();
@@ -305,7 +305,7 @@ router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
-router.get("/mapp", async (req, res, next) => {
+router.post("/mapp", async (req, res, next) => {
   try {
     const query = "coffee in Austin";
 
@@ -335,7 +335,7 @@ router.get("/mapp", async (req, res, next) => {
   }
 });
 
-router.get("/map", async (req, res, next) => {
+router.post("/map", async (req, res, next) => {
   try {
     res.status(200).json(storedData);
     return;

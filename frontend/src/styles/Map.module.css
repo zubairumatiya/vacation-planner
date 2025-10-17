@@ -158,3 +158,24 @@
 .filterContainer :nth-child(4) {
   margin-left: 0.5rem;
 }
+
+.buttonsContainer {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  margin: 0.5rem;
+}
+
+.nextButtonContainer {
+  width: 44.5px;
+}
+.nextButton {
+  padding: 0.5rem 1rem;
+}
+
+.prevButtonContainer {
+  width: 44.5px;
+}
+.prevButton {
+  padding: 0.5rem 1rem;
+}

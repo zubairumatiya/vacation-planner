@@ -21,40 +21,76 @@ export const PlaceSearchWebComponent = ({
     rating: "",
     reviews: "",
   });
+  const [holdNPT, setHoldNPT] = useState<string>("");
+  const [pageCount, setPageCount] = useState<number>(1);
+  const [loadingNext, setLoadingNext] = useState<boolean>(true);
+  const [newPageTrigger, setNewPageTrigger] = useState<boolean>(false);
+  const [currentPageMax, setCurrentPageMax] = useState<number>(0);
 
   // on change of filters resubmit, on next button send new request()
   useEffect(() => {
     async function getPlaces() {
+      setLoadingNext(true);
       try {
-        const res = await fetch(`${apiURL}/map`); // can add in the request body the number of stars (minRating)
+        if (!ratingRef.current || !reviewCountRef.current) return;
+        console.log(ratingRef.current.value);
+        const res = await fetch(`${apiURL}/map`, {
+          method: "POST",
+          body: JSON.stringify({
+            ratingFilter: ratingRef.current.value,
+            reviewFilter: reviewCountRef.current.value,
+            nextPageToken: holdNPT,
+          }),
+        });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        console.log(data.places[0].location);
-        console.log(reviewCountRef?.current?.value);
-        if (ratingRef.current && reviewCountRef.current) {
-          setRememberFilter({
-            rating: ratingRef?.current?.value,
-            reviews: reviewCountRef?.current?.value,
-          });
-        }
-        setResults(data.places);
-        setPlaces(data.places);
+
+        setRememberFilter({
+          rating: ratingRef?.current?.value,
+          reviews: reviewCountRef?.current?.value,
+        });
+        setHoldNPT(data.nextPageToken);
+        const pagesAdded = Math.ceil(data.places.length / 10);
+        setCurrentPageMax((prev) => prev + pagesAdded);
+        setResults((prev) => [...prev, ...data.places]); // this might hold old results even when we search a new place
+
+        setPlaces(data.places.slice(0, 10)); // do we want all of the pins on the map? it might slow maps otherwise we'll need separate handlers for page back and page next
+
+        setLoadingNext(false);
       } catch (err) {
         console.error("Error fetching places:", err);
       }
     }
 
     getPlaces();
-  }, [newParams]);
+  }, [newParams, newPageTrigger]);
 
   const checkDifferentSelection = () => {
     if (
       rememberFilter.rating !== ratingRef?.current?.value ||
-      rememberFilter.reviews !== reviewCountRef?.current?.value
+      rememberFilter.reviews !== reviewCountRef?.current?.value // hmm will this remember it properly or will it reset when i make api call?
     ) {
       setDisabled(false);
     } else {
       setDisabled(true);
+    }
+  };
+
+  const handlePrevPage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setPageCount((prev) => prev - 1);
+    setPlaces(results.slice(10 * (pageCount - 1), 10 * pageCount));
+  };
+
+  const handleNextPage = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (pageCount === currentPageMax) {
+      setPageCount((prev) => prev + 1); // will the order of this matter?
+      setNewPageTrigger((prev) => !prev);
+    } else {
+      setPageCount((prev) => prev + 1);
+      setPlaces(results.slice(10 * (pageCount - 1), 10 * pageCount));
     }
   };
 
@@ -76,7 +112,6 @@ export const PlaceSearchWebComponent = ({
         >
           <option value="none">-</option>
           <option value="4">4 Stars</option>
-          <option value="3">3 Stars</option>
         </select>
         <label htmlFor="number-of-reviews" className={styles.filterLabel}>
           # of Reviews:
@@ -92,7 +127,6 @@ export const PlaceSearchWebComponent = ({
           <option value="1000">1000</option>
           <option value="500">500</option>
           <option value="250">250</option>
-          <option value="100">100</option>
         </select>
         <div>
           <button
@@ -107,10 +141,9 @@ export const PlaceSearchWebComponent = ({
         </div>
       </div>
       <div className={styles.placesContainer}>
-        {results.map((place) => {
+        {results.slice(10 * (pageCount - 1), 10 * pageCount).map((place) => {
           //const photoUrl =
           //  place.photos?.[0]?.getUrl() ?? "https://via.placeholder.com/80";
-
           return (
             <div
               key={place.id}
@@ -141,6 +174,32 @@ export const PlaceSearchWebComponent = ({
             </div>
           );
         })}
+        <div className={styles.buttonsContainer}>
+          <div className={styles.prevButtonContainer}>
+            {pageCount > 1 && (
+              <button
+                type="button"
+                className={styles.prevButton}
+                onClick={handlePrevPage}
+              >
+                &lt;
+              </button>
+            )}
+          </div>
+          <p>page {pageCount}</p>
+          {holdNPT && (
+            <div className={styles.nextButtonWrapper}>
+              <button
+                type="button"
+                className={styles.nextButton}
+                onClick={handleNextPage}
+                disabled={loadingNext}
+              >
+                &gt;
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
