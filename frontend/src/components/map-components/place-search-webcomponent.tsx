@@ -55,7 +55,7 @@ export const PlaceSearchWebComponent = ({
         setResults((prev) => [...prev, ...data.places]); // this might hold old results even when we search a new place
 
         setPlaces(data.places.slice(0, 10)); // do we want all of the pins on the map? it might slow maps otherwise we'll need separate handlers for page back and page next
-
+        // NEXT TIME test filter, next time need to try real request with NPT (we can keep calling pages because we always have an NPT in our example JSON);
         setLoadingNext(false);
       } catch (err) {
         console.error("Error fetching places:", err);
@@ -98,82 +98,85 @@ export const PlaceSearchWebComponent = ({
   // This component is rendered as a custom HTML element (Web Component) provided by Google
   return (
     <>
-      <div className={styles.filterContainer}>
-        <p>Filters</p>
-        <label htmlFor="mininmum-rating" className={styles.filterLabel}>
-          Min. Rating:
-        </label>
-        <select
-          name="min-rating"
-          id="min-rating"
-          className={styles.select}
-          ref={ratingRef}
-          onChange={checkDifferentSelection}
-        >
-          <option value="none">-</option>
-          <option value="4">4 Stars</option>
-        </select>
-        <label htmlFor="number-of-reviews" className={styles.filterLabel}>
-          # of Reviews:
-        </label>
-        <select
-          name="min-reviews"
-          id="min-reviews"
-          className={styles.select}
-          ref={reviewCountRef}
-          onChange={checkDifferentSelection}
-        >
-          <option value="none">-</option>
-          <option value="1000">1000</option>
-          <option value="500">500</option>
-          <option value="250">250</option>
-        </select>
-        <div>
-          <button
-            type="button"
-            onClick={() => {
-              setNewParams((prev) => !prev);
-            }}
-            disabled={disabled}
+      <div className={styles.listParentContainer}>
+        <div className={styles.filterContainer}>
+          <p className={styles.filterHeader}>Filters</p>
+          <label htmlFor="mininmum-rating" className={styles.filterLabel}>
+            Min. Rating:
+          </label>
+          <select
+            name="min-rating"
+            id="min-rating"
+            className={styles.select}
+            ref={ratingRef}
+            onChange={checkDifferentSelection}
           >
-            Submit
-          </button>
-        </div>
-      </div>
-      <div className={styles.placesContainer}>
-        {results.slice(10 * (pageCount - 1), 10 * pageCount).map((place) => {
-          //const photoUrl =
-          //  place.photos?.[0]?.getUrl() ?? "https://via.placeholder.com/80";
-          return (
-            <div
-              key={place.id}
-              className={styles.placeCard}
+            <option value="none">-</option>
+            <option value="4">4 Stars</option>
+          </select>
+          <label htmlFor="number-of-reviews" className={styles.filterLabel}>
+            # of Reviews:
+          </label>
+          <select
+            name="min-reviews"
+            id="min-reviews"
+            className={styles.select}
+            ref={reviewCountRef}
+            onChange={checkDifferentSelection}
+          >
+            <option value="none">-</option>
+            <option value="1000">1000</option>
+            <option value="500">500</option>
+            <option value="250">250</option>
+          </select>
+          <div>
+            <button
+              className={styles.applyButton}
+              type="button"
               onClick={() => {
-                onPlaceSelect(place);
+                setNewParams((prev) => !prev);
               }}
+              disabled={disabled}
             >
-              {/*<img
+              Apply
+            </button>
+          </div>
+        </div>
+        <div className={styles.placesContainer}>
+          {results.slice(10 * (pageCount - 1), 10 * pageCount).map((place) => {
+            //const photoUrl =
+            //  place.photos?.[0]?.getUrl() ?? "https://via.placeholder.com/80";
+            return (
+              <div
+                key={place.id}
+                className={styles.placeCard}
+                onClick={() => {
+                  onPlaceSelect(place);
+                }}
+              >
+                {/*<img
               src={photoUrl}
               alt={place.name}
               className={styles.placePhoto}
             />*/}
-              <div className={styles.placeDetails}>
-                <h3 className={styles.placeName}>
-                  {place?.displayName?.text ?? "undefined"}
-                </h3>
-                <div className={styles.placeRating}>
-                  ⭐ {place.rating ?? "—"}{" "}
-                  <span className={styles.ratingCount}>
-                    ({place.userRatingCount ?? 0})
-                  </span>
-                </div>
-                <div className={styles.placeAddress}>
-                  {place.formattedAddress}
+                <div className={styles.placeDetails}>
+                  <h3 className={styles.placeName}>
+                    {place?.displayName?.text ?? "undefined"}
+                  </h3>
+                  <div className={styles.placeRating}>
+                    ⭐ {place.rating ?? "—"}{" "}
+                    <span className={styles.ratingCount}>
+                      ({place.userRatingCount ?? 0})
+                    </span>
+                  </div>
+                  <div className={styles.placeAddress}>
+                    {place.formattedAddress}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
         <div className={styles.buttonsContainer}>
           <div className={styles.prevButtonContainer}>
             {pageCount > 1 && (
