@@ -18,11 +18,11 @@ export const AutocompleteWebComponent = ({ onPlaceSelect }: Props) => {
     async (place: google.maps.places.Place) => {
       try {
         // Fetch location and viewport data for the selected place
-        // await place.fetchFields({
-        //   fields: ["displayName", "location", "viewport"],
-        // });
-
+        await place.fetchFields({
+          fields: ["displayName", "location", "viewport", "formattedAddress"],
+        });
         // If the place has a viewport (area boundaries), adjust the map to show it
+        console.log(place.formattedAddress);
         if (place.viewport) {
           map?.fitBounds(place.viewport);
         }

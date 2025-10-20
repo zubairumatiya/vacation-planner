@@ -4,30 +4,44 @@ const nextDay = new Date("2025-08-01T02:00:00.000Z");
 console.log(nextDay.toISOString());
 
 const apiKey = "AIzaSyCniKprqPB06h2CWrWI45AAZfFkvlDIygw";
-const query = "coffee in Austin";
 
-const controller = new AbortController();
+let countOfPlaces = 0;
+const gatherPlaces = [];
+let holdToken = "";
+const repeaterCall = async () => {
+  const query = "restaurants near San Saba, TX 76877, USA"; // this will need to be changed too
 
-fetch("https://places.googleapis.com/v1/places:searchText", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    "X-Goog-Api-Key": apiKey,
-    "X-Goog-FieldMask": "*",
-  },
-  body: JSON.stringify({ textQuery: query, pageSize: 21 }),
-  signal: controller.signal,
-})
-  .then((res) => res.json())
-  .then((data) => {
-    /*
-    fs.writeFileSync("debug.json", JSON.stringify(data, null, 2));
-    console.log("Saved as debug.json");
-    */
-    console.log(data);
-  })
-  .catch((err) => console.error(err))
-  .finally(() => controller.abort());
+  while (countOfPlaces < 20 && holdToken !== undefined) {
+    const result = await fetch(
+      "https://places.googleapis.com/v1/places:searchText",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": `${apiKey}`,
+          //"places.id,nextPageToken,places.name",
+          "X-Goog-FieldMask": "places.id,nextPageToken,places.displayName",
+        },
+        body: JSON.stringify({
+          textQuery: `${query}`,
+          pageToken: holdToken,
+          //minRating: 4,
+          pageSize: 20,
+        }),
+      }
+    );
+    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+    const data = await result.json();
+    countOfPlaces += data.places.length;
+    holdToken = data.nextPageToken;
+    gatherPlaces.push(...data.places);
+    data.places.forEach((v) => console.log(v.displayName.text, "--- ", v.id));
+    console.log(`\n\n~~~~~~~~ \n\n`);
+  }
+  console.log(holdToken);
+  console.log(gatherPlaces.length);
+};
+repeaterCall();
 
 // make dragging responsive to all platforms // NEEDS TESTING
 // should i just make end time an hour later upon drag and drop?  -- i think i should - DONE

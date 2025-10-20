@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
+import starIcon from "../../assets/star-icon.svg";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -8,7 +9,6 @@ export const PlaceSearchWebComponent = ({
   //FOR NEXT TIME: let's get cards set up that are scrollable and selectable with a page button
   onPlaceSelect,
   setPlaces,
-  locationId,
   locationName,
   placeType,
 }: PlaceSearchProps) => {
@@ -26,20 +26,33 @@ export const PlaceSearchWebComponent = ({
   const [loadingNext, setLoadingNext] = useState<boolean>(true);
   const [newPageTrigger, setNewPageTrigger] = useState<boolean>(false);
   const [currentPageMax, setCurrentPageMax] = useState<number>(0);
+  const [pageCountSwitch, setPageCountSwitch] = useState<boolean>(false);
 
   // on change of filters resubmit, on next button send new request()
   useEffect(() => {
+    console.log("PLACETYPE", placeType);
+    console.log("LOCATIONNAME", locationName);
     async function getPlaces() {
       setLoadingNext(true);
       try {
         if (!ratingRef.current || !reviewCountRef.current) return;
-        console.log(ratingRef.current.value);
         const res = await fetch(`${apiURL}/map`, {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
-            ratingFilter: ratingRef.current.value,
-            reviewFilter: reviewCountRef.current.value,
+            ratingFilter:
+              ratingRef.current.value === "none"
+                ? null
+                : Number(ratingRef.current.value),
+            reviewFilter:
+              reviewCountRef.current.value === "none"
+                ? null
+                : Number(reviewCountRef.current.value),
             nextPageToken: holdNPT,
+            placeType,
+            locationName,
           }),
         });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -53,7 +66,6 @@ export const PlaceSearchWebComponent = ({
         const pagesAdded = Math.ceil(data.places.length / 10);
         setCurrentPageMax((prev) => prev + pagesAdded);
         setResults((prev) => [...prev, ...data.places]); // this might hold old results even when we search a new place
-
         setPlaces(data.places.slice(0, 10)); // do we want all of the pins on the map? it might slow maps otherwise we'll need separate handlers for page back and page next
         // NEXT TIME test filter, next time need to try real request with NPT (we can keep calling pages because we always have an NPT in our example JSON);
         setLoadingNext(false);
@@ -63,7 +75,11 @@ export const PlaceSearchWebComponent = ({
     }
 
     getPlaces();
-  }, [newParams, newPageTrigger]);
+  }, [newParams, newPageTrigger, placeType, locationName]);
+
+  useEffect(() => {
+    setPlaces(results.slice(10 * (pageCount - 1), 10 * pageCount));
+  }, [pageCountSwitch]);
 
   const checkDifferentSelection = () => {
     if (
@@ -79,18 +95,19 @@ export const PlaceSearchWebComponent = ({
   const handlePrevPage = (e: React.MouseEvent) => {
     e.preventDefault();
     setPageCount((prev) => prev - 1);
-    setPlaces(results.slice(10 * (pageCount - 1), 10 * pageCount));
+    setPageCountSwitch((prev) => !prev);
   };
 
   const handleNextPage = (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (pageCount === currentPageMax) {
+      console.log("enter");
       setPageCount((prev) => prev + 1); // will the order of this matter?
       setNewPageTrigger((prev) => !prev);
     } else {
       setPageCount((prev) => prev + 1);
-      setPlaces(results.slice(10 * (pageCount - 1), 10 * pageCount));
+      setPageCountSwitch((prev) => !prev);
     }
   };
 
@@ -113,6 +130,7 @@ export const PlaceSearchWebComponent = ({
           >
             <option value="none">-</option>
             <option value="4">4 Stars</option>
+            <option value="4.5">4.5 Stars</option>
           </select>
           <label htmlFor="number-of-reviews" className={styles.filterLabel}>
             # of Reviews:
@@ -164,7 +182,14 @@ export const PlaceSearchWebComponent = ({
                     {place?.displayName?.text ?? "undefined"}
                   </h3>
                   <div className={styles.placeRating}>
-                    ⭐ {place.rating ?? "—"}{" "}
+                    {place.rating}
+                    &nbsp;
+                    <img
+                      className={styles.starIcon}
+                      src={starIcon}
+                      alt="star"
+                    ></img>
+                    &nbsp;
                     <span className={styles.ratingCount}>
                       ({place.userRatingCount ?? 0})
                     </span>
@@ -191,7 +216,7 @@ export const PlaceSearchWebComponent = ({
           </div>
           <p>page {pageCount}</p>
           {holdNPT && (
-            <div className={styles.nextButtonWrapper}>
+            <div className={styles.nextButtonContainer}>
               <button
                 type="button"
                 className={styles.nextButton}

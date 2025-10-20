@@ -138,6 +138,8 @@
   font-size: 14px;
   color: #888;
   margin: 4px 0;
+  display: flex;
+  justify-content: center;
 }
 
 .ratingCount {
@@ -202,4 +204,8 @@
   border-radius: 12px;
   overflow: auto;
   resize: both;
+}
+
+.starIcon {
+  width: 1rem;
 }

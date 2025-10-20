@@ -35,7 +35,7 @@ const MyMapComponent = () => {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined
   );
-  const [locationId, setLocationId] = useState<string | undefined>(undefined);
+  const [locationId, setLocationId] = useState<string | undefined>("");
   const [locationName, setLocationName] = useState<string | null>("Austin");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
@@ -68,7 +68,6 @@ const MyMapComponent = () => {
           */}
           <PlaceSearchWebComponent
             placeType={placeType}
-            locationId={locationId}
             locationName={locationName}
             setPlaces={setPlaces}
             onPlaceSelect={(place) =>

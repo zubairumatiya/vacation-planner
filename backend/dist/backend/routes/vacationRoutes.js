@@ -3,8 +3,6 @@ const router = express.Router();
 import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
-///prettier-ignore
-import storedData from "../../debug.json" with { type: "json" };
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
 router.get("/home", ensureLoggedIn, async (req, res, next) => {
@@ -241,39 +239,62 @@ router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
         next(err);
     }
 });
-router.post("/mapp", async (req, res, next) => {
-    try {
-        const query = "coffee in Austin";
-        const result = await fetch("https://places.googleapis.com/v1/places:searchText", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-Goog-Api-Key": `${API_KEY}`,
-                //"places.id,nextPageToken,places.name",
-                "X-Goog-FieldMask": "places.id,places.displayName,places.rating,places.userRatingCount,places.location,places.shortFormattedAddress,nextPageToken",
-            },
-            body: JSON.stringify({
-                textQuery: `${query}`,
-                pageSize: 3,
-            }),
-        });
-        if (!result.ok)
-            throw new Error(`HTTP error! status: ${result.status}`);
-        const data = await result.json();
-        res.status(200).json(data);
-        return;
-    }
-    catch (err) {
-        next(err);
-    }
-});
 router.post("/map", async (req, res, next) => {
+    let countOfPlaces = 0;
+    const gatherPlaces = [];
+    let holdToken = req.body.nextPageToken;
     try {
-        res.status(200).json(storedData);
+        const query = `${req.body.placeType}s near ${req.body.locationName}`;
+        console.log(query);
+        while (countOfPlaces < 20 && holdToken !== undefined) {
+            const result = await fetch("https://places.googleapis.com/v1/places:searchText", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Goog-Api-Key": `${API_KEY}`,
+                    //"places.id,nextPageToken,places.name",
+                    "X-Goog-FieldMask": "places.id,places.displayName,nextPageToken,places.location,places.shortFormattedAddress"
+                    //"places.id,places.displayName,places.rating,places.userRatingCount,places.location,places.shortFormattedAddress,nextPageToken",
+                },
+                body: JSON.stringify({
+                    textQuery: `${query}`,
+                    pageToken: holdToken,
+                    minRating: req.body.ratingFilter,
+                    pageSize: 20,
+                }),
+            });
+            if (!result.ok)
+                throw new Error(`HTTP error! status: ${result.status}`);
+            const data = await result.json();
+            if (req.body.reviewFilter) {
+                data.places.forEach(v => {
+                    if (v.userRatingCount >= req.body.reviewFilter) {
+                        countOfPlaces++;
+                        gatherPlaces.push(...data.places);
+                    }
+                });
+            }
+            else {
+                countOfPlaces += data.places.length;
+                gatherPlaces.push(...data.places);
+            }
+            holdToken = data.nextPageToken;
+        }
+        res.status(200).json({ places: gatherPlaces, nextPageToken: holdToken });
         return;
     }
     catch (err) {
         next(err);
     }
 });
+/*
+router.post("/map", async (req, res, next) => {
+  try {
+    res.status(200).json(storedData);
+    return;
+  } catch (err) {
+    next(err);
+  }
+});
+*/
 export default router;
