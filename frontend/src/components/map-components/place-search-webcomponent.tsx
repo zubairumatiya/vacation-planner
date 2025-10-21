@@ -6,7 +6,6 @@ import starIcon from "../../assets/star-icon.svg";
 const apiURL = import.meta.env.VITE_API_URL;
 
 export const PlaceSearchWebComponent = ({
-  //FOR NEXT TIME: let's get cards set up that are scrollable and selectable with a page button
   onPlaceSelect,
   setPlaces,
   locationName,
@@ -24,11 +23,10 @@ export const PlaceSearchWebComponent = ({
   const [holdNPT, setHoldNPT] = useState<string>("");
   const [pageCount, setPageCount] = useState<number>(1);
   const [loadingNext, setLoadingNext] = useState<boolean>(true);
-  const [newPageTrigger, setNewPageTrigger] = useState<boolean>(false);
   const [currentPageMax, setCurrentPageMax] = useState<number>(0);
   const [pageCountSwitch, setPageCountSwitch] = useState<boolean>(false);
+  const [newPageRequest, setNewPageRequest] = useState<boolean>(false);
 
-  // on change of filters resubmit, on next button send new request()
   useEffect(() => {
     console.log("PLACETYPE", placeType);
     console.log("LOCATIONNAME", locationName);
@@ -50,7 +48,7 @@ export const PlaceSearchWebComponent = ({
               reviewCountRef.current.value === "none"
                 ? null
                 : Number(reviewCountRef.current.value),
-            nextPageToken: holdNPT,
+            nextPageToken: newPageRequest ? holdNPT : "",
             placeType,
             locationName,
           }),
@@ -62,12 +60,20 @@ export const PlaceSearchWebComponent = ({
           rating: ratingRef?.current?.value,
           reviews: reviewCountRef?.current?.value,
         });
-        setHoldNPT(data.nextPageToken);
+        console.log(data.nextPageToken);
+        console.log("\n\n\n ~~~~~~~~~ \n\n\n");
         const pagesAdded = Math.ceil(data.places.length / 10);
-        setCurrentPageMax((prev) => prev + pagesAdded);
-        setResults((prev) => [...prev, ...data.places]); // this might hold old results even when we search a new place
-        setPlaces(data.places.slice(0, 10)); // do we want all of the pins on the map? it might slow maps otherwise we'll need separate handlers for page back and page next
-        // NEXT TIME test filter, next time need to try real request with NPT (we can keep calling pages because we always have an NPT in our example JSON);
+        if (newPageRequest) {
+          setCurrentPageMax((prev) => prev + pagesAdded);
+          setResults((prev) => [...prev, ...data.places]);
+          setNewPageRequest(false);
+        } else {
+          setCurrentPageMax(pagesAdded);
+          setResults(data.places);
+          setPageCount(1);
+        }
+        setPlaces(data.places.slice(0, 10));
+        setHoldNPT(data.nextPageToken);
         setLoadingNext(false);
       } catch (err) {
         console.error("Error fetching places:", err);
@@ -75,7 +81,13 @@ export const PlaceSearchWebComponent = ({
     }
 
     getPlaces();
-  }, [newParams, newPageTrigger, placeType, locationName]);
+  }, [newParams, placeType, locationName]);
+
+  //the only time we would reuse token is if a new page is requested, otherwise, upon any other change, we will be making a new req.
+  const newPageTrigger = () => {
+    setNewPageRequest(true);
+    setNewParams((prev) => !prev);
+  };
 
   useEffect(() => {
     setPlaces(results.slice(10 * (pageCount - 1), 10 * pageCount));
@@ -84,7 +96,7 @@ export const PlaceSearchWebComponent = ({
   const checkDifferentSelection = () => {
     if (
       rememberFilter.rating !== ratingRef?.current?.value ||
-      rememberFilter.reviews !== reviewCountRef?.current?.value // hmm will this remember it properly or will it reset when i make api call?
+      rememberFilter.reviews !== reviewCountRef?.current?.value
     ) {
       setDisabled(false);
     } else {
@@ -102,9 +114,8 @@ export const PlaceSearchWebComponent = ({
     e.preventDefault();
 
     if (pageCount === currentPageMax) {
-      console.log("enter");
       setPageCount((prev) => prev + 1); // will the order of this matter?
-      setNewPageTrigger((prev) => !prev);
+      newPageTrigger();
     } else {
       setPageCount((prev) => prev + 1);
       setPageCountSwitch((prev) => !prev);
@@ -169,7 +180,7 @@ export const PlaceSearchWebComponent = ({
                 key={place.id}
                 className={styles.placeCard}
                 onClick={() => {
-                  onPlaceSelect(place);
+                  onPlaceSelect(place.id);
                 }}
               >
                 {/*<img
@@ -215,8 +226,8 @@ export const PlaceSearchWebComponent = ({
             )}
           </div>
           <p>page {pageCount}</p>
-          {holdNPT && (
-            <div className={styles.nextButtonContainer}>
+          <div className={styles.nextButtonContainer}>
+            {(holdNPT || pageCount < currentPageMax) && (
               <button
                 type="button"
                 className={styles.nextButton}
@@ -225,8 +236,8 @@ export const PlaceSearchWebComponent = ({
               >
                 &gt;
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </>

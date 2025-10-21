@@ -5,7 +5,6 @@ import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
 ///prettier-ignore
 import storedData from "../../debug.json" with { type: "json" };
-import { count } from "console";
 
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
@@ -309,10 +308,10 @@ router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
 router.post("/map", async (req, res, next) => {
   let countOfPlaces = 0; 
   const gatherPlaces = [];
-  let holdToken = req.body.nextPageToken;
+  let holdToken = req.body.nextPageToken === undefined ? "" : req.body.nextPageToken;
   try {
     const query = `${req.body.placeType}s near ${req.body.locationName}`; 
-    console.log(query) // for next time, there is an error when i search a place, it initializes fine, only when i search
+    console.log(req.body) // TODO: test filters, placetype, and locationName changes.
     while(countOfPlaces < 20 && holdToken !== undefined){
     const result = await fetch(
       "https://places.googleapis.com/v1/places:searchText",
@@ -322,7 +321,7 @@ router.post("/map", async (req, res, next) => {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
           //"places.id,nextPageToken,places.name",
-          "X-Goog-FieldMask": "places.id,places.displayName,nextPageToken,places.location,places.shortFormattedAddress"
+          "X-Goog-FieldMask": "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress"
             //"places.id,places.displayName,places.rating,places.userRatingCount,places.location,places.shortFormattedAddress,nextPageToken",
         },
         body: JSON.stringify({
@@ -336,6 +335,7 @@ router.post("/map", async (req, res, next) => {
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data = await result.json();
     if(req.body.reviewFilter){
+      console.log("entering review filter sorting");
       data.places.forEach(v=>{
         if(v.userRatingCount >= req.body.reviewFilter){
           countOfPlaces++;

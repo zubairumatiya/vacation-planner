@@ -26,7 +26,7 @@ declare global {
   }
 
   interface PlaceSearchProps {
-    onPlaceSelect: (place: google.maps.places.Place | undefined) => void;
+    onPlaceSelect: (place: google.maps.places.Place.id | undefined) => void;
     setPlaces: (markers: google.maps.places.Place[]) => void;
     locationName: string | null;
     placeType: string | null;

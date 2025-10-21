@@ -70,9 +70,7 @@ const MyMapComponent = () => {
             placeType={placeType}
             locationName={locationName}
             setPlaces={setPlaces}
-            onPlaceSelect={(place) =>
-              setSelectedPlaceId(place?.id ?? undefined)
-            }
+            onPlaceSelect={setSelectedPlaceId}
           />
         </div>
 

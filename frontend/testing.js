@@ -5,6 +5,31 @@ console.log(nextDay.toISOString());
 
 const apiKey = "AIzaSyCniKprqPB06h2CWrWI45AAZfFkvlDIygw";
 
+async function getPlaces() {
+  try {
+    const res = await fetch(`http://localhost:5000/map`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        ratingFilter: null,
+        reviewFilter: null,
+        nextPageToken: "",
+        placeType: "restaurant",
+        locationName: "San Saba, TX 76877, USA",
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+    const data = await res.json();
+    console.log(data);
+    console.log(data.places.length);
+  } catch (err) {
+    console.error("Error fetching places:", err);
+  }
+}
+getPlaces();
+/*
 let countOfPlaces = 0;
 const gatherPlaces = [];
 let holdToken = "";
@@ -42,7 +67,7 @@ const repeaterCall = async () => {
   console.log(gatherPlaces.length);
 };
 repeaterCall();
-
+*/
 // make dragging responsive to all platforms // NEEDS TESTING
 // should i just make end time an hour later upon drag and drop?  -- i think i should - DONE
 
@@ -80,6 +105,8 @@ repeaterCall();
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.
 // -- Set usage limits in Google Cloud Console - You can restrict the number of requests per day per key.
+// -- reset place list scroll bar upon next page
+// -- add token check to backend maps api point
 // add a calender view different than editing view we already have
 // -- add token check when getting schedule
 // refresh token
