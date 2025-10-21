@@ -8,5 +8,7 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "esModuleInterop": true
-  }
+  },
+  "include": ["."],
+  "exclude": ["dist", "node_modules"]
 }

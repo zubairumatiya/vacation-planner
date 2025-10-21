@@ -30,6 +30,7 @@ export const PlaceSearchWebComponent = ({
   useEffect(() => {
     console.log("PLACETYPE", placeType);
     console.log("LOCATIONNAME", locationName);
+    console.log(reviewCountRef.current.value);
     async function getPlaces() {
       setLoadingNext(true);
       try {
@@ -55,13 +56,11 @@ export const PlaceSearchWebComponent = ({
         });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-
+        console.log(data);
         setRememberFilter({
           rating: ratingRef?.current?.value,
           reviews: reviewCountRef?.current?.value,
         });
-        console.log(data.nextPageToken);
-        console.log("\n\n\n ~~~~~~~~~ \n\n\n");
         const pagesAdded = Math.ceil(data.places.length / 10);
         if (newPageRequest) {
           setCurrentPageMax((prev) => prev + pagesAdded);

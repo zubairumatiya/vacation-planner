@@ -311,7 +311,7 @@ router.post("/map", async (req, res, next) => {
   let holdToken = req.body.nextPageToken === undefined ? "" : req.body.nextPageToken;
   try {
     const query = `${req.body.placeType}s near ${req.body.locationName}`; 
-    console.log(req.body) // TODO: test filters, placetype, and locationName changes.
+    console.log(req.body) 
     while(countOfPlaces < 20 && holdToken !== undefined){
     const result = await fetch(
       "https://places.googleapis.com/v1/places:searchText",
@@ -321,8 +321,9 @@ router.post("/map", async (req, res, next) => {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
           //"places.id,nextPageToken,places.name",
-          "X-Goog-FieldMask": "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress"
-            //"places.id,places.displayName,places.rating,places.userRatingCount,places.location,places.shortFormattedAddress,nextPageToken",
+          "X-Goog-FieldMask": //"places.id,nextPageToken"
+          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress"
+            "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.rating,places.userRatingCount"
         },
         body: JSON.stringify({
           textQuery: `${query}`,
@@ -333,13 +334,13 @@ router.post("/map", async (req, res, next) => {
       }
     );
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
-    const data = await result.json();
+    const data:TextSearchResponse = await result.json();
     if(req.body.reviewFilter){
       console.log("entering review filter sorting");
-      data.places.forEach(v=>{
+      data.places.forEach((v:Place)=>{
         if(v.userRatingCount >= req.body.reviewFilter){
           countOfPlaces++;
-          gatherPlaces.push(...data.places);
+          gatherPlaces.push(v);
         }
       })
     }else{

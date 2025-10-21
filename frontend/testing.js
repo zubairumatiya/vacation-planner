@@ -89,22 +89,14 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
-// -- tweak viewport maybe, pins are landing way north of viewport
+// -- the filters button does not turn off after the first change. It should be disabling after re-renders, and only turn on when the current selection is different than the one it was rendered with.
+// -- maybe need to change primary type, it's pulling in cidercade and escape room for "museums" near Austin, TX
 // -- need to add more selection criteria, categories, ratings, reviews,etc
-// -- -- running into a bit of a problem, search nearby doesn't allow for filtering by stars and ratings. So the best practical method is probably to retirieve a lot
-// -- -- of places and then filter by our filters and sort descending. But still this will not pull all the places within our criteria, a fix i can think of is having
-// -- -- a next button or something that sends another request, but then i would have to retrieve another set that is not similar to my first retrieval (UNKNOWN)
-// -- -- this would be complex. Another maybe even more complex thing would be to do a text retrieval of every place (UNKNOWN), filter with our criteria, not sure if
-// -- -- i would even be able to access the star and rating count fields of places (UNKNOWN), keep the id's, then do a mass id array search to put pins on places (UNKNOWN)
-// -- -- simplest option would prob be to rank by popularity and retrieve a lot more spots to hopefully get all the good places to cancel the bad. AN IDEA:
-// -- -- we could pull a large pool using the rank by popularity but still maintain the ability to filter. 20 is the MAX actually. Let's see how we can make multiple
-// -- -- requests in batches of 20 and then we can either add the filters or just keep the POPULAR results
-// -- -- will require changing the search query into a single query instead of type. Although text does include types, still need to think of format.
 // -- auto load a place depending on the location of our vacation spot
 // -- add from google maps directly to want to see list OR schedule
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.
-// -- Set usage limits in Google Cloud Console - You can restrict the number of requests per day per key.
+// -- Set usage limits in Google Cloud Console - since we know all requests will be using the enterprise option, we can set the generic query limit in quotas using free limit for the enterprise text search SKU (1000)
 // -- reset place list scroll bar upon next page
 // -- add token check to backend maps api point
 // add a calender view different than editing view we already have
