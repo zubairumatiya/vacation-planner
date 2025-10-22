@@ -320,10 +320,9 @@ router.post("/map", async (req, res, next) => {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
-          //"places.id,nextPageToken,places.name",
-          "X-Goog-FieldMask": //"places.id,nextPageToken"
+          "X-Goog-FieldMask": "places.id,nextPageToken"
           //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress"
-            "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.rating,places.userRatingCount"
+          //  "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.rating,places.userRatingCount"
         },
         body: JSON.stringify({
           textQuery: `${query}`,

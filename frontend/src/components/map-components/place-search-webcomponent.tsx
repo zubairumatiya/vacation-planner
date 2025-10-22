@@ -61,6 +61,7 @@ export const PlaceSearchWebComponent = ({
           rating: ratingRef?.current?.value,
           reviews: reviewCountRef?.current?.value,
         });
+        setDisabled(true);
         const pagesAdded = Math.ceil(data.places.length / 10);
         if (newPageRequest) {
           setCurrentPageMax((prev) => prev + pagesAdded);

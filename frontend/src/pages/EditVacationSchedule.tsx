@@ -1131,6 +1131,7 @@ const EditVacationSchedule = (props: { loadFirst: () => void }) => {
                                       endError ? "border-red-500" : undefined
                                     }
                                     onChange={(
+                                      // im pretty sure using a callback function here is not necessary, could just put constructDate, however we will lose "end" since it's closed over
                                       hour: string,
                                       minute: string,
                                       meridiem: string
