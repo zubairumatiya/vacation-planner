@@ -89,8 +89,8 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
-// -- maybe need to change primary type, it's pulling in cidercade and escape room for "museums" near Austin, TX
-// -- need to add more selection criteria, categories, ratings, reviews,etc
+// -- let's see if we can change filter and change placetype or location all together so we can mitigate api requests. We are able to do this by setting the filters first (without clicking apply) and then setting place type and location. Will prob need to change auto placetype select api request
+// -- figure out starting area and maybe add placeholders for the initial render of the map
 // -- auto load a place depending on the location of our vacation spot
 // -- add from google maps directly to want to see list OR schedule
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.

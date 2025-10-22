@@ -23,6 +23,8 @@ interface Place {
   /** Place types/categories (if requested) */
   types?: string[];
 
+  primaryType?: string;
+
   rating?: number;
 
   userRatingCount?: number;
