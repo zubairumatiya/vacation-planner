@@ -89,7 +89,6 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
-// -- the filters button does not turn off after the first change. It should be disabling after re-renders, and only turn on when the current selection is different than the one it was rendered with.
 // -- maybe need to change primary type, it's pulling in cidercade and escape room for "museums" near Austin, TX
 // -- need to add more selection criteria, categories, ratings, reviews,etc
 // -- auto load a place depending on the location of our vacation spot

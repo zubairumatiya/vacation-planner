@@ -320,8 +320,8 @@ router.post("/map", async (req, res, next) => {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": "places.id,nextPageToken"
-          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress"
+          "X-Goog-FieldMask": //"places.id,nextPageToken"
+          "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress"
           //  "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.rating,places.userRatingCount"
         },
         body: JSON.stringify({
@@ -329,6 +329,8 @@ router.post("/map", async (req, res, next) => {
           pageToken: holdToken,
           minRating: req.body.ratingFilter,
           pageSize: 20,
+          includedType:`${req.body.placeType}`,
+          strictTypeFiltering:true,
         }),
       }
     );
