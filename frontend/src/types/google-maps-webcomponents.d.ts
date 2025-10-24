@@ -7,6 +7,32 @@ declare global {
     loadSecond: () => void;
   }
 
+  type PlacePrediction = {
+    place: string;
+    placeId: string;
+    text: {
+      text: string;
+      matches: { startOffset: number; endOffset: number }[];
+    };
+    structuredFormat: {
+      mainText: {
+        text: string;
+        matches: { startOffset: number; endOffset: number }[];
+      };
+      secondaryText: {
+        text: string;
+        matches: { startOffset: number; endOffset: number }[];
+      };
+    };
+    types: string[];
+  };
+
+  type SuggestionsResponse = {
+    suggestions: {
+      placePrediction?: PlacePrediction;
+    }[];
+  };
+
   type PlaceType = "restaurant" | "cafe" | "museum";
 
   interface GmpSelectEvent {

@@ -1,4 +1,4 @@
-import fs from "fs";
+import fs from "fs/promises";
 const nextDay = new Date("2025-08-01T02:00:00.000Z");
 
 console.log(nextDay.toISOString());
@@ -17,18 +17,52 @@ async function getPlaces() {
         reviewFilter: null,
         nextPageToken: "",
         placeType: "restaurant",
-        locationName: "San Saba, TX 76877, USA",
+        locationName: "Austin",
       }),
     });
     if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
-    console.log(data);
+    console.log(data.places);
     console.log(data.places.length);
   } catch (err) {
     console.error("Error fetching places:", err);
   }
 }
-getPlaces();
+//getPlaces();
+
+const autoC = async () => {
+  const query = "a";
+  try {
+    const result = await fetch(
+      "https://places.googleapis.com/v1/places:autocomplete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": `${apiKey}`,
+          "X-Goog-FieldMask": "suggestions.placePrediction",
+        },
+        body: JSON.stringify({
+          input: `${query}`,
+          //includeQueryPredictions: true, // optional, want to test what this will do. If this is off, we will have place queries only, which is prob what we want so let's test this for now
+          includedPrimaryTypes: ["locality"],
+        }),
+      }
+    );
+    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+    const data = await result.json();
+    //await fs.writeFile(
+    //  "autoCompleteResponse.json",
+    //  JSON.stringify(data, null, 2)
+    //);
+    console.log(data.suggestions);
+    data.suggestions.forEach((v) => console.log(v.placePrediction.text.text));
+  } catch (err) {
+    return err;
+  }
+};
+
+//autoC();
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];

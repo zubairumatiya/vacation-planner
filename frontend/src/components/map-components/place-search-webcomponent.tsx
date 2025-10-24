@@ -30,7 +30,6 @@ export const PlaceSearchWebComponent = ({
   useEffect(() => {
     console.log("PLACETYPE", placeType);
     console.log("LOCATIONNAME", locationName);
-    console.log(reviewCountRef.current.value);
     async function getPlaces() {
       setLoadingNext(true);
       try {
@@ -56,7 +55,7 @@ export const PlaceSearchWebComponent = ({
         });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         const data = await res.json();
-        console.log(data);
+        console.log(data.places);
         setRememberFilter({
           rating: ratingRef?.current?.value,
           reviews: reviewCountRef?.current?.value,

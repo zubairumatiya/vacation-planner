@@ -1,0 +1,136 @@
+{
+  "suggestions": [
+    {
+      "placePrediction": {
+        "place": "places/ChIJLwPMoJm1RIYRetVp1EtGm10",
+        "placeId": "ChIJLwPMoJm1RIYRetVp1EtGm10",
+        "text": {
+          "text": "Austin, TX, USA",
+          "matches": [
+            {
+              "endOffset": 1
+            }
+          ]
+        },
+        "structuredFormat": {
+          "mainText": {
+            "text": "Austin",
+            "matches": [
+              {
+                "endOffset": 1
+              }
+            ]
+          },
+          "secondaryText": {
+            "text": "TX, USA"
+          }
+        },
+        "types": [
+          "locality",
+          "political",
+          "geocode"
+        ]
+      }
+    },
+    {
+      "placePrediction": {
+        "place": "places/ChIJRf9KizuxRIYRaCfcyaj8pxw",
+        "placeId": "ChIJRf9KizuxRIYRaCfcyaj8pxw",
+        "text": {
+          "text": "Austin-Bergstrom International Airport (AUS), Presidential Boulevard, Austin, TX, USA",
+          "matches": [
+            {
+              "endOffset": 1
+            }
+          ]
+        },
+        "structuredFormat": {
+          "mainText": {
+            "text": "Austin-Bergstrom International Airport (AUS)",
+            "matches": [
+              {
+                "endOffset": 1
+              }
+            ]
+          },
+          "secondaryText": {
+            "text": "Presidential Boulevard, Austin, TX, USA"
+          }
+        },
+        "types": [
+          "establishment",
+          "airport",
+          "international_airport",
+          "point_of_interest"
+        ]
+      }
+    },
+    {
+      "placePrediction": {
+        "place": "places/ChIJK_T79BfLRIYReUu3gsYy1Vg",
+        "placeId": "ChIJK_T79BfLRIYReUu3gsYy1Vg",
+        "text": {
+          "text": "ACC Highland, Airport Boulevard, Austin, TX, USA",
+          "matches": [
+            {
+              "endOffset": 1
+            }
+          ]
+        },
+        "structuredFormat": {
+          "mainText": {
+            "text": "ACC Highland",
+            "matches": [
+              {
+                "endOffset": 1
+              }
+            ]
+          },
+          "secondaryText": {
+            "text": "Airport Boulevard, Austin, TX, USA"
+          }
+        },
+        "types": [
+          "point_of_interest",
+          "university",
+          "establishment"
+        ]
+      }
+    },
+    {},
+    {
+      "placePrediction": {
+        "place": "places/ChIJ_ZXI2dq1RIYRKtfmRymvSm4",
+        "placeId": "ChIJ_ZXI2dq1RIYRKtfmRymvSm4",
+        "text": {
+          "text": "Anderson High School, Mesa Drive, Austin, TX, USA",
+          "matches": [
+            {
+              "endOffset": 1
+            }
+          ]
+        },
+        "structuredFormat": {
+          "mainText": {
+            "text": "Anderson High School",
+            "matches": [
+              {
+                "endOffset": 1
+              }
+            ]
+          },
+          "secondaryText": {
+            "text": "Mesa Drive, Austin, TX, USA"
+          }
+        },
+        "types": [
+          "school",
+          "government_office",
+          "secondary_school",
+          "establishment",
+          "point_of_interest"
+        ]
+      }
+    }
+  ]
+}

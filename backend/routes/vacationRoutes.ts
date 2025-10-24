@@ -320,8 +320,8 @@ router.post("/map", async (req, res, next) => {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": //"places.id,nextPageToken"
-          "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
+          "X-Goog-FieldMask": "places.id,nextPageToken",
+          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
           //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
         },
         body: JSON.stringify({
@@ -336,8 +336,8 @@ router.post("/map", async (req, res, next) => {
     );
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data:TextSearchResponse = await result.json();
-    if(req.body.placeType){ //should always have this but lets check just in case
-      data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
+    if(req.body.placeType){ //should always have this but lets check just in case  
+    // UNDO THIS COMMENT //data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
     }else{
       throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
     }
