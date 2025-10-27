@@ -275,3 +275,16 @@
 .clearButton:hover {
   background-color: #f0f0f0;
 }
+
+.suggestionUl {
+  list-style: none;
+}
+
+.suggestionUl li {
+  color: black;
+  cursor: pointer;
+}
+
+.suggestionUl li:hover {
+  background-color: #dedede;
+}

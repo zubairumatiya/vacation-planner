@@ -3,6 +3,7 @@ import { AutocompleteWebComponent } from "./autocomplete-webcomponent";
 import styles from "../../styles/Map.module.css";
 import autocompleteIcon from "../../assets/autocomplete-icon.svg";
 import clearIcon from "../../assets/clear-icon.svg";
+import { useMap } from "@vis.gl/react-google-maps";
 
 export const SearchBar = memo(function SearchBar({
   placeType,
@@ -25,6 +26,11 @@ export const SearchBar = memo(function SearchBar({
   const [submitButtonTrigger, setSubmitButtonTrigger] =
     useState<boolean>(false);
 
+  const [hideSuggestions, setHideSuggestions] = useState<boolean>(false);
+
+  const [closure, setClosure] = useState<(() => void) | undefined>(undefined);
+  const map = useMap();
+
   const [inputValue, setInputValue] = useState<string>("");
 
   const handlePlaceTypeChange = (
@@ -35,6 +41,15 @@ export const SearchBar = memo(function SearchBar({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
+  };
+
+  const handleSubmitValues = (id: string, name: string, vp: Viewport) => {
+    const holdValues = () => {
+      setLocationId(id);
+      setLocationName(name);
+      map?.fitBounds(vp);
+    };
+    setClosure(holdValues);
   };
 
   return (
@@ -81,6 +96,7 @@ export const SearchBar = memo(function SearchBar({
           className={styles.searchInput}
           value={inputValue}
           onChange={handleInputChange}
+          onClick={() => setHideSuggestions(false)}
           aria-autocomplete="list"
           autoComplete="off"
           role="combobox"
@@ -102,14 +118,17 @@ export const SearchBar = memo(function SearchBar({
       </div>
       <AutocompleteWebComponent
         searchButtonSubmit={submitButtonTrigger}
-        onPlaceSelect={(place) => {
-          setLocationId(place?.id ?? undefined);
-          setLocationName(place?.formattedAddress ?? null);
-        }}
+        inputValue={inputValue}
+        storeValues={handleSubmitValues}
+        setInputVal={setInputValue}
+        setHideSuggestions={setHideSuggestions}
       />
       <button
         type="button"
-        onClick={() => setSubmitButtonTrigger((prev) => !prev)}
+        onClick={() => {
+          setSubmitButtonTrigger((prev) => !prev);
+          if (closure) closure();
+        }}
       >
         Submit
       </button>

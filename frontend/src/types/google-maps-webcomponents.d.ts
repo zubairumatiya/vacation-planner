@@ -33,6 +33,11 @@ declare global {
     }[];
   };
 
+  type Viewport = {
+    low: { latitude: number; longitude: number };
+    high: { latitude: number; longitude: number };
+  };
+
   type PlaceType = "restaurant" | "cafe" | "museum";
 
   interface GmpSelectEvent {

@@ -362,6 +362,50 @@ router.post("/map", async (req, res, next) => {
   }
 });
 
+router.post("/autocomplete", async(req,res,next)=>{
+  const query = req.body.query;
+  try{
+    const result = await fetch("https://places.googleapis.com/v1/places:autocomplete",{
+      method:"POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": `${API_KEY}`,
+        "X-Goog-FieldMask": "suggestions.placePrediction",
+      },
+      body: JSON.stringify({
+        input:`${query}`,
+        includedPrimaryTypes: ["locality"], // will suggest cities, countries, etc, instead of places of business
+      })
+    })
+    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+    const data = await result.json();
+    res.status(200).json(data);
+  }catch(err){
+    next(err)
+  }
+})
+
+router.get("/details/:itemId", async(req,res,next)=>{
+  try{
+    if(!req.params.itemId){
+      throw new Error("Error finishing req")
+    }
+    const result = await fetch(`https://places.googleapis.com/v1/places/${req.params.itemId}`,{
+      method:"POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": `${API_KEY}`,
+        "X-Goog-FieldMask": "viewport",
+      }
+    })
+    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+    const data = await result.json();
+    res.status(200).json(data);
+  }catch(err){
+    next(err)
+  }
+})
+
 /*
 router.post("/map", async (req, res, next) => {
   try {
