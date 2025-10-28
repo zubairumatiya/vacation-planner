@@ -391,7 +391,7 @@ router.get("/details/:itemId", async(req,res,next)=>{
       throw new Error("Error finishing req")
     }
     const result = await fetch(`https://places.googleapis.com/v1/places/${req.params.itemId}`,{
-      method:"POST",
+      method:"GET",
       headers: {
         "Content-Type": "application/json",
         "X-Goog-Api-Key": `${API_KEY}`,

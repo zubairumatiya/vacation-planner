@@ -1,4 +1,11 @@
-import React, { memo, useMemo, useState, useRef, useEffect } from "react";
+import React, {
+  memo,
+  useMemo,
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { AutocompleteWebComponent } from "./autocomplete-webcomponent";
 import styles from "../../styles/Map.module.css";
 import autocompleteIcon from "../../assets/autocomplete-icon.svg";
@@ -35,6 +42,10 @@ export const SearchBar = memo(function SearchBar({
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  const [resetInput, setResetInput] = useState<boolean>(false);
+
+  const [holdValue, setHoldValue] = useState<string>("");
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -58,14 +69,30 @@ export const SearchBar = memo(function SearchBar({
     setInputValue(e.target.value);
   };
 
-  const handleSubmitValues = (id: string, name: string, vp: Viewport) => {
-    const holdValues = () => {
-      setLocationId(id);
-      setLocationName(name);
-      map?.fitBounds(vp);
-    };
-    setClosure(holdValues);
-  };
+  useEffect(() => {
+    console.log("my use effect", holdValue);
+  }, [holdValue]);
+
+  const handleSubmitValues = useCallback(
+    (id, name, vp) => {
+      setResetInput(true);
+      const bounds = new google.maps.LatLngBounds(
+        new google.maps.LatLng(vp.low.latitude, vp.low.longitude),
+        new google.maps.LatLng(vp.high.latitude, vp.high.longitude)
+      );
+
+      const holdValues = () => {
+        setLocationId(id);
+        setLocationName(name);
+        setHoldValue(name);
+        map?.fitBounds(bounds);
+        console.log("enter");
+      };
+
+      setClosure(() => holdValues);
+    },
+    [map]
+  );
 
   return (
     <div
@@ -111,7 +138,13 @@ export const SearchBar = memo(function SearchBar({
             className={styles.searchInput}
             value={inputValue}
             onChange={handleInputChange}
-            onFocus={() => setHideSuggestions(false)}
+            onFocus={() => {
+              if (resetInput) {
+                setInputValue("");
+                setResetInput(false);
+              }
+              setHideSuggestions(false);
+            }}
             aria-autocomplete="list"
             autoComplete="off"
             role="combobox"

@@ -39,6 +39,7 @@ export const AutocompleteWebComponent = ({
       setSuggestions([]);
       return;
     }
+    console.log(inputValue);
     const autocompleteReq = async (input: string) => {
       try {
         const result = await fetch(`${apiURL}/autocomplete`, {
@@ -105,25 +106,25 @@ export const AutocompleteWebComponent = ({
   const handlePlaceClick = async (e: React.MouseEvent<HTMLUListElement>) => {
     // will have to make a call to place details to get place viewport
     // will have to get rid of suggestions on blur but still hold the text value in the search bar
-    const target = e.target as HTMLLIElement;
+    const li = (e.target as HTMLElement).closest("li");
 
-    if (target.tagName !== "LI" || target.textContent === null) {
+    if (!(li instanceof HTMLElement)) {
       console.log("error selecting item");
       return;
     }
-    const itemId = target.id;
+    const itemId = li.id;
     const result = await fetch(`${apiURL}/details/${itemId}`, {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
     });
     const data = await result.json();
     setViewport(data.viewport);
-    setPlaceName(target.textContent);
+    setPlaceName(li.dataset.location ?? "");
     setPlaceId(itemId);
-    storeValues(itemId, target.textContent, data.viewport);
-    setInputVal(target.textContent);
+    storeValues(itemId, li.dataset.location ?? "", data.viewport);
+    setInputVal(li.dataset.location ?? "");
     setHideSuggestions(true);
     setSuggestions([]);
   };
@@ -148,7 +149,11 @@ export const AutocompleteWebComponent = ({
               (
                 v // v.structuredFormat.mainText.text   AND     v.structuredFormat.secondaryText.text
               ) => (
-                <li key={v.placePrediction?.placeId}>
+                <li
+                  key={v.placePrediction?.placeId}
+                  data-location={v.placePrediction?.text.text}
+                  id={v.placePrediction?.placeId}
+                >
                   <div className={styles.liRow}>
                     <span className={styles.mainSuggestionText}>
                       {v.placePrediction?.structuredFormat.mainText?.text}
