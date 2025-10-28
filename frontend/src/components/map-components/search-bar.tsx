@@ -44,7 +44,9 @@ export const SearchBar = memo(function SearchBar({
 
   const [resetInput, setResetInput] = useState<boolean>(false);
 
-  const [holdValue, setHoldValue] = useState<string>("");
+  const [placeTypeValue, setPlaceTypeValue] = useState<PlaceType>(placeType);
+
+  const placeTypeRef = useRef<PlaceType>(placeType);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -59,33 +61,32 @@ export const SearchBar = memo(function SearchBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    placeTypeRef.current = placeTypeValue;
+  }, [placeTypeValue]);
+
   const handlePlaceTypeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
   ) => {
-    setPlaceType(event.target.value as PlaceType);
+    setPlaceTypeValue(event.target.value as PlaceType);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
-  useEffect(() => {
-    console.log("my use effect", holdValue);
-  }, [holdValue]);
-
   const handleSubmitValues = useCallback(
-    (id, name, vp) => {
+    (id: string, name: string, vp: Viewport) => {
       setResetInput(true);
       const bounds = new google.maps.LatLngBounds(
         new google.maps.LatLng(vp.low.latitude, vp.low.longitude),
         new google.maps.LatLng(vp.high.latitude, vp.high.longitude)
       );
-
       const holdValues = () => {
         setLocationId(id);
         setLocationName(name);
-        setHoldValue(name);
         map?.fitBounds(bounds);
+        setPlaceType(placeTypeRef.current);
         console.log("enter");
       };
 
@@ -105,7 +106,7 @@ export const SearchBar = memo(function SearchBar({
       </label>
       <select
         id="place-type-select"
-        value={placeType}
+        value={placeTypeValue}
         onChange={handlePlaceTypeChange}
         className={styles.select}
       >
