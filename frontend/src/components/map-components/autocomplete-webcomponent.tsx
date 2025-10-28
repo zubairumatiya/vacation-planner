@@ -36,6 +36,7 @@ export const AutocompleteWebComponent = ({
 
   useEffect(() => {
     if (!inputValue) {
+      setSuggestions([]);
       return;
     }
     const autocompleteReq = async (input: string) => {
@@ -50,6 +51,9 @@ export const AutocompleteWebComponent = ({
           }),
         });
         const data: SuggestionsResponse = await result.json();
+        if (!data.suggestions) {
+          data.suggestions = [];
+        }
         setSuggestions(data.suggestions);
       } catch {
         console.log("error making req to backend");
@@ -137,15 +141,28 @@ export const AutocompleteWebComponent = ({
         - ongmp-select: Used in alpha and future stable versions
         - ongmp-placeselect: Deprecated but still used in beta channel
       */}
-      <div className={styles.suggestionListContainer}>
-        <ul className={styles.suggestionUl} onClick={handlePlaceClick}>
-          {suggestions.map((v) => (
-            <li key={v.placePrediction?.placeId}>
-              {v.placePrediction?.text.text}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {suggestions.length > 0 && (
+        <div className={styles.suggestionListContainer}>
+          <ul className={styles.suggestionUl} onClick={handlePlaceClick}>
+            {suggestions.map(
+              (
+                v // v.structuredFormat.mainText.text   AND     v.structuredFormat.secondaryText.text
+              ) => (
+                <li key={v.placePrediction?.placeId}>
+                  <div className={styles.liRow}>
+                    <span className={styles.mainSuggestionText}>
+                      {v.placePrediction?.structuredFormat.mainText?.text}
+                    </span>
+                    <span className={styles.secondarySuggestionText}>
+                      {v.placePrediction?.structuredFormat.secondaryText.text}
+                    </span>
+                  </div>
+                </li>
+              )
+            )}
+          </ul>
+        </div>
+      )}
       {/*
 
           <gmp-basic-place-autocomplete

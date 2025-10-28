@@ -16,8 +16,11 @@
 }
 
 .autocompleteContainer {
-  border: 1px solid black;
-  border-radius: 3px;
+  box-shadow: light-dark(rgba(60, 64, 67, 0.3), rgba(0, 0, 0, 0.3)) 0px 1px 2px
+      0px,
+    light-dark(rgba(60, 64, 67, 0.15), rgba(0, 0, 0, 0.15)) 0px 2px 6px 2px;
+  border-radius: 8px;
+  border-radius: 0 0 8px 8px;
 }
 
 .label {
@@ -278,13 +281,58 @@
 
 .suggestionUl {
   list-style: none;
+  background-color: white;
+  border-width: 0 1px 1px;
+  border-radius: 0 0 8px 8px;
+  display: flex;
+  flex-flow: column;
+  height: 16rem;
 }
 
 .suggestionUl li {
   color: black;
   cursor: pointer;
+  border-bottom: 1px solid rgb(217, 217, 217);
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.liRow {
+  display: flex;
+  flex-flow: column;
+  padding: 0.25rem 0;
+}
+
+.mainSuggestionText {
+  color: rgb(31, 31, 31);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.secondarySuggestionText {
+  color: rgb(94, 94, 94);
+  font-weight: 400;
+  line-height: 16px;
+  font-size: 13px;
+}
+
+.suggestionUl li:last-of-type {
+  border-bottom: none;
 }
 
 .suggestionUl li:hover {
   background-color: #dedede;
+}
+
+.searchAndAutoContainer {
+  position: relative;
+}
+
+.autoWrapper {
+  position: absolute;
+  width: 100%;
 }

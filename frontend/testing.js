@@ -124,6 +124,7 @@ repeaterCall();
 
 // add google maps API window
 // -- let's see if we can change filter and change placetype or location all together so we can mitigate api requests. We are able to do this by setting the filters first (without clicking apply) and then setting place type and location. Will prob need to change auto placetype select api request
+// -- -- NEXT TIME: let's style the suggestions in autocomplete. Let's test backend routes. Let's test focusing, blurring etc.
 // -- figure out starting area and maybe add placeholders for the initial render of the map
 // -- auto load a place depending on the location of our vacation spot
 // -- add from google maps directly to want to see list OR schedule
@@ -131,9 +132,10 @@ repeaterCall();
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.
 // -- Set usage limits in Google Cloud Console - since we know all requests will be using the enterprise option, we can set the generic query limit in quotas using free limit for the enterprise text search SKU (1000)
 // -- reset place list scroll bar upon next page
-// -- add token check to backend maps api point
+// -- add token check to backend maps api points
+// check if i am counting days properly in the title
 // add a calender view different than editing view we already have
-// -- add token check when getting schedule
+// -- add token check when viewing schedule
 // refresh token
 // maybe find a way to log person out before they have make an api request
 // mailgun email styling

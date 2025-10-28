@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState, useRef } from "react";
+import React, { memo, useMemo, useState, useRef, useEffect } from "react";
 import { AutocompleteWebComponent } from "./autocomplete-webcomponent";
 import styles from "../../styles/Map.module.css";
 import autocompleteIcon from "../../assets/autocomplete-icon.svg";
@@ -32,6 +32,21 @@ export const SearchBar = memo(function SearchBar({
   const map = useMap();
 
   const [inputValue, setInputValue] = useState<string>("");
+
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        wrapperRef.current &&
+        !wrapperRef.current.contains(e.target as Node)
+      ) {
+        setHideSuggestions(true);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handlePlaceTypeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -74,55 +89,60 @@ export const SearchBar = memo(function SearchBar({
         ))}
       </select>
       <span className={styles.span}>near</span>
-
-      <div
-        className={`${styles.searchContainer} ${
-          isFocused ? styles.focusRing : ""
-        }`}
-        tabIndex={0}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        onClick={() => searchInputRef.current?.focus()}
-      >
-        <div className={styles.acIconContainer}>
-          <img
-            className={styles.acIcon}
-            src={autocompleteIcon}
-            alt="autocompleteIcon"
-          />
-        </div>
-        <input
-          ref={searchInputRef}
-          className={styles.searchInput}
-          value={inputValue}
-          onChange={handleInputChange}
-          onClick={() => setHideSuggestions(false)}
-          aria-autocomplete="list"
-          autoComplete="off"
-          role="combobox"
-          aria-expanded="false"
-          aria-haspopup="listbox"
-          aria-label="Search For a Place"
-        />
-        <button
-          type="button"
-          className={styles.clearButton}
-          onClick={() => setInputValue("")}
+      <div className={styles.searchAndAutoContainer}>
+        <div
+          className={`${styles.searchContainer} ${
+            isFocused ? styles.focusRing : ""
+          }`}
+          tabIndex={0}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onClick={() => searchInputRef.current?.focus()}
         >
-          <img
-            className={styles.clearButtonIcon}
-            src={clearIcon}
-            alt="clearIcon"
+          <div className={styles.acIconContainer}>
+            <img
+              className={styles.acIcon}
+              src={autocompleteIcon}
+              alt="autocompleteIcon"
+            />
+          </div>
+          <input
+            ref={searchInputRef}
+            className={styles.searchInput}
+            value={inputValue}
+            onChange={handleInputChange}
+            onFocus={() => setHideSuggestions(false)}
+            aria-autocomplete="list"
+            autoComplete="off"
+            role="combobox"
+            aria-expanded="false"
+            aria-haspopup="listbox"
+            aria-label="Search For a Place"
           />
-        </button>
+          <button
+            type="button"
+            className={styles.clearButton}
+            onClick={() => setInputValue("")}
+          >
+            <img
+              className={styles.clearButtonIcon}
+              src={clearIcon}
+              alt="clearIcon"
+            />
+          </button>
+        </div>
+        <div ref={wrapperRef} className={styles.autoWrapper}>
+          {!hideSuggestions && (
+            <AutocompleteWebComponent
+              searchButtonSubmit={submitButtonTrigger}
+              inputValue={inputValue}
+              storeValues={handleSubmitValues}
+              setInputVal={setInputValue}
+              setHideSuggestions={setHideSuggestions}
+            />
+          )}
+        </div>
       </div>
-      <AutocompleteWebComponent
-        searchButtonSubmit={submitButtonTrigger}
-        inputValue={inputValue}
-        storeValues={handleSubmitValues}
-        setInputVal={setInputValue}
-        setHideSuggestions={setHideSuggestions}
-      />
       <button
         type="button"
         onClick={() => {
