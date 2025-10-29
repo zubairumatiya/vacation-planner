@@ -3,7 +3,6 @@ import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 
 interface Props {
-  searchButtonSubmit: boolean;
   inputValue: string;
   storeValues: (id: string, name: string, vp: Viewport) => void;
   setInputVal: React.Dispatch<SetStateAction<string>>;
@@ -13,7 +12,6 @@ interface Props {
 const apiURL = import.meta.env.VITE_API_URL;
 
 export const AutocompleteWebComponent = ({
-  searchButtonSubmit,
   inputValue,
   storeValues,
   setInputVal,

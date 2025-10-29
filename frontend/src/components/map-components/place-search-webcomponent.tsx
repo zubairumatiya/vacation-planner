@@ -10,11 +10,12 @@ export const PlaceSearchWebComponent = ({
   setPlaces,
   locationName,
   placeType,
+  setSearchDisabled,
+  submitButtonTrigger,
 }: PlaceSearchProps) => {
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
   const [newParams, setNewParams] = useState<boolean>(false);
-  const [disabled, setDisabled] = useState<boolean>(true);
   const [results, setResults] = useState<google.maps.places.Place[]>([]);
   const [rememberFilter, setRememberFilter] = useState({
     rating: "",
@@ -60,7 +61,7 @@ export const PlaceSearchWebComponent = ({
           rating: ratingRef?.current?.value,
           reviews: reviewCountRef?.current?.value,
         });
-        setDisabled(true);
+        setSearchDisabled(true);
         const pagesAdded = Math.ceil(data.places.length / 10);
         if (newPageRequest) {
           setCurrentPageMax((prev) => prev + pagesAdded);
@@ -80,7 +81,7 @@ export const PlaceSearchWebComponent = ({
     }
 
     getPlaces();
-  }, [newParams, placeType, locationName]);
+  }, [newParams, placeType, locationName, submitButtonTrigger]);
 
   //the only time we would reuse token is if a new page is requested, otherwise, upon any other change, we will be making a new req.
   const newPageTrigger = () => {
@@ -93,13 +94,14 @@ export const PlaceSearchWebComponent = ({
   }, [pageCountSwitch]);
 
   const checkDifferentSelection = () => {
+    // can use this to check other setttings like placeType and location. But we will need a state in parent to also communicate with search bar to disable the submit button
     if (
       rememberFilter.rating !== ratingRef?.current?.value ||
       rememberFilter.reviews !== reviewCountRef?.current?.value
     ) {
-      setDisabled(false);
+      setSearchDisabled(false);
     } else {
-      setDisabled(true);
+      setSearchDisabled(true);
     }
   };
 
@@ -157,18 +159,7 @@ export const PlaceSearchWebComponent = ({
             <option value="500">500</option>
             <option value="250">250</option>
           </select>
-          <div>
-            <button
-              className={styles.applyButton}
-              type="button"
-              onClick={() => {
-                setNewParams((prev) => !prev);
-              }}
-              disabled={disabled}
-            >
-              Apply
-            </button>
-          </div>
+          <div></div>
         </div>
         <div className={styles.placesContainer}>
           {results.slice(10 * (pageCount - 1), 10 * pageCount).map((place) => {

@@ -38,6 +38,9 @@ const MyMapComponent = () => {
   const [locationId, setLocationId] = useState<string | undefined>("");
   const [locationName, setLocationName] = useState<string | null>("Austin");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
+  const [searchDisabled, setSearchDisabled] = useState<boolean>(true);
+  const [submitButtonTrigger, setSubmitButtonTrigger] =
+    useState<boolean>(false);
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
 
@@ -71,6 +74,8 @@ const MyMapComponent = () => {
             locationName={locationName}
             setPlaces={setPlaces}
             onPlaceSelect={setSelectedPlaceId}
+            setSearchDisabled={setSearchDisabled}
+            submitButtonTrigger={submitButtonTrigger}
           />
         </div>
 
@@ -93,6 +98,9 @@ const MyMapComponent = () => {
             setPlaceType={setPlaceType}
             setLocationId={setLocationId}
             setLocationName={setLocationName}
+            locationName={locationName}
+            searchDisabled={searchDisabled}
+            setSubmitButtonTrigger={setSubmitButtonTrigger}
           />
 
           {/*

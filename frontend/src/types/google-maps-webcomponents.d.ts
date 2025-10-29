@@ -61,6 +61,8 @@ declare global {
     setPlaces: (markers: google.maps.places.Place[]) => void;
     locationName: string | null;
     placeType: string | null;
+    setSearchDisabled: (boolean: boolean) => void;
+    submitButtonTrigger: boolean;
   }
 
   type PlaceSearchElement = HTMLElement & {
@@ -119,6 +121,9 @@ declare global {
     placeType: PlaceType;
     setPlaceType: (placeType: PlaceType) => void;
     setLocationName: (placeDisplayName: string | null) => void;
+    locationName: string;
+    searchDisabled: boolean;
+    setSubmitButtonTrigger: React.Dispatch<React.SetStateAction<boolean>>;
   }
 
   interface PlaceTypeOption {

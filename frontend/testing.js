@@ -124,8 +124,8 @@ repeaterCall();
 
 // add google maps API window
 // -- let's see if we can change filter and change placetype or location all together so we can mitigate api requests. We are able to do this by setting the filters first (without clicking apply) and then setting place type and location. Will prob need to change auto placetype select api request
-// -- -- NEXT TIME: let's style the suggestions in autocomplete. Let's test backend routes. Let's test focusing, blurring etc.
-// -- figure out starting area and maybe add placeholders for the initial render of the map
+// -- -- let's see if we can add a central object that remembers the current search so that if it is the same, we can disable the submit button
+// -- figure out starting area and maybe add placeholders for the initial render of the map -- Will have to add the same autocomplete we have for our maps to add vacation. Can maybe get the view window while we are at it?
 // -- auto load a place depending on the location of our vacation spot
 // -- add from google maps directly to want to see list OR schedule
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.

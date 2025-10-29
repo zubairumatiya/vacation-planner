@@ -17,6 +17,9 @@ export const SearchBar = memo(function SearchBar({
   setPlaceType,
   setLocationId,
   setLocationName,
+  locationName,
+  searchDisabled,
+  setSubmitButtonTrigger,
 }: SearchBarProps) {
   const placeTypeOptions: PlaceTypeOption[] = useMemo(
     () => [
@@ -30,15 +33,12 @@ export const SearchBar = memo(function SearchBar({
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  const [submitButtonTrigger, setSubmitButtonTrigger] =
-    useState<boolean>(false);
-
-  const [hideSuggestions, setHideSuggestions] = useState<boolean>(false);
+  const [hideSuggestions, setHideSuggestions] = useState<boolean>(true);
 
   const [closure, setClosure] = useState<(() => void) | undefined>(undefined);
   const map = useMap();
 
-  const [inputValue, setInputValue] = useState<string>("");
+  const [inputValue, setInputValue] = useState<string>(locationName);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -48,12 +48,22 @@ export const SearchBar = memo(function SearchBar({
 
   const placeTypeRef = useRef<PlaceType>(placeType);
 
+  const [localSearchDisabled, setLocalSearchDisabled] = useState<boolean>(true);
+
+  const [holdName, setHoldName] = useState<string>(locationName);
+
+  useEffect(() => {}, [localSearchDisabled, searchDisabled]);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
+      if (document.activeElement === searchInputRef.current) {
+        console.log("fudge");
+      }
       if (
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
       ) {
+        console.log("HIDE");
         setHideSuggestions(true);
       }
     };
@@ -62,8 +72,14 @@ export const SearchBar = memo(function SearchBar({
   }, []);
 
   useEffect(() => {
+    console.log(holdName);
     placeTypeRef.current = placeTypeValue;
-  }, [placeTypeValue]);
+    if (placeType !== placeTypeValue || locationName !== holdName) {
+      setLocalSearchDisabled(false);
+    } else {
+      setLocalSearchDisabled(true);
+    }
+  }, [placeTypeValue, holdName]);
 
   const handlePlaceTypeChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -78,6 +94,7 @@ export const SearchBar = memo(function SearchBar({
   const handleSubmitValues = useCallback(
     (id: string, name: string, vp: Viewport) => {
       setResetInput(true);
+      setHoldName(name);
       const bounds = new google.maps.LatLngBounds(
         new google.maps.LatLng(vp.low.latitude, vp.low.longitude),
         new google.maps.LatLng(vp.high.latitude, vp.high.longitude)
@@ -87,6 +104,7 @@ export const SearchBar = memo(function SearchBar({
         setLocationName(name);
         map?.fitBounds(bounds);
         setPlaceType(placeTypeRef.current);
+        setLocalSearchDisabled(true);
         console.log("enter");
       };
 
@@ -117,7 +135,7 @@ export const SearchBar = memo(function SearchBar({
         ))}
       </select>
       <span className={styles.span}>near</span>
-      <div className={styles.searchAndAutoContainer}>
+      <div ref={wrapperRef} className={styles.searchAndAutoContainer}>
         <div
           className={`${styles.searchContainer} ${
             isFocused ? styles.focusRing : ""
@@ -165,10 +183,9 @@ export const SearchBar = memo(function SearchBar({
             />
           </button>
         </div>
-        <div ref={wrapperRef} className={styles.autoWrapper}>
+        <div className={styles.autoWrapper}>
           {!hideSuggestions && (
             <AutocompleteWebComponent
-              searchButtonSubmit={submitButtonTrigger}
               inputValue={inputValue}
               storeValues={handleSubmitValues}
               setInputVal={setInputValue}
@@ -179,6 +196,7 @@ export const SearchBar = memo(function SearchBar({
       </div>
       <button
         type="button"
+        disabled={searchDisabled && localSearchDisabled}
         onClick={() => {
           setSubmitButtonTrigger((prev) => !prev);
           if (closure) closure();
