@@ -56,14 +56,10 @@ export const SearchBar = memo(function SearchBar({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (document.activeElement === searchInputRef.current) {
-        console.log("fudge");
-      }
       if (
         wrapperRef.current &&
         !wrapperRef.current.contains(e.target as Node)
       ) {
-        console.log("HIDE");
         setHideSuggestions(true);
       }
     };
@@ -187,9 +183,9 @@ export const SearchBar = memo(function SearchBar({
           {!hideSuggestions && (
             <AutocompleteWebComponent
               inputValue={inputValue}
-              storeValues={handleSubmitValues}
               setInputVal={setInputValue}
               setHideSuggestions={setHideSuggestions}
+              storeValues={handleSubmitValues}
             />
           )}
         </div>

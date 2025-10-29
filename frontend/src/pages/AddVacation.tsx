@@ -23,14 +23,16 @@ const AddVacation = () => {
   return (
     <form onSubmit={formSubmit}>
       <VacationForm disableOrNah={checkError} submit={submitClicked} />
-      <button
-        type="submit"
-        disabled={submitButtonDisabled}
-        className="px-40 py-2 rounded bg-indigo-500 text-white pointer-events-auto cursor-pointer hover:bg-indigo-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-25"
-      >
-        Submit
-      </button>
-      <Link to="/">Cancel</Link>
+      <div className="flex flex-col items-center">
+        <button
+          type="submit"
+          disabled={submitButtonDisabled}
+          className="px-40 py-2 rounded bg-indigo-500 text-white pointer-events-auto cursor-pointer hover:bg-indigo-600 disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-25"
+        >
+          Submit
+        </button>
+        <Link to="/">Cancel</Link>
+      </div>
     </form>
   );
 };

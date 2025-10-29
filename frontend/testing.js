@@ -31,7 +31,7 @@ async function getPlaces() {
 //getPlaces();
 
 const autoC = async () => {
-  const query = "a";
+  const query = "saudi";
   try {
     const result = await fetch(
       "https://places.googleapis.com/v1/places:autocomplete",
@@ -45,7 +45,7 @@ const autoC = async () => {
         body: JSON.stringify({
           input: `${query}`,
           //includeQueryPredictions: true, // optional, want to test what this will do. If this is off, we will have place queries only, which is prob what we want so let's test this for now
-          includedPrimaryTypes: ["locality"],
+          includedPrimaryTypes: ["locality", "country"],
         }),
       }
     );
@@ -56,13 +56,13 @@ const autoC = async () => {
     //  JSON.stringify(data, null, 2)
     //);
     console.log(data.suggestions);
-    data.suggestions.forEach((v) => console.log(v.placePrediction.text.text));
+    data.suggestions.forEach((v) => console.log(v.placePrediction));
   } catch (err) {
     return err;
   }
 };
 
-//autoC();
+autoC();
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];

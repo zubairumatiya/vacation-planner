@@ -1,6 +1,6 @@
 .pageWrapper {
-  height: 100vh;
-  min-height: 33vh;
+  /*height: 100vh;
+  min-height: 33vh;  not sure if i will need this, but it looks clean when it fills the space*/
   width: 31%;
   background-color: ivory;
   border: 1px solid white;

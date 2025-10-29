@@ -157,6 +157,7 @@
 .filterContainer {
   border-bottom: 1px solid whitesmoke;
   margin-top: 0.5rem;
+  padding-bottom: 1rem;
 }
 
 .filterHeader {
@@ -207,6 +208,7 @@
   border-radius: 12px;
   overflow: auto;
   resize: both;
+  margin-right: 10px;
 }
 
 .starIcon {

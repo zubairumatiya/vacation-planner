@@ -320,8 +320,8 @@ router.post("/map", async (req, res, next) => {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": //"places.id,nextPageToken",
-          "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
+          "X-Goog-FieldMask": "places.id,nextPageToken",
+          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
           //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
         },
         body: JSON.stringify({
@@ -374,7 +374,7 @@ router.post("/autocomplete", async(req,res,next)=>{
       },
       body: JSON.stringify({
         input:`${query}`,
-        includedPrimaryTypes: ["locality"], // will suggest cities, countries, etc, instead of places of business
+        includedPrimaryTypes: ["locality", "country"], // will suggest cities, countries, etc, instead of places of business
       })
     })
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);

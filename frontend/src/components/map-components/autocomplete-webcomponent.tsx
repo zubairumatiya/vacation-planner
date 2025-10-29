@@ -1,36 +1,28 @@
-import { useCallback, useState, useEffect, type SetStateAction } from "react";
-import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+import { useState, useEffect, type SetStateAction } from "react";
+import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 
 interface Props {
   inputValue: string;
-  storeValues: (id: string, name: string, vp: Viewport) => void;
   setInputVal: React.Dispatch<SetStateAction<string>>;
   setHideSuggestions: React.Dispatch<SetStateAction<boolean>>;
+  storeValues?: (id: string, name: string, vp: Viewport) => void;
 }
 
 const apiURL = import.meta.env.VITE_API_URL;
 
 export const AutocompleteWebComponent = ({
   inputValue,
-  storeValues,
   setInputVal,
   setHideSuggestions,
+  storeValues,
 }: Props) => {
   // Load the places library to ensure the web component is available
   useMapsLibrary("places");
-  const [closureRef, setClosureRef] = useState<(() => void) | undefined>(
-    undefined
-  );
+
   const [suggestions, setSuggestions] = useState<
     { placePrediction?: PlacePrediction }[]
   >([]);
-
-  const [viewport, setViewport] = useState<Viewport | null>();
-  const [placeName, setPlaceName] = useState<string>("");
-  const [placeId, setPlaceId] = useState<string>("");
-
-  const map = useMap();
 
   useEffect(() => {
     if (!inputValue) {
@@ -118,10 +110,9 @@ export const AutocompleteWebComponent = ({
       },
     });
     const data = await result.json();
-    setViewport(data.viewport);
-    setPlaceName(li.dataset.location ?? "");
-    setPlaceId(itemId);
-    storeValues(itemId, li.dataset.location ?? "", data.viewport);
+    if (storeValues) {
+      storeValues(itemId, li.dataset.location ?? "", data.viewport);
+    }
     setInputVal(li.dataset.location ?? "");
     setHideSuggestions(true);
     setSuggestions([]);
@@ -154,10 +145,10 @@ export const AutocompleteWebComponent = ({
                 >
                   <div className={styles.liRow}>
                     <span className={styles.mainSuggestionText}>
-                      {v.placePrediction?.structuredFormat.mainText?.text}
+                      {v.placePrediction?.structuredFormat?.mainText?.text}
                     </span>
                     <span className={styles.secondarySuggestionText}>
-                      {v.placePrediction?.structuredFormat.secondaryText.text}
+                      {v.placePrediction?.structuredFormat?.secondaryText?.text}
                     </span>
                   </div>
                 </li>

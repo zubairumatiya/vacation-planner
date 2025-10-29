@@ -1,8 +1,9 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/AddVacationForm.module.css";
 import { AuthContext } from "../context/AuthContext.tsx";
 import clsx from "clsx";
+import { AutocompleteWebComponent } from "../components/map-components/autocomplete-webcomponent.tsx";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 type Props = {
@@ -18,6 +19,12 @@ type Props = {
   method?: string;
   sendSubmissionResult?: (result: boolean) => void;
 };
+
+type GValues = {
+  id: string;
+  location: string;
+  vp: { south: number; west: number; north: number; east: number };
+};
 const VacationForm = (props?: Props) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -26,8 +33,34 @@ const VacationForm = (props?: Props) => {
   const date = new Date();
   date.setFullYear(date.getFullYear() + 1);
   const oneYear = date.toISOString().slice(0, 10);
+  const locationInputRef = useRef<HTMLInputElement>(null);
+  const [gValues, setGValues] = useState(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        locationInputRef.current &&
+        !locationInputRef.current.contains(e.target as Node) // I know this is a DOM node; let me call .contains() on it.
+      ) {
+        setHideSuggestions(true);
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  const storeValues = (id: string, location: string, vp: Viewport) => {
+    // for NEXT time: send these to db of trip and load it into map when we load our map in the edit page
+    const bounds: GValues["vp"] = {
+      south: vp.low.latitude,
+      west: vp.low.longitude,
+      north: vp.high.latitude,
+      east: vp.high.longitude,
+    };
+    setGValues;
+  };
 
   const prefixZero = (x: number): string => {
     if (x <= 9) {
@@ -64,6 +97,7 @@ const VacationForm = (props?: Props) => {
   const [oneYearRange, setOneYearRange] = useState(oneYear);
   const [tripName, setTripName] = useState(props?.preFill?.trip_name ?? "");
   const [location, setLocation] = useState(props?.preFill?.location ?? "");
+  const [hideSuggestions, setHideSuggestions] = useState(true);
 
   useEffect(() => {
     props?.disableOrNah(fieldError);
@@ -199,17 +233,34 @@ const VacationForm = (props?: Props) => {
               <label className={labels} htmlFor="location">
                 Destination:{" "}
               </label>
-              <input
-                className={clsx(fieldError && styles.dateError, inputs)}
-                type="text"
-                name="location"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setLocation(e.target.value);
-                }}
-                value={location}
-                id="location"
-                placeholder="country, city, etc"
-              />
+              <div className="w-4/10">
+                <input
+                  ref={locationInputRef}
+                  className={clsx(
+                    fieldError && styles.dateError,
+                    inputs,
+                    "w-full"
+                  )}
+                  type="text"
+                  name="location"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setLocation(e.target.value);
+                  }}
+                  onFocus={() => setHideSuggestions(false)}
+                  //onBlur={() => setHideSuggestions(true)}
+                  value={location}
+                  id="location"
+                  placeholder="country, city, etc"
+                  autoComplete="off"
+                />
+                {!hideSuggestions && (
+                  <AutocompleteWebComponent
+                    inputValue={location}
+                    setInputVal={setLocation}
+                    setHideSuggestions={setHideSuggestions}
+                  />
+                )}
+              </div>
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="startdate">
