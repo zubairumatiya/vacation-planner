@@ -34,7 +34,8 @@ const VacationForm = (props?: Props) => {
   date.setFullYear(date.getFullYear() + 1);
   const oneYear = date.toISOString().slice(0, 10);
   const locationInputRef = useRef<HTMLInputElement>(null);
-  const [gValues, setGValues] = useState(null);
+  const [gValues, setGValues] = useState<GValues | null>(null);
+  const [clickClear, setClickClear] = useState<boolean>(true);
 
   const navigate = useNavigate();
 
@@ -51,15 +52,48 @@ const VacationForm = (props?: Props) => {
     return () => document.removeEventListener("click", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    const getGValues = async () => {
+      try {
+        const result = await fetch(
+          `${apiUrl}/add-vacation/${props?.preFill?.id}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        if (result.ok) {
+          const data = await result.json();
+          setGValues({
+            id: data.gId,
+            location: props?.preFill?.location ?? data.gLocation,
+            vp: data.gVp,
+          });
+        }
+      } catch (err) {
+        console.log("Failed to fetch gValue:", err);
+      }
+    };
+    if (props?.method === "PATCH") {
+      if (!props.preFill?.location) {
+        console.log("no prefill location, falling back on db location");
+      }
+      getGValues();
+    }
+  }, []);
+
   const storeValues = (id: string, location: string, vp: Viewport) => {
     // for NEXT time: send these to db of trip and load it into map when we load our map in the edit page
+    setClickClear(true);
     const bounds: GValues["vp"] = {
       south: vp.low.latitude,
       west: vp.low.longitude,
       north: vp.high.latitude,
       east: vp.high.longitude,
     };
-    setGValues;
+    setGValues({ id, location, vp: bounds });
   };
 
   const prefixZero = (x: number): string => {
@@ -112,15 +146,20 @@ const VacationForm = (props?: Props) => {
       !location ||
       isNaN(start.getTime()) ||
       isNaN(end.getTime()) ||
-      start > end
+      start > end ||
+      !gValues
     ) {
       setFieldError(true);
     } else {
       setFieldError(false);
     }
-  }, [startDate, endDate, location, tripName]);
+  }, [startDate, endDate, location, tripName, gValues]);
 
   useEffect(() => {
+    if (!gValues) {
+      alert("ERR: Please select valid location");
+      return;
+    }
     if (props?.submit === true) {
       const formSubmit = async () => {
         let method = "POST";
@@ -130,12 +169,16 @@ const VacationForm = (props?: Props) => {
           location: string;
           startDate: string;
           endDate: string;
+          gId: string;
+          gVp: GValues["vp"];
           id?: string;
         } = {
           tripname: tripName,
           location: location,
           startDate: startDate,
           endDate: endDate,
+          gId: gValues.id,
+          gVp: gValues.vp,
         };
         if (props?.method === "PATCH") {
           method = "PATCH";
@@ -246,7 +289,14 @@ const VacationForm = (props?: Props) => {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     setLocation(e.target.value);
                   }}
-                  onFocus={() => setHideSuggestions(false)}
+                  onFocus={() => {
+                    if (clickClear) {
+                      setLocation("");
+                      setClickClear(false);
+                      setGValues(null);
+                    }
+                    setHideSuggestions(false);
+                  }}
                   //onBlur={() => setHideSuggestions(true)}
                   value={location}
                   id="location"
@@ -258,6 +308,7 @@ const VacationForm = (props?: Props) => {
                     inputValue={location}
                     setInputVal={setLocation}
                     setHideSuggestions={setHideSuggestions}
+                    storeValues={storeValues}
                   />
                 )}
               </div>

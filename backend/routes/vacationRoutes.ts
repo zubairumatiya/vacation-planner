@@ -27,12 +27,35 @@ router.get("/home", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
+router.get("/add-vacation/:tripId", ensureLoggedIn, async(req, res, next)=> {
+  try{
+    const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2",[req.user.id, req.params.id]);
+    if(confirmUser.rowCount < 1){
+      res.sendStatus(404);
+      return;
+    }
+    const results = await db.query("SELECT * FROM trips WHERE id=$1", [req.params.id])
+    if(results.rowCount < 1){
+      res.sendStatus(404);
+      return
+    } else{
+      res.status(200).json({gId:results.rows[0].g_id, gLocation:results.rows[0].location, gVp:results.rows[0].g_vp})
+      return;
+    }
+
+  }catch(err){
+    next(err)
+  }
+})
+
 router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
   if (
     !req.body.tripname ||
     !req.body.location ||
     !req.body.startDate ||
-    !req.body.endDate
+    !req.body.endDate ||
+    !req.body.gId ||
+    !req.body.gVp
   ) {
     res
       .status(403)
@@ -51,12 +74,14 @@ router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
 
   try {
     const results = await db.query(
-      "INSERT INTO trips (trip_name, location, start_date, end_date) VALUES ($1, $2, $3, $4) RETURNING id",
+      "INSERT INTO trips (trip_name, location, start_date, end_date, g_id, g_vp) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
       [
         req.body.tripname,
         req.body.location,
         req.body.startDate,
         req.body.endDate,
+        req.body.gId,
+        req.body.gVp
       ]
     );
     await db.query(
@@ -75,11 +100,18 @@ router.patch("/add-vacation/:id", ensureLoggedIn, async (req, res, next) => {
     !req.body.tripname ||
     !req.body.location ||
     !req.body.startDate ||
-    !req.body.endDate
+    !req.body.endDate ||
+    !req.body.gId ||
+    !req.body.gVp
   ) {
     res
       .status(403)
       .json({ message: "Invalid input - make sure all the fields are filled" });
+    return;
+  }
+  const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2", [req.user.id, req.params.id])
+  if(confirmUser.rowCount < 1){
+    res.sendStatus(404);
     return;
   }
   const startDate = new Date(req.body.startDate);
@@ -94,12 +126,14 @@ router.patch("/add-vacation/:id", ensureLoggedIn, async (req, res, next) => {
 
   try {
     const result = await db.query(
-      "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, last_modified=NOW() WHERE id=$5 RETURNING *",
+      "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, g_id=$5, g_vp=$6, last_modified=NOW() WHERE id=$7 RETURNING *",
       [
         req.body.tripname,
         req.body.startDate,
         req.body.endDate,
         req.body.location,
+        req.body.gId,
+        req.body.gVp,
         req.params.id,
       ]
     );
@@ -116,8 +150,12 @@ router.delete(
   "/delete-vacation/:id",
   ensureLoggedIn,
   async (req, res, next) => {
-    console.log("ENTERRR");
     try {
+      const confirmUser = await db.query("SELECT * user_trips WHERE user_id=$1 AND trip_id=$2", [req.user.id, req.params.id])
+      if(confirmUser.rowCount < 1){
+        res.sendStatus(404);
+        return;
+      }
       const result = await db.query(
         "DELETE FROM trips WHERE id=$1 RETURNING *",
         [req.params.id]
