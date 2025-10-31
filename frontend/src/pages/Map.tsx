@@ -1,7 +1,7 @@
 // Copyright (c) 2023 Vis.gl contributors
 // Licensed under the MIT License
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 
 import { PlaceDetailsMarker } from "../components/map-components/place-details-marker";
@@ -30,19 +30,31 @@ const MAP_CONFIG = {
   clickableIcons: false,
 };
 
-const MyMapComponent = () => {
+type Props = {
+  center: Point | null;
+  startLocation: string;
+  gId: string;
+};
+
+const MyMapComponent = ({ center, startLocation, gId }: Props) => {
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined
   );
-  const [locationId, setLocationId] = useState<string | undefined>("");
-  const [locationName, setLocationName] = useState<string | null>("Austin");
+  const [locationId, setLocationId] = useState<string | undefined>(gId);
+  const [locationName, setLocationName] = useState<string>(startLocation ?? "");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
   const [searchDisabled, setSearchDisabled] = useState<boolean>(true);
   const [submitButtonTrigger, setSubmitButtonTrigger] =
     useState<boolean>(false);
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
+
+  useEffect(() => {
+    if (center) {
+      MAP_CONFIG.defaultCenter = center;
+    }
+  }, []);
 
   // Memoize the place markers to prevent unnecessary re-renders
   // Only recreate when places, selection, or details size changes

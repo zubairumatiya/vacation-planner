@@ -193,6 +193,9 @@ router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
     const startDate = result2.rows[0].start_date;
     const endDate = result2.rows[0].end_date;
     const tripName = result2.rows[0].trip_name;
+    const location = result2.rows[0].location;
+    const gId = result2.rows[0].g_id;
+    const gVp = result2.rows[0].g_vp;
     console.log("~~~~~~~~~~~~~~~~~~~", req.params.id);
     const result3 = await db.query(
       "SELECT * FROM trip_schedule WHERE trip_id=$1",
@@ -201,7 +204,7 @@ router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
     const arrCargo = result3.rowCount > 0 ? result3.rows : [];
     res
       .status(200)
-      .json({ role, tripName, startDate, endDate, schedule: arrCargo });
+      .json({ role, tripName, startDate, endDate, location, gId, gVp, schedule: arrCargo }); // FOR NEXT TIME: EXTRACT THIS FROM EDIT** VACATION SCHEULDE AND PASS IT DOWN
     return;
   } catch (err) {
     next(err);
@@ -412,7 +415,7 @@ router.post("/autocomplete", async(req,res,next)=>{
       },
       body: JSON.stringify({
         input:`${query}`,
-        includedPrimaryTypes: ["locality", "country"], // will suggest cities, countries, etc, instead of places of business
+        includedPrimaryTypes: ["locality", "country", "political"], // will suggest cities, countries, etc, instead of places of business
       })
     })
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);

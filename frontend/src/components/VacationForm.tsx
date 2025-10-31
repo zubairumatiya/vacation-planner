@@ -156,11 +156,11 @@ const VacationForm = (props?: Props) => {
   }, [startDate, endDate, location, tripName, gValues]);
 
   useEffect(() => {
-    if (!gValues) {
-      alert("ERR: Please select valid location");
-      return;
-    }
     if (props?.submit === true) {
+      if (!gValues) {
+        alert("ERR: Please select valid location");
+        return;
+      }
       const formSubmit = async () => {
         let method = "POST";
         let url: string = `${apiUrl}/add-vacation`;

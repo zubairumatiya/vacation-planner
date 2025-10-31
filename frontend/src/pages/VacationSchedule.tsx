@@ -1,18 +1,7 @@
 import { useParams, useNavigate, NavLink, Outlet } from "react-router-dom";
-import { useState, useEffect, useContext, useRef, Fragment } from "react";
+import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
-
-type Schedule = {
-  id: number;
-  trip_id: number;
-  location: string;
-  details: string;
-  start_time: Date;
-  end_time: Date;
-  cost: number;
-  multi_day: boolean;
-};
 
 const apiURL = import.meta.env.VITE_API_URL;
 const VacationSchedule = () => {
@@ -23,6 +12,8 @@ const VacationSchedule = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [tripLength, setTripLength] = useState(0);
+  const [vp, setVp] = useState<null | Vp>(null);
+  const [location, setLocation] = useState<string>("");
 
   useEffect(() => {
     const getTrip = async () => {
@@ -42,6 +33,8 @@ const VacationSchedule = () => {
         alert("Error: Trip not found");
       }
       if (response.ok) {
+        setVp(data.gVp);
+        setLocation(data.location);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
         let costTotal = 0;
@@ -51,10 +44,10 @@ const VacationSchedule = () => {
           costTotal += Number(i.cost);
         }
         setCostTotal(costTotal);
-        data.schedule.sort(
-          (a: Schedule, b: Schedule) =>
-            a.start_time.getTime() - b.start_time.getTime()
-        );
+        // data.schedule.sort(  don't need this i don't think
+        //   (a: Schedule, b: Schedule) =>
+        //     a.start_time.getTime() - b.start_time.getTime()
+        // );
         setTitle(data.tripName);
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();

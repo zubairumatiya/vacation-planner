@@ -27,6 +27,18 @@ declare global {
     types: string[];
   };
 
+  type Vp = {
+    south: number;
+    west: number;
+    north: number;
+    east: number;
+  };
+
+  type Point = {
+    lat: number;
+    lng: number;
+  };
+
   type SuggestionsResponse = {
     suggestions: {
       placePrediction?: PlacePrediction;
@@ -120,7 +132,7 @@ declare global {
     setLocationId: (placeId: string | undefined) => void;
     placeType: PlaceType;
     setPlaceType: (placeType: PlaceType) => void;
-    setLocationName: (placeDisplayName: string | null) => void;
+    setLocationName: (placeDisplayName: string) => void;
     locationName: string;
     searchDisabled: boolean;
     setSubmitButtonTrigger: React.Dispatch<React.SetStateAction<boolean>>;
