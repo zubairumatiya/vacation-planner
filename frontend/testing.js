@@ -124,18 +124,14 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
-// -- figure out starting area and maybe add placeholders for the initial render of the map -- Will have to add the same autocomplete we have for our maps to add vacation. Can maybe get the view window while we are at it?
-// -- -- let's add location name, id , and viewport to db on the trips table
-// -- -- will have to try and safeguard against them not clicking a place and submitting as is, maybe check the stored id GValue, up click clear it all.
-// -- -- on vacaction form patch, let's prefill the gValue, will have to hit our Db to get it
-// -- auto load a place depending on the location of our vacation spot
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
-// -- add sharing capabilites to other users - for view only, maybe just not render the edit tab?
+// -- reset place list scroll bar upon next page
+// -- add token check to backend maps api points
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.
 // -- Set usage limits in Google Cloud Console - since we know all requests will be using the enterprise option, we can set the generic query limit in quotas using free limit for the enterprise text search SKU (1000)
-// -- reset place list scroll bar upon next page
-// -- add token check to backend maps api points
+// add sharing capabilites to other users - for view only, maybe just not render the edit tab?
+// maybe have collapsable weeks in the schedule portion, and maybe a max height too?
 // check if i am counting days properly in the title
 // add a calender view different than editing view we already have
 // -- add token check when viewing schedule

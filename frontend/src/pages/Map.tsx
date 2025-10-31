@@ -22,8 +22,9 @@ export type DetailsSize = "FULL" | "COMPACT";
 export type ColorScheme = "light" | "dark";
 
 const MAP_CONFIG = {
-  defaultZoom: 15,
-  defaultCenter: { lat: 30.26, lng: -97.74 },
+  //defaultZoom: 8,
+  //defaultCenter: { lat: 30.26, lng: -97.74 },
+  defaultBounds: {},
   mapId: "49ae42fed52588c3",
   gestureHandling: "greedy" as const,
   disableDefaultUI: true,
@@ -31,12 +32,12 @@ const MAP_CONFIG = {
 };
 
 type Props = {
-  center: Point | null;
+  bounds: Vp | null;
   startLocation: string;
   gId: string;
 };
 
-const MyMapComponent = ({ center, startLocation, gId }: Props) => {
+const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined
@@ -51,8 +52,8 @@ const MyMapComponent = ({ center, startLocation, gId }: Props) => {
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
 
   useEffect(() => {
-    if (center) {
-      MAP_CONFIG.defaultCenter = center;
+    if (bounds) {
+      MAP_CONFIG.defaultBounds = bounds;
     }
   }, []);
 

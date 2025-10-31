@@ -12,8 +12,6 @@ const VacationSchedule = () => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [tripLength, setTripLength] = useState(0);
-  const [vp, setVp] = useState<null | Vp>(null);
-  const [location, setLocation] = useState<string>("");
 
   useEffect(() => {
     const getTrip = async () => {
@@ -33,8 +31,6 @@ const VacationSchedule = () => {
         alert("Error: Trip not found");
       }
       if (response.ok) {
-        setVp(data.gVp);
-        setLocation(data.location);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
         let costTotal = 0;

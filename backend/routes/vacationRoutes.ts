@@ -29,12 +29,12 @@ router.get("/home", ensureLoggedIn, async (req, res, next) => {
 
 router.get("/add-vacation/:tripId", ensureLoggedIn, async(req, res, next)=> {
   try{
-    const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2",[req.user.id, req.params.id]);
+    const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",[req.user.id, req.params.tripId, "owner", "editor"]);
     if(confirmUser.rowCount < 1){
       res.sendStatus(404);
       return;
     }
-    const results = await db.query("SELECT * FROM trips WHERE id=$1", [req.params.id])
+    const results = await db.query("SELECT * FROM trips WHERE id=$1", [req.params.tripId])
     if(results.rowCount < 1){
       res.sendStatus(404);
       return
@@ -109,7 +109,7 @@ router.patch("/add-vacation/:id", ensureLoggedIn, async (req, res, next) => {
       .json({ message: "Invalid input - make sure all the fields are filled" });
     return;
   }
-  const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2", [req.user.id, req.params.id])
+  const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)", [req.user.id, req.params.id, "owner", "editor"])
   if(confirmUser.rowCount < 1){
     res.sendStatus(404);
     return;
@@ -151,7 +151,7 @@ router.delete(
   ensureLoggedIn,
   async (req, res, next) => {
     try {
-      const confirmUser = await db.query("SELECT * user_trips WHERE user_id=$1 AND trip_id=$2", [req.user.id, req.params.id])
+      const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)", [req.user.id, req.params.id, "owner", "editor"])
       if(confirmUser.rowCount < 1){
         res.sendStatus(404);
         return;
@@ -173,8 +173,8 @@ router.delete(
 router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2",
-      [req.user.id, req.params.id]
+      "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
+      [req.user.id, req.params.id, "owner", "editor"]
     );
     if (result.rowCount < 1) {
       console.log("~~~~LOG~~~~~ this trip is not assigned to this user");

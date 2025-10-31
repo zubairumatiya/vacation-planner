@@ -7,12 +7,12 @@ import { useState } from "react";
 const EditCanvas = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [loading2, setLoading2] = useState<boolean>(true);
-  const [point, setPoint] = useState<null | Point>(null);
+  const [vp, setVp] = useState<null | Vp>(null);
   const [location, setLocation] = useState<string>("");
   const [gId, setGId] = useState<string>("");
 
-  const gValueFn = (point: Point, gLocation: string, gId: string) => {
-    setPoint(point);
+  const gValuesFn = (vp: Vp, gLocation: string, gId: string) => {
+    setVp(vp);
     setLocation(gLocation);
     setGId(gId);
   };
@@ -21,11 +21,11 @@ const EditCanvas = () => {
     <div className={styles.pageWrapper}>
       <EditVacationSchedule
         loadFirst={() => setLoading(false)}
-        getMapValues={gValueFn}
+        getMapValues={gValuesFn}
       />
       {!loading && <WantToSeeList loadSecond={() => setLoading2(false)} />}
       {!loading2 && (
-        <MyMapComponent center={point} startLocation={location} gId={gId} />
+        <MyMapComponent bounds={vp} startLocation={location} gId={gId} />
       )}
     </div>
   );

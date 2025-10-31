@@ -42,7 +42,7 @@ export const SearchBar = memo(function SearchBar({
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const [resetInput, setResetInput] = useState<boolean>(false);
+  const [resetInput, setResetInput] = useState<boolean>(true);
 
   const [placeTypeValue, setPlaceTypeValue] = useState<PlaceType>(placeType);
 

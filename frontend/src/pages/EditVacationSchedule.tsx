@@ -41,7 +41,7 @@ type timeObj = {
 
 const EditVacationSchedule = (props: {
   loadFirst: () => void;
-  getMapValues: (a: Point, b: string, c: string) => void;
+  getMapValues: (a: Vp, b: string, c: string) => void;
 }) => {
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
@@ -139,10 +139,7 @@ const EditVacationSchedule = (props: {
         //  "enddate:",
         //  data.endDate
         //);
-        const latitude = (data.gVp.north + data.gVp.south) / 2;
-        const longitude = (data.gVp.east + data.gVp.west) / 2;
-        const point = { lat: latitude, lng: longitude };
-        props.getMapValues(point, data.location, data.gId);
+        props.getMapValues(data.gVp, data.location, data.gId);
         const convertStartPreserved = new Date(data.startDate);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
