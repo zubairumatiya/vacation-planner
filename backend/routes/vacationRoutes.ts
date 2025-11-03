@@ -353,8 +353,12 @@ router.post("/map", async (req, res, next) => {
   console.log(req.body.locationName)
   console.log(req.body.placeType)
   try {
+    if(req.body.nextPageToken === undefined){
+      res.sendStatus(406);
+      return;
+    }
     const query = `${req.body.placeType}s near ${req.body.locationName}`; 
-    while(countOfPlaces < 20 && holdToken !== undefined){
+    while(countOfPlaces < 20 && holdToken !== undefined){ //why not just to length of gather places instead of tracking count?
     const result = await fetch(
       "https://places.googleapis.com/v1/places:searchText",
       {
@@ -363,8 +367,8 @@ router.post("/map", async (req, res, next) => {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
           "X-Goog-FieldMask": //"places.id,nextPageToken",
-          "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
-          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
+          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
+          "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
         },
         body: JSON.stringify({
           textQuery: `${query}`,
@@ -379,7 +383,7 @@ router.post("/map", async (req, res, next) => {
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data:TextSearchResponse = await result.json();
     if(req.body.placeType){ //should always have this but lets check just in case  
-    //data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
+    data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
     }else{
       throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
     }
@@ -396,6 +400,9 @@ router.post("/map", async (req, res, next) => {
     }
     holdToken = data.nextPageToken;
   }
+  console.log("array length:",gatherPlaces.length);
+  console.log("count", countOfPlaces);
+  console.log("holdToken", holdToken)
     res.status(200).json({places: gatherPlaces, nextPageToken: holdToken});
     return;
   } catch (err) {

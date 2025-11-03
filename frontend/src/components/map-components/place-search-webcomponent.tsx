@@ -28,7 +28,18 @@ export const PlaceSearchWebComponent = ({
   const [currentPageMax, setCurrentPageMax] = useState<number>(0);
   const [pageCountSwitch, setPageCountSwitch] = useState<boolean>(false);
   const [newPageRequest, setNewPageRequest] = useState<boolean>(false);
+  const [holdRemainder, setHoldRemainder] = useState<[]>([]);
   const firstLoad = useRef<number>(0);
+
+  const makePages = (arr: Array<object>) => {
+    const total = newPageRequest
+      ? holdRemainder.length + arr.length
+      : arr.length;
+    const pages = Math.floor(total / 10);
+    const leftover = total % 10;
+    return { pages, leftover };
+    // want to return: pages added(10), leftover
+  };
 
   useEffect(() => {
     console.log("PLACETYPE", placeType);
@@ -69,14 +80,34 @@ export const PlaceSearchWebComponent = ({
           reviews: reviewCountRef?.current?.value,
         });
         setSearchDisabled(true);
-        const pagesAdded = Math.ceil(data.places.length / 10);
+        const pagesObj = makePages(data.places);
+        if (pagesObj.leftover) {
+          setHoldRemainder(data.places.slice(-pagesObj.leftover));
+        }
         if (newPageRequest) {
-          setCurrentPageMax((prev) => prev + pagesAdded);
-          setResults((prev) => [...prev, ...data.places]);
+          const arr = [
+            ...holdRemainder,
+            ...data.places.slice(0, pagesObj.pages * 10),
+          ];
+
+          if (!data.nextPageToken) {
+            if (pagesObj.leftover) {
+              pagesObj.pages += 1;
+              setResults((prev) => [...prev, ...data.places]);
+            }
+          } else {
+            setResults((prev) => [...prev, ...arr]);
+          }
+          setCurrentPageMax((prev) => prev + pagesObj.pages);
           setNewPageRequest(false);
         } else {
-          setCurrentPageMax(pagesAdded);
+          if (!data.nextPageToken) {
+            if (pagesObj.leftover) {
+              pagesObj.pages += 1;
+            }
+          }
           setResults(data.places);
+          setCurrentPageMax(pagesObj.pages);
           setPageCount(1);
         }
         setPlaces(data.places.slice(0, 10));

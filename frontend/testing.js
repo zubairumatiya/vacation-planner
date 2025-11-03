@@ -65,11 +65,6 @@ const autoC = async () => {
 
 //autoC();
 
-const str =
-  "I WAS RAISED BY A POOR WANDERING BARD. THE WANDERING BARD, JULIUS, NEVER SHARED MUCH ABOUT HIMSELF BUT RAISED ME WITH A LOT OF LOVE AND TAUGHT ME RIGHT FROM WRONG. HE INSTILLED ALL HIS AMAZING MUSICAL SKILLS INTO ME AND I'VE BEEN BLESSED WITH ENOUGH TALENT TO CARRY ON HIS TEACHINGS.  HOWEVER, AFTER HIS PASSING DUE TO A CURABLE ILLNESS, I QUESTION WHAT IS RIGHT AND WHAT IS WRONG AS NO ONE LENT A HELPING HAND TO A MAN WHO ALWAYS SHARED WHAT LITTLE HE HAD. I DO NOT KNOW WHO MY PARENTS WERE OR WHAT HAPPENED TO THEM, BUT I'M ON A JOURNEY TO FIND CLUES ABOUT THEM AS I AVOID BEING FOUND BY THE CULT OF THE DRAGON AS I STOLE SOMETHING IMPORTANT TO THEM IN ORDER TO SELL FOR LIVING EXPENSES. AS OF NOW I STILL HAVE THE ITEM BUT DO NOT KNOW WHAT IT IS OR ITS WORTH BUT I AM ACTIVELY LOOKING TO SELL IT.";
-
-console.log(str.toLowerCase());
-
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];
@@ -130,9 +125,10 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
-// -- suggestion list is still in austin
 // -- pulling in a museum from houston?? maybe decrease range to search?
+// -- map places endpoint has the possibility of returning 6 places for some reason. 6 places on page 4?? that's strange. Either frontend is clipping to 2 pages on any return, or backend is tweaking.
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
+// -- add more placeTypes
 // -- reset place list scroll bar upon next page
 // -- add token check to backend maps api points
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
@@ -143,7 +139,7 @@ repeaterCall();
 // check if i am counting days properly in the title
 // add a calender view different than editing view we already have
 // make the tabs font in vs code smaller
-// -- add token check when viewing schedule
+// add token check when viewing schedule
 // refresh token
 // maybe find a way to log person out before they have make an api request
 // mailgun email styling
