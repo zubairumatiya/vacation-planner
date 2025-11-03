@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from "react";
-import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
+//import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 import starIcon from "../../assets/star-icon.svg";
 
 const apiURL = import.meta.env.VITE_API_URL;
+const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
 
 export const PlaceSearchWebComponent = ({
   onPlaceSelect,
@@ -27,10 +28,16 @@ export const PlaceSearchWebComponent = ({
   const [currentPageMax, setCurrentPageMax] = useState<number>(0);
   const [pageCountSwitch, setPageCountSwitch] = useState<boolean>(false);
   const [newPageRequest, setNewPageRequest] = useState<boolean>(false);
+  const firstLoad = useRef<number>(0);
 
   useEffect(() => {
     console.log("PLACETYPE", placeType);
     console.log("LOCATIONNAME", locationName);
+    console.log(envValue);
+    if (firstLoad.current < envValue) {
+      firstLoad.current++;
+      return;
+    }
     async function getPlaces() {
       setLoadingNext(true);
       try {
@@ -115,7 +122,7 @@ export const PlaceSearchWebComponent = ({
     e.preventDefault();
 
     if (pageCount === currentPageMax) {
-      setPageCount((prev) => prev + 1); // will the order of this matter?
+      setPageCount((prev) => prev + 1);
       newPageTrigger();
     } else {
       setPageCount((prev) => prev + 1);
@@ -161,10 +168,9 @@ export const PlaceSearchWebComponent = ({
           </select>
           <div></div>
         </div>
+
         <div className={styles.placesContainer}>
           {results.slice(10 * (pageCount - 1), 10 * pageCount).map((place) => {
-            //const photoUrl =
-            //  place.photos?.[0]?.getUrl() ?? "https://via.placeholder.com/80";
             return (
               <div
                 key={place.id}
@@ -173,11 +179,6 @@ export const PlaceSearchWebComponent = ({
                   onPlaceSelect(place.id);
                 }}
               >
-                {/*<img
-              src={photoUrl}
-              alt={place.name}
-              className={styles.placePhoto}
-            />*/}
                 <div className={styles.placeDetails}>
                   <h3 className={styles.placeName}>
                     {place?.displayName?.text ?? "undefined"}
@@ -203,6 +204,7 @@ export const PlaceSearchWebComponent = ({
             );
           })}
         </div>
+
         <div className={styles.buttonsContainer}>
           <div className={styles.prevButtonContainer}>
             {pageCount > 1 && (

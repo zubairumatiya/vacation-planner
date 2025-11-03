@@ -204,7 +204,7 @@ router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
     const arrCargo = result3.rowCount > 0 ? result3.rows : [];
     res
       .status(200)
-      .json({ role, tripName, startDate, endDate, location, gId, gVp, schedule: arrCargo }); // FOR NEXT TIME: EXTRACT THIS FROM EDIT** VACATION SCHEULDE AND PASS IT DOWN
+      .json({ role, tripName, startDate, endDate, location, gId, gVp, schedule: arrCargo });
     return;
   } catch (err) {
     next(err);
@@ -350,9 +350,10 @@ router.post("/map", async (req, res, next) => {
   let countOfPlaces = 0; 
   const gatherPlaces = [];
   let holdToken = req.body.nextPageToken === undefined ? "" : req.body.nextPageToken;
+  console.log(req.body.locationName)
+  console.log(req.body.placeType)
   try {
     const query = `${req.body.placeType}s near ${req.body.locationName}`; 
-    console.log(req.body) 
     while(countOfPlaces < 20 && holdToken !== undefined){
     const result = await fetch(
       "https://places.googleapis.com/v1/places:searchText",
@@ -361,8 +362,8 @@ router.post("/map", async (req, res, next) => {
         headers: {
           "Content-Type": "application/json",
           "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": "places.id,nextPageToken",
-          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
+          "X-Goog-FieldMask": //"places.id,nextPageToken",
+          "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
           //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
         },
         body: JSON.stringify({
@@ -378,12 +379,11 @@ router.post("/map", async (req, res, next) => {
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data:TextSearchResponse = await result.json();
     if(req.body.placeType){ //should always have this but lets check just in case  
-    // UNDO THIS COMMENT //data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
+    //data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
     }else{
       throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
     }
     if(req.body.reviewFilter){
-      console.log("entering review filter sorting");
       data.places.forEach((v:Place)=>{
         if(v.userRatingCount >= req.body.reviewFilter){
           countOfPlaces++;
@@ -415,7 +415,7 @@ router.post("/autocomplete", async(req,res,next)=>{
       },
       body: JSON.stringify({
         input:`${query}`,
-        includedPrimaryTypes: ["locality", "country", "political"], // will suggest cities, countries, etc, instead of places of business
+        includedPrimaryTypes: ["locality", "country", "political"], // will suggest cities, countries, political boundaries, etc, instead of places of business
       })
     })
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);

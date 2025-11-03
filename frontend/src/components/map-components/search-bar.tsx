@@ -38,7 +38,7 @@ export const SearchBar = memo(function SearchBar({
   const [closure, setClosure] = useState<(() => void) | undefined>(undefined);
   const map = useMap();
 
-  const [inputValue, setInputValue] = useState<string>(locationName);
+  const [inputValue, setInputValue] = useState<string>("");
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -160,6 +160,7 @@ export const SearchBar = memo(function SearchBar({
               }
               setHideSuggestions(false);
             }}
+            placeholder="city, town, etc"
             aria-autocomplete="list"
             autoComplete="off"
             role="combobox"
