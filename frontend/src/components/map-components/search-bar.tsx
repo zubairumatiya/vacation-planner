@@ -20,6 +20,7 @@ export const SearchBar = memo(function SearchBar({
   locationName,
   searchDisabled,
   setSubmitButtonTrigger,
+  setViewport,
 }: SearchBarProps) {
   const placeTypeOptions: PlaceTypeOption[] = useMemo(
     () => [
@@ -91,6 +92,7 @@ export const SearchBar = memo(function SearchBar({
     (id: string, name: string, vp: Viewport) => {
       setResetInput(true);
       setHoldName(name);
+      setViewport(vp);
       const bounds = new google.maps.LatLngBounds(
         new google.maps.LatLng(vp.low.latitude, vp.low.longitude),
         new google.maps.LatLng(vp.high.latitude, vp.high.longitude)

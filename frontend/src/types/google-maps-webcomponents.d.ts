@@ -75,6 +75,7 @@ declare global {
     placeType: string | null;
     setSearchDisabled: (boolean: boolean) => void;
     submitButtonTrigger: boolean;
+    viewport;
   }
 
   type PlaceSearchElement = HTMLElement & {
@@ -136,6 +137,7 @@ declare global {
     locationName: string;
     searchDisabled: boolean;
     setSubmitButtonTrigger: React.Dispatch<React.SetStateAction<boolean>>;
+    setViewport: React.Dispatch<React.SetStateAction<Viewport | null>>;
   }
 
   interface PlaceTypeOption {

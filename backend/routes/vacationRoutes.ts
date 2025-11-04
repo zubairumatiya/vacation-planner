@@ -377,6 +377,7 @@ router.post("/map", async (req, res, next) => {
           pageSize: 20,
           includedType:`${req.body.placeType}`,
           strictTypeFiltering:true,
+          locationRestriction: {"rectangle":req.body.viewport}    // TEST THIS FOR NEXT TIME!
         }),
       }
     );
@@ -402,7 +403,8 @@ router.post("/map", async (req, res, next) => {
   }
   console.log("array length:",gatherPlaces.length);
   console.log("count", countOfPlaces);
-  console.log("holdToken", holdToken)
+
+  console.log("holdToken", typeof holdToken)
     res.status(200).json({places: gatherPlaces, nextPageToken: holdToken});
     return;
   } catch (err) {

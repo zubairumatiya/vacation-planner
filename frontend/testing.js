@@ -130,6 +130,7 @@ repeaterCall();
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
 // -- add more placeTypes
 // -- reset place list scroll bar upon next page
+// -- make UI responsive
 // -- add token check to backend maps api points
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.

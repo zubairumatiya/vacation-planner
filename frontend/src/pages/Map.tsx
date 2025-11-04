@@ -22,9 +22,7 @@ export type DetailsSize = "FULL" | "COMPACT";
 export type ColorScheme = "light" | "dark";
 
 const MAP_CONFIG = {
-  //defaultZoom: 8,
-  //defaultCenter: { lat: 30.26, lng: -97.74 },
-  defaultBounds: {},
+  defaultBounds: { south: 0, west: 0, north: 0, east: 0 },
   mapId: "49ae42fed52588c3",
   gestureHandling: "greedy" as const,
   disableDefaultUI: true,
@@ -48,6 +46,7 @@ const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
   const [searchDisabled, setSearchDisabled] = useState<boolean>(true);
   const [submitButtonTrigger, setSubmitButtonTrigger] =
     useState<boolean>(false);
+  const [viewport, setViewport] = useState<Viewport | null>(null);
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
 
@@ -89,6 +88,7 @@ const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
             onPlaceSelect={setSelectedPlaceId}
             setSearchDisabled={setSearchDisabled}
             submitButtonTrigger={submitButtonTrigger}
+            viewport={viewport}
           />
         </div>
 
@@ -114,6 +114,7 @@ const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
             locationName={locationName}
             searchDisabled={searchDisabled}
             setSubmitButtonTrigger={setSubmitButtonTrigger}
+            setViewport={setViewport}
           />
 
           {/*

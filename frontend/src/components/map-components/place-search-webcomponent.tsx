@@ -13,6 +13,7 @@ export const PlaceSearchWebComponent = ({
   placeType,
   setSearchDisabled,
   submitButtonTrigger,
+  viewport,
 }: PlaceSearchProps) => {
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
@@ -70,6 +71,7 @@ export const PlaceSearchWebComponent = ({
             nextPageToken: newPageRequest ? holdNPT : "",
             placeType,
             locationName,
+            viewport,
           }),
         });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -119,7 +121,7 @@ export const PlaceSearchWebComponent = ({
     }
 
     getPlaces();
-  }, [newParams, placeType, locationName, submitButtonTrigger]);
+  }, [newParams, placeType, locationName, submitButtonTrigger, viewport]);
 
   //the only time we would reuse token is if a new page is requested, otherwise, upon any other change, we will be making a new req.
   const newPageTrigger = () => {
