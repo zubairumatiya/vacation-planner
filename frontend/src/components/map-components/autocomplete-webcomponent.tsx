@@ -135,8 +135,6 @@ export const AutocompleteWebComponent = forwardRef(
     ) => {
       // will have to make a call to place details to get place viewport
       // will have to get rid of suggestions on blur but still hold the text value in the search bar
-      console.log(keyboardSelection ? "from board" : "from mouse");
-      console.log("e: ", e, "keyboardSelection: ", keyboardSelection);
       let index =
         (e?.target as HTMLElement)?.closest("li")?.dataset.index ??
         keyboardSelection;

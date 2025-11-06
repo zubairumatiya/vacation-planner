@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 //import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 import starIcon from "../../assets/star-icon.svg";
+import addToList from "../../assets/add-to-list.svg";
 
 const apiURL = import.meta.env.VITE_API_URL;
 const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
@@ -231,6 +232,18 @@ export const PlaceSearchWebComponent = ({
                   </div>
                   <div className={styles.placeAddress}>
                     {place.formattedAddress}
+                  </div>
+                  <div>
+                    <button
+                      className={styles.addToListButton}
+                      title={"Add to Want to See List"}
+                    >
+                      <img
+                        src={addToList}
+                        alt="addToListIcon"
+                        className={styles.addToListIcon}
+                      />
+                    </button>
                   </div>
                 </div>
               </div>

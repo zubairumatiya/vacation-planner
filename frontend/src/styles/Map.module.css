@@ -108,13 +108,14 @@
 .placeCard {
   display: flex;
   justify-content: center;
-  padding: 12px;
+  padding: 22px;
   background: #1f1f1f;
   border-width: 1px 0;
   border-style: solid;
   border-color: #888;
   cursor: pointer;
   transition: box-shadow 0.2s ease, transform 0.1s ease;
+  position: relative;
 }
 
 .placePhoto {
@@ -343,4 +344,18 @@
 
 .focusedSuggestion {
   background-color: #dedede;
+}
+
+.addToListButton {
+  width: 2.25rem;
+  border: solid 4px #4ec84e;
+  padding: 0.1rem;
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 0.5rem;
+}
+
+.addToListIcon {
+  width: 3rem;
 }

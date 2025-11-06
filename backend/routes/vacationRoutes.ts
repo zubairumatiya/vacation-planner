@@ -383,11 +383,11 @@ router.post("/map", async (req, res, next) => {
     );
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data:TextSearchResponse = await result.json();
-    if(req.body.placeType){ //should always have this but lets check just in case  
-    data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
-    }else{
-      throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
-    }
+   // if(req.body.placeType){ //should always have this but lets check just in case  
+   // data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
+   // }else{
+   //   throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
+   // }
     if(req.body.reviewFilter){
       data.places.forEach((v:Place)=>{
         if(v.userRatingCount >= req.body.reviewFilter){
