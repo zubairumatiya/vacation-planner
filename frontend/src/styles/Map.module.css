@@ -340,3 +340,7 @@
   position: absolute;
   width: 100%;
 }
+
+.focusedSuggestion {
+  background-color: #dedede;
+}

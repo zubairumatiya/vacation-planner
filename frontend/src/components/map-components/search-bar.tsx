@@ -53,7 +53,9 @@ export const SearchBar = memo(function SearchBar({
 
   const [holdName, setHoldName] = useState<string>(locationName);
 
-  useEffect(() => {}, [localSearchDisabled, searchDisabled]);
+  const autocompleteRef = useRef<{
+    handleKeyDown: (key: string) => void;
+  }>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -92,7 +94,6 @@ export const SearchBar = memo(function SearchBar({
     (id: string, name: string, vp: Viewport) => {
       setResetInput(true);
       setHoldName(name);
-      setViewport(vp);
       const bounds = new google.maps.LatLngBounds(
         new google.maps.LatLng(vp.low.latitude, vp.low.longitude),
         new google.maps.LatLng(vp.high.latitude, vp.high.longitude)
@@ -100,6 +101,7 @@ export const SearchBar = memo(function SearchBar({
       const holdValues = () => {
         setLocationId(id);
         setLocationName(name);
+        setViewport(vp);
         map?.fitBounds(bounds);
         setPlaceType(placeTypeRef.current);
         setLocalSearchDisabled(true);
@@ -169,6 +171,9 @@ export const SearchBar = memo(function SearchBar({
             aria-expanded="false"
             aria-haspopup="listbox"
             aria-label="Search For a Place"
+            onKeyDown={(e) => {
+              autocompleteRef.current?.handleKeyDown(e.key);
+            }}
           />
           <button
             type="button"
@@ -185,6 +190,7 @@ export const SearchBar = memo(function SearchBar({
         <div className={styles.autoWrapper}>
           {!hideSuggestions && (
             <AutocompleteWebComponent
+              ref={autocompleteRef}
               inputValue={inputValue}
               setInputVal={setInputValue}
               setHideSuggestions={setHideSuggestions}

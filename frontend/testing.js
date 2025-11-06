@@ -125,7 +125,7 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
-// -- pulling in a museum from houston?? maybe decrease range to search?
+// -- add arrow down and up to autocomplete suggestion, and enter as selection (click)
 // -- map places endpoint has the possibility of returning 6 places for some reason. 6 places on page 4?? that's strange. Either frontend is clipping to 2 pages on any return, or backend is tweaking.
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
 // -- add more placeTypes
