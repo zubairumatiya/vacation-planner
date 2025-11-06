@@ -23,9 +23,8 @@ export const AutocompleteWebComponent = forwardRef(
     ref
   ) => {
     const handleKeyDown = (e: string) => {
-      console.log("enter", e);
       if (!e) return;
-      if (suggestions.length < 0 || focusedSelection === -1) return;
+      if (suggestions.length < 0 && focusedSelection === -1) return;
       let next = focusedSelection;
       if (e === "ArrowDown") {
         if (focusedSelection === suggestions.length - 1) {
@@ -42,8 +41,10 @@ export const AutocompleteWebComponent = forwardRef(
       }
       if (focusedSelection !== next) setFocusedSelection(next);
 
-      if (e === "enter" || e === " ") {
-        handlePlaceClick(undefined, focusedSelection);
+      if (e === "Enter") {
+        if (focusedSelection !== -1) {
+          handlePlaceClick(undefined, focusedSelection);
+        }
       }
     };
 
@@ -135,8 +136,9 @@ export const AutocompleteWebComponent = forwardRef(
       // will have to make a call to place details to get place viewport
       // will have to get rid of suggestions on blur but still hold the text value in the search bar
       console.log(keyboardSelection ? "from board" : "from mouse");
+      console.log("e: ", e, "keyboardSelection: ", keyboardSelection);
       let index =
-        (e?.target as HTMLElement).closest("li")?.dataset.index ??
+        (e?.target as HTMLElement)?.closest("li")?.dataset.index ??
         keyboardSelection;
       if (!index) {
         index = 0;
@@ -162,6 +164,7 @@ export const AutocompleteWebComponent = forwardRef(
       setInputVal(element.placePrediction?.text.text ?? "");
       setHideSuggestions(true);
       setSuggestions([]);
+      setFocusedSelection(-1);
     };
 
     // Note: This is a React 19 thing to be able to treat custom elements this way.

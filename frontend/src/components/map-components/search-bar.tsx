@@ -171,8 +171,18 @@ export const SearchBar = memo(function SearchBar({
             aria-expanded="false"
             aria-haspopup="listbox"
             aria-label="Search For a Place"
-            onKeyDown={(e) => {
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              if (
+                e.key === "ArrowUp" ||
+                e.key === "ArrowDown" ||
+                e.key === "Enter"
+              ) {
+                e.preventDefault();
+              }
               autocompleteRef.current?.handleKeyDown(e.key);
+              if (e.key === "Enter") {
+                e.currentTarget.blur();
+              }
             }}
           />
           <button
