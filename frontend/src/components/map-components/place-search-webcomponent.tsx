@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import styles from "../../styles/Map.module.css";
 import starIcon from "../../assets/star-icon.svg";
 import addToList from "../../assets/add-to-list.svg";
+import added from "../../assets/check-mark.svg";
 
 const apiURL = import.meta.env.VITE_API_URL;
 const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
@@ -15,6 +16,8 @@ export const PlaceSearchWebComponent = ({
   setSearchDisabled,
   submitButtonTrigger,
   viewport,
+  list,
+  setList,
 }: PlaceSearchProps) => {
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
@@ -163,6 +166,13 @@ export const PlaceSearchWebComponent = ({
       setPageCountSwitch((prev) => !prev);
     }
   };
+  const handleListRemoval = (placeId: string) => {
+    setList((prev) => prev.filter((v) => v.id !== placeId));
+  };
+
+  const handleListAdd = (placeId: string, placeName: string) => {
+    setList((prev) => [...prev, { id: placeId, value: placeName }]);
+  };
 
   // Return the Google Maps Place List Web Component
   // This component is rendered as a custom HTML element (Web Component) provided by Google
@@ -208,6 +218,7 @@ export const PlaceSearchWebComponent = ({
             return (
               <div
                 key={place.id}
+                id={place.id}
                 className={styles.placeCard}
                 onClick={() => {
                   onPlaceSelect(place.id);
@@ -234,16 +245,35 @@ export const PlaceSearchWebComponent = ({
                     {place.formattedAddress}
                   </div>
                   <div>
-                    <button
-                      className={styles.addToListButton}
-                      title={"Add to Want to See List"}
-                    >
-                      <img
-                        src={addToList}
-                        alt="addToListIcon"
-                        className={styles.addToListIcon}
-                      />
-                    </button>
+                    {list.find((v) => v.id === place.id) ? (
+                      <button
+                        className={`${styles.addToListButton}`}
+                        onClick={() => handleListRemoval(place.id)}
+                      >
+                        <img
+                          src={added}
+                          alt="itemAdded"
+                          className={styles.addedIcon}
+                        />
+                      </button>
+                    ) : (
+                      <button
+                        className={styles.addToListButton}
+                        title={"Add to Want to See List"}
+                        onClick={() =>
+                          handleListAdd(
+                            place.id,
+                            place?.displayName?.text ?? "undefined"
+                          )
+                        }
+                      >
+                        <img
+                          src={addToList}
+                          alt="addToListIcon"
+                          className={styles.addToListIcon}
+                        />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

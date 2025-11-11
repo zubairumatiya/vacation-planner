@@ -5,7 +5,14 @@ export {}; // ensures it's a module
 declare global {
   interface WantToSeeListProps {
     loadSecond: () => void;
+    list: Item[];
+    setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
   }
+
+  type Item = {
+    id: string;
+    value: string;
+  };
 
   type PlacePrediction = {
     place: string;
@@ -76,6 +83,8 @@ declare global {
     setSearchDisabled: (boolean: boolean) => void;
     submitButtonTrigger: boolean;
     viewport;
+    list: Item[];
+    setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
   }
 
   type PlaceSearchElement = HTMLElement & {

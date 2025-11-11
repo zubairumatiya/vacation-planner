@@ -347,15 +347,19 @@
 }
 
 .addToListButton {
-  width: 2.25rem;
-  border: solid 4px #4ec84e;
-  padding: 0.1rem;
+  border: solid 0 #4ec84e;
+  padding: 0.2rem;
   position: absolute;
   right: 0;
   top: 0;
-  margin: 0.5rem;
+  margin: 0.7rem;
+  background-color: #333;
 }
 
 .addToListIcon {
-  width: 3rem;
+  width: 1.5rem;
+}
+
+.addedIcon {
+  width: 1.5rem;
 }

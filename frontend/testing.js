@@ -125,6 +125,7 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
+// BUG! on map render if i only change the placetype and not location it err's -- i think the problem is that the I have france as my initial place, but do I have the other values in place required for a place search, perhaps in the place search componenet?
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
 // -- -- maybe change the current button to a simple thicker logo, maybe the one we currently have, without the outline, and match the button to the background
 // -- -- change add button to a unclickable checkmark,  prob just an img then.

@@ -6,17 +6,12 @@ import { AuthContext } from "../context/AuthContext";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
-type Item = {
-  id: number;
-  value: string;
-};
-
 const WantToSeeList = (props: WantToSeeListProps) => {
   const { tripId } = useParams();
-  const [list, setList] = useState<Item[]>([]);
+  //const [list, props.setList] = useState<Item[]>([]);
   const [newItem, setNewItem] = useState<string>("");
   const [addingNewItem, setAddingNewItem] = useState<boolean>(true);
-  const [editItemId, setEditItemId] = useState<number>(-1);
+  const [editItemId, setEditItemId] = useState<string>("-1");
   const inputRef = useRef<HTMLInputElement>(null);
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -40,7 +35,8 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         alert("Error: List not found");
       }
       if (response.ok) {
-        setList(data.data);
+        data.data.forEach((v: Item) => String(v.id));
+        props.setList(data.data);
         props.loadSecond();
         //console.log(data.data);
       }
@@ -81,8 +77,8 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
     if (response.ok) {
       const apiData: { data: Item } = await response.json();
-      setList((prev) => [...prev, apiData.data]); // rmr our list items are now objects
-      setEditItemId(-1);
+      props.setList((prev) => [...prev, apiData.data]); // rmr our list items are now objects
+      setEditItemId("-1");
       setNewItem("");
     }
   };
@@ -90,7 +86,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const handleEditItem = async (
     e: React.FormEvent<HTMLFormElement>,
     index: number,
-    itemId: number
+    itemId: string
   ) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -120,27 +116,27 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
 
     if (response.ok) {
-      setList((prev) => {
+      props.setList((prev) => {
         return [
           ...prev.slice(0, index),
           { ...prev[index], value: item },
           ...prev.slice(index + 1),
         ];
       });
-      setEditItemId(-1);
+      setEditItemId("-1");
       setNewItem("");
       setAddingNewItem(true);
     }
   };
 
-  const editItem = (e: React.MouseEvent, index: number, itemId: number) => {
+  const editItem = (e: React.MouseEvent, index: number, itemId: string) => {
     e.preventDefault();
     setAddingNewItem(false);
     setEditItemId(itemId);
-    setNewItem(list[index].value);
+    setNewItem(props.list[index].value);
   };
 
-  const handleDeleteItem = async (e: React.MouseEvent, itemId: number) => {
+  const handleDeleteItem = async (e: React.MouseEvent, itemId: string) => {
     e.preventDefault();
 
     const response = await fetch(`${apiURL}/list/${itemId}`, {
@@ -160,8 +156,8 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       alert("Error: List not found");
     }
     if (response.ok) {
-      setList((prev) => prev.filter((v) => v.id !== itemId));
-      setEditItemId(-1);
+      props.setList((prev) => prev.filter((v) => v.id !== itemId));
+      setEditItemId("-1");
       setNewItem("");
       setAddingNewItem(true);
     }
@@ -171,7 +167,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     // prettier-ignore
     if (!(e.target instanceof HTMLImageElement || e.target instanceof HTMLButtonElement)) {
       e.preventDefault();
-      setEditItemId(-1);
+      setEditItemId("-1");
       setNewItem("");
       setAddingNewItem(true);
     }
@@ -185,7 +181,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       <h3 className={styles.title}>Want to See</h3>
       <hr />
       <ul>
-        {list.map((v, i) =>
+        {props.list.map((v, i) =>
           v.id === editItemId ? (
             <li key={v.id} id={String(v.id)}>
               <div className={styles.editItemWrapper}>

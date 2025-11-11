@@ -39,7 +39,7 @@ export const SearchBar = memo(function SearchBar({
   const [closure, setClosure] = useState<(() => void) | undefined>(undefined);
   const map = useMap();
 
-  const [inputValue, setInputValue] = useState<string>("");
+  const [inputValue, setInputValue] = useState<string>(locationName);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +51,7 @@ export const SearchBar = memo(function SearchBar({
 
   const [localSearchDisabled, setLocalSearchDisabled] = useState<boolean>(true);
 
-  const [holdName, setHoldName] = useState<string>(locationName);
+  const [holdName, setHoldName] = useState<string>("-1-2A-ad-54");
 
   const autocompleteRef = useRef<{
     handleKeyDown: (key: string) => void;
@@ -71,9 +71,9 @@ export const SearchBar = memo(function SearchBar({
   }, []);
 
   useEffect(() => {
-    console.log(holdName);
     placeTypeRef.current = placeTypeValue;
     if (placeType !== placeTypeValue || locationName !== holdName) {
+      // getting an annoying bug rn. locationName and holdName are not equal until we select a new location, so we can keep selecting the same placetype and it will register as new params. This started because I realized if someone is planning a location and they want to look at restaurants they would not have been able to because of how i set it up, they would basically have to make 2 requests to do that. So im trying to let someone search initially and then store the values.
       setLocalSearchDisabled(false);
     } else {
       setLocalSearchDisabled(true);
@@ -211,10 +211,11 @@ export const SearchBar = memo(function SearchBar({
       </div>
       <button
         type="button"
-        disabled={searchDisabled && localSearchDisabled}
+        disabled={(searchDisabled && localSearchDisabled) || holdName === ""}
         onClick={() => {
           setSubmitButtonTrigger((prev) => !prev);
           if (closure) closure();
+          setLocalSearchDisabled(true);
         }}
       >
         Submit

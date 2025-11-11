@@ -10,6 +10,7 @@ const EditCanvas = () => {
   const [vp, setVp] = useState<null | Vp>(null);
   const [location, setLocation] = useState<string>("");
   const [gId, setGId] = useState<string>("");
+  const [wishList, setWishList] = useState<Item[]>([]);
 
   const gValuesFn = (vp: Vp, gLocation: string, gId: string) => {
     setVp(vp);
@@ -23,9 +24,21 @@ const EditCanvas = () => {
         loadFirst={() => setLoading(false)}
         getMapValues={gValuesFn}
       />
-      {!loading && <WantToSeeList loadSecond={() => setLoading2(false)} />}
+      {!loading && (
+        <WantToSeeList
+          loadSecond={() => setLoading2(false)}
+          setList={setWishList}
+          list={wishList}
+        />
+      )}
       {!loading2 && (
-        <MyMapComponent bounds={vp} startLocation={location} gId={gId} />
+        <MyMapComponent
+          bounds={vp}
+          startLocation={location}
+          gId={gId}
+          setList={setWishList}
+          list={wishList}
+        />
       )}
     </div>
   );

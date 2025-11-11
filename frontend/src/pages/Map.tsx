@@ -30,12 +30,20 @@ const MAP_CONFIG = {
 };
 
 type Props = {
-  bounds: Vp | null;
+  bounds: Vp;
   startLocation: string;
   gId: string;
+  list: Item[];
+  setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
 };
 
-const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
+const MyMapComponent = ({
+  bounds,
+  startLocation,
+  gId,
+  list,
+  setList,
+}: Props) => {
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined
@@ -46,7 +54,9 @@ const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
   const [searchDisabled, setSearchDisabled] = useState<boolean>(true);
   const [submitButtonTrigger, setSubmitButtonTrigger] =
     useState<boolean>(false);
-  const [viewport, setViewport] = useState<Viewport | null>(null);
+  const [viewport, setViewport] = useState<Viewport | null>(() =>
+    toViewport(bounds)
+  );
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
 
@@ -55,6 +65,13 @@ const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
       MAP_CONFIG.defaultBounds = bounds;
     }
   }, []);
+
+  function toViewport(bounds: Vp): Viewport {
+    return {
+      low: { latitude: bounds.south, longitude: bounds.west },
+      high: { latitude: bounds.north, longitude: bounds.east },
+    };
+  }
 
   // Memoize the place markers to prevent unnecessary re-renders
   // Only recreate when places, selection, or details size changes
@@ -89,6 +106,8 @@ const MyMapComponent = ({ bounds, startLocation, gId }: Props) => {
             setSearchDisabled={setSearchDisabled}
             submitButtonTrigger={submitButtonTrigger}
             viewport={viewport}
+            list={list}
+            setList={setList}
           />
         </div>
 
