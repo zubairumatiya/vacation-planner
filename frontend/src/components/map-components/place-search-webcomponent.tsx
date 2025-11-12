@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 //import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 import starIcon from "../../assets/star-icon.svg";
@@ -8,7 +8,7 @@ import added from "../../assets/check-mark.svg";
 const apiURL = import.meta.env.VITE_API_URL;
 const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
 
-export const PlaceSearchWebComponent = ({
+const PlaceSearchWebComponent = ({
   onPlaceSelect,
   setPlaces,
   locationName,
@@ -157,7 +157,6 @@ export const PlaceSearchWebComponent = ({
 
   const handleNextPage = (e: React.MouseEvent) => {
     e.preventDefault();
-
     if (pageCount === currentPageMax) {
       setPageCount((prev) => prev + 1);
       newPageTrigger();
@@ -166,11 +165,19 @@ export const PlaceSearchWebComponent = ({
       setPageCountSwitch((prev) => !prev);
     }
   };
-  const handleListRemoval = (placeId: string) => {
+  const handleListRemoval = (e: React.MouseEvent, placeId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
     setList((prev) => prev.filter((v) => v.id !== placeId));
   };
 
-  const handleListAdd = (placeId: string, placeName: string) => {
+  const handleListAdd = (
+    e: React.MouseEvent,
+    placeId: string,
+    placeName: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
     setList((prev) => [...prev, { id: placeId, value: placeName }]);
   };
 
@@ -248,7 +255,7 @@ export const PlaceSearchWebComponent = ({
                     {list.find((v) => v.id === place.id) ? (
                       <button
                         className={`${styles.addToListButton}`}
-                        onClick={() => handleListRemoval(place.id)}
+                        onClick={(e) => handleListRemoval(e, place.id)}
                       >
                         <img
                           src={added}
@@ -260,8 +267,9 @@ export const PlaceSearchWebComponent = ({
                       <button
                         className={styles.addToListButton}
                         title={"Add to Want to See List"}
-                        onClick={() =>
+                        onClick={(e) =>
                           handleListAdd(
+                            e,
                             place.id,
                             place?.displayName?.text ?? "undefined"
                           )
@@ -311,6 +319,8 @@ export const PlaceSearchWebComponent = ({
     </>
   );
 };
+
+export default React.memo(PlaceSearchWebComponent);
 
 /**
  * Augments the React JSX namespace to add type definitions for the

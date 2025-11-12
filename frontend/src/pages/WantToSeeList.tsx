@@ -56,28 +56,10 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     if (!raw || typeof raw !== "string") {
       return;
     }
-    const item: string = raw.trim();
+    const item = raw.trim();
+    const res = await props.handleSubmitItem(item);
 
-    // insert backend query here - it will return our added item so we can use the DB ID as our key. We will have to make our data structure an array with objects inside
-    const response = await fetch(`${apiURL}/list/${tripId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ value: item }),
-    });
-    if (response.status === 401) {
-      navigate("/login", {
-        state: { message: "Session expired, redirecting to log in..." },
-      });
-    }
-    if (response.status === 404) {
-      alert("Error: List not found");
-    }
-    if (response.ok) {
-      const apiData: { data: Item } = await response.json();
-      props.setList((prev) => [...prev, apiData.data]); // rmr our list items are now objects
+    if (res === 200) {
       setEditItemId("-1");
       setNewItem("");
     }
@@ -138,25 +120,9 @@ const WantToSeeList = (props: WantToSeeListProps) => {
 
   const handleDeleteItem = async (e: React.MouseEvent, itemId: string) => {
     e.preventDefault();
+    const res = await props.handleDeleteItem(itemId);
 
-    const response = await fetch(`${apiURL}/list/${itemId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 401) {
-      navigate("/login", {
-        state: { message: "Session expired, redirecting to log in..." },
-      });
-    }
-    if (response.status === 404) {
-      alert("Error: List not found");
-    }
-    if (response.ok) {
-      props.setList((prev) => prev.filter((v) => v.id !== itemId));
+    if (res === 200) {
       setEditItemId("-1");
       setNewItem("");
       setAddingNewItem(true);
@@ -201,7 +167,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
                   type="button"
                   className={styles.trashButton}
                   onClick={(e) => {
-                    handleDeleteItem(e, v.id);
+                    handleDeleteItem(v.id, e);
                   }}
                 >
                   <img

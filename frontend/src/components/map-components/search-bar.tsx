@@ -73,7 +73,6 @@ export const SearchBar = memo(function SearchBar({
   useEffect(() => {
     placeTypeRef.current = placeTypeValue;
     if (placeType !== placeTypeValue || locationName !== holdName) {
-      // getting an annoying bug rn. locationName and holdName are not equal until we select a new location, so we can keep selecting the same placetype and it will register as new params. This started because I realized if someone is planning a location and they want to look at restaurants they would not have been able to because of how i set it up, they would basically have to make 2 requests to do that. So im trying to let someone search initially and then store the values.
       setLocalSearchDisabled(false);
     } else {
       setLocalSearchDisabled(true);
@@ -215,7 +214,7 @@ export const SearchBar = memo(function SearchBar({
         onClick={() => {
           setSubmitButtonTrigger((prev) => !prev);
           if (closure) closure();
-          setLocalSearchDisabled(true);
+          setHoldName(inputValue);
         }}
       >
         Submit

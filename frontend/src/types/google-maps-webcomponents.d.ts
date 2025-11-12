@@ -7,6 +7,8 @@ declare global {
     loadSecond: () => void;
     list: Item[];
     setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
+    handleDeleteItem: (a: string) => void | Promise<number>;
+    handleSubmitItem: (val: string, id?: string) => void | Promise<number>;
   }
 
   type Item = {

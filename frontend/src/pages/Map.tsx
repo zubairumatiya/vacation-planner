@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect } from "react";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 
 import { PlaceDetailsMarker } from "../components/map-components/place-details-marker";
-import { PlaceSearchWebComponent } from "../components/map-components/place-search-webcomponent";
+import PlaceSearchWebComponent from "../components/map-components/place-search-webcomponent";
 import { SearchBar } from "../components/map-components/search-bar";
 // This registers ALL `<gmp-...>` components globally
 
@@ -30,7 +30,7 @@ const MAP_CONFIG = {
 };
 
 type Props = {
-  bounds: Vp;
+  bounds: Vp | null;
   startLocation: string;
   gId: string;
   list: Item[];
@@ -55,7 +55,12 @@ const MyMapComponent = ({
   const [submitButtonTrigger, setSubmitButtonTrigger] =
     useState<boolean>(false);
   const [viewport, setViewport] = useState<Viewport | null>(() =>
-    toViewport(bounds)
+    bounds
+      ? toViewport(bounds)
+      : {
+          high: { latitude: 0, longitude: 0 },
+          low: { latitude: 0, longitude: 0 },
+        }
   );
   const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
   const [colorScheme, setColorScheme] = useState<ColorScheme>("light");

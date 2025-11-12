@@ -125,9 +125,9 @@ repeaterCall();
 // add want to see list - DONE
 
 // add google maps API window
-// BUG! on map render if i only change the placetype and not location it err's -- i think the problem is that the I have france as my initial place, but do I have the other values in place required for a place search, perhaps in the place search componenet?
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
-// -- -- maybe change the current button to a simple thicker logo, maybe the one we currently have, without the outline, and match the button to the background
+// -- -- will prob have to change the DB for want to see list because we will need to be able to store the ID of google place instead of using the DB serial id.
+// -- -- editing item will be tricky. I can either make it so a google item is uneditable, only deletable, OR upon editing, the ID is changed.
 // -- -- change add button to a unclickable checkmark,  prob just an img then.
 // -- -- we should be able to preload these check marks if we make the want to see list the id's of the places too.
 // -- add more placeTypes
