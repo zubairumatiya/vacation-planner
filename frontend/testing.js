@@ -127,7 +127,7 @@ repeaterCall();
 // add google maps API window
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
 // -- -- will prob have to change the DB for want to see list because we will need to be able to store the ID of google place instead of using the DB serial id.
-// -- -- editing item will be tricky. I can either make it so a google item is uneditable, only deletable, OR upon editing, the ID is changed.
+// -- -- editing item will be tricky. Let's add a googleItem boolean column in the DB, which will have to now be a part of Item, so you can only edit non-google items.
 // -- -- change add button to a unclickable checkmark,  prob just an img then.
 // -- -- we should be able to preload these check marks if we make the want to see list the id's of the places too.
 // -- add more placeTypes

@@ -46,11 +46,39 @@
   align-items: center;
 }
 
+.form {
+  position: relative;
+}
+
 .input {
   background-color: black;
   width: 100%;
   color: white;
   border-radius: 5px;
+}
+
+.noEditingInput {
+  pointer-events: all;
+  cursor: help;
+}
+
+.hiddenMessage {
+  position: absolute;
+  z-index: 10;
+  visibility: hidden;
+  background-color: rgb(134, 168, 134);
+  border: 3px dashed rgb(81, 80, 80);
+  font-size: small;
+  color: black;
+  margin: 0.25rem;
+  padding: 0.1rem 0.25rem;
+  width: 8rem;
+  right: 0;
+}
+
+.showMessage:hover {
+  visibility: visible;
+  opacity: 0.75;
 }
 
 .trashButton {

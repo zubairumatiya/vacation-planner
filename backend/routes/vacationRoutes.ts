@@ -297,7 +297,7 @@ router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
 router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "SELECT id, value FROM trip_list WHERE trip_id=$1",
+      "SELECT id, value, from_google FROM trip_list WHERE trip_id=$1",
       [req.params.tripId]
     );
     res.status(200).json({ data: result.rows });
@@ -309,10 +309,17 @@ router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
 
 router.post("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
   try {
-    const result = await db.query(
-      "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value",
-      [req.params.tripId, req.body.value]
-    );
+    let queryText:string;
+    let queryParams:string[];
+    if(req.body.id){
+      queryText = "INSERT INTO trip_list (trip_id, value, id, from_google) VALUES ($1, $2, $3, true) RETURNING id, value, from_google";
+      queryParams = [req.params.tripId, req.body.value, req.body.id];
+    }else{
+      queryText = "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google";
+      queryParams= [req.params.tripId, req.body.value];
+    }
+    
+    const result = await db.query(queryText,queryParams);
     res.status(200).json({ data: result.rows[0] });
     return;
   } catch (err) {

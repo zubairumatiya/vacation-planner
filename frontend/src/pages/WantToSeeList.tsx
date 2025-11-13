@@ -35,10 +35,10 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         alert("Error: List not found");
       }
       if (response.ok) {
-        data.data.forEach((v: Item) => String(v.id));
+        data.data.forEach((v: Item) => v.id);
         props.setList(data.data);
         props.loadSecond();
-        //console.log(data.data);
+        console.log(data.data);
       }
     };
 
@@ -147,13 +147,19 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       <h3 className={styles.title}>Want to See</h3>
       <hr />
       <ul>
-        {props.list.map((v, i) =>
-          v.id === editItemId ? (
+        {props.list.map((v, i) => {
+          console.log(v.fromGoogle); // FOR NEXT TIME: from_google vs fromGoogle, need to add helper function in backend to convert snake to camelcase.
+          return v.id === editItemId ? (
             <li key={v.id} id={String(v.id)}>
               <div className={styles.editItemWrapper}>
-                <form onSubmit={(e) => handleEditItem(e, i, v.id)}>
+                <form
+                  onSubmit={(e) => handleEditItem(e, i, v.id)}
+                  className={styles.form}
+                >
                   <input
-                    className={styles.input}
+                    className={`${styles.input} ${
+                      v.fromGoogle && styles.noEditingInput
+                    }`}
                     type="text"
                     name="newItem"
                     autoComplete="off"
@@ -161,13 +167,21 @@ const WantToSeeList = (props: WantToSeeListProps) => {
                     value={newItem}
                     onChange={(e) => setNewItem(e.target.value)}
                     id="newItem"
+                    disabled={v.fromGoogle}
                   />
+                  <div
+                    className={`${styles.hiddenMessage} ${
+                      v.fromGoogle && styles.showMessage
+                    }`}
+                  >
+                    Places added from map cannot be edited
+                  </div>
                 </form>
                 <button
                   type="button"
                   className={styles.trashButton}
                   onClick={(e) => {
-                    handleDeleteItem(v.id, e);
+                    handleDeleteItem(e, v.id);
                   }}
                 >
                   <img
@@ -186,8 +200,8 @@ const WantToSeeList = (props: WantToSeeListProps) => {
             >
               {v.value}
             </li>
-          )
-        )}{" "}
+          );
+        })}{" "}
         {addingNewItem && (
           <li>
             <form onSubmit={handleSubmitItem}>

@@ -34,7 +34,8 @@ type Props = {
   startLocation: string;
   gId: string;
   list: Item[];
-  setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
+  handleSubmitItem: WantToSeeListProps["handleSubmitItem"];
+  handleDeleteItem: WantToSeeListProps["handleDeleteItem"];
 };
 
 const MyMapComponent = ({
@@ -42,7 +43,8 @@ const MyMapComponent = ({
   startLocation,
   gId,
   list,
-  setList,
+  handleSubmitItem,
+  handleDeleteItem,
 }: Props) => {
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
@@ -112,7 +114,8 @@ const MyMapComponent = ({
             submitButtonTrigger={submitButtonTrigger}
             viewport={viewport}
             list={list}
-            setList={setList}
+            handleSubmitItem={handleSubmitItem}
+            handleDeleteItem={handleDeleteItem}
           />
         </div>
 

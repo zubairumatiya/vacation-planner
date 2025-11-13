@@ -7,13 +7,14 @@ declare global {
     loadSecond: () => void;
     list: Item[];
     setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
-    handleDeleteItem: (a: string) => void | Promise<number>;
-    handleSubmitItem: (val: string, id?: string) => void | Promise<number>;
+    handleDeleteItem: (a: string) => Promise<number | undefined>;
+    handleSubmitItem: (val: string, id?: string) => Promise<number | undefined>;
   }
 
   type Item = {
     id: string;
     value: string;
+    fromGoogle: boolean;
   };
 
   type PlacePrediction = {
@@ -86,7 +87,8 @@ declare global {
     submitButtonTrigger: boolean;
     viewport;
     list: Item[];
-    setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
+    handleSubmitItem: WantToSeeListProps["handleSubmitItem"];
+    handleDeleteItem: WantToSeeListProps["handleDeleteItem"];
   }
 
   type PlaceSearchElement = HTMLElement & {

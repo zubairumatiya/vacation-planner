@@ -26,17 +26,15 @@ const EditCanvas = () => {
     setGId(gId);
   };
 
-  const handleSubmitItem = async (value: string, id?: string) => {
-    const item = value;
-
-    // insert backend query here - it will return our added item so we can use the DB ID as our key. We will have to make our data structure an array with objects inside
+  const handleSubmitItem = useCallback(async (value: string, id?: string) => {
+    const val = value;
     const response = await fetch(`${apiURL}/list/${tripId}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ value: item }), // SEND ID!
+      body: JSON.stringify({ value: val, id: id ?? null }),
     });
     if (response.status === 401) {
       navigate("/login", {
@@ -48,19 +46,12 @@ const EditCanvas = () => {
     }
     if (response.ok) {
       const apiData: { data: Item } = await response.json();
-
-      apiData.data.id = id; // TODO this part will need to change, it will work until we have to refresh, then the id of the google place will be replaced by the DB id.
       setWishList((prev) => [...prev, apiData.data]);
-
-      setWishList((prev) => [...prev, apiData.data]); // rmr our list items are now objects
       return 200;
-      setEditItemId("-1");
-      setNewItem("");
     }
-  };
+  }, []);
 
-  const handleDeleteItem = async (itemId: string) => {
-    // this will only work if the google item is stored with its id. And serial primary key is an integer, so we might have to come up with some algorithm to store it as a number and be able to decipher it upon retrieval. Easiest way is to prob move away from primary serial id and create our own id's or soemthing. honestly, i just want to be able to store it as my ID, that would be the simplest.
+  const handleDeleteItem = useCallback(async (itemId: string) => {
     const response = await fetch(`${apiURL}/list/${itemId}`, {
       method: "DELETE",
       headers: {
@@ -80,11 +71,8 @@ const EditCanvas = () => {
     if (response.ok) {
       setWishList((prev) => prev.filter((v) => v.id !== itemId));
       return 200;
-      setEditItemId("-1");
-      setNewItem("");
-      setAddingNewItem(true);
     }
-  };
+  }, []);
 
   return (
     <div className={styles.pageWrapper}>
@@ -106,7 +94,6 @@ const EditCanvas = () => {
           bounds={vp}
           startLocation={location}
           gId={gId}
-          setList={setWishList}
           list={wishList}
           handleSubmitItem={handleSubmitItem}
           handleDeleteItem={handleDeleteItem}

@@ -17,7 +17,8 @@ const PlaceSearchWebComponent = ({
   submitButtonTrigger,
   viewport,
   list,
-  setList,
+  handleSubmitItem,
+  handleDeleteItem,
 }: PlaceSearchProps) => {
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
@@ -168,7 +169,7 @@ const PlaceSearchWebComponent = ({
   const handleListRemoval = (e: React.MouseEvent, placeId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    setList((prev) => prev.filter((v) => v.id !== placeId));
+    handleDeleteItem(placeId);
   };
 
   const handleListAdd = (
@@ -178,7 +179,7 @@ const PlaceSearchWebComponent = ({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    setList((prev) => [...prev, { id: placeId, value: placeName }]);
+    handleSubmitItem(placeName, placeId);
   };
 
   // Return the Google Maps Place List Web Component
