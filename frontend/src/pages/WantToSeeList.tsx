@@ -38,7 +38,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         data.data.forEach((v: Item) => v.id);
         props.setList(data.data);
         props.loadSecond();
-        console.log(data.data);
       }
     };
 
@@ -77,8 +76,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       return;
     }
     const item: string = raw.trim();
-
-    // insert backend query here - it will return our added item so we can use the DB ID as our key. We will have to make our data structure an array with objects inside
     const response = await fetch(`${apiURL}/list/${itemId}`, {
       method: "PATCH",
       headers: {
@@ -97,11 +94,12 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       alert("Error: List not found");
     }
 
+    const data = await response.json();
     if (response.ok) {
       props.setList((prev) => {
         return [
           ...prev.slice(0, index),
-          { ...prev[index], value: item },
+          { ...prev[index], value: data.data[0].value },
           ...prev.slice(index + 1),
         ];
       });
@@ -148,13 +146,14 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       <hr />
       <ul>
         {props.list.map((v, i) => {
-          console.log(v.fromGoogle); // FOR NEXT TIME: from_google vs fromGoogle, need to add helper function in backend to convert snake to camelcase.
           return v.id === editItemId ? (
             <li key={v.id} id={String(v.id)}>
               <div className={styles.editItemWrapper}>
                 <form
                   onSubmit={(e) => handleEditItem(e, i, v.id)}
-                  className={styles.form}
+                  className={`${styles.form} ${
+                    v.fromGoogle && styles.showMessage
+                  }`}
                 >
                   <input
                     className={`${styles.input} ${
@@ -169,11 +168,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
                     id="newItem"
                     disabled={v.fromGoogle}
                   />
-                  <div
-                    className={`${styles.hiddenMessage} ${
-                      v.fromGoogle && styles.showMessage
-                    }`}
-                  >
+                  <div className={`${styles.hiddenMessage}`}>
                     Places added from map cannot be edited
                   </div>
                 </form>

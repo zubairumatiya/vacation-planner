@@ -55,11 +55,14 @@
   width: 100%;
   color: white;
   border-radius: 5px;
+  padding-left: 0.25rem;
 }
 
 .noEditingInput {
   pointer-events: all;
   cursor: help;
+  background-color: darkgrey;
+  color: gainsboro;
 }
 
 .hiddenMessage {
@@ -74,11 +77,13 @@
   padding: 0.1rem 0.25rem;
   width: 8rem;
   right: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
 }
 
-.showMessage:hover {
+.showMessage:hover .hiddenMessage {
   visibility: visible;
-  opacity: 0.75;
+  opacity: 1;
 }
 
 .trashButton {

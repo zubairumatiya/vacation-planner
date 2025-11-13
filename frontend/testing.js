@@ -65,6 +65,27 @@ const autoC = async () => {
 
 //autoC();
 
+const dbResult = [
+  { user_id: 1, first_name: "Alice", created_at: "2025-01-01" },
+  { user_id: 2, first_name: "Bob", created_at: "2025-01-02" },
+];
+
+const toCamelCase = (dbRows) => {
+  //will change array in place
+  dbRows.map((row, index) => {
+    const newObj = {};
+    for (const key in row) {
+      //const camelKey = key.replace(/_(\w)/g, (match, p1) => p1.toUpperCase());
+      const camelKey = key.replace(/_(\w)/g, (match, p1) => p1.toUpperCase());
+      newObj[camelKey] = row[key];
+    }
+    dbRows[index] = newObj;
+  });
+};
+
+toCamelCase(dbResult);
+console.log(dbResult);
+
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];

@@ -3,8 +3,7 @@ const router = express.Router();
 import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
-///prettier-ignore
-import storedData from "../../debug.json" with { type: "json" };
+import { snakeToCamel } from "../helpers/snakeToCamel.js";
 
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
@@ -27,26 +26,36 @@ router.get("/home", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
-router.get("/add-vacation/:tripId", ensureLoggedIn, async(req, res, next)=> {
-  try{
-    const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",[req.user.id, req.params.tripId, "owner", "editor"]);
-    if(confirmUser.rowCount < 1){
+router.get("/add-vacation/:tripId", ensureLoggedIn, async (req, res, next) => {
+  try {
+    const confirmUser = await db.query(
+      "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
+      [req.user.id, req.params.tripId, "owner", "editor"]
+    );
+    if (confirmUser.rowCount < 1) {
       res.sendStatus(404);
       return;
     }
-    const results = await db.query("SELECT * FROM trips WHERE id=$1", [req.params.tripId])
-    if(results.rowCount < 1){
+    const results = await db.query("SELECT * FROM trips WHERE id=$1", [
+      req.params.tripId,
+    ]);
+    if (results.rowCount < 1) {
       res.sendStatus(404);
-      return
-    } else{
-      res.status(200).json({gId:results.rows[0].g_id, gLocation:results.rows[0].location, gVp:results.rows[0].g_vp})
+      return;
+    } else {
+      res
+        .status(200)
+        .json({
+          gId: results.rows[0].g_id,
+          gLocation: results.rows[0].location,
+          gVp: results.rows[0].g_vp,
+        });
       return;
     }
-
-  }catch(err){
-    next(err)
+  } catch (err) {
+    next(err);
   }
-})
+});
 
 router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
   if (
@@ -81,7 +90,7 @@ router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
         req.body.startDate,
         req.body.endDate,
         req.body.gId,
-        req.body.gVp
+        req.body.gVp,
       ]
     );
     await db.query(
@@ -109,8 +118,11 @@ router.patch("/add-vacation/:id", ensureLoggedIn, async (req, res, next) => {
       .json({ message: "Invalid input - make sure all the fields are filled" });
     return;
   }
-  const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)", [req.user.id, req.params.id, "owner", "editor"])
-  if(confirmUser.rowCount < 1){
+  const confirmUser = await db.query(
+    "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
+    [req.user.id, req.params.id, "owner", "editor"]
+  );
+  if (confirmUser.rowCount < 1) {
     res.sendStatus(404);
     return;
   }
@@ -151,8 +163,11 @@ router.delete(
   ensureLoggedIn,
   async (req, res, next) => {
     try {
-      const confirmUser = await db.query("SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)", [req.user.id, req.params.id, "owner", "editor"])
-      if(confirmUser.rowCount < 1){
+      const confirmUser = await db.query(
+        "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
+        [req.user.id, req.params.id, "owner", "editor"]
+      );
+      if (confirmUser.rowCount < 1) {
         res.sendStatus(404);
         return;
       }
@@ -204,7 +219,16 @@ router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
     const arrCargo = result3.rowCount > 0 ? result3.rows : [];
     res
       .status(200)
-      .json({ role, tripName, startDate, endDate, location, gId, gVp, schedule: arrCargo });
+      .json({
+        role,
+        tripName,
+        startDate,
+        endDate,
+        location,
+        gId,
+        gVp,
+        schedule: arrCargo,
+      });
     return;
   } catch (err) {
     next(err);
@@ -300,6 +324,7 @@ router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
       "SELECT id, value, from_google FROM trip_list WHERE trip_id=$1",
       [req.params.tripId]
     );
+    snakeToCamel(result.rows);
     res.status(200).json({ data: result.rows });
     return;
   } catch (err) {
@@ -309,17 +334,19 @@ router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
 
 router.post("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
   try {
-    let queryText:string;
-    let queryParams:string[];
-    if(req.body.id){
-      queryText = "INSERT INTO trip_list (trip_id, value, id, from_google) VALUES ($1, $2, $3, true) RETURNING id, value, from_google";
+    let queryText: string;
+    let queryParams: string[];
+    if (req.body.id) {
+      queryText =
+        "INSERT INTO trip_list (trip_id, value, id, from_google) VALUES ($1, $2, $3, true) RETURNING id, value, from_google";
       queryParams = [req.params.tripId, req.body.value, req.body.id];
-    }else{
-      queryText = "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google";
-      queryParams= [req.params.tripId, req.body.value];
+    } else {
+      queryText =
+        "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google";
+      queryParams = [req.params.tripId, req.body.value];
     }
-    
-    const result = await db.query(queryText,queryParams);
+    const result = await db.query(queryText, queryParams);
+    snakeToCamel(result.rows);
     res.status(200).json({ data: result.rows[0] });
     return;
   } catch (err) {
@@ -333,6 +360,7 @@ router.patch("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
       "UPDATE trip_list SET value=$1 WHERE id=$2 RETURNING *",
       [req.body.value, req.params.itemId]
     );
+    snakeToCamel(result.rows);
     res.status(200).json({ data: result.rows });
     return;
   } catch (err) {
@@ -354,114 +382,122 @@ router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
 });
 
 router.post("/map", async (req, res, next) => {
-  let countOfPlaces = 0; 
+  let countOfPlaces = 0;
   const gatherPlaces = [];
-  let holdToken = req.body.nextPageToken === undefined ? "" : req.body.nextPageToken;
-  console.log(req.body.locationName)
-  console.log(req.body.placeType)
+  let holdToken =
+    req.body.nextPageToken === undefined ? "" : req.body.nextPageToken;
+  console.log(req.body.locationName);
+  console.log(req.body.placeType);
   try {
-    if(req.body.nextPageToken === undefined){
+    if (req.body.nextPageToken === undefined) {
       res.sendStatus(406);
       return;
     }
-    const query = `${req.body.placeType}s near ${req.body.locationName}`; 
-    while(countOfPlaces < 20 && holdToken !== undefined){ //why not just to length of gather places instead of tracking count?
-    const result = await fetch(
-      "https://places.googleapis.com/v1/places:searchText",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": "places.id,nextPageToken",
-          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
-          //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
-        },
-        body: JSON.stringify({
-          textQuery: `${query}`,
-          pageToken: holdToken,
-          minRating: req.body.ratingFilter,
-          pageSize: 20,
-          includedType:`${req.body.placeType}`,
-          strictTypeFiltering:true,
-          locationRestriction: {"rectangle":req.body.viewport}
-        }),
-      }
-    );
-    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
-    const data:TextSearchResponse = await result.json();
-   // if(req.body.placeType){ //should always have this but lets check just in case  
-   // data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
-   // }else{
-   //   throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
-   // }
-    if(req.body.reviewFilter){
-      data.places.forEach((v:Place)=>{
-        if(v.userRatingCount >= req.body.reviewFilter){
-          countOfPlaces++;
-          gatherPlaces.push(v);
+    const query = `${req.body.placeType}s near ${req.body.locationName}`;
+    while (countOfPlaces < 20 && holdToken !== undefined) {
+      //why not just to length of gather places instead of tracking count?
+      const result = await fetch(
+        "https://places.googleapis.com/v1/places:searchText",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": `${API_KEY}`,
+            "X-Goog-FieldMask": "places.id,nextPageToken",
+            //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
+            //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
+          },
+          body: JSON.stringify({
+            textQuery: `${query}`,
+            pageToken: holdToken,
+            minRating: req.body.ratingFilter,
+            pageSize: 20,
+            includedType: `${req.body.placeType}`,
+            strictTypeFiltering: true,
+            locationRestriction: { rectangle: req.body.viewport },
+          }),
         }
-      })
-    }else{
-      countOfPlaces += data.places.length;
-      gatherPlaces.push(...data.places)
+      );
+      if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+      const data: TextSearchResponse = await result.json();
+      // if(req.body.placeType){ //should always have this but lets check just in case
+      // data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
+      // }else{
+      //   throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
+      // }
+      if (req.body.reviewFilter) {
+        data.places.forEach((v: Place) => {
+          if (v.userRatingCount >= req.body.reviewFilter) {
+            countOfPlaces++;
+            gatherPlaces.push(v);
+          }
+        });
+      } else {
+        countOfPlaces += data.places.length;
+        gatherPlaces.push(...data.places);
+      }
+      holdToken = data.nextPageToken;
     }
-    holdToken = data.nextPageToken;
-  }
-  console.log("array length:",gatherPlaces.length);
-  console.log("count", countOfPlaces);
+    console.log("array length:", gatherPlaces.length);
+    console.log("count", countOfPlaces);
 
-  console.log("holdToken", typeof holdToken)
-    res.status(200).json({places: gatherPlaces, nextPageToken: holdToken});
+    console.log("holdToken", typeof holdToken);
+    res.status(200).json({ places: gatherPlaces, nextPageToken: holdToken });
     return;
   } catch (err) {
     next(err);
   }
 });
 
-router.post("/autocomplete", async(req,res,next)=>{
+router.post("/autocomplete", async (req, res, next) => {
   const query = req.body.query;
-  try{
-    const result = await fetch("https://places.googleapis.com/v1/places:autocomplete",{
-      method:"POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": `${API_KEY}`,
-        "X-Goog-FieldMask": "suggestions.placePrediction",
-      },
-      body: JSON.stringify({
-        input:`${query}`,
-        includedPrimaryTypes: ["locality", "country", "political"], // will suggest cities, countries, political boundaries, etc, instead of places of business
-      })
-    })
-    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
-    const data = await result.json();
-    res.status(200).json(data);
-  }catch(err){
-    next(err)
-  }
-})
-
-router.get("/details/:itemId", async(req,res,next)=>{
-  try{
-    if(!req.params.itemId){
-      throw new Error("Error finishing req")
-    }
-    const result = await fetch(`https://places.googleapis.com/v1/places/${req.params.itemId}`,{
-      method:"GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Goog-Api-Key": `${API_KEY}`,
-        "X-Goog-FieldMask": "viewport",
+  try {
+    const result = await fetch(
+      "https://places.googleapis.com/v1/places:autocomplete",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": `${API_KEY}`,
+          "X-Goog-FieldMask": "suggestions.placePrediction",
+        },
+        body: JSON.stringify({
+          input: `${query}`,
+          includedPrimaryTypes: ["locality", "country", "political"], // will suggest cities, countries, political boundaries, etc, instead of places of business
+        }),
       }
-    })
+    );
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data = await result.json();
     res.status(200).json(data);
-  }catch(err){
-    next(err)
+  } catch (err) {
+    next(err);
   }
-})
+});
+
+router.get("/details/:itemId", async (req, res, next) => {
+  try {
+    if (!req.params.itemId) {
+      throw new Error("Error finishing req");
+    }
+    const result = await fetch(
+      `https://places.googleapis.com/v1/places/${req.params.itemId}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": `${API_KEY}`,
+          "X-Goog-FieldMask": "viewport",
+        },
+      }
+    );
+    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+    const data = await result.json();
+    res.status(200).json(data);
+  } catch (err) {
+    next(err);
+  }
+});
 
 /*
 router.post("/map", async (req, res, next) => {
