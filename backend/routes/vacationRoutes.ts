@@ -43,13 +43,11 @@ router.get("/add-vacation/:tripId", ensureLoggedIn, async (req, res, next) => {
       res.sendStatus(404);
       return;
     } else {
-      res
-        .status(200)
-        .json({
-          gId: results.rows[0].g_id,
-          gLocation: results.rows[0].location,
-          gVp: results.rows[0].g_vp,
-        });
+      res.status(200).json({
+        gId: results.rows[0].g_id,
+        gLocation: results.rows[0].location,
+        gVp: results.rows[0].g_vp,
+      });
       return;
     }
   } catch (err) {
@@ -217,18 +215,16 @@ router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
       [req.params.id]
     );
     const arrCargo = result3.rowCount > 0 ? result3.rows : [];
-    res
-      .status(200)
-      .json({
-        role,
-        tripName,
-        startDate,
-        endDate,
-        location,
-        gId,
-        gVp,
-        schedule: arrCargo,
-      });
+    res.status(200).json({
+      role,
+      tripName,
+      startDate,
+      endDate,
+      location,
+      gId,
+      gVp,
+      schedule: arrCargo,
+    });
     return;
   } catch (err) {
     next(err);
@@ -321,7 +317,7 @@ router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
 router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "SELECT id, value, from_google FROM trip_list WHERE trip_id=$1",
+      "SELECT id, value, from_google FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
       [req.params.tripId]
     );
     snakeToCamel(result.rows);
