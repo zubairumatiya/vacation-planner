@@ -15,6 +15,7 @@ declare global {
     id: string;
     value: string;
     fromGoogle: boolean;
+    itemAdded: boolean;
   };
 
   type PlacePrediction = {
@@ -76,6 +77,10 @@ declare global {
     selected: boolean;
     onClick: (placeId: string | undefined) => void;
     detailsSize: "FULL";
+  }
+
+  interface CheckBubbleProps {
+    checked: boolean;
   }
 
   interface PlaceSearchProps {

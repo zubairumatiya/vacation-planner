@@ -17,16 +17,47 @@
 
 .pageWrapper ul {
   list-style: disc;
-  padding-left: 2rem;
   text-align: left;
+  padding-left: 2rem;
 }
 .pageWrapper ul li {
-  list-style-type: disc;
   color: rgb(60, 58, 58);
   list-style-position: outside;
   font-size: x-large;
   line-height: 1.5rem;
   margin-bottom: 0.6rem;
+  width: 100%;
+  /*display: flex;
+  align-items: end;*/
+}
+
+.listItem {
+  display: flex;
+  align-items: end;
+  margin-left: -1.7rem;
+}
+
+.editListItem {
+  display: flex;
+  align-items: center;
+  margin-left: -1.7rem;
+}
+
+.newItem {
+  list-style: disc;
+}
+
+.checkBubbleWrapper {
+  margin-right: 0.3rem;
+}
+
+.itemValue {
+  width: 100%;
+  display: flex;
+}
+
+.itemChecked {
+  text-decoration: line-through;
 }
 
 .title {

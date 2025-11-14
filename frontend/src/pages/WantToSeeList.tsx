@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import trashIcon from "../assets/trash-icon.svg";
 import { AuthContext } from "../context/AuthContext";
+import CheckBubble from "../components/CheckBubble";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -35,7 +36,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         alert("Error: List not found");
       }
       if (response.ok) {
-        data.data.forEach((v: Item) => v.id);
+        //data.data.forEach((v: Item) => v.id);
         props.setList(data.data);
         props.loadSecond();
       }
@@ -137,6 +138,44 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
   };
 
+  const handleCheckItem = async (
+    e: React.MouseEvent,
+    currentState: boolean,
+    itemId: string,
+    index: number
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const newValue = !currentState;
+    const result = await fetch(`${apiURL}/check-list-item/${itemId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        newValue,
+      }),
+    });
+    if (result.ok) {
+      const data = await result.json();
+      props.setList((prev) => [
+        ...prev.slice(0, index),
+        { ...prev[index], itemAdded: data.data[0].itemAdded },
+        ...prev.slice(index + 1),
+      ]);
+    } else {
+      if (result.status === 401) {
+        navigate("/login", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+      }
+      if (result.status === 404) {
+        alert("Error: List not found");
+      }
+    }
+  };
+
   return (
     <div
       className={styles.pageWrapper}
@@ -147,7 +186,10 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       <ul>
         {props.list.map((v, i) => {
           return v.id === editItemId ? (
-            <li key={v.id} id={String(v.id)}>
+            <li key={v.id} id={String(v.id)} className={styles.editListItem}>
+              <div className={styles.checkBubbleWrapper}>
+                <CheckBubble checked={v.itemAdded} />
+              </div>
               <div className={styles.editItemWrapper}>
                 <form
                   onSubmit={(e) => handleEditItem(e, i, v.id)}
@@ -188,17 +230,26 @@ const WantToSeeList = (props: WantToSeeListProps) => {
               </div>
             </li>
           ) : (
-            <li
-              key={v.id}
-              id={String(v.id)}
-              onDoubleClick={(e) => editItem(e, i, v.id)}
-            >
-              {v.value}
+            <li key={v.id} id={String(v.id)} className={styles.listItem}>
+              <div
+                className={styles.checkBubbleWrapper}
+                onClick={(e) => handleCheckItem(e, v.itemAdded, v.id, i)}
+              >
+                <CheckBubble checked={v.itemAdded} />
+              </div>
+              <div
+                onDoubleClick={(e) => editItem(e, i, v.id)}
+                className={`${styles.itemValue} ${
+                  v.itemAdded && styles.itemChecked
+                }`}
+              >
+                {v.value}
+              </div>
             </li>
           );
         })}{" "}
         {addingNewItem && (
-          <li>
+          <li className={styles.newItem}>
             <form onSubmit={handleSubmitItem}>
               <input
                 className={styles.input}

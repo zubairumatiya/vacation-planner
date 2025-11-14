@@ -147,10 +147,10 @@ repeaterCall();
 
 // add google maps API window
 // -- add from google maps directly to want to see list OR schedule (prob a button instead of drag, or maybe button for one and drag for the other)
-// -- -- will prob have to change the DB for want to see list because we will need to be able to store the ID of google place instead of using the DB serial id.
-// -- -- editing item will be tricky. Let's add a googleItem boolean column in the DB, which will have to now be a part of Item, so you can only edit non-google items.
-// -- -- change add button to a unclickable checkmark,  prob just an img then.
-// -- -- we should be able to preload these check marks if we make the want to see list the id's of the places too.
+// -- -- add a check mark abilityt to check list, i think the most simple would be changing the bullet to an empty circle and then when clicked, it turns to a check mark and crosses the list item out
+// -- -- add drag from list to schedule, this will not remove the list item but rather engage the checked list item styling, if a successful drop occurs
+// -- -- dragging is not ideal for mobile, so we can help mitigate by adding auto suggestions from list to the location input when adding a new item to the schedule.
+// -- schedule drag styling should shift items visually
 // -- add more placeTypes
 // -- reset place list scroll bar upon next page
 // -- make UI responsive

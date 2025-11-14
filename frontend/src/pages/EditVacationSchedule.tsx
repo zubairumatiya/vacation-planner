@@ -958,7 +958,7 @@ const EditVacationSchedule = (props: {
                     ></th>
                     <th className={styles.startTimeHeader}>Start Time</th>
                     <th className={styles.endTimeHeader}>End Time</th>
-                    <th className={styles.locationHeader}>Location</th>
+                    <th className={styles.locationHeader}>Place</th>
                     <th className={styles.costHeader}>Cost</th>
                     <th className={styles.detailsHeader}>Details</th>
                     <th className={styles.multiDayHeader}>Multi-day</th>

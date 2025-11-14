@@ -317,7 +317,7 @@ router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
 router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "SELECT id, value, from_google FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
+      "SELECT id, value, from_google, item_added FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
       [req.params.tripId]
     );
     snakeToCamel(result.rows);
@@ -363,6 +363,24 @@ router.patch("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
     next(err);
   }
 });
+
+router.patch(
+  "/check-list-item/:itemId",
+  ensureLoggedIn,
+  async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "UPDATE trip_list SET item_added=$1 WHERE id=$2 RETURNING *",
+        [req.body.newValue, req.params.itemId]
+      );
+      snakeToCamel(result.rows);
+      res.status(200).json({ data: result.rows });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
   try {
