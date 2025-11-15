@@ -51,9 +51,19 @@
   margin-right: 0.3rem;
 }
 
+.checkBubbleWrapper:hover {
+  cursor: pointer;
+}
+
 .itemValue {
   width: 100%;
   display: flex;
+  margin-bottom: 1px;
+  cursor: grab;
+}
+
+.grabbing {
+  cursor: grabbing;
 }
 
 .itemChecked {

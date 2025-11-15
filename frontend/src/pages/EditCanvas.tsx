@@ -16,6 +16,7 @@ const EditCanvas = () => {
   const [location, setLocation] = useState<string>("");
   const [gId, setGId] = useState<string>("");
   const [wishList, setWishList] = useState<Item[]>([]);
+  //const [dragListItem, setDragListItem] = useState<
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();

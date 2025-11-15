@@ -83,8 +83,7 @@ const toCamelCase = (dbRows) => {
   });
 };
 
-toCamelCase(dbResult);
-console.log(dbResult);
+//toCamelCase(dbResult);
 
 /*
 let countOfPlaces = 0;
@@ -150,9 +149,11 @@ repeaterCall();
 // -- -- add a check mark abilityt to check list, i think the most simple would be changing the bullet to an empty circle and then when clicked, it turns to a check mark and crosses the list item out
 // -- -- add drag from list to schedule, this will not remove the list item but rather engage the checked list item styling, if a successful drop occurs
 // -- -- dragging is not ideal for mobile, so we can help mitigate by adding auto suggestions from list to the location input when adding a new item to the schedule.
+// -- -- should we add a google id link from list to schedule just like we did in maps? Or is this unecessarily complex without added benefit, yeah i really don't know if the user is getting any benefit.
 // -- schedule drag styling should shift items visually
 // -- add more placeTypes
 // -- reset place list scroll bar upon next page
+// -- add question mark help button in corner of each component that gives explanation
 // -- make UI responsive
 // -- add token check to backend maps api points
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.

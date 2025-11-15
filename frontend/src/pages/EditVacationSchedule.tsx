@@ -290,7 +290,8 @@ const EditVacationSchedule = (props: {
   const setEndDate = (
     newStartTime: Date,
     currentEndTime: Date,
-    multiDayCheck: boolean
+    multiDayCheck: boolean,
+    fromList: boolean
   ): Date => {
     /*
     const difference =
@@ -310,6 +311,9 @@ const EditVacationSchedule = (props: {
       console.log("no change needed", currentEndTime);
       return currentEndTime;
     }*/
+    if (fromList) {
+      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
+    }
     if (multiDayCheck) {
       return new Date(newStartTime.getTime() + 60 * 60 * 24 * 1000);
     } else {
@@ -619,10 +623,42 @@ const EditVacationSchedule = (props: {
   const handleDragDrop = async (e: React.DragEvent) => {
     e.preventDefault();
 
+    if (e.dataTransfer.getData("application/json/list-item")) {
+      console.log(
+        "from list! ",
+        e.dataTransfer.getData("application/json/list-item")
+      );
+      console.log(
+        "this should be empty: ",
+        e.dataTransfer.getData("text/plain")
+      );
+      return;
+    }
+
     const target = e.target as HTMLElement;
     let targetIndex = Number(target.closest("tr")?.dataset.index);
     const copy = schedule.slice();
-    const removedElement = copy.splice(dragIndexRef.current, 1);
+    let removedElement: Schedule[];
+    if (e.dataTransfer.getData("application/json/list-item")) {
+      // if we drag from list, let's make an empty Schedule item so we can use the rest of this function seemlessly, and add empty fields
+      const itemFromList: Item = JSON.parse(
+        e.dataTransfer.getData("application/json/list-item")
+      );
+      removedElement = [
+        {
+          id: -1,
+          trip_id: Number(tripId),
+          location: itemFromList.value,
+          details: "",
+          start_time: new Date(),
+          end_time: new Date(),
+          cost: 0,
+          multi_day: false,
+        },
+      ];
+    } else {
+      removedElement = copy.splice(dragIndexRef.current, 1);
+    }
     const multiDayCheck = removedElement[0].multi_day;
     let finalArr: Schedule[] = schedule;
 
@@ -655,7 +691,8 @@ const EditVacationSchedule = (props: {
         targetIndex,
         multiDayCheck,
         true,
-        dropDay
+        dropDay,
+        e.dataTransfer.getData("application/json/list-item") ? true : false
       );
     } else if (targetIndex === dragIndexRef.current) {
       //if some one picks it up but doesn't drop it elsewhere
@@ -673,10 +710,15 @@ const EditVacationSchedule = (props: {
         targetIndex,
         multiDayCheck,
         false,
-        dropDay
+        dropDay,
+        e.dataTransfer.getData("application/json/list-item") ? true : false
       );
     }
 
+    if (e.dataTransfer.getData("application/json/list-item")) {
+      // TO DO FOR NEXT TIME: need to add backend query. What is the current index or our new item? how will we add a new item to the top of the list? how about the bottom? might have to start incorporation on drag over.
+    }
+    // for a new item from list, let's add a post request instead but do the same result.ok
     const updatedItem = finalArr[targetIndex];
     const result = await fetch(`${apiURL}/update-time/${updatedItem.id}`, {
       method: "PATCH",
@@ -734,7 +776,8 @@ const EditVacationSchedule = (props: {
     targetIndex: number,
     multiDayCheck: boolean,
     emptyTable?: boolean,
-    newDay?: Date
+    newDay?: Date,
+    fromList?: boolean
   ) => {
     // shockingly all we need is the final arr and target index. Why?? Because our value always becomes the targetIndex whether we go above or below. because we slice where the target is never included but then added immedialtely after which then becomes the targetIndex. It can get confusing because it seems to get added above or below our original target, which visually is true but, we are working with indexes, which make it more simple - it's as simple as hey give me your spot. Especially with the idea of removing an element from the array and then placing it back in, our ideas can turn quickly into whats indexes get shifted where what goes
     if (emptyTable) {
@@ -752,7 +795,8 @@ const EditVacationSchedule = (props: {
       finalArr[targetIndex].end_time = setEndDate(
         constructDate,
         finalArr[targetIndex].end_time,
-        multiDayCheck
+        multiDayCheck,
+        fromList
       );
       console.log("end date:" + finalArr[targetIndex].end_time);
       return finalArr;
@@ -767,7 +811,8 @@ const EditVacationSchedule = (props: {
         finalArr[targetIndex].end_time = setEndDate(
           constructDate,
           finalArr[targetIndex].end_time,
-          multiDayCheck
+          multiDayCheck,
+          fromList
         );
         finalArr[targetIndex].start_time = constructDate;
         return finalArr;
@@ -784,7 +829,8 @@ const EditVacationSchedule = (props: {
         finalArr[targetIndex].end_time = setEndDate(
           constructDate,
           finalArr[targetIndex].end_time,
-          multiDayCheck
+          multiDayCheck,
+          fromList
         );
         return finalArr;
       }
@@ -826,7 +872,8 @@ const EditVacationSchedule = (props: {
       finalArr[targetIndex].end_time = setEndDate(
         constructDate,
         finalArr[targetIndex].end_time,
-        multiDayCheck
+        multiDayCheck,
+        fromList
       );
       return finalArr;
     }

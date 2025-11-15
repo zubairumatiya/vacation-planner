@@ -13,6 +13,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const [newItem, setNewItem] = useState<string>("");
   const [addingNewItem, setAddingNewItem] = useState<boolean>(true);
   const [editItemId, setEditItemId] = useState<string>("-1");
+  const [isHolding, setIsHolding] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -176,6 +177,13 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
   };
 
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: Item) => {
+    if (e) {
+      const stringItem = JSON.stringify(item);
+      e.dataTransfer?.setData("application/json/list-item", stringItem);
+    }
+  };
+
   return (
     <div
       className={styles.pageWrapper}
@@ -230,7 +238,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
               </div>
             </li>
           ) : (
-            <li key={v.id} id={String(v.id)} className={styles.listItem}>
+            <li key={v.id} id={v.id} className={`${styles.listItem}`}>
               <div
                 className={styles.checkBubbleWrapper}
                 onClick={(e) => handleCheckItem(e, v.itemAdded, v.id, i)}
@@ -241,7 +249,11 @@ const WantToSeeList = (props: WantToSeeListProps) => {
                 onDoubleClick={(e) => editItem(e, i, v.id)}
                 className={`${styles.itemValue} ${
                   v.itemAdded && styles.itemChecked
-                }`}
+                }  ${isHolding && styles.grabbing}`}
+                onMouseDown={() => setIsHolding(true)}
+                onDragEnd={() => setIsHolding(false)}
+                draggable="true"
+                onDragStart={(e) => handleDragStart(e, v)}
               >
                 {v.value}
               </div>
