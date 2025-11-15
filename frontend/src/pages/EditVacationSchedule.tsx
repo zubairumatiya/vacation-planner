@@ -291,7 +291,7 @@ const EditVacationSchedule = (props: {
     newStartTime: Date,
     currentEndTime: Date,
     multiDayCheck: boolean,
-    fromList: boolean
+    fromList: boolean | undefined
   ): Date => {
     /*
     const difference =
@@ -403,7 +403,7 @@ const EditVacationSchedule = (props: {
         return;
       } else {
         try {
-          const addingReq = await fetch(`${apiURL}/vacation/${tripId}`, {
+          const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -716,7 +716,30 @@ const EditVacationSchedule = (props: {
     }
 
     if (e.dataTransfer.getData("application/json/list-item")) {
-      // TO DO FOR NEXT TIME: need to add backend query. What is the current index or our new item? how will we add a new item to the top of the list? how about the bottom? might have to start incorporation on drag over.
+      // TO DO FOR NEXT TIME: need to add backend query. We will have a problem with new items being able to be placed at the bottom of the total array, because adding a new item with our current algorithm, will place the new item above the target index - the new item then becomes the targetIndex. I think we might have to start incorporation a drag over to visually indicate where to drop an item.
+      const updatedItem = finalArr[targetIndex];
+      const result = await fetch(`${apiURL}/schedule/${tripId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          start: updatedItem.start_time,
+          end: updatedItem.end_time,
+          location: updatedItem.location,
+          cost: updatedItem.cost,
+          details: updatedItem.details,
+          multiDay: updatedItem.multi_day,
+        }),
+      });
+      if (result.ok) {
+        const data = await result.json();
+        finalArr[targetIndex] = data.addedItem;
+        setSchedule(finalArr);
+      } else {
+        alert("error processing change");
+      }
     }
     // for a new item from list, let's add a post request instead but do the same result.ok
     const updatedItem = finalArr[targetIndex];

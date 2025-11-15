@@ -231,7 +231,7 @@ router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
-router.post("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
+router.post("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
   try {
     const match = await db.query(
       "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
@@ -242,7 +242,7 @@ router.post("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
       return;
     }
     const result = await db.query(
-      "INSERT INTO trip_schedule (trip_id,start_time, end_time, location, cost, details, multi_day) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+      "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
       [
         match.rows[0].trip_id,
         req.body.start,
