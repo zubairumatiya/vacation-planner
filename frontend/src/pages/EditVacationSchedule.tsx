@@ -39,6 +39,15 @@ type timeObj = {
   meridiem: string;
 };
 
+type DayContainer = {
+  day: string;
+  label: string;
+};
+
+type DaySchedule = {
+  [day: string]: Schedule[];
+};
+
 const EditVacationSchedule = (props: {
   loadFirst: () => void;
   getMapValues: (a: Vp, b: string, c: string) => void;
@@ -53,7 +62,7 @@ const EditVacationSchedule = (props: {
   const [tripStart, setTripStart] = useState<Date>(new Date());
   const [tripEnd, setTripEnd] = useState<Date>(new Date());
   const [tripLength, setTripLength] = useState(0);
-  const [scheduleDayLabels, setScheduleDayLabels] = useState<string[]>([]); // basically each day
+  const [days, setDays] = useState<DayContainer[]>([]); // each day(table)
   const [addingItem, setAddingItem] = useState<boolean>(false); // buttons for each day will have to have their own boolean to show or not to
   const [individualAddition, setIndividualAddition] = useState<boolean[]>([
     false,
@@ -155,7 +164,7 @@ const EditVacationSchedule = (props: {
           (a: Schedule, b: Schedule) =>
             a.start_time.getTime() - b.start_time.getTime()
         );
-        setSchedule(data.schedule);
+
         setTitle(data.tripName);
         setTripStart(convertStartPreserved);
         setTripEnd(convertEnd);
@@ -164,7 +173,7 @@ const EditVacationSchedule = (props: {
         const UtcEnd = convertEnd.getTime();
         const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
         setTripLength(length);
-        const daysArr: string[] = [];
+        const dayContainers: DayContainer[] = [];
 
         for (let i = 0; i <= length; i++) {
           if (i === 0) {
@@ -178,7 +187,11 @@ const EditVacationSchedule = (props: {
               day: "numeric",
               timeZone: "UTC",
             }).format(convertStart);
-            daysArr.push(`${day} - ${date}`);
+
+            dayContainers.push({
+              day: convertStart.toISOString().split("T")[0],
+              label: `${day} - ${date}`,
+            });
           } else {
             convertStart.setDate(convertStart.getDate() + 1); // a day is a day whether local or UTC, this doesn't change the timezone even tho they are local timezone methods
             const day = new Intl.DateTimeFormat("en-us", {
@@ -191,10 +204,22 @@ const EditVacationSchedule = (props: {
               day: "numeric",
               timeZone: "UTC",
             }).format(convertStart);
-            daysArr.push(`${day} - ${date}`);
+            dayContainers.push({
+              day: convertStart.toISOString().split("T")[0],
+              label: `${day} - ${date}`,
+            });
           }
         }
-        setScheduleDayLabels(daysArr);
+        setDays(dayContainers);
+        const organizeSchedule: DaySchedule = {};
+        dayContainers.forEach(
+          (dayObj: DayContainer) =>
+            (organizeSchedule[dayObj.day] = schedule.filter(
+              (v) => v.start_time.toISOString().split("T")[0] === dayObj.day
+            ))
+        );
+        //(dayObj.day:)
+        setSchedule;
         setLoading(false);
         props.loadFirst();
       }
@@ -716,7 +741,7 @@ const EditVacationSchedule = (props: {
     }
 
     if (e.dataTransfer.getData("application/json/list-item")) {
-      // TO DO FOR NEXT TIME: need to add backend query. We will have a problem with new items being able to be placed at the bottom of the total array, because adding a new item with our current algorithm, will place the new item above the target index - the new item then becomes the targetIndex. I think we might have to start incorporation a drag over to visually indicate where to drop an item.
+      // TO DO FOR NEXT TIME: Test backend query. We will have a problem with new items being able to be placed at the bottom of the total array, because adding a new item with our current algorithm, will place the new item above the target index - the new item then becomes the targetIndex. I think we might have to start incorporation a drag over to visually indicate where to drop an item.
       const updatedItem = finalArr[targetIndex];
       const result = await fetch(`${apiURL}/schedule/${tripId}`, {
         method: "POST",
@@ -988,7 +1013,7 @@ const EditVacationSchedule = (props: {
     <p>{message}</p>
   ) : (
     <div className={styles.pageWrapper}>
-      {scheduleDayLabels.map((day, index) => {
+      {scheduleDayLabels.map((dayObj: DayContainer, index) => {
         // day = Tuesday - Jul 15, 2025
         // all of these are local times as of now
         const getDay = day.split("-")[1].trim();
@@ -1001,7 +1026,7 @@ const EditVacationSchedule = (props: {
         const UTCDayOfTrip = new Date(
           `${year}-${zeroAddedMonth}-${dayOf}T00:00:00Z`
         );
-        const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01 THIS HAS TO BE FIXED because it is treting the raw date as local time and turning it into UTC, which results in day shifts depending on local time
+        const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01
         return (
           <div key={day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{day}</div>
@@ -1047,7 +1072,7 @@ const EditVacationSchedule = (props: {
                         .split("T")[0];
                       return startDay === dayOfTrip;
                     })
-                    .map(({ value, index }) => {
+                    .map(({ value, index }, ind, arr) => {
                       let sTime;
                       if (value.start_time) {
                         sTime = addMeridiem(

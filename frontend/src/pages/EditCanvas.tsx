@@ -5,6 +5,7 @@ import styles from "../styles/EditCanvas.module.css";
 import { useState, useCallback, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { DndContext } from "@dnd-kit/core";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -76,31 +77,33 @@ const EditCanvas = () => {
   }, []);
 
   return (
-    <div className={styles.pageWrapper}>
-      <EditVacationSchedule
-        loadFirst={() => setLoading(false)}
-        getMapValues={gValuesFn}
-      />
-      {!loading && (
-        <WantToSeeList
-          loadSecond={() => setLoading2(false)}
-          setList={setWishList}
-          list={wishList}
-          handleSubmitItem={handleSubmitItem}
-          handleDeleteItem={handleDeleteItem}
+    <DndContext>
+      <div className={styles.pageWrapper}>
+        <EditVacationSchedule
+          loadFirst={() => setLoading(false)}
+          getMapValues={gValuesFn}
         />
-      )}
-      {!loading2 && (
-        <MyMapComponent
-          bounds={vp}
-          startLocation={location}
-          gId={gId}
-          list={wishList}
-          handleSubmitItem={handleSubmitItem}
-          handleDeleteItem={handleDeleteItem}
-        />
-      )}
-    </div>
+        {!loading && (
+          <WantToSeeList
+            loadSecond={() => setLoading2(false)}
+            setList={setWishList}
+            list={wishList}
+            handleSubmitItem={handleSubmitItem}
+            handleDeleteItem={handleDeleteItem}
+          />
+        )}
+        {!loading2 && (
+          <MyMapComponent
+            bounds={vp}
+            startLocation={location}
+            gId={gId}
+            list={wishList}
+            handleSubmitItem={handleSubmitItem}
+            handleDeleteItem={handleDeleteItem}
+          />
+        )}
+      </div>
+    </DndContext>
   );
 };
 
