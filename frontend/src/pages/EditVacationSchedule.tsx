@@ -1,4 +1,4 @@
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useContext, useRef, Fragment } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/EditSchedule.module.css";
@@ -9,6 +9,9 @@ import editIcon from "../assets/edit-icon.svg";
 import dragIcon from "../assets/dragger.svg";
 import { polyfill } from "mobile-drag-drop";
 import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
+import { DragOverlay, useDroppable } from "@dnd-kit/core";
+import { SortableContext, useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -17,13 +20,13 @@ const apiURL = import.meta.env.VITE_API_URL;
 
 type Schedule = {
   id: number;
-  trip_id: number;
+  tripId: number;
   location: string;
   details: string;
-  start_time: Date;
-  end_time: Date;
+  startTime: Date;
+  endTime: Date;
   cost: number;
-  multi_day: boolean;
+  multiDay: boolean;
 };
 
 type Prefill = {
@@ -57,11 +60,7 @@ const EditVacationSchedule = (props: {
   const token = auth?.token;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [schedule, setSchedule] = useState<Schedule[]>([]);
-  const [title, setTitle] = useState("");
-  const [tripStart, setTripStart] = useState<Date>(new Date());
-  const [tripEnd, setTripEnd] = useState<Date>(new Date());
-  const [tripLength, setTripLength] = useState(0);
+  const [schedule, setSchedule] = useState<DaySchedule>({});
   const [days, setDays] = useState<DayContainer[]>([]); // each day(table)
   const [addingItem, setAddingItem] = useState<boolean>(false); // buttons for each day will have to have their own boolean to show or not to
   const [individualAddition, setIndividualAddition] = useState<boolean[]>([
@@ -105,7 +104,6 @@ const EditVacationSchedule = (props: {
   const [multiDayStyle, setMultiDayStyle] = useState(false);
   const editSubmitButtonRef = useRef<HTMLButtonElement>(null);
   const [editMultiDay, setEditMultiDay] = useState(false);
-  const [costTotal, setCostTotal] = useState(0);
 
   const monthsArr = [
     "Jan",
@@ -124,7 +122,7 @@ const EditVacationSchedule = (props: {
 
   useEffect(() => {
     const getTrip = async () => {
-      const response = await fetch(`${apiURL}/vacation/${tripId}`, {
+      const response = await fetch(`${apiURL}/schedule/${tripId}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -149,30 +147,22 @@ const EditVacationSchedule = (props: {
         //  data.endDate
         //);
         props.getMapValues(data.gVp, data.location, data.gId);
-        const convertStartPreserved = new Date(data.startDate);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
-        let costTotal = 0;
         for (const i of data.schedule) {
-          i.start_time = new Date(i.start_time);
-          i.end_time = new Date(i.end_time);
-          costTotal += Number(i.cost);
+          i.startTime = new Date(i.startTime);
+          i.endTime = new Date(i.endTime);
         }
-        setCostTotal(costTotal);
+
         //console.log(data.schedule);
         data.schedule.sort(
           (a: Schedule, b: Schedule) =>
-            a.start_time.getTime() - b.start_time.getTime()
+            a.startTime.getTime() - b.startTime.getTime()
         );
-
-        setTitle(data.tripName);
-        setTripStart(convertStartPreserved);
-        setTripEnd(convertEnd);
 
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
         const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
-        setTripLength(length);
         const dayContainers: DayContainer[] = [];
 
         for (let i = 0; i <= length; i++) {
@@ -210,16 +200,17 @@ const EditVacationSchedule = (props: {
             });
           }
         }
-        setDays(dayContainers);
-        const organizeSchedule: DaySchedule = {};
+
+        const bucketizeItems: DaySchedule = {};
         dayContainers.forEach(
           (dayObj: DayContainer) =>
-            (organizeSchedule[dayObj.day] = schedule.filter(
-              (v) => v.start_time.toISOString().split("T")[0] === dayObj.day
+            (bucketizeItems[dayObj.day] = data.schedule.filter(
+              (v: Schedule) =>
+                v.startTime.toISOString().split("T")[0] === dayObj.day
             ))
         );
-        //(dayObj.day:)
-        setSchedule;
+        setDays(dayContainers);
+        setSchedule(bucketizeItems);
         setLoading(false);
         props.loadFirst();
       }
@@ -230,13 +221,13 @@ const EditVacationSchedule = (props: {
 
   const reSort = (arr: Array<Schedule>) => {
     arr.map((v) => {
-      v.start_time = new Date(v.start_time);
-      v.end_time = new Date(v.end_time);
+      v.startTime = new Date(v.startTime);
+      v.endTime = new Date(v.endTime);
       return v;
     });
     arr.sort(
       (a: Schedule, b: Schedule) =>
-        a.start_time.getTime() - b.start_time.getTime()
+        a.startTime.getTime() - b.startTime.getTime()
     );
     return arr;
   };
@@ -672,19 +663,19 @@ const EditVacationSchedule = (props: {
       removedElement = [
         {
           id: -1,
-          trip_id: Number(tripId),
+          tripId: Number(tripId),
           location: itemFromList.value,
           details: "",
-          start_time: new Date(),
-          end_time: new Date(),
+          startTime: new Date(),
+          endTime: new Date(),
           cost: 0,
-          multi_day: false,
+          multiDay: false,
         },
       ];
     } else {
       removedElement = copy.splice(dragIndexRef.current, 1);
     }
-    const multiDayCheck = removedElement[0].multi_day;
+    const multiDayCheck = removedElement[0].multiDay;
     let finalArr: Schedule[] = schedule;
 
     const tableTarget = String(target.closest("table")?.id);
@@ -699,7 +690,7 @@ const EditVacationSchedule = (props: {
       targetIndex =
         schedule.findIndex(
           // do we need thiss? why not just use drop day and paste the time
-          (v) => v.start_time.getTime() > UTCDestination
+          (v) => v.startTime.getTime() > UTCDestination
         ) - 1;
       if (targetIndex === -2) {
         //this will trigger if we are placing it at the bottom of schedule since there is no item that will be > UTCOrigin so it returns -1
@@ -750,12 +741,12 @@ const EditVacationSchedule = (props: {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          start: updatedItem.start_time,
-          end: updatedItem.end_time,
+          start: updatedItem.startTime,
+          end: updatedItem.endTime,
           location: updatedItem.location,
           cost: updatedItem.cost,
           details: updatedItem.details,
-          multiDay: updatedItem.multi_day,
+          multiDay: updatedItem.multiDay,
         }),
       });
       if (result.ok) {
@@ -775,8 +766,8 @@ const EditVacationSchedule = (props: {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        start: updatedItem.start_time,
-        end: updatedItem.end_time,
+        start: updatedItem.startTime,
+        end: updatedItem.endTime,
       }),
     });
     if (result.ok) {
@@ -833,58 +824,58 @@ const EditVacationSchedule = (props: {
         console.log("error in finding new date to place on");
         return schedule;
       }
-      const preserveTime = finalArr[targetIndex].start_time
+      const preserveTime = finalArr[targetIndex].startTime
         .toISOString()
         .split("T")[1];
       const day = newDay.toISOString().split("T")[0];
 
       const constructDate = new Date(`${day}T${preserveTime}`);
-      finalArr[targetIndex].start_time = constructDate;
-      finalArr[targetIndex].end_time = setEndDate(
+      finalArr[targetIndex].startTime = constructDate;
+      finalArr[targetIndex].endTime = setEndDate(
         constructDate,
-        finalArr[targetIndex].end_time,
+        finalArr[targetIndex].endTime,
         multiDayCheck,
         fromList
       );
-      console.log("end date:" + finalArr[targetIndex].end_time);
+      console.log("end date:" + finalArr[targetIndex].endTime);
       return finalArr;
     }
     if (targetIndex === 0) {
-      const dateAfter: Date = finalArr[targetIndex + 1].start_time;
-      const newDate = finalArr[targetIndex + 1].start_time
+      const dateAfter: Date = finalArr[targetIndex + 1].startTime;
+      const newDate = finalArr[targetIndex + 1].startTime
         .toISOString()
         .split("T")[0];
       if (dateAfter.getUTCHours() === 0) {
         const constructDate = new Date(`${newDate}T00:00:00Z`);
-        finalArr[targetIndex].end_time = setEndDate(
+        finalArr[targetIndex].endTime = setEndDate(
           constructDate,
-          finalArr[targetIndex].end_time,
+          finalArr[targetIndex].endTime,
           multiDayCheck,
           fromList
         );
-        finalArr[targetIndex].start_time = constructDate;
+        finalArr[targetIndex].startTime = constructDate;
         return finalArr;
       } else {
         const newHour = dateAfter.getUTCHours() - 1;
         const newHourMod = prefixZero(newHour);
         const minutes: string = prefixZero(
-          finalArr[targetIndex].start_time.getUTCMinutes()
+          finalArr[targetIndex].startTime.getUTCMinutes()
         );
         const constructDate = new Date(
           `${newDate}T${newHourMod}:${minutes}:00Z`
         );
-        finalArr[targetIndex].start_time = constructDate;
-        finalArr[targetIndex].end_time = setEndDate(
+        finalArr[targetIndex].startTime = constructDate;
+        finalArr[targetIndex].endTime = setEndDate(
           constructDate,
-          finalArr[targetIndex].end_time,
+          finalArr[targetIndex].endTime,
           multiDayCheck,
           fromList
         );
         return finalArr;
       }
     } else {
-      const dateBefore: Date = finalArr[targetIndex - 1]?.start_time; // we will be comparing adjacent days of the target to make sure it gets placed in the right day and not the day above
-      const dateAfter: Date = finalArr[targetIndex + 1]?.start_time;
+      const dateBefore: Date = finalArr[targetIndex - 1]?.startTime; // we will be comparing adjacent days of the target to make sure it gets placed in the right day and not the day above
+      const dateAfter: Date = finalArr[targetIndex + 1]?.startTime;
 
       const dayDrop = newDay?.toISOString().split("T")[0];
       let dayReference;
@@ -916,10 +907,10 @@ const EditVacationSchedule = (props: {
       const minutes: string = prefixZero(dayReference.getUTCMinutes());
 
       const constructDate = new Date(`${newDate}T${newHourMod}:${minutes}:00Z`);
-      finalArr[targetIndex].start_time = constructDate;
-      finalArr[targetIndex].end_time = setEndDate(
+      finalArr[targetIndex].startTime = constructDate;
+      finalArr[targetIndex].endTime = setEndDate(
         constructDate,
-        finalArr[targetIndex].end_time,
+        finalArr[targetIndex].endTime,
         multiDayCheck,
         fromList
       );
@@ -1009,34 +1000,115 @@ const EditVacationSchedule = (props: {
     }
   };
 
+  const fourDigitTime = (time: Date) => {
+    return time.toUTCString().slice(-12, -7);
+  };
+
+  const dayOfTrip = "TRUE";
+
+  const NormalRow = ({ value }: { value: Schedule }) => {
+    let sTime;
+    if (value.startTime) {
+      sTime = addMeridiem(fourDigitTime(value.startTime));
+    } else {
+      sTime = "12:00 AM";
+    }
+    let eTime;
+    if (value.endTime) {
+      eTime = addMeridiem(fourDigitTime(value.endTime));
+    } else {
+      eTime = "12:01 AM";
+    }
+
+    const startDate: string = value.startTime.toISOString().split("T")[0];
+
+    const endDate: string = value.endTime.toISOString().split("T")[0];
+
+    const endDateFormatted: string = `${prefixZero(
+      value.endTime.getUTCMonth() + 1
+    )}-${prefixZero(
+      value.endTime.getUTCDate()
+    )}-${value.endTime.getUTCFullYear()}`;
+    return (
+      <>
+        <td
+          draggable="true"
+          //onDragStart={(e) =>
+          //  handleDragStart(e, value.id, index)
+          //}
+          className={styles.dragCells}
+        >
+          <img className={styles.dragButton} src={dragIcon} alt="drag" />
+        </td>
+        <td>{sTime}</td>
+        {startDate !== endDate ? (
+          <td>
+            {endDateFormatted}
+            <br />
+            {eTime}
+          </td>
+        ) : (
+          <td>{eTime}</td>
+        )}
+        <td className={`${styles.locationTd}`}>{value.location}</td>
+        <td className={styles.costTd}>{`$${value.cost}`}</td>
+        <td className={styles.detailsTd}>
+          <div>{value.details}</div>
+        </td>
+        <td>{value.multiDay ? "yes" : "no"}</td>
+        <td>
+          <img
+            className={styles.editIcon}
+            src={editIcon}
+            alt="edit-icon"
+            onClick={(e) =>
+              handleEdit(
+                e,
+                value.id,
+                value.location,
+                value.cost,
+                value.details,
+                value.multiDay,
+                startDate,
+                endDate,
+                dayOfTrip
+              )
+            }
+          />
+        </td>
+      </>
+    );
+  };
+
   return loading ? (
     <p>{message}</p>
   ) : (
     <div className={styles.pageWrapper}>
-      {scheduleDayLabels.map((dayObj: DayContainer, index) => {
+      {days.map((dayObj: DayContainer, index) => {
         // day = Tuesday - Jul 15, 2025
-        // all of these are local times as of now
-        const getDay = day.split("-")[1].trim();
-        const splits = getDay.split(" ");
-        const month = monthsArr.findIndex((v) => splits[0] === v) + 1;
-        const zeroAddedMonth = prefixZero(month);
-        const dayOf = splits[1].slice(0, 2);
-        const year = splits[2];
-        const combined = `${year}-${zeroAddedMonth}-${dayOf}`;
-        const UTCDayOfTrip = new Date(
-          `${year}-${zeroAddedMonth}-${dayOf}T00:00:00Z`
-        );
-        const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01
+        //const getDay = day.split("-")[1].trim();
+        //const splits = getDay.split(" ");
+        //const month = monthsArr.findIndex((v) => splits[0] === v) + 1;
+        //const zeroAddedMonth = prefixZero(month);
+        //const dayOf = splits[1].slice(0, 2);
+        //const year = splits[2];
+        //const combined = `${year}-${zeroAddedMonth}-${dayOf}`;
+        //const UTCDayOfTrip = new Date(
+        //  `${year}-${zeroAddedMonth}-${dayOf}T00:00:00Z`
+        //);
+        //const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01
+        const { setNodeRef } = useDroppable({ id: dayObj.day });
         return (
-          <div key={day} className={styles.tableNButtonContainer}>
-            <div className={styles.tableCaption}>{day}</div>
+          <div key={dayObj.day} className={styles.tableNButtonContainer}>
+            <div className={styles.tableCaption}>{dayObj.label}</div>
             <div className={styles.tableContainer}>
               <table
                 onDrop={(e) => handleDragDrop(e)}
                 onDragOver={(e) => e.preventDefault()}
                 onDragEnter={(e) => e.preventDefault()}
                 className={styles.table}
-                id={combined}
+                id={dayObj.day}
+                ref={setNodeRef}
               >
                 <colgroup>
                   <col className={styles.dragCol} />
@@ -1061,56 +1133,37 @@ const EditVacationSchedule = (props: {
                   </tr>
                 </thead>
                 <tbody>
-                  {schedule
-                    .map((v, i): { value: Schedule; index: number } => ({
-                      value: v,
-                      index: i,
-                    })) // this is a wrapper so we can use the original index after the filter so we can drag and drop as a whole array rather than an array for each day
-                    .filter(({ value }) => {
-                      const startDay = new Date(value.start_time)
-                        .toISOString()
-                        .split("T")[0];
-                      return startDay === dayOfTrip;
-                    })
-                    .map(({ value, index }, ind, arr) => {
-                      let sTime;
-                      if (value.start_time) {
-                        sTime = addMeridiem(
-                          value.start_time.toUTCString().slice(-12, -7)
-                        );
-                      } else {
-                        sTime = "12:00 AM";
-                      }
-                      let eTime;
-                      if (value.end_time) {
-                        eTime = addMeridiem(
-                          value.end_time.toUTCString().slice(-12, -7)
-                        );
-                      } else {
-                        eTime = "12:01 AM";
-                      }
-
-                      const startDate: string = value.start_time
+                  <SortableContext items={schedule[dayObj.day]}>
+                    {schedule[dayObj.day].map((value, ind) => {
+                      const startDate: string = value.startTime
                         .toISOString()
                         .split("T")[0];
 
-                      const endDate: string = value.end_time
+                      const endDate: string = value.endTime
                         .toISOString()
                         .split("T")[0];
-
-                      const endDateFormatted: string = `${prefixZero(
-                        value.end_time.getUTCMonth() + 1
-                      )}-${prefixZero(
-                        value.end_time.getUTCDate()
-                      )}-${value.end_time.getUTCFullYear()}`;
-
+                      const {
+                        attributes,
+                        listeners,
+                        setNodeRef,
+                        transform,
+                        transition,
+                      } = useSortable({ id: value.id });
+                      const style = {
+                        transform: CSS.Transform.toString(transform),
+                        transition,
+                      };
                       //        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Iterate divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                       return (
                         <Fragment key={value.id}>
                           <tr
                             key={value.id}
-                            id={value.id + ""}
+                            //id={value.id + ""}
+                            {...attributes}
+                            {...listeners}
+                            style={style}
+                            ref={setNodeRef}
                             onDragOver={(e) => e.preventDefault()}
                             data-index={index}
                             className={`${
@@ -1123,7 +1176,7 @@ const EditVacationSchedule = (props: {
                                 value.location,
                                 value.cost,
                                 value.details,
-                                value.multi_day,
+                                value.multiDay,
                                 startDate,
                                 endDate,
                                 dayOfTrip
@@ -1196,7 +1249,9 @@ const EditVacationSchedule = (props: {
                                         meridiem,
                                       });
                                     }}
-                                    preTime={sTime}
+                                    preTime={addMeridiem(
+                                      fourDigitTime(value.startTime)
+                                    )}
                                   />
                                 </td>
 
@@ -1254,7 +1309,9 @@ const EditVacationSchedule = (props: {
                                         meridiem,
                                       });
                                     }}
-                                    preTime={eTime}
+                                    preTime={addMeridiem(
+                                      fourDigitTime(value.endTime)
+                                    )}
                                   />
                                 </td>
 
@@ -1348,61 +1405,7 @@ const EditVacationSchedule = (props: {
                             ) : (
                               //          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Editing above : divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-                              <>
-                                <td
-                                  draggable="true"
-                                  onDragStart={(e) =>
-                                    handleDragStart(e, value.id, index)
-                                  }
-                                  className={styles.dragCells}
-                                >
-                                  <img
-                                    className={styles.dragButton}
-                                    src={dragIcon}
-                                    alt="drag"
-                                  />
-                                </td>
-                                <td>{sTime}</td>
-                                {startDate !== endDate ? (
-                                  <td>
-                                    {endDateFormatted}
-                                    <br />
-                                    {eTime}
-                                  </td>
-                                ) : (
-                                  <td>{eTime}</td>
-                                )}
-                                <td className={`${styles.locationTd}`}>
-                                  {value.location}
-                                </td>
-                                <td
-                                  className={styles.costTd}
-                                >{`$${value.cost}`}</td>
-                                <td className={styles.detailsTd}>
-                                  <div>{value.details}</div>
-                                </td>
-                                <td>{value.multi_day ? "yes" : "no"}</td>
-                                <td>
-                                  <img
-                                    className={styles.editIcon}
-                                    src={editIcon}
-                                    alt="edit-icon"
-                                    onClick={(e) =>
-                                      handleEdit(
-                                        e,
-                                        value.id,
-                                        value.location,
-                                        value.cost,
-                                        value.details,
-                                        value.multi_day,
-                                        startDate,
-                                        endDate,
-                                        dayOfTrip
-                                      )
-                                    }
-                                  />
-                                </td>
-                              </>
+                              <NormalRow value={value}></NormalRow>
                             )}
                           </tr>
                           {editLineId === value.id && (
@@ -1417,9 +1420,20 @@ const EditVacationSchedule = (props: {
                         </Fragment>
                       );
                     })}
+                  </SortableContext>
                 </tbody>
               </table>
             </div>
+            <DragOverlay>
+              {activeId ? (
+                <NormalRow
+                  value={
+                    hmmIfWeKnewOurItemContainerWeCouldDoScheduleBracketContainerDotFindActiveId
+                  }
+                />
+              ) : null}{" "}
+              {/* will need container logic and finding index of id once we find container. Hmm, how do we access what's active? I think it will have to be a series of props and callbacks from EditCanvas right?*/}
+            </DragOverlay>
 
             {!individualAddition[index] ? (
               <button

@@ -183,7 +183,7 @@ router.delete(
   }
 );
 
-router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
+router.get("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
       "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
@@ -203,26 +203,20 @@ router.get("/vacation/:id", ensureLoggedIn, async (req, res, next) => {
       res.sendStatus(404);
       return;
     }
-    const startDate = result2.rows[0].start_date;
-    const endDate = result2.rows[0].end_date;
-    const tripName = result2.rows[0].trip_name;
-    const location = result2.rows[0].location;
-    const gId = result2.rows[0].g_id;
-    const gVp = result2.rows[0].g_vp;
+    snakeToCamel(result2.rows);
     console.log("~~~~~~~~~~~~~~~~~~~", req.params.id);
     const result3 = await db.query(
       "SELECT * FROM trip_schedule WHERE trip_id=$1",
       [req.params.id]
     );
+    if (result3.rowCount > 0) {
+      snakeToCamel(result3.rows);
+    }
     const arrCargo = result3.rowCount > 0 ? result3.rows : [];
+
     res.status(200).json({
       role,
-      tripName,
-      startDate,
-      endDate,
-      location,
-      gId,
-      gVp,
+      ...result2.rows[0],
       schedule: arrCargo,
     });
     return;
@@ -253,8 +247,11 @@ router.post("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
         req.body.multiDay,
       ]
     );
-    res.status(200).json({ addedItem: result.rows[0] });
-    return;
+    if (result.rowCount > 0) {
+      snakeToCamel(result.rows);
+      res.status(200).json({ addedItem: result.rows[0] });
+      return;
+    }
   } catch (err) {
     next(err);
   }
@@ -275,6 +272,7 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
       ]
     );
     if (result.rowCount > 0) {
+      snakeToCamel(result.rows);
       res.status(200).json({ updatedData: result.rows[0] });
       return;
     }
@@ -291,6 +289,7 @@ router.patch("/update-time/:id", ensureLoggedIn, async (req, res, next) => {
       [req.body.start, req.body.end, req.params.id]
     );
     if (result.rowCount > 0) {
+      snakeToCamel(result.rows);
       res.status(200).json({ updatedData: result.rows[0] });
       return;
     }
@@ -306,6 +305,7 @@ router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
       [req.params.id]
     );
     if (result.rowCount > 0) {
+      snakeToCamel(result.rows);
       res.status(200).json({ deletedData: result.rows[0] });
       return;
     }

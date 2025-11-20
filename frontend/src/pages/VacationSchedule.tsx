@@ -15,7 +15,7 @@ const VacationSchedule = () => {
 
   useEffect(() => {
     const getTrip = async () => {
-      const response = await fetch(`${apiURL}/vacation/${tripId}`, {
+      const response = await fetch(`${apiURL}/schedule/${tripId}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -35,8 +35,8 @@ const VacationSchedule = () => {
         const convertEnd = new Date(data.endDate);
         let costTotal = 0;
         for (const i of data.schedule) {
-          i.start_time = new Date(i.start_time);
-          i.end_time = new Date(i.end_time);
+          i.startTime = new Date(i.startTime);
+          i.endTime = new Date(i.endTime);
           costTotal += Number(i.cost);
         }
         setCostTotal(costTotal);
