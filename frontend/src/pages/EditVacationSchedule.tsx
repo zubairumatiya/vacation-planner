@@ -9,16 +9,22 @@ import editIcon from "../assets/edit-icon.svg";
 import dragIcon from "../assets/dragger.svg";
 import { polyfill } from "mobile-drag-drop";
 import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
-import { DragOverlay, useDroppable } from "@dnd-kit/core";
+import {
+  DragOverlay,
+  useDroppable,
+  type DraggableAttributes,
+  type UniqueIdentifier,
+} from "@dnd-kit/core";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 const apiURL = import.meta.env.VITE_API_URL;
 
-type Schedule = {
+export type Schedule = {
   id: number;
   tripId: number;
   location: string;
@@ -47,20 +53,37 @@ type DayContainer = {
   label: string;
 };
 
-type DaySchedule = {
+export type DaySchedule = {
   [day: string]: Schedule[];
 };
 
-const EditVacationSchedule = (props: {
+type NormalRowProps = {
+  value: Schedule;
+  listeners?: SyntheticListenerMap;
+  attributes?: DraggableAttributes | undefined;
+};
+
+type ScheduleProps = {
   loadFirst: () => void;
   getMapValues: (a: Vp, b: string, c: string) => void;
-}) => {
+  activeId: UniqueIdentifier | null;
+  overId: UniqueIdentifier | null;
+  schedule: DaySchedule;
+  setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
+};
+
+const EditVacationSchedule = ({
+  activeId,
+  overId,
+  schedule,
+  setSchedule,
+  ...props
+}: ScheduleProps) => {
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [schedule, setSchedule] = useState<DaySchedule>({});
   const [days, setDays] = useState<DayContainer[]>([]); // each day(table)
   const [addingItem, setAddingItem] = useState<boolean>(false); // buttons for each day will have to have their own boolean to show or not to
   const [individualAddition, setIndividualAddition] = useState<boolean[]>([
@@ -1006,7 +1029,7 @@ const EditVacationSchedule = (props: {
 
   const dayOfTrip = "TRUE";
 
-  const NormalRow = ({ value }: { value: Schedule }) => {
+  const NormalRow = ({ value, ...restOfProps }: NormalRowProps) => {
     let sTime;
     if (value.startTime) {
       sTime = addMeridiem(fourDigitTime(value.startTime));
@@ -1037,6 +1060,7 @@ const EditVacationSchedule = (props: {
           //  handleDragStart(e, value.id, index)
           //}
           className={styles.dragCells}
+          {...restOfProps}
         >
           <img className={styles.dragButton} src={dragIcon} alt="drag" />
         </td>
@@ -1078,6 +1102,208 @@ const EditVacationSchedule = (props: {
         </td>
       </>
     );
+  };
+
+  const EditableRow = ({
+    value,
+    index,
+  }: {
+    value: Schedule;
+    index: number;
+  }) => {
+    return (
+      <>
+        <td>
+          <button
+            type="button"
+            className={styles.xButton}
+            onClick={(e) => submitDelete(e, value.id, index)}
+          >
+            delete
+          </button>
+        </td>
+        <td
+          className={`border-2 ${
+            startError ? " border-red-500" : "border-transparent"
+          }`}
+        >
+          {
+            <input
+              type="date"
+              name="startDate"
+              id="startDate"
+              className={`${styles.dateEditInput} `}
+              value={editStartDate}
+              onChange={(e) => {
+                setEditStartDate(e.target.value);
+                testLessThan24({
+                  which: "start",
+                  date: e.target.value,
+                  ...editStartTimeObject,
+                });
+              }}
+              ref={startDateEditRef}
+            />
+          }
+          <CustomTimePicker
+            className={startError ? "border-red-500" : undefined}
+            onChange={(hour: string, minute: string, meridiem: string) => {
+              constructDate("start", hour, minute, meridiem);
+              setEditStartTimeObject({
+                hour,
+                minute,
+                meridiem,
+              });
+              testLessThan24({
+                which: "start",
+                date: startDateEditRef?.current?.value,
+                hour,
+                minute,
+                meridiem,
+              });
+            }}
+            preTime={addMeridiem(fourDigitTime(value.startTime))}
+          />
+        </td>
+
+        <td
+          className={`border-2 ${
+            endError ? " border-red-500" : "border-transparent"
+          }`}
+        >
+          {
+            <input
+              type="date"
+              name="endDate"
+              id="endDate"
+              value={editEndDate}
+              className={`${styles.dateEditInput}`}
+              onChange={(e) => {
+                setEditEndDate(e.target.value);
+                testLessThan24({
+                  which: "end",
+                  date: e.target.value,
+                  ...editEndTimeObject,
+                });
+              }}
+              ref={endDateEditRef}
+            />
+          }
+          <CustomTimePicker
+            className={endError ? "border-red-500" : undefined}
+            onChange={(
+              // im pretty sure using a callback function here is not necessary, could just put constructDate, however we will lose "end" since it's closed over
+              hour: string,
+              minute: string,
+              meridiem: string
+            ) => {
+              constructDate("end", hour, minute, meridiem);
+              setEditEndTimeObject({
+                hour,
+                minute,
+                meridiem,
+              });
+              testLessThan24({
+                which: "end",
+                date: endDateEditRef?.current?.value,
+                hour,
+                minute,
+                meridiem,
+              });
+            }}
+            preTime={addMeridiem(fourDigitTime(value.endTime))}
+          />
+        </td>
+
+        <td>
+          <input
+            type="text"
+            name="location"
+            id="location"
+            maxLength={300}
+            className={`${locationError && "border-red-500"} ${styles.input}`}
+            ref={locationEditRef}
+          />
+        </td>
+
+        <td>
+          <input
+            className={`${styles.input} ${styles.costEditInput}`}
+            type="number"
+            name="cost"
+            id="cost"
+            step="0.01"
+            min="0"
+            ref={costEditRef}
+          />
+        </td>
+
+        <td>
+          <textarea
+            onInput={handleTextInput}
+            className={`${styles.textArea}`}
+            rows={50}
+            cols={5}
+            name="details"
+            id="details"
+            maxLength={500}
+            ref={detailEditRef}
+            onFocus={() => setTextAreaFocus(true)}
+            onBlur={() => setTextAreaFocus(false)}
+          />
+        </td>
+        <td>
+          <input
+            type="checkbox"
+            className={`${multiDayStyle && styles.checkBoxHighlight}`}
+            name="editMultDay"
+            id="editMultiDay"
+            checked={editMultiDay}
+            onChange={(e) => setEditMultiDay(e.target.checked)}
+            ref={multiDayEditRef}
+          />
+        </td>
+
+        <td>
+          <div className={styles.editButtonCluster}>
+            <button
+              type="button"
+              className={`${styles.buttonsWhileEditing} ${styles.cancelButton}`}
+              onClick={cancelAdd}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={`${styles.buttonsWhileEditing}  ${
+                endError || startError ? "" : styles.submitEditButton
+              }`}
+              onClick={(e) => submitEdit(dayOfTrip, value.id, e)}
+              disabled={endError || startError}
+              ref={editSubmitButtonRef}
+              onKeyUp={(e) => {
+                submitEdit(dayOfTrip, value.id, e);
+              }}
+            >
+              Submit
+            </button>
+          </div>
+        </td>
+      </>
+    );
+  };
+
+  const findContainer = (id: string): string | undefined => {
+    return Object.keys(schedule).find((v) =>
+      schedule[v].find((scheduleItem) => scheduleItem.id === Number(id))
+    );
+  };
+
+  const returnTableRow = (id: string) => {
+    const activeContainer = findContainer(id);
+    if (activeContainer) {
+      schedule[activeContainer].find((v) => id === String(v.id));
+    }
   };
 
   return loading ? (
@@ -1134,12 +1360,12 @@ const EditVacationSchedule = (props: {
                 </thead>
                 <tbody>
                   <SortableContext items={schedule[dayObj.day]}>
-                    {schedule[dayObj.day].map((value, ind) => {
-                      const startDate: string = value.startTime
+                    {schedule[dayObj.day].map((item: Schedule, ind) => {
+                      const startDate: string = item.startTime
                         .toISOString()
                         .split("T")[0];
 
-                      const endDate: string = value.endTime
+                      const endDate: string = item.endTime
                         .toISOString()
                         .split("T")[0];
                       const {
@@ -1148,7 +1374,7 @@ const EditVacationSchedule = (props: {
                         setNodeRef,
                         transform,
                         transition,
-                      } = useSortable({ id: value.id });
+                      } = useSortable({ id: item.id });
                       const style = {
                         transform: CSS.Transform.toString(transform),
                         transition,
@@ -1156,12 +1382,10 @@ const EditVacationSchedule = (props: {
                       //        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Iterate divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                       return (
-                        <Fragment key={value.id}>
+                        <Fragment key={item.id}>
                           <tr
-                            key={value.id}
-                            //id={value.id + ""}
-                            {...attributes}
-                            {...listeners}
+                            key={item.id}
+                            //id={item.id + ""}
                             style={style}
                             ref={setNodeRef}
                             onDragOver={(e) => e.preventDefault()}
@@ -1172,243 +1396,33 @@ const EditVacationSchedule = (props: {
                             onDoubleClick={(e) =>
                               handleEdit(
                                 e,
-                                value.id,
-                                value.location,
-                                value.cost,
-                                value.details,
-                                value.multiDay,
+                                item.id,
+                                item.location,
+                                item.cost,
+                                item.details,
+                                item.multiDay,
                                 startDate,
                                 endDate,
                                 dayOfTrip
                               )
                             }
                           >
-                            {value.id === editLineId ? (
-                              <>
-                                <td>
-                                  <button
-                                    type="button"
-                                    className={styles.xButton}
-                                    onClick={(e) =>
-                                      submitDelete(e, value.id, index)
-                                    }
-                                  >
-                                    delete
-                                  </button>
-                                </td>
-                                <td
-                                  className={`border-2 ${
-                                    startError
-                                      ? " border-red-500"
-                                      : "border-transparent"
-                                  }`}
-                                >
-                                  {
-                                    <input
-                                      type="date"
-                                      name="startDate"
-                                      id="startDate"
-                                      className={`${styles.dateEditInput} `}
-                                      value={editStartDate}
-                                      onChange={(e) => {
-                                        setEditStartDate(e.target.value);
-                                        testLessThan24({
-                                          which: "start",
-                                          date: e.target.value,
-                                          ...editStartTimeObject,
-                                        });
-                                      }}
-                                      ref={startDateEditRef}
-                                    />
-                                  }
-                                  <CustomTimePicker
-                                    className={
-                                      startError ? "border-red-500" : undefined
-                                    }
-                                    onChange={(
-                                      hour: string,
-                                      minute: string,
-                                      meridiem: string
-                                    ) => {
-                                      constructDate(
-                                        "start",
-                                        hour,
-                                        minute,
-                                        meridiem
-                                      );
-                                      setEditStartTimeObject({
-                                        hour,
-                                        minute,
-                                        meridiem,
-                                      });
-                                      testLessThan24({
-                                        which: "start",
-                                        date: startDateEditRef?.current?.value,
-                                        hour,
-                                        minute,
-                                        meridiem,
-                                      });
-                                    }}
-                                    preTime={addMeridiem(
-                                      fourDigitTime(value.startTime)
-                                    )}
-                                  />
-                                </td>
-
-                                <td
-                                  className={`border-2 ${
-                                    endError
-                                      ? " border-red-500"
-                                      : "border-transparent"
-                                  }`}
-                                >
-                                  {
-                                    <input
-                                      type="date"
-                                      name="endDate"
-                                      id="endDate"
-                                      value={editEndDate}
-                                      className={`${styles.dateEditInput}`}
-                                      onChange={(e) => {
-                                        setEditEndDate(e.target.value);
-                                        testLessThan24({
-                                          which: "end",
-                                          date: e.target.value,
-                                          ...editEndTimeObject,
-                                        });
-                                      }}
-                                      ref={endDateEditRef}
-                                    />
-                                  }
-                                  <CustomTimePicker
-                                    className={
-                                      endError ? "border-red-500" : undefined
-                                    }
-                                    onChange={(
-                                      // im pretty sure using a callback function here is not necessary, could just put constructDate, however we will lose "end" since it's closed over
-                                      hour: string,
-                                      minute: string,
-                                      meridiem: string
-                                    ) => {
-                                      constructDate(
-                                        "end",
-                                        hour,
-                                        minute,
-                                        meridiem
-                                      );
-                                      setEditEndTimeObject({
-                                        hour,
-                                        minute,
-                                        meridiem,
-                                      });
-                                      testLessThan24({
-                                        which: "end",
-                                        date: endDateEditRef?.current?.value,
-                                        hour,
-                                        minute,
-                                        meridiem,
-                                      });
-                                    }}
-                                    preTime={addMeridiem(
-                                      fourDigitTime(value.endTime)
-                                    )}
-                                  />
-                                </td>
-
-                                <td>
-                                  <input
-                                    type="text"
-                                    name="location"
-                                    id="location"
-                                    maxLength={300}
-                                    className={`${
-                                      locationError && "border-red-500"
-                                    } ${styles.input}`}
-                                    ref={locationEditRef}
-                                  />
-                                </td>
-
-                                <td>
-                                  <input
-                                    className={`${styles.input} ${styles.costEditInput}`}
-                                    type="number"
-                                    name="cost"
-                                    id="cost"
-                                    step="0.01"
-                                    min="0"
-                                    ref={costEditRef}
-                                  />
-                                </td>
-
-                                <td>
-                                  <textarea
-                                    onInput={handleTextInput}
-                                    className={`${styles.textArea}`}
-                                    rows={50}
-                                    cols={5}
-                                    name="details"
-                                    id="details"
-                                    maxLength={500}
-                                    ref={detailEditRef}
-                                    onFocus={() => setTextAreaFocus(true)}
-                                    onBlur={() => setTextAreaFocus(false)}
-                                  />
-                                </td>
-                                <td>
-                                  <input
-                                    type="checkbox"
-                                    className={`${
-                                      multiDayStyle && styles.checkBoxHighlight
-                                    }`}
-                                    name="editMultDay"
-                                    id="editMultiDay"
-                                    checked={editMultiDay}
-                                    onChange={(e) =>
-                                      setEditMultiDay(e.target.checked)
-                                    }
-                                    ref={multiDayEditRef}
-                                  />
-                                </td>
-
-                                <td>
-                                  <div className={styles.editButtonCluster}>
-                                    <button
-                                      type="button"
-                                      className={`${styles.buttonsWhileEditing} ${styles.cancelButton}`}
-                                      onClick={cancelAdd}
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className={`${
-                                        styles.buttonsWhileEditing
-                                      }  ${
-                                        endError || startError
-                                          ? ""
-                                          : styles.submitEditButton
-                                      }`}
-                                      onClick={(e) =>
-                                        submitEdit(dayOfTrip, value.id, e)
-                                      }
-                                      disabled={endError || startError}
-                                      ref={editSubmitButtonRef}
-                                      onKeyUp={(e) => {
-                                        submitEdit(dayOfTrip, editLineId, e);
-                                      }}
-                                    >
-                                      Submit
-                                    </button>
-                                  </div>
-                                </td>
-                              </>
+                            {item.id === editLineId ? (
+                              <EditableRow
+                                value={item}
+                                index={ind}
+                              ></EditableRow>
                             ) : (
                               //          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Editing above : divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-                              <NormalRow value={value}></NormalRow>
+                              <NormalRow
+                                value={item}
+                                {...attributes}
+                                {...listeners}
+                              ></NormalRow>
                             )}
                           </tr>
-                          {editLineId === value.id && (
+                          {editLineId === item.id && (
                             <tr className={styles.errDiv}>
                               {(endError || startError) && (
                                 <td colSpan={8} className={"text-red-600"}>
@@ -1426,11 +1440,13 @@ const EditVacationSchedule = (props: {
             </div>
             <DragOverlay>
               {activeId ? (
-                <NormalRow
-                  value={
-                    hmmIfWeKnewOurItemContainerWeCouldDoScheduleBracketContainerDotFindActiveId
-                  }
-                />
+                <tr className={styles.tableRow}>
+                  <NormalRow
+                    value={
+                      hmmIfWeKnewOurItemContainerWeCouldDoScheduleBracketContainerDotFindActiveId
+                    }
+                  />
+                </tr>
               ) : null}{" "}
               {/* will need container logic and finding index of id once we find container. Hmm, how do we access what's active? I think it will have to be a series of props and callbacks from EditCanvas right?*/}
             </DragOverlay>

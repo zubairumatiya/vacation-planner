@@ -5,7 +5,14 @@ import styles from "../styles/EditCanvas.module.css";
 import { useState, useCallback, useContext } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { DndContext } from "@dnd-kit/core";
+import {
+  DndContext,
+  //type DragEndEvent,
+  type DragOverEvent,
+  type DragStartEvent,
+  type UniqueIdentifier,
+} from "@dnd-kit/core";
+import { type DaySchedule } from "./EditVacationSchedule";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -17,10 +24,26 @@ const EditCanvas = () => {
   const [location, setLocation] = useState<string>("");
   const [gId, setGId] = useState<string>("");
   const [wishList, setWishList] = useState<Item[]>([]);
-  //const [dragListItem, setDragListItem] = useState<
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
+  const [schedule, setSchedule] = useState<DaySchedule>({});
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();
+
+  const handleDragStart = (e: DragStartEvent) => {
+    setActiveId(e.active.id);
+  };
+
+  const handleDragOver = (e: DragOverEvent) => {
+    if (e.over) setOverId(e.over.id);
+    else setOverId(null);
+  };
+
+  const handleDragEnd = () => {
+    setActiveId(null);
+    // will prob just end up moving time change and api end point fetch request here instead, will be easier since we are wanting to incorporate drag across components
+  };
 
   const gValuesFn = (vp: Vp, gLocation: string, gId: string) => {
     setVp(vp);
@@ -77,11 +100,19 @@ const EditCanvas = () => {
   }, []);
 
   return (
-    <DndContext>
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
       <div className={styles.pageWrapper}>
         <EditVacationSchedule
           loadFirst={() => setLoading(false)}
           getMapValues={gValuesFn}
+          activeId={activeId}
+          overId={overId}
+          schedule={schedule}
+          setSchedule={setSchedule}
         />
         {!loading && (
           <WantToSeeList
