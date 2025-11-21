@@ -1,4 +1,4 @@
-import EditVacationSchedule from "./EditVacationSchedule";
+import EditVacationSchedule, { Schedule } from "./EditVacationSchedule";
 import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
@@ -12,7 +12,7 @@ import {
   type DragStartEvent,
   type UniqueIdentifier,
 } from "@dnd-kit/core";
-import { type DaySchedule } from "./EditVacationSchedule";
+import { type DaySchedule, type DraggingState } from "./EditVacationSchedule";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -27,12 +27,20 @@ const EditCanvas = () => {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   const [schedule, setSchedule] = useState<DaySchedule>({});
+  const [dragItem, setDragItem] = useState<DraggingState | null>(null);
+  const [dragRow, setDragRow] = useState<Schedule | null>(null);
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();
 
   const handleDragStart = (e: DragStartEvent) => {
     setActiveId(e.active.id);
+    const containerAndIndex = findContainerAndIndex(e.active.id);
+    setDragItem(containerAndIndex);
+    if (containerAndIndex.container && containerAndIndex.index)
+      setDragRow(
+        schedule[containerAndIndex?.container][containerAndIndex.index]
+      );
   };
 
   const handleDragOver = (e: DragOverEvent) => {
@@ -43,6 +51,23 @@ const EditCanvas = () => {
   const handleDragEnd = () => {
     setActiveId(null);
     // will prob just end up moving time change and api end point fetch request here instead, will be easier since we are wanting to incorporate drag across components
+  };
+
+  const findContainerAndIndex = (
+    id: UniqueIdentifier | undefined
+  ): DraggingState => {
+    const containerAndIndex: DraggingState = { container: null, index: null };
+
+    for (const v of Object.keys(schedule)) {
+      for (let i = 0; i < schedule[v].length; i++) {
+        if (schedule[v][i].id === id) {
+          containerAndIndex["container"] = v;
+          containerAndIndex["index"] = i;
+          return containerAndIndex;
+        }
+      }
+    }
+    return containerAndIndex;
   };
 
   const gValuesFn = (vp: Vp, gLocation: string, gId: string) => {
@@ -113,6 +138,7 @@ const EditCanvas = () => {
           overId={overId}
           schedule={schedule}
           setSchedule={setSchedule}
+          dragRow={dragRow}
         />
         {!loading && (
           <WantToSeeList

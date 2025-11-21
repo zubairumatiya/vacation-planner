@@ -25,7 +25,7 @@ polyfill({
 const apiURL = import.meta.env.VITE_API_URL;
 
 export type Schedule = {
-  id: number;
+  id: UniqueIdentifier;
   tripId: number;
   location: string;
   details: string;
@@ -63,18 +63,20 @@ type NormalRowProps = {
   attributes?: DraggableAttributes | undefined;
 };
 
+export type DraggingState = {
+  container: string | null;
+  index: number | null;
+};
+
 type ScheduleProps = {
   loadFirst: () => void;
   getMapValues: (a: Vp, b: string, c: string) => void;
-  activeId: UniqueIdentifier | null;
-  overId: UniqueIdentifier | null;
   schedule: DaySchedule;
   setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
+  dragRow: Schedule | null;
 };
 
 const EditVacationSchedule = ({
-  activeId,
-  overId,
   schedule,
   setSchedule,
   ...props
@@ -97,7 +99,7 @@ const EditVacationSchedule = ({
   const [startTimePick, setStartTimePick] = useState<string | null>(null); // i think we will need two of these for start and end, which means we can't have multiple adding schedules open
   const [endTimePick, setEndTimePick] = useState<string | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const [editLineId, setEditLineId] = useState<number | null>(null);
+  const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
   const locationEditRef = useRef<HTMLInputElement>(null);
   const costEditRef = useRef<HTMLInputElement>(null);
   const detailEditRef = useRef<HTMLTextAreaElement>(null);
@@ -488,7 +490,7 @@ const EditVacationSchedule = ({
 
   const submitEdit = async (
     dateAdded: string,
-    itemID: number,
+    itemID: UniqueIdentifier,
     e?: React.MouseEvent | React.KeyboardEvent
   ) => {
     e?.preventDefault();
@@ -563,7 +565,7 @@ const EditVacationSchedule = ({
 
   const submitDelete = async (
     e: React.MouseEvent,
-    itemID: number,
+    itemID: UniqueIdentifier,
     index: number
   ) => {
     e.preventDefault();
@@ -613,7 +615,7 @@ const EditVacationSchedule = ({
 
   const handleEdit = (
     e: React.MouseEvent,
-    id: number,
+    id: UniqueIdentifier,
     preFilledLocation: string,
     preFilledCost: number,
     preFilledDetails: string,
@@ -1293,19 +1295,6 @@ const EditVacationSchedule = ({
     );
   };
 
-  const findContainer = (id: string): string | undefined => {
-    return Object.keys(schedule).find((v) =>
-      schedule[v].find((scheduleItem) => scheduleItem.id === Number(id))
-    );
-  };
-
-  const returnTableRow = (id: string) => {
-    const activeContainer = findContainer(id);
-    if (activeContainer) {
-      schedule[activeContainer].find((v) => id === String(v.id));
-    }
-  };
-
   return loading ? (
     <p>{message}</p>
   ) : (
@@ -1439,13 +1428,9 @@ const EditVacationSchedule = ({
               </table>
             </div>
             <DragOverlay>
-              {activeId ? (
+              {props.dragRow ? (
                 <tr className={styles.tableRow}>
-                  <NormalRow
-                    value={
-                      hmmIfWeKnewOurItemContainerWeCouldDoScheduleBracketContainerDotFindActiveId
-                    }
-                  />
+                  <NormalRow value={props.dragRow} />
                 </tr>
               ) : null}{" "}
               {/* will need container logic and finding index of id once we find container. Hmm, how do we access what's active? I think it will have to be a series of props and callbacks from EditCanvas right?*/}
