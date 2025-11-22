@@ -1,18 +1,28 @@
-import EditVacationSchedule, { Schedule } from "./EditVacationSchedule";
+import EditVacationSchedule, from "./EditVacationSchedule";
 import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
-import { useState, useCallback, useContext } from "react";
+import { useState, useCallback, useContext, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import {
+    closestCorners,
   DndContext,
+  getFirstCollision,
+  KeyboardSensor,
+  MouseSensor,
+  pointerWithin,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  
   //type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
   type UniqueIdentifier,
 } from "@dnd-kit/core";
-import { type DaySchedule, type DraggingState } from "./EditVacationSchedule";
+import { type DaySchedule, type DraggingState, type Schedule } from "./EditVacationSchedule";
+import type { CollisionArgs, CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -25,13 +35,47 @@ const EditCanvas = () => {
   const [gId, setGId] = useState<string>("");
   const [wishList, setWishList] = useState<Item[]>([]);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
+  //const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   const [schedule, setSchedule] = useState<DaySchedule>({});
   const [dragItem, setDragItem] = useState<DraggingState | null>(null);
   const [dragRow, setDragRow] = useState<Schedule | null>(null);
+  const recentlyMovedToNewContainer = useRef<boolean>(false);
+  const lastOverId = useRef<UniqueIdentifier|null>(null);
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();
+
+  const sensors = useSensors(useSensor(MouseSensor),useSensor(TouchSensor), useSensor(KeyboardSensor))
+
+  const customCollisionsDetectionAlgorithm:CollisionDetection = useCallback((args) => {
+    const pointerCollisions = pointerWithin(args); // we will use this for touch and pointer sensor
+
+    const intersections = pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args)     // fallback on closest corners in case of keyboard sensor
+
+    let overId = getFirstCollision(intersections, "id"); // i guess this will always be the container first? According to source code example?
+
+    if(overId !== null){
+        if(overId in schedule){
+            const containerItems = schedule[overId] 
+            
+                                              
+            if(containerItems.length > 0){
+                overId = closestCorners({
+                    ...args,
+                    droppableContainers: args.droppableContainers.filter(container=> container.id !== overId && containerItems.find(v=> container.id === v.id))
+                })[0]?.id; // return closest container that is not our parent container and is actually inside the parent container we are over. Not just closest in general.
+            }
+        }
+        lastOverId.current = overId;
+        return [{id:overId}]
+    }
+
+    if (recentlyMovedToNewContainer.current) {
+        lastOverId.current = activeId;
+      }
+
+    return lastOverId.current ? [{id:lastOverId.current}] : []
+  },[activeId, schedule])
 
   const handleDragStart = (e: DragStartEvent) => {
     setActiveId(e.active.id);
@@ -43,9 +87,17 @@ const EditCanvas = () => {
       );
   };
 
-  const handleDragOver = (e: DragOverEvent) => {
-    if (e.over) setOverId(e.over.id);
-    else setOverId(null);
+  const handleDragOver = ({active, over}: DragOverEvent) => {
+    // for next time -- let's start shifting our items around. Do rect measurements. Will have to mess with time on each step too
+
+    // see if dragged to new container
+    if(!over) return;
+    const activeContainer = findContainerAndIndex(active.id).container
+    const overContainer = findContainerAndIndex(over.id).container
+
+    if(activeContainer !== overContainer){
+        recentlyMovedToNewContainer.current = true;
+    }
   };
 
   const handleDragEnd = () => {
@@ -129,6 +181,9 @@ const EditCanvas = () => {
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={}
+      sensors={sensors}
+      collisionDetection={customCollisionsDetectionAlgorithm}
     >
       <div className={styles.pageWrapper}>
         <EditVacationSchedule

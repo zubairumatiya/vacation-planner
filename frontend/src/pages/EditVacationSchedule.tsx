@@ -130,21 +130,6 @@ const EditVacationSchedule = ({
   const editSubmitButtonRef = useRef<HTMLButtonElement>(null);
   const [editMultiDay, setEditMultiDay] = useState(false);
 
-  const monthsArr = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-
   useEffect(() => {
     const getTrip = async () => {
       const response = await fetch(`${apiURL}/schedule/${tripId}`, {
@@ -177,6 +162,7 @@ const EditVacationSchedule = ({
         for (const i of data.schedule) {
           i.startTime = new Date(i.startTime);
           i.endTime = new Date(i.endTime);
+          i.id = String(i.id);
         }
 
         //console.log(data.schedule);
@@ -1054,6 +1040,7 @@ const EditVacationSchedule = ({
     )}-${prefixZero(
       value.endTime.getUTCDate()
     )}-${value.endTime.getUTCFullYear()}`;
+
     return (
       <>
         <td
@@ -1300,18 +1287,6 @@ const EditVacationSchedule = ({
   ) : (
     <div className={styles.pageWrapper}>
       {days.map((dayObj: DayContainer, index) => {
-        // day = Tuesday - Jul 15, 2025
-        //const getDay = day.split("-")[1].trim();
-        //const splits = getDay.split(" ");
-        //const month = monthsArr.findIndex((v) => splits[0] === v) + 1;
-        //const zeroAddedMonth = prefixZero(month);
-        //const dayOf = splits[1].slice(0, 2);
-        //const year = splits[2];
-        //const combined = `${year}-${zeroAddedMonth}-${dayOf}`;
-        //const UTCDayOfTrip = new Date(
-        //  `${year}-${zeroAddedMonth}-${dayOf}T00:00:00Z`
-        //);
-        //const dayOfTrip = UTCDayOfTrip.toISOString().split("T")[0]; // Aug 1, 2025 -> 2025-08-01
         const { setNodeRef } = useDroppable({ id: dayObj.day });
         return (
           <div key={dayObj.day} className={styles.tableNButtonContainer}>

@@ -239,6 +239,7 @@
 .tableRow {
   height: 3rem;
   align-items: center;
+  touch-action: none;
 }
 
 .errDiv {
@@ -302,6 +303,7 @@
   min-width: 3rem;
   border: 1px solid white;
   border-radius: 5px;
+  touch-action: none;
 }
 
 .dragButton:hover {
