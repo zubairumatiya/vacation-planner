@@ -178,22 +178,178 @@ const EditCanvas = ({
       setActiveId(null);
       return;
     }
-
     if (activeInfo.index !== overInfo.index) {
-      setSchedule((prevSchedule) => ({
-        ...prevSchedule,
-        [overContainer]: arrayMove(
-          prevSchedule[overContainer],
+      setSchedule((prevSchedule) => {
+        const newStartTime = changeDropTime(
+          prevSchedule,
           activeIndex,
-          overIndex ?? 0
-        ),
-      }));
+          overIndex,
+          overContainer
+        );
+        const newEndTime = changeEndDate(
+          newStartTime,
+          prevSchedule[overContainer][activeIndex].multiDay
+        );
+        prevSchedule[overContainer][activeIndex] = {
+          ...prevSchedule[overContainer][activeIndex],
+          startTime: newStartTime,
+          endTime: newEndTime,
+        };
+        return {
+          ...prevSchedule,
+          [overContainer]: arrayMove(
+            prevSchedule[overContainer],
+            activeIndex,
+            overIndex ?? 0
+          ),
+        };
+      });
     }
     setActiveId(null);
     // will prob just end up moving time change and api end point fetch request here instead, will be easier since we are wanting to incorporate drag across components
   };
 
-  // NEXT: move the logic of time change to drag over -- Move api end point calls to frontend -- move cost total state to App ()
+  const changeEndDate = (
+    newStartTime: Date,
+    multiDayCheck: boolean,
+    fromList?: boolean
+  ): Date => {
+    if (fromList) {
+      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
+    }
+    if (multiDayCheck) {
+      return new Date(newStartTime.getTime() + 60 * 60 * 24 * 1000);
+    } else {
+      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
+    }
+  };
+
+  const prefixZero = (x: number): string => {
+    if (x <= 9) {
+      return "0" + x;
+    }
+    return "" + x;
+  };
+
+  const changeDropTime = (
+    currentSchedule: DaySchedule,
+    activeIndex: number,
+    overIndex: number | null,
+    overContainer: string
+  ): Date => {
+    // ts-ignore
+    let activeStartTime: Date =
+      currentSchedule[overContainer][activeIndex].startTime;
+    const holdTime = activeStartTime.toISOString().split("T")[1]; // the time should already be in UTC so going to ISOString should not change time: format hh:mm:ss.sssZ
+
+    if (!overIndex) {
+      // dropping on empty container
+      activeStartTime = new Date(`${overContainer}T${holdTime}`);
+    } else if (activeIndex === 0) {
+      // will need time of below item
+      activeStartTime = new Date(`${overContainer}T${holdTime}`);
+      const timeBelow =
+        currentSchedule[overContainer][activeIndex + 1].startTime;
+      if (activeStartTime.getTime() > timeBelow.getTime()) {
+        if (timeBelow.getUTCHours() === 0) {
+          activeStartTime = new Date(`${overContainer}T00:00:00Z`);
+        } else {
+          const newHour = prefixZero(timeBelow.getUTCHours() - 1);
+          const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
+          activeStartTime = new Date(
+            `${overContainer}T${newHour}:${sameMinute}:00Z`
+          );
+        }
+      } else {
+        // item is at the top of day, day is correct, time is before item below, no change needed.
+      }
+    } else {
+      //otherwise we can just grab the time from above
+      const timeAbove =
+        currentSchedule[overContainer][activeIndex - 1].startTime;
+      const timeBelow =
+        currentSchedule[overContainer][activeIndex + 1]?.startTime;
+      if (!timeBelow) {
+        if (timeAbove.getUTCHours() === 23) {
+          activeStartTime = new Date(
+            `${overContainer}T23:${prefixZero(
+              activeStartTime.getUTCMinutes()
+            )}:00Z`
+          );
+        } else {
+          if (activeStartTime.getTime() < timeAbove.getTime()) {
+            activeStartTime = new Date(
+              `${overContainer}T${prefixZero(
+                timeAbove.getUTCHours() + 1
+              )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+            );
+          } else {
+            // day is correct, no item below, time is after item above, no action needed
+          }
+        }
+      } else {
+        // squeeze new item between two item start times
+        if (
+          timeAbove.getTime() <= activeStartTime.getTime() &&
+          timeBelow.getTime() >= activeStartTime.getTime()
+        ) {
+          // perfect squeeze, no action needed
+        } else {
+          if (
+            timeAbove.getTime() === timeBelow.getTime() ||
+            timeAbove.getUTCHours() === 23
+          ) {
+            activeStartTime = timeAbove;
+          } else {
+            if (timeBelow.getUTCHours() - timeAbove.getUTCHours() > 1) {
+              activeStartTime = new Date(
+                `${overContainer}T${prefixZero(
+                  timeAbove.getUTCHours() + 1
+                )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+              );
+            } else {
+              // will either be the same hour or 1 hour apart
+              if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
+                if (timeBelow.getUTCMinutes() > timeAbove.getUTCMinutes()) {
+                  // greater than an hour gap
+                  if (
+                    timeBelow.getUTCMinutes() > activeStartTime.getUTCMinutes()
+                  ) {
+                    // current minutes less than time below, can freely add an hour and keep minutes
+                    activeStartTime = new Date(
+                      `${overContainer}T${prefixZero(
+                        timeAbove.getUTCHours() + 1
+                      )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                    );
+                  } else {
+                    // current minutes greater. just add hour and zero the minutes instead of microing minutes
+                    activeStartTime = new Date(
+                      `${overContainer}T${prefixZero(
+                        timeAbove.getUTCHours() + 1
+                      )}:00:00Z`
+                    );
+                  }
+                } else {
+                  // less than an hour gap when including minutes
+                  activeStartTime = new Date(
+                    `${overContainer}T${prefixZero(
+                      timeAbove.getUTCHours() + 1
+                    )}:00:00Z`
+                  );
+                }
+              } else {
+                // same hour
+                activeStartTime = timeAbove;
+              }
+            }
+          }
+        }
+      }
+    }
+    return activeStartTime;
+  };
+
+  // NEXT: move the logic of time change to drag over -- make sure to check multiday -- Move api end point calls to frontend
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string

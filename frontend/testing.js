@@ -1,6 +1,9 @@
 import fs from "fs/promises";
 const nextDay = new Date("2025-08-01T02:00:00.000Z");
 
+console.log(nextDay.getDate());
+nextDay.setDate(nextDay.getDate() + 1);
+
 console.log(nextDay.toISOString());
 
 const apiKey = "AIzaSyCniKprqPB06h2CWrWI45AAZfFkvlDIygw";
@@ -149,8 +152,7 @@ repeaterCall();
 // -- -- add drag from list to schedule, this will not remove the list item but rather engage the checked list item styling, if a successful drop occurs
 //
 // -- -- implement dnd-kit (overhaul existing drag logic)
-// -- -- -- change listeners on Droppable containers (table) and on sortable items (the tr's)
-// -- -- -- get callback functions to pass into schedule component
+// -- -- -- change time while dragging over or only on drag end?
 // -- -- -- will we need tr for the drag overlay as well? add the drag handle to first td instead, the listeners and attributes
 // -- -- -- pass the appropriate sensors to Dnd context - mainly mouse and touch so that we can use this on mobile too - https://docs.dndkit.com/api-documentation/sensors
 // -- -- -- maybe i don't even need a drag overlay, it's just the bottom part of the drag, i don't need to display the bottom part

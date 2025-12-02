@@ -162,6 +162,7 @@ const EditVacationSchedule = ({
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
         for (const i of data.schedule) {
+          // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
           i.startTime = new Date(i.startTime);
           i.endTime = new Date(i.endTime);
           i.id = String(i.id);
@@ -196,7 +197,7 @@ const EditVacationSchedule = ({
               label: `${day} - ${date}`,
             });
           } else {
-            convertStart.setDate(convertStart.getDate() + 1); // a day is a day whether local or UTC, this doesn't change the timezone even tho they are local timezone methods
+            convertStart.setDate(convertStart.getDate() + 1); // adding a day in local time, and then converting to UTC in method below: timeZone: "UTC"
             const day = new Intl.DateTimeFormat("en-us", {
               weekday: "long",
               timeZone: "UTC",
