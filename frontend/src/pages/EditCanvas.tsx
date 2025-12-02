@@ -349,7 +349,7 @@ const EditCanvas = ({
     return activeStartTime;
   };
 
-  // NEXT: move the logic of time change to drag over -- make sure to check multiday -- Move api end point calls to frontend
+  // NEXT: Move api end point calls to frontend -- make list draggable -- need to make list ID's more unique because rn there can be a mistaken identity in findContainer, actually can prob just add data arg.
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string

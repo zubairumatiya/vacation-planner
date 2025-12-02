@@ -1,5 +1,7 @@
 // src/types/google-maps-webcomponents.d.ts
 
+import type { UniqueIdentifier } from "@dnd-kit/core";
+
 export {}; // ensures it's a module
 
 declare global {
@@ -7,12 +9,15 @@ declare global {
     loadSecond: () => void;
     list: Item[];
     setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
-    handleDeleteItem: (a: string) => Promise<number | undefined>;
-    handleSubmitItem: (val: string, id?: string) => Promise<number | undefined>;
+    handleDeleteItem: (a: UniqueIdentifier) => Promise<number | undefined>;
+    handleSubmitItem: (
+      val: string,
+      id?: UniqueIdentifier
+    ) => Promise<number | undefined>;
   }
 
   type Item = {
-    id: string;
+    id: UniqueIdentifier;
     value: string;
     fromGoogle: boolean;
     itemAdded: boolean;

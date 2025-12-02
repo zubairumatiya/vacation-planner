@@ -1341,7 +1341,10 @@ const EditVacationSchedule = ({
                         setNodeRef,
                         transform,
                         transition,
-                      } = useSortable({ id: item.id });
+                      } = useSortable({
+                        id: item.id,
+                        data: { type: "schedule" },
+                      });
                       const style = {
                         transform: CSS.Transform.toString(transform),
                         transition,

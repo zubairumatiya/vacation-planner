@@ -4,6 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import trashIcon from "../assets/trash-icon.svg";
 import { AuthContext } from "../context/AuthContext";
 import CheckBubble from "../components/CheckBubble";
+import { useDraggable, type UniqueIdentifier } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -12,7 +14,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   //const [list, props.setList] = useState<Item[]>([]);
   const [newItem, setNewItem] = useState<string>("");
   const [addingNewItem, setAddingNewItem] = useState<boolean>(true);
-  const [editItemId, setEditItemId] = useState<string>("-1");
+  const [editItemId, setEditItemId] = useState<UniqueIdentifier>("-1");
   const [isHolding, setIsHolding] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const auth = useContext(AuthContext);
@@ -69,7 +71,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const handleEditItem = async (
     e: React.FormEvent<HTMLFormElement>,
     index: number,
-    itemId: string
+    itemId: UniqueIdentifier
   ) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -111,14 +113,21 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
   };
 
-  const editItem = (e: React.MouseEvent, index: number, itemId: string) => {
+  const editItem = (
+    e: React.MouseEvent,
+    index: number,
+    itemId: UniqueIdentifier
+  ) => {
     e.preventDefault();
     setAddingNewItem(false);
     setEditItemId(itemId);
     setNewItem(props.list[index].value);
   };
 
-  const handleDeleteItem = async (e: React.MouseEvent, itemId: string) => {
+  const handleDeleteItem = async (
+    e: React.MouseEvent,
+    itemId: UniqueIdentifier
+  ) => {
     e.preventDefault();
     const res = await props.handleDeleteItem(itemId);
 
@@ -142,7 +151,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const handleCheckItem = async (
     e: React.MouseEvent,
     currentState: boolean,
-    itemId: string,
+    itemId: UniqueIdentifier,
     index: number
   ) => {
     e.preventDefault();
@@ -193,6 +202,15 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       <hr />
       <ul>
         {props.list.map((v, i) => {
+          const { attributes, listeners, setNodeRef, transform } = useDraggable(
+            {
+              id: v.id,
+              data: { type: "list" },
+            }
+          );
+          const style = {
+            transform: CSS.Translate.toString(transform),
+          };
           return v.id === editItemId ? (
             <li key={v.id} id={String(v.id)} className={styles.editListItem}>
               <div className={styles.checkBubbleWrapper}>
@@ -238,7 +256,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
               </div>
             </li>
           ) : (
-            <li key={v.id} id={v.id} className={`${styles.listItem}`}>
+            <li key={v.id} id={String(v.id)} className={`${styles.listItem}`}>
               <div
                 className={styles.checkBubbleWrapper}
                 onClick={(e) => handleCheckItem(e, v.itemAdded, v.id, i)}
@@ -250,10 +268,14 @@ const WantToSeeList = (props: WantToSeeListProps) => {
                 className={`${styles.itemValue} ${
                   v.itemAdded && styles.itemChecked
                 }  ${isHolding && styles.grabbing}`}
-                onMouseDown={() => setIsHolding(true)}
-                onDragEnd={() => setIsHolding(false)}
-                draggable="true"
-                onDragStart={(e) => handleDragStart(e, v)}
+                //onMouseDown={() => setIsHolding(true)}
+                //onDragEnd={() => setIsHolding(false)}
+                //draggable="true"
+                //onDragStart={(e) => handleDragStart(e, v)}
+                ref={setNodeRef}
+                {...attributes}
+                {...listeners}
+                style={style}
               >
                 {v.value}
               </div>

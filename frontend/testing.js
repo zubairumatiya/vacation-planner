@@ -156,7 +156,7 @@ repeaterCall();
 // -- -- -- will we need tr for the drag overlay as well? add the drag handle to first td instead, the listeners and attributes
 // -- -- -- pass the appropriate sensors to Dnd context - mainly mouse and touch so that we can use this on mobile too - https://docs.dndkit.com/api-documentation/sensors
 // -- -- -- maybe i don't even need a drag overlay, it's just the bottom part of the drag, i don't need to display the bottom part
-// -- -- -- will need to remove the HTML 5 native dnd listeners in edit vacation schedule
+// -- -- -- if holding cursor is not handled automatically in dnd kit, we will have to manually setIsHolding to false on drag end, will have to pass to edit canvas probably
 //
 // -- -- dragging is not ideal for mobile, so we can help mitigate by adding auto suggestions from list to the location input when adding a new item to the schedule.
 // -- -- should we add a google id link from list to schedule just like we did in maps? Or is this unecessarily complex without added benefit, yeah i really don't know if the user is getting any benefit.
