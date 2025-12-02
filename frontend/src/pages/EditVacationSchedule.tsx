@@ -74,11 +74,13 @@ type ScheduleProps = {
   schedule: DaySchedule;
   setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
   dragRow: Schedule | null;
+  setCostTotal: React.Dispatch<React.SetStateAction<number>>;
 };
 
 const EditVacationSchedule = ({
   schedule,
   setSchedule,
+  setCostTotal,
   ...props
 }: ScheduleProps) => {
   const { tripId } = useParams();
@@ -1287,15 +1289,15 @@ const EditVacationSchedule = ({
   ) : (
     <div className={styles.pageWrapper}>
       {days.map((dayObj: DayContainer, index) => {
-        const { setNodeRef } = useDroppable({ id: dayObj.day });
+        const { setNodeRef } = useDroppable({ id: dayObj.day }); // no need for Droppable component, just attach ref to droppable container
         return (
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{dayObj.label}</div>
             <div className={styles.tableContainer}>
               <table
-                onDrop={(e) => handleDragDrop(e)}
-                onDragOver={(e) => e.preventDefault()}
-                onDragEnter={(e) => e.preventDefault()}
+                //onDrop={(e) => handleDragDrop(e)}
+                //onDragOver={(e) => e.preventDefault()}
+                //onDragEnter={(e) => e.preventDefault()}
                 className={styles.table}
                 id={dayObj.day}
                 ref={setNodeRef}
@@ -1352,7 +1354,7 @@ const EditVacationSchedule = ({
                             //id={item.id + ""}
                             style={style}
                             ref={setNodeRef}
-                            onDragOver={(e) => e.preventDefault()}
+                            //onDragOver={(e) => e.preventDefault()}
                             data-index={index}
                             className={`${
                               index === dragIndexRef.current && styles.dragging

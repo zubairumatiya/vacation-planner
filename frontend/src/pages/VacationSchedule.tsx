@@ -3,10 +3,14 @@ import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 
+type VacationProps = {
+  setCostTotal: React.Dispatch<React.SetStateAction<number>>;
+  costTotal: number;
+};
+
 const apiURL = import.meta.env.VITE_API_URL;
-const VacationSchedule = () => {
+const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const { tripId } = useParams();
-  const [costTotal, setCostTotal] = useState(0);
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();

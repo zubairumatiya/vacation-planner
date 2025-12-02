@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LayoutWithHeader from "./layouts/LayoutWithHeader.tsx";
 import LayoutWithoutHeader from "./layouts/LayoutWithoutHeader.tsx";
 import { AuthContext } from "./context/AuthContext.tsx";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import Home from "./pages/Home.tsx";
 import AddVacation from "./pages/AddVacation.tsx";
 import "./styles/App.css";
@@ -18,6 +18,8 @@ import EditCanvas from "./pages/EditCanvas.tsx";
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
 
+const [costTotal, setCostTotal] = useState(0);
+
 function App() {
   const auth = useContext(AuthContext);
   if (auth?.loggingOut) return null;
@@ -27,9 +29,20 @@ function App() {
         <Route element={<LayoutWithHeader />}>
           <Route path="/" element={<Home />} />
           <Route path="/add-vacation" element={<AddVacation />} />
-          <Route path="/vacation/:tripId" element={<VacationSchedule />}>
+          <Route
+            path="/vacation/:tripId"
+            element={
+              <VacationSchedule
+                setCostTotal={setCostTotal}
+                costTotal={costTotal}
+              />
+            }
+          >
             <Route index element={<ViewVacationSchedule />} />
-            <Route path="edit" element={<EditCanvas />} />
+            <Route
+              path="edit"
+              element={<EditCanvas setCostTotal={setCostTotal} />}
+            />
           </Route>
           <Route path="/test" element={<Test />} />
         </Route>
