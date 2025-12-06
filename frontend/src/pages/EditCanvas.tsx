@@ -287,6 +287,11 @@ const EditCanvas = ({
                 refIdSnapshot === v.id ? data.addedItem : v
               ),
             }));
+            setWishList((prev) =>
+              prev.map((v) =>
+                v.id === activeId ? { ...v, itemAdded: true } : v
+              )
+            );
           } else {
             setSchedule(clonedSchedule);
             alert("error processing change");
@@ -318,7 +323,6 @@ const EditCanvas = ({
         // NEXT: I just realized id will be -1 for list items inside schedule, using this optimistic update. I will need to somehow attach it. But for clonedSchedule it won't be, if the DB goes correctly.
       }
     };
-
     setActiveId(null);
     setDragRow(null);
     tempScheduleItem.current = null;
