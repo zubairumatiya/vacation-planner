@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction } from "express";
 import { Request, Response } from "express";
 const app = express();
 import vacationRoutes from "./routes/vacationRoutes.js";
@@ -29,7 +29,9 @@ if (app.get("env") === "development") {
   app.use(function (
     err: Error & { status?: number },
     req: Request,
-    res: Response
+    res: Response,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    next: NextFunction
   ) {
     res.status(err.status || 500).json({ message: err.message, error: err });
   });

@@ -178,7 +178,9 @@ router.delete(
         return;
       }
     } catch (err) {
+      res.sendStatus(500);
       next(err);
+      return;
     }
   }
 );
@@ -251,6 +253,9 @@ router.post("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
       snakeToCamel(result.rows);
       res.status(200).json({ addedItem: result.rows[0] });
       return;
+    } else {
+      res.sendStatus(500);
+      return;
     }
   } catch (err) {
     next(err);
@@ -291,6 +296,9 @@ router.patch("/update-time/:id", ensureLoggedIn, async (req, res, next) => {
     if (result.rowCount > 0) {
       snakeToCamel(result.rows);
       res.status(200).json({ updatedData: result.rows[0] });
+      return;
+    } else {
+      res.sendStatus(500);
       return;
     }
   } catch (err) {
@@ -377,7 +385,9 @@ router.patch(
       res.status(200).json({ data: result.rows });
       return;
     } catch (err) {
+      res.sendStatus(500);
       next(err);
+      return;
     }
   }
 );

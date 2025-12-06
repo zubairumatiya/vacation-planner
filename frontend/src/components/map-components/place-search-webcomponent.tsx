@@ -4,6 +4,7 @@ import styles from "../../styles/Map.module.css";
 import starIcon from "../../assets/star-icon.svg";
 import addToList from "../../assets/add-to-list.svg";
 import added from "../../assets/check-mark.svg";
+import type { UniqueIdentifier } from "@dnd-kit/core";
 
 const apiURL = import.meta.env.VITE_API_URL;
 const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
@@ -166,7 +167,10 @@ const PlaceSearchWebComponent = ({
       setPageCountSwitch((prev) => !prev);
     }
   };
-  const handleListRemoval = (e: React.MouseEvent, placeId: string) => {
+  const handleListRemoval = (
+    e: React.MouseEvent,
+    placeId: UniqueIdentifier
+  ) => {
     e.preventDefault();
     e.stopPropagation();
     handleDeleteItem(placeId);
@@ -174,7 +178,7 @@ const PlaceSearchWebComponent = ({
 
   const handleListAdd = (
     e: React.MouseEvent,
-    placeId: string,
+    placeId: UniqueIdentifier,
     placeName: string
   ) => {
     e.preventDefault();

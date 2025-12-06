@@ -1343,7 +1343,7 @@ const EditVacationSchedule = ({
                         transition,
                       } = useSortable({
                         id: item.id,
-                        data: { type: "schedule" },
+                        data: { type: "schedule" } as DragData,
                       });
                       const style = {
                         transform: CSS.Transform.toString(transform),

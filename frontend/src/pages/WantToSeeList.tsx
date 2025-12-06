@@ -205,7 +205,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           const { attributes, listeners, setNodeRef, transform } = useDraggable(
             {
               id: v.id,
-              data: { type: "list" },
+              data: { type: "list" } as DragData,
             }
           );
           const style = {

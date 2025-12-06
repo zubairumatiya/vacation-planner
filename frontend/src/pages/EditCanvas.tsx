@@ -29,6 +29,7 @@ import {
 } from "./EditVacationSchedule";
 import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 import { arrayMove } from "@dnd-kit/sortable";
+import type { AnyData } from "@dnd-kit/core/dist/store/types";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -49,9 +50,11 @@ const EditCanvas = ({
   const [schedule, setSchedule] = useState<DaySchedule>({});
   //const [dragItem, setDragItem] = useState<DraggingState | null>(null);
   const [dragRow, setDragRow] = useState<Schedule | null>(null);
+  const [clonedSchedule, setClonedSchedule] = useState<DaySchedule>({});
   const recentlyMovedToNewContainer = useRef<boolean>(false);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const auth = useContext(AuthContext);
+  const tempScheduleItem = useRef<Schedule | null>(null);
   const token = auth?.token;
   const navigate = useNavigate();
 
@@ -98,20 +101,48 @@ const EditCanvas = ({
     [activeId, schedule]
   );
 
+  function isDragData(data: DragData | AnyData | undefined): data is DragData {
+    if (data === undefined) {
+      return false;
+    }
+    return data && "type" in data;
+  }
+
   const handleDragStart = (e: DragStartEvent) => {
     setActiveId(e.active.id);
-    const containerAndIndex = findContainerAndIndex(e.active.id);
-    if (containerAndIndex.container && containerAndIndex.index)
-      setDragRow(
-        schedule[containerAndIndex?.container][containerAndIndex.index]
-      );
+    setClonedSchedule(schedule);
+    if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
+    const typeOfDrag = e.active.data.current;
+    if (typeOfDrag.type === "list") {
+      const listValue =
+        wishList.find((item) => item.id == e.active.id)?.value ?? "";
+      tempScheduleItem.current = {
+        id: -1,
+        tripId: Number(tripId),
+        location: listValue,
+        details: "",
+        startTime: new Date(),
+        endTime: new Date(),
+        cost: 0,
+        multiDay: false,
+      };
+      setDragRow(tempScheduleItem.current);
+    } else if (typeOfDrag.type === "schedule") {
+      const containerAndIndex = findContainerAndIndex(e.active.id);
+      if (containerAndIndex.container && containerAndIndex.index)
+        setDragRow(
+          schedule[containerAndIndex?.container][containerAndIndex.index]
+        );
+    }
   };
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
     // sorting animation and shuffling seems to be the deafult within the same container!
     // see if dragged to new container
     if (!over) return;
-    const activeInfo = findContainerAndIndex(active.id);
+    const activeInfo = tempScheduleItem.current
+      ? { container: "-1", index: -1 }
+      : findContainerAndIndex(active.id); // list items wont be in schedule yet, AND list and schedule id's can clash so active.id won't be reliable moving forward
     const activeContainer = activeInfo.container;
     const overInfo = findContainerAndIndex(over.id);
     const overContainer = overInfo.container;
@@ -122,7 +153,7 @@ const EditCanvas = ({
 
     if (activeContainer !== overContainer) {
       setSchedule((prevSchedule) => {
-        const activeItems = prevSchedule[activeContainer];
+        const activeItems = prevSchedule[activeContainer]; // could be undefined
         const overItems = prevSchedule[overContainer];
         const activeIndex = activeInfo.index;
         const overIndex = overInfo.index;
@@ -132,7 +163,7 @@ const EditCanvas = ({
         if (over.id in schedule || overIndex === null) {
           newIndex = overItems.length + 1;
         } else {
-          const isBelowOverItem = // we have to decide if our item is going above or below the item we are over (which is returned from our collion alg). Specifically when switching containers, we need a simple calc to see where to place it
+          const isBelowOverItem = // we have to decide if our item is going above or below the item we are over (which is returned from our colision alg). Specifically when switching containers, we need a simple calc to see where to place it
             over &&
             active.rect.current.translated &&
             active.rect.current.translated.top >
@@ -146,40 +177,61 @@ const EditCanvas = ({
 
         recentlyMovedToNewContainer.current = true;
 
-        return {
-          ...prevSchedule,
-          [activeContainer]: activeItems.filter((v) => v.id !== active.id),
-          [overContainer]: [
-            ...overItems.slice(0, newIndex),
-            activeItems[activeIndex ?? 0],
-            ...overItems.slice(newIndex, overItems.length),
-          ],
-        };
+        return activeItems === undefined &&
+          activeIndex === -1 &&
+          tempScheduleItem.current //  could make the conditional argument just my tempScheduleItem but I want to trust the process of my drag and have flow with my variables, maybe just being pedantic
+          ? {
+              ...prevSchedule,
+              [overContainer]: [
+                ...overItems.slice(0, newIndex),
+                tempScheduleItem.current,
+                ...overItems.slice(newIndex, overItems.length),
+              ],
+            }
+          : {
+              ...prevSchedule,
+              [activeContainer]: activeItems.filter((v) => v.id !== active.id),
+              [overContainer]: [
+                ...overItems.slice(0, newIndex),
+                activeItems[activeIndex ?? 0],
+                ...overItems.slice(newIndex, overItems.length),
+              ],
+            };
       });
     }
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    // for next time, let's continue to incorporate adding a list item to schedule.
     if (over?.id == null) {
       setActiveId(null);
       return;
     }
-    const activeInfo = findContainerAndIndex(active.id);
+    const activeInfo = tempScheduleItem.current
+      ? findContainerAndIndex(tempScheduleItem.current.id) // for list, id won't be reliable since it could technically be the same as an item in the container. So we can use the temp id we assigned
+      : findContainerAndIndex(active.id);
     const activeIndex = activeInfo.index;
     const overInfo = findContainerAndIndex(over.id);
     const overIndex = overInfo.index;
     const overContainer = overInfo.container;
+    let previous: DaySchedule;
 
-    if (activeIndex == null) {
-      return;
-    }
-
-    if (activeInfo.container == null || overContainer == null) {
+    if (
+      activeIndex == null ||
+      activeInfo.container == null ||
+      overContainer == null
+    ) {
+      // this is not like drag over where a null index indicates and empty table, since we will have already set the active item in schedule, it should return an index. This is a catch all check.
+      setSchedule(clonedSchedule);
       setActiveId(null);
+      setDragRow(null);
+      tempScheduleItem.current = null;
       return;
     }
+
     if (activeInfo.index !== overInfo.index) {
       setSchedule((prevSchedule) => {
+        previous = prevSchedule;
         const newStartTime = changeDropTime(
           prevSchedule,
           activeIndex,
@@ -191,6 +243,7 @@ const EditCanvas = ({
           prevSchedule[overContainer][activeIndex].multiDay
         );
         prevSchedule[overContainer][activeIndex] = {
+          // mutation but we make a new ref upon returning
           ...prevSchedule[overContainer][activeIndex],
           startTime: newStartTime,
           endTime: newEndTime,
@@ -205,7 +258,70 @@ const EditCanvas = ({
         };
       });
     }
+    // will be using optimistic UI updates for fast and snappy dragging.
+    const refIdSnapshot = tempScheduleItem.current?.id; // need closure, ref always points to current
+
+    const sendScheduleToDb = async () => {
+      try {
+        if (refIdSnapshot) {
+          const result = await fetch(`${apiURL}/schedule/${tripId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              start: previous[overContainer][activeIndex].startTime,
+              end: previous[overContainer][activeIndex].endTime,
+              location: previous[overContainer][activeIndex].location,
+              cost: previous[overContainer][activeIndex].cost,
+              details: previous[overContainer][activeIndex].details,
+              multiDay: previous[overContainer][activeIndex].multiDay,
+            }),
+          });
+          if (result.ok) {
+            const data = await result.json();
+            setSchedule((prev) => ({
+              ...prev,
+              [overContainer]: prev[overContainer].map((v) =>
+                refIdSnapshot === v.id ? data.addedItem : v
+              ),
+            }));
+          } else {
+            setSchedule(clonedSchedule);
+            alert("error processing change");
+          }
+        } else {
+          // for an existing item in schedule
+          const updatedItem = previous[overContainer][activeIndex];
+          const result = await fetch(
+            `${apiURL}/update-time/${updatedItem.id}`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                start: updatedItem.startTime,
+                end: updatedItem.endTime,
+              }),
+            }
+          );
+          if (!result.ok) {
+            setSchedule(clonedSchedule);
+            alert("error processing change");
+          }
+        }
+      } catch {
+        setSchedule(clonedSchedule);
+        // NEXT: I just realized id will be -1 for list items inside schedule, using this optimistic update. I will need to somehow attach it. But for clonedSchedule it won't be, if the DB goes correctly.
+      }
+    };
+
     setActiveId(null);
+    setDragRow(null);
+    tempScheduleItem.current = null;
     // will prob just end up moving time change and api end point fetch request here instead, will be easier since we are wanting to incorporate drag across components
   };
 
@@ -349,7 +465,7 @@ const EditCanvas = ({
     return activeStartTime;
   };
 
-  // NEXT: Move api end point calls to frontend -- make list draggable -- need to make list ID's more unique because rn there can be a mistaken identity in findContainer, actually can prob just add data arg.
+  // NEXT: Move api end point calls to frontend -- make list draggable -- differentiate dragging from list vs schedule with data:type -- decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list)
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string
@@ -379,32 +495,35 @@ const EditCanvas = ({
     setGId(gId);
   };
 
-  const handleSubmitItem = useCallback(async (value: string, id?: string) => {
-    const val = value;
-    const response = await fetch(`${apiURL}/list/${tripId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ value: val, id: id ?? null }),
-    });
-    if (response.status === 401) {
-      navigate("/login", {
-        state: { message: "Session expired, redirecting to log in..." },
+  const handleSubmitItem = useCallback(
+    async (value: string, id?: UniqueIdentifier) => {
+      const val = value;
+      const response = await fetch(`${apiURL}/list/${tripId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ value: val, id: id ?? null }),
       });
-    }
-    if (response.status === 404) {
-      alert("Error: List not found");
-    }
-    if (response.ok) {
-      const apiData: { data: Item } = await response.json();
-      setWishList((prev) => [...prev, apiData.data]);
-      return 200;
-    }
-  }, []);
+      if (response.status === 401) {
+        navigate("/login", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+      }
+      if (response.status === 404) {
+        alert("Error: List not found");
+      }
+      if (response.ok) {
+        const apiData: { data: Item } = await response.json();
+        setWishList((prev) => [...prev, apiData.data]);
+        return 200;
+      }
+    },
+    []
+  );
 
-  const handleDeleteItem = useCallback(async (itemId: string) => {
+  const handleDeleteItem = useCallback(async (itemId: UniqueIdentifier) => {
     const response = await fetch(`${apiURL}/list/${itemId}`, {
       method: "DELETE",
       headers: {
@@ -422,7 +541,7 @@ const EditCanvas = ({
       alert("Error: List not found");
     }
     if (response.ok) {
-      setWishList((prev) => prev.filter((v) => v.id !== itemId));
+      setWishList((prev) => prev.filter((v) => v.id != itemId));
       return 200;
     }
   }, []);

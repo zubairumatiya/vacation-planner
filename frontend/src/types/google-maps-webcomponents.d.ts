@@ -9,12 +9,18 @@ declare global {
     loadSecond: () => void;
     list: Item[];
     setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
-    handleDeleteItem: (a: UniqueIdentifier) => Promise<number | undefined>;
+    handleDeleteItem: (
+      a: UniqueIdentifier
+    ) => Promise<UniqueIdentifier | undefined>;
     handleSubmitItem: (
       val: string,
       id?: UniqueIdentifier
-    ) => Promise<number | undefined>;
+    ) => Promise<UniqueIdentifier | undefined>;
   }
+
+  type DragData = {
+    type: string;
+  };
 
   type Item = {
     id: UniqueIdentifier;
