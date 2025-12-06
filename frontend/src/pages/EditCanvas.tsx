@@ -33,6 +33,13 @@ import type { AnyData } from "@dnd-kit/core/dist/store/types";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
+export const prefixZero = (x: number): string => {
+  if (x <= 9) {
+    return "0" + x;
+  }
+  return "" + x;
+};
+
 const EditCanvas = ({
   setCostTotal,
 }: {
@@ -320,13 +327,12 @@ const EditCanvas = ({
         }
       } catch {
         setSchedule(clonedSchedule);
-        // NEXT: I just realized id will be -1 for list items inside schedule, using this optimistic update. I will need to somehow attach it. But for clonedSchedule it won't be, if the DB goes correctly.
       }
     };
+    sendScheduleToDb();
     setActiveId(null);
     setDragRow(null);
     tempScheduleItem.current = null;
-    // will prob just end up moving time change and api end point fetch request here instead, will be easier since we are wanting to incorporate drag across components
   };
 
   const changeEndDate = (
@@ -342,13 +348,6 @@ const EditCanvas = ({
     } else {
       return new Date(newStartTime.getTime() + 60 * 60 * 1000);
     }
-  };
-
-  const prefixZero = (x: number): string => {
-    if (x <= 9) {
-      return "0" + x;
-    }
-    return "" + x;
   };
 
   const changeDropTime = (
@@ -469,7 +468,7 @@ const EditCanvas = ({
     return activeStartTime;
   };
 
-  // NEXT: Move api end point calls to frontend -- make list draggable -- differentiate dragging from list vs schedule with data:type -- decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list)
+  // NEXT: decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list)
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string

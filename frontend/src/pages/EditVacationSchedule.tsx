@@ -18,6 +18,7 @@ import {
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { prefixZero } from "./EditCanvas";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -59,6 +60,7 @@ export type DaySchedule = {
 
 type NormalRowProps = {
   value: Schedule;
+  dayContainer: string;
   listeners?: SyntheticListenerMap;
   attributes?: DraggableAttributes | undefined;
 };
@@ -317,13 +319,14 @@ const EditVacationSchedule = ({
     }
   };
 
+  /*
   const setEndDate = (
     newStartTime: Date,
     currentEndTime: Date,
     multiDayCheck: boolean,
     fromList: boolean | undefined
   ): Date => {
-    /*
+    
     const difference =
       (currentEndTime.getTime() - newStartTime.getTime()) / (1000 * 60 * 60); // where i left off let's double check i am using the right timezone and if there isn't an easier way to do what i am doing, maybe
     
@@ -340,7 +343,7 @@ const EditVacationSchedule = ({
     } else {
       console.log("no change needed", currentEndTime);
       return currentEndTime;
-    }*/
+    }
     if (fromList) {
       return new Date(newStartTime.getTime() + 60 * 60 * 1000);
     }
@@ -349,7 +352,7 @@ const EditVacationSchedule = ({
     } else {
       return new Date(newStartTime.getTime() + 60 * 60 * 1000);
     }
-  };
+  };*/
 
   useEffect(() => {
     if (locationEditRef.current) {
@@ -451,7 +454,10 @@ const EditVacationSchedule = ({
           if (addingReq.ok) {
             const data = await addingReq.json();
             setSchedule((prev) => {
-              return reSort([...prev, data.addedItem]);
+              return {
+                ...prev,
+                [dateAdded]: reSort([...prev[dateAdded], data.addedItem]),
+              };
             });
             setIndividualAddition((prev) => {
               prev[index] = false;
@@ -535,10 +541,12 @@ const EditVacationSchedule = ({
         const data = await response.json();
         setEditLineId(null);
         setAddingItem(false);
-        setSchedule(
-          (prev) =>
-            reSort(prev.map((v) => (v.id === itemID ? data.updatedData : v))) // yeah, you can stick a whole .map as a param haha really cool, because .map returns and array
-        );
+        setSchedule((prev) => ({
+          ...prev,
+          [dateAdded]: reSort(
+            prev[dateAdded].map((v) => (v.id === itemID ? data.updatedData : v))
+          ),
+        })); // yeah, you can stick a whole .map as a param haha really cool, because .map returns and array
       } else if (response.status === 401) {
         navigate("/redirect", {
           state: { message: "Session expired, redirecting to log in..." },
@@ -555,7 +563,8 @@ const EditVacationSchedule = ({
   const submitDelete = async (
     e: React.MouseEvent,
     itemID: UniqueIdentifier,
-    index: number
+    index: number,
+    dateAdded: string
   ) => {
     e.preventDefault();
     try {
@@ -569,8 +578,11 @@ const EditVacationSchedule = ({
       if (response.ok) {
         setEditLineId(null);
         setAddingItem(false);
-        setSchedule((prev) => prev.filter((v) => v.id !== itemID));
-        setCostTotal((prev) => prev - schedule[index].cost);
+        setCostTotal((prev) => prev - schedule[dateAdded][index].cost);
+        setSchedule((prev) => ({
+          ...prev,
+          [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
+        }));
         // might have to remove from our react schedule item using itemID
       } else if (response.status === 401) {
         navigate("/redirect", {
@@ -635,6 +647,25 @@ const EditVacationSchedule = ({
     setStartError(false);
   };
 
+  const addMeridiem = (militaryTime: string) => {
+    let hour = Number(militaryTime.split(":")[0]);
+    const minute = militaryTime.split(":")[1];
+    let meridiem;
+    if (hour > 11) {
+      if (hour !== 12) {
+        hour = hour - 12;
+      }
+      meridiem = "PM";
+    } else {
+      if (hour === 0) {
+        hour = 12;
+      }
+      meridiem = "AM";
+    }
+    return `${hour}:${minute} ${meridiem}`;
+  };
+
+  /*
   const handleDragStart = (
     e: React.DragEvent<HTMLTableCellElement>,
     itemID: number,
@@ -799,23 +830,6 @@ const EditVacationSchedule = ({
     return "" + x;
   };
 
-  const addMeridiem = (militaryTime: string) => {
-    let hour = Number(militaryTime.split(":")[0]);
-    const minute = militaryTime.split(":")[1];
-    let meridiem;
-    if (hour > 11) {
-      if (hour !== 12) {
-        hour = hour - 12;
-      }
-      meridiem = "PM";
-    } else {
-      if (hour === 0) {
-        hour = 12;
-      }
-      meridiem = "AM";
-    }
-    return `${hour}:${minute} ${meridiem}`;
-  };
   /*
   const getLocalDate = (toBeConverted: Date): string => {
     const year = toBeConverted.getUTCFullYear();
@@ -824,6 +838,7 @@ const EditVacationSchedule = ({
     return year + "-" + month + "-" + day;
   };*/
 
+  /*
   const changeDropTime = (
     finalArr: Schedule[],
     targetIndex: number,
@@ -931,6 +946,7 @@ const EditVacationSchedule = ({
       return finalArr;
     }
   };
+  */
 
   useEffect(() => {
     if (holdStartTime && holdEndTime) {
@@ -1018,9 +1034,11 @@ const EditVacationSchedule = ({
     return time.toUTCString().slice(-12, -7);
   };
 
-  const dayOfTrip = "TRUE";
-
-  const NormalRow = ({ value, ...restOfProps }: NormalRowProps) => {
+  const NormalRow = ({
+    value,
+    dayContainer,
+    ...restOfProps
+  }: NormalRowProps) => {
     let sTime;
     if (value.startTime) {
       sTime = addMeridiem(fourDigitTime(value.startTime));
@@ -1087,7 +1105,7 @@ const EditVacationSchedule = ({
                 value.multiDay,
                 startDate,
                 endDate,
-                dayOfTrip
+                dayContainer
               )
             }
           />
@@ -1099,9 +1117,11 @@ const EditVacationSchedule = ({
   const EditableRow = ({
     value,
     index,
+    dayContainer,
   }: {
     value: Schedule;
     index: number;
+    dayContainer: string;
   }) => {
     return (
       <>
@@ -1109,7 +1129,7 @@ const EditVacationSchedule = ({
           <button
             type="button"
             className={styles.xButton}
-            onClick={(e) => submitDelete(e, value.id, index)}
+            onClick={(e) => submitDelete(e, value.id, index, dayContainer)}
           >
             delete
           </button>
@@ -1270,11 +1290,11 @@ const EditVacationSchedule = ({
               className={`${styles.buttonsWhileEditing}  ${
                 endError || startError ? "" : styles.submitEditButton
               }`}
-              onClick={(e) => submitEdit(dayOfTrip, value.id, e)}
+              onClick={(e) => submitEdit(dayContainer, value.id, e)}
               disabled={endError || startError}
               ref={editSubmitButtonRef}
               onKeyUp={(e) => {
-                submitEdit(dayOfTrip, value.id, e);
+                submitEdit(dayContainer, value.id, e);
               }}
             >
               Submit
@@ -1373,7 +1393,7 @@ const EditVacationSchedule = ({
                                 item.multiDay,
                                 startDate,
                                 endDate,
-                                dayOfTrip
+                                dayObj.day
                               )
                             }
                           >
@@ -1381,12 +1401,14 @@ const EditVacationSchedule = ({
                               <EditableRow
                                 value={item}
                                 index={ind}
+                                dayContainer={dayObj.day}
                               ></EditableRow>
                             ) : (
                               //          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Editing above : divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
                               <NormalRow
                                 value={item}
+                                dayContainer={dayObj.day}
                                 {...attributes}
                                 {...listeners}
                               ></NormalRow>
@@ -1411,7 +1433,7 @@ const EditVacationSchedule = ({
             <DragOverlay>
               {props.dragRow ? (
                 <tr className={styles.tableRow}>
-                  <NormalRow value={props.dragRow} />
+                  <NormalRow value={props.dragRow} dayContainer={dayObj.day} />
                 </tr>
               ) : null}{" "}
               {/* will need container logic and finding index of id once we find container. Hmm, how do we access what's active? I think it will have to be a series of props and callbacks from EditCanvas right?*/}
@@ -1432,7 +1454,7 @@ const EditVacationSchedule = ({
               <div className={styles.formWrapper}>
                 <form
                   className={styles.form}
-                  onSubmit={(e) => submitAddItem(e, dayOfTrip, index)}
+                  onSubmit={(e) => submitAddItem(e, dayObj.day, index)}
                 >
                   <div
                     className={`${styles.itemElement} ${styles.timeWrapper}`}
