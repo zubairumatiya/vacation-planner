@@ -186,12 +186,13 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
   };
 
+  /*
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: Item) => {
     if (e) {
       const stringItem = JSON.stringify(item);
       e.dataTransfer?.setData("application/json/list-item", stringItem);
     }
-  };
+  };*/
 
   return (
     <div

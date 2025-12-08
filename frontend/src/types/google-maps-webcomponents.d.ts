@@ -1,34 +1,8 @@
 // src/types/google-maps-webcomponents.d.ts
 
-import type { UniqueIdentifier } from "@dnd-kit/core";
-
 export {}; // ensures it's a module
 
 declare global {
-  interface WantToSeeListProps {
-    loadSecond: () => void;
-    list: Item[];
-    setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
-    handleDeleteItem: (
-      a: UniqueIdentifier
-    ) => Promise<UniqueIdentifier | undefined>;
-    handleSubmitItem: (
-      val: string,
-      id?: UniqueIdentifier
-    ) => Promise<UniqueIdentifier | undefined>;
-  }
-
-  type DragData = {
-    type: string;
-  };
-
-  type Item = {
-    id: UniqueIdentifier;
-    value: string;
-    fromGoogle: boolean;
-    itemAdded: boolean;
-  };
-
   type PlacePrediction = {
     place: string;
     placeId: string;
@@ -88,10 +62,6 @@ declare global {
     selected: boolean;
     onClick: (placeId: string | undefined) => void;
     detailsSize: "FULL";
-  }
-
-  interface CheckBubbleProps {
-    checked: boolean;
   }
 
   interface PlaceSearchProps {

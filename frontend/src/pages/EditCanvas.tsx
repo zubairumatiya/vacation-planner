@@ -33,13 +33,6 @@ import type { AnyData } from "@dnd-kit/core/dist/store/types";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
-export const prefixZero = (x: number): string => {
-  if (x <= 9) {
-    return "0" + x;
-  }
-  return "" + x;
-};
-
 const EditCanvas = ({
   setCostTotal,
 }: {
@@ -62,7 +55,6 @@ const EditCanvas = ({
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const auth = useContext(AuthContext);
   const tempScheduleItem = useRef<Schedule | null>(null);
-  const token = auth?.token;
   const navigate = useNavigate();
 
   const sensors = useSensors(
@@ -107,6 +99,8 @@ const EditCanvas = ({
     },
     [activeId, schedule]
   );
+
+  const token = auth?.token;
 
   function isDragData(data: DragData | AnyData | undefined): data is DragData {
     if (data === undefined) {
@@ -335,6 +329,13 @@ const EditCanvas = ({
     tempScheduleItem.current = null;
   };
 
+  const prefixZero = (x: number): string => {
+    if (x >= 0 && x < 10) {
+      return "0" + x;
+    }
+    return "" + x;
+  };
+
   const changeEndDate = (
     newStartTime: Date,
     multiDayCheck: boolean,
@@ -468,7 +469,7 @@ const EditCanvas = ({
     return activeStartTime;
   };
 
-  // NEXT: decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list)
+  // NEXT: decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list) -- might need styling for mouse cursor to appear "holding"
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string
