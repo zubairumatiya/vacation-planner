@@ -70,7 +70,7 @@ const EditVacationSchedule = ({
     editLineId,
     setEditLineId,
     addingItem,
-    //setAddingItem,
+    setAddingItem,
     dayOfTripRef,
     setEndError,
     setStartError,
@@ -108,8 +108,6 @@ const EditVacationSchedule = ({
   const multiDayEditRef = useRef<HTMLInputElement>(null);
 
   const dragIndexRef = useRef(-1);
-  const [editStartDate, setEditStartDate] = useState<string>("");
-  const [editEndDate, setEditEndDate] = useState<string>("");
   const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
   const [editStartTimeObject, setEditStartTimeObject] = useState<timeObj>(
     {} as timeObj
@@ -528,13 +526,6 @@ const EditVacationSchedule = ({
         }
       }
     }
-  };
-
-  const handleTextInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
-    const MAX_HEIGHT = 5 * 16;
-    const el = e.currentTarget;
-    el.style.height = "auto";
-    el.style.height = Math.min(el.scrollHeight, MAX_HEIGHT) + "px";
   };
 
   /*
