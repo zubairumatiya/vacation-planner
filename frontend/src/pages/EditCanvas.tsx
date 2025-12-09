@@ -5,6 +5,7 @@ import styles from "../styles/EditCanvas.module.css";
 import { useState, useCallback, useContext, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { EditScheduleProvider } from "../context/EditScheduleContext";
 import {
   closestCorners,
   DndContext,
@@ -22,11 +23,7 @@ import {
   type DragStartEvent,
   type UniqueIdentifier,
 } from "@dnd-kit/core";
-import {
-  type DaySchedule,
-  type DraggingState,
-  type Schedule,
-} from "./EditVacationSchedule";
+import { type DraggingState, type Schedule } from "./EditVacationSchedule";
 import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
@@ -329,13 +326,6 @@ const EditCanvas = ({
     tempScheduleItem.current = null;
   };
 
-  const prefixZero = (x: number): string => {
-    if (x >= 0 && x < 10) {
-      return "0" + x;
-    }
-    return "" + x;
-  };
-
   const changeEndDate = (
     newStartTime: Date,
     multiDayCheck: boolean,
@@ -559,14 +549,16 @@ const EditCanvas = ({
       collisionDetection={customCollisionsDetectionAlgorithm}
     >
       <div className={styles.pageWrapper}>
-        <EditVacationSchedule
-          loadFirst={() => setLoading(false)}
-          getMapValues={gValuesFn}
-          schedule={schedule}
-          setSchedule={setSchedule}
-          dragRow={dragRow}
-          setCostTotal={setCostTotal}
-        />
+        <EditScheduleProvider>
+          <EditVacationSchedule
+            loadFirst={() => setLoading(false)}
+            getMapValues={gValuesFn}
+            schedule={schedule}
+            setSchedule={setSchedule}
+            dragRow={dragRow}
+            setCostTotal={setCostTotal}
+          />
+        </EditScheduleProvider>
         {!loading && (
           <WantToSeeList
             loadSecond={() => setLoading2(false)}

@@ -18,6 +18,8 @@ import {
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import CustomTableComponent from "../components/CustomTableComponent";
+import { EditScheduleContext } from "../context/EditScheduleContext";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -35,21 +37,10 @@ export type Schedule = {
   multiDay: boolean;
 };
 
-type Prefill = {
-  location: string;
-  cost: number;
-  details: string;
-  multiDay: boolean;
-};
-
 type timeObj = {
   hour: string;
   minute: string;
   meridiem: string;
-};
-
-export type DaySchedule = {
-  [day: string]: Schedule[];
 };
 
 export type DraggingState = {
@@ -72,45 +63,54 @@ const EditVacationSchedule = ({
   setCostTotal,
   ...props
 }: ScheduleProps) => {
+  const editContext = useContext(EditScheduleContext);
+
+  const {
+    preFill,
+    editLineId,
+    setEditLineId,
+    addingItem,
+    //setAddingItem,
+    dayOfTripRef,
+    setEndError,
+    setStartError,
+    startTimePick,
+    endTimePick,
+    setLocationError,
+    handleEdit,
+    constructDate,
+    editStartDate,
+    setEditStartDate,
+    editEndDate,
+    setEditEndDate,
+    startError,
+    endError,
+    locationError,
+    locationEditRef,
+    costEditRef,
+    handleTextInput,
+  } = editContext;
+
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<DayContainer[]>([]); // each day(table)
-  const [addingItem, setAddingItem] = useState<boolean>(false); // buttons for each day will have to have their own boolean to show or not to
   const [individualAddition, setIndividualAddition] = useState<boolean[]>([
     false,
   ]);
   const [itemError, setItemError] = useState(false);
-  const [startError, setStartError] = useState(false);
-  const [endError, setEndError] = useState(false);
-  const [locationError, setLocationError] = useState(false);
   const [message, setMessage] = useState("");
-  const [startTimePick, setStartTimePick] = useState<string | null>(null); // i think we will need two of these for start and end, which means we can't have multiple adding schedules open
-  const [endTimePick, setEndTimePick] = useState<string | null>(null);
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
-  const locationEditRef = useRef<HTMLInputElement>(null);
-  const costEditRef = useRef<HTMLInputElement>(null);
   const detailEditRef = useRef<HTMLTextAreaElement>(null);
   const multiDayEditRef = useRef<HTMLInputElement>(null);
-  const [preFill, setPreFill] = useState<Prefill>({
-    location: "",
-    cost: 0,
-    details: "",
-    multiDay: false,
-  });
+
   const dragIndexRef = useRef(-1);
   const [editStartDate, setEditStartDate] = useState<string>("");
   const [editEndDate, setEditEndDate] = useState<string>("");
-  const startDateEditRef = useRef<HTMLInputElement>(null);
-  const endDateEditRef = useRef<HTMLInputElement>(null);
   const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
-  const dayOfTripRef = useRef<string>("");
-  const [editEndTimeObject, setEditEndTimeObject] = useState<timeObj>(
-    {} as timeObj
-  );
   const [editStartTimeObject, setEditStartTimeObject] = useState<timeObj>(
     {} as timeObj
   );
@@ -278,33 +278,6 @@ const EditVacationSchedule = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editLineId, textAreaFocus, dayOfTripRef, endError, startError]);
-
-  const constructDate = (
-    which: "start" | "end",
-    hour: string,
-    minute: string,
-    meridiem: string
-  ) => {
-    if (startError) {
-      if (which === "start") {
-        if (hour && minute && meridiem) {
-          setStartError(false);
-        }
-      }
-    }
-    if (endError) {
-      if (which === "end") {
-        if (hour && minute && meridiem) {
-          setEndError(false);
-        }
-      }
-    }
-    if (which === "start") {
-      setStartTimePick((hour + ":" + minute + " " + meridiem).trim());
-    } else {
-      setEndTimePick((hour + ":" + minute + " " + meridiem).trim());
-    }
-  };
 
   /*
   const setEndDate = (
@@ -547,43 +520,6 @@ const EditVacationSchedule = ({
     }
   };
 
-  const submitDelete = async (
-    e: React.MouseEvent,
-    itemID: UniqueIdentifier,
-    index: number,
-    dateAdded: string
-  ) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`${apiURL}/schedule/${itemID}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (response.ok) {
-        setEditLineId(null);
-        setAddingItem(false);
-        setCostTotal((prev) => prev - schedule[dateAdded][index].cost);
-        setSchedule((prev) => ({
-          ...prev,
-          [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
-        }));
-        // might have to remove from our react schedule item using itemID
-      } else if (response.status === 401) {
-        navigate("/redirect", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
-        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
-      } else {
-        console.log("~~~~ error deleting item");
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   const formChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (locationError) {
       if (e.target.name === "location") {
@@ -599,39 +535,6 @@ const EditVacationSchedule = ({
     const el = e.currentTarget;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, MAX_HEIGHT) + "px";
-  };
-
-  const handleEdit = (
-    e: React.MouseEvent,
-    id: UniqueIdentifier,
-    preFilledLocation: string,
-    preFilledCost: number,
-    preFilledDetails: string,
-    preFilledMultiDay: boolean,
-    startDate: string,
-    endDate: string,
-    dayOfTrip: string
-  ) => {
-    e.preventDefault();
-
-    setPreFill({
-      location: preFilledLocation,
-      cost: preFilledCost,
-      details: preFilledDetails,
-      multiDay: preFilledMultiDay,
-    });
-    setEditLineId(id);
-    setAddingItem(true); // let's not allow adding items when editing an item
-    setEditStartDate(startDate);
-    setEditEndDate(endDate);
-    dayOfTripRef.current = dayOfTrip;
-  };
-
-  const cancelAdd = () => {
-    setAddingItem(false);
-    setEditLineId(null);
-    setEndError(false);
-    setStartError(false);
   };
 
   /*
@@ -972,6 +875,29 @@ const EditVacationSchedule = ({
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{dayObj.label}</div>
             <div className={styles.tableContainer}></div>
+            <CustomTableComponent
+              dayObj={dayObj}
+              editLineId={editLineId}
+              schedule={schedule}
+              ind={index} // DO we need this? i dont think so.
+              endError={endError}
+              startError={startError}
+              errMessage={errMessage}
+              setSchedule={setSchedule}
+              setCostTotal={setCostTotal}
+              //here
+              //submitDelete={submitDelete} moved entirety
+              hanldeEdit={handleEdit}
+              editStartDate={editStartDate}
+              setEditStartDate={setEditStartDate}
+              editEndDate={editEndDate}
+              setEditEndDate={setEditEndDate}
+              constructDate={constructDate}
+              locationError={locationError}
+              locationEditRef={locationEditRef}
+              costEditRef={costEditRef}
+              handleTextInput={handleTextInput}
+            />
             <DragOverlay>
               {props.dragRow ? (
                 <tr className={styles.tableRow}>

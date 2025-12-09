@@ -159,6 +159,7 @@ repeaterCall();
 // -- -- -- if holding cursor is not handled automatically in dnd kit, we will have to manually setIsHolding to false on drag end, will have to pass to edit canvas probably
 // -- -- -- no way to cancel mid drag yet, if it has gone over a container, it will go to that container even if we are no longer dragging over it.
 // -- -- -- but since im using mouse over for collision detection, will it recognize a cancelled drop (over container === null)? If so, we will prob need cloneItems to replace, cuz i set state for new containers
+// -- -- -- memoize the table components i made so they arent uneccessarily re-rendered
 //
 // -- -- dragging is not ideal for mobile, so we can help mitigate by adding auto suggestions from list to the location input when adding a new item to the schedule.
 // -- -- should we add a google id link from list to schedule just like we did in maps? Or is this unecessarily complex without added benefit, yeah i really don't know if the user is getting any benefit.

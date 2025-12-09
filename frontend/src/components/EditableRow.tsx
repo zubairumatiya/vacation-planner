@@ -1,12 +1,83 @@
+import styles from "../styles/EditSchedule.module.css";
+import { useState, useRef, useContext } from "react";
+import {
+  testLessThan24,
+  addMeridiem,
+  fourDigitTime,
+} from "../utils/timeHelpers";
+import CustomTimePicker from "./CustomTimePicker";
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import { AuthContext } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+
 const EditableRow = ({
   value,
   index,
   dayContainer,
-}: {
-  value: Schedule;
-  index: number;
-  dayContainer: string;
-}) => {
+  startError,
+  endError,
+  setSchedule,
+  setCostTotal,
+  schedule,
+  editStartDate,
+  setEditStartDate,
+  constructDate,
+  editEndDate,
+  setEditEndDate,
+  locationError,
+  locationEditRef,
+  costEditRef,
+}: EditRowProps) => {
+  const [editStartTimeObject, setEditStartTimeObject] = useState<TimeObj>(
+    {} as TimeObj
+  );
+  const [editEndTimeObject, setEditEndTimeObject] = useState<TimeObj>(
+    {} as TimeObj
+  );
+  const startDateEditRef = useRef<HTMLInputElement>(null);
+  const endDateEditRef = useRef<HTMLInputElement>(null);
+  const apiURL = import.meta.env.VITE_API_URL;
+  const auth = useContext(AuthContext);
+  const token = auth?.token;
+  const navigate = useNavigate();
+
+  const submitDelete = async (
+    e: React.MouseEvent,
+    itemID: UniqueIdentifier,
+    index: number,
+    dateAdded: string
+  ) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${apiURL}/schedule/${itemID}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        setEditLineId(null);
+        setAddingItem(false);
+        setCostTotal((prev) => prev - schedule[dateAdded][index].cost);
+        setSchedule((prev) => ({
+          ...prev,
+          [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
+        }));
+        // might have to remove from our react schedule item using itemID
+      } else if (response.status === 401) {
+        navigate("/redirect", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+      } else {
+        console.log("~~~~ error deleting item");
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <>
       <td>
@@ -188,3 +259,5 @@ const EditableRow = ({
     </>
   );
 };
+
+export default EditableRow;

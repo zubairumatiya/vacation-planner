@@ -80,3 +80,5 @@ const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
     </>
   );
 };
+
+export default NormalRow;
