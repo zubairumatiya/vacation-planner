@@ -98,41 +98,8 @@ const MyMapComponent = ({
     // APIProvider sets up the Google Maps JavaScript API with the specified key
     // Using 'alpha' version to access the latest features including UI Kit components
     <APIProvider apiKey={API_KEY}>
-      <div className={styles.placesUiKit} style={{ colorScheme: colorScheme }}>
-        <div className={styles.placeListWrapper}>
-          {/*
-            PlaceSearchtWebComponent displays a list of places based on:
-            - The selected place type (restaurant, cafe, etc.)
-            - The current map location and bounds
-          */}
-          <PlaceSearchWebComponent
-            placeType={placeType}
-            locationName={locationName}
-            setPlaces={setPlaces}
-            onPlaceSelect={setSelectedPlaceId}
-            setSearchDisabled={setSearchDisabled}
-            submitButtonTrigger={submitButtonTrigger}
-            viewport={viewport}
-            list={list}
-            handleSubmitItem={handleSubmitItem}
-            handleDeleteItem={handleDeleteItem}
-          />
-        </div>
-
+      <div className={styles.gPlaces} style={{ colorScheme: colorScheme }}>
         <div className={styles.mapContainer}>
-          {/*
-            The Map component renders the Google Map
-            Clicking on the map background will deselect any selected place
-          */}
-          <Map {...MAP_CONFIG} onClick={() => setSelectedPlaceId(undefined)}>
-            {placeMarkers}
-          </Map>
-
-          {/*
-            SearchBar allows users to:
-            - Select the type of place they want to find
-            - Search for a specific location to center the map on
-          */}
           <SearchBar
             placeType={placeType}
             setPlaceType={setPlaceType}
@@ -143,6 +110,45 @@ const MyMapComponent = ({
             setSubmitButtonTrigger={setSubmitButtonTrigger}
             setViewport={setViewport}
           />
+
+          <div className={styles.listAndMap}>
+            <div className={styles.placeListWrapper}>
+              {/*
+            PlaceSearchtWebComponent displays a list of places based on:
+            - The selected place type (restaurant, cafe, etc.)
+            - The current map location and bounds
+          */}
+              <PlaceSearchWebComponent
+                placeType={placeType}
+                locationName={locationName}
+                setPlaces={setPlaces}
+                onPlaceSelect={setSelectedPlaceId}
+                setSearchDisabled={setSearchDisabled}
+                submitButtonTrigger={submitButtonTrigger}
+                viewport={viewport}
+                list={list}
+                handleSubmitItem={handleSubmitItem}
+                handleDeleteItem={handleDeleteItem}
+              />
+            </div>
+            {/*
+            The Map component renders the Google Map
+            Clicking on the map background will deselect any selected place
+            */}
+            <div className={styles.mapWrapper}>
+              <Map
+                {...MAP_CONFIG}
+                onClick={() => setSelectedPlaceId(undefined)}
+              >
+                {placeMarkers}
+              </Map>
+            </div>
+          </div>
+          {/*
+            SearchBar allows users to:
+            - Select the type of place they want to find
+            - Search for a specific location to center the map on
+          */}
 
           {/*
             ControlPanel provides UI controls for adjusting the size of place details

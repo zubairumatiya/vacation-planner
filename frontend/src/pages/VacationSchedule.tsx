@@ -51,29 +51,30 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         setTitle(data.tripName);
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
-        const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
-        setTripLength(length);
+        const length = Math.ceil((UtcEnd - UtcStart) / (1000 * 60 * 60 * 24));
+        setTripLength(length); // add a day since it is not counting
       }
     };
     getTrip();
   }, []);
   return (
     <div>
-      <div className={styles.backAndTotal}>
-        <div className={styles.backWrapper}>
-          <NavLink to="/" className={styles.backButton}>
-            &#60;
-          </NavLink>
+      <div className={styles.costAndHeader}>
+        <div className={styles.backAndTotal}>
+          <div className={styles.backWrapper}>
+            <NavLink to="/" className={styles.backButton}>
+              &#60;
+            </NavLink>
+          </div>
+          <div className={styles.costWrapper}>
+            <h3 className="font-bold">Total Cost: ${costTotal}</h3>
+          </div>
         </div>
-        <div className={styles.costWrapper}>
-          <h3 className="font-bold">Total Cost: ${costTotal}</h3>
-        </div>
+        <header className={styles.header}>
+          <h2 className={styles.title}>{title}&nbsp;</h2>
+          <h3 className={styles.length}>- {tripLength} days</h3>
+        </header>
       </div>
-      <header className={styles.header}>
-        <h2 className={styles.title}>{title}&nbsp;</h2>
-        <h3 className={styles.length}>- {tripLength} days</h3>
-      </header>
-
       <nav className={styles.navWrapper}>
         <ul className={`${styles.nav} ${styles.navPills}`} role="tablist">
           <li className={styles.navItem}>

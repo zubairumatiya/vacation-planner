@@ -1,13 +1,21 @@
+.costAndHeader {
+  display: flex;
+  flex-direction: column;
+  align-content: center;
+}
+
 .header {
   display: flex;
   flex-flow: row;
   justify-content: center;
   align-items: baseline;
+  align-self: center;
+  width: 50vw;
 }
 
 .navWrapper {
   display: flex;
-  width: 400px;
+  /*width: 400px;*/
   /*margin-bottom: -50px;*/
   margin-left: 25px;
 }
@@ -76,11 +84,12 @@
   border: 1px solid white;
   display: flex;
   align-items: center;
-  padding: 1rem;
+  padding: 0.5rem;
   border-radius: 5px;
 }
 
 .backAndTotal {
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }

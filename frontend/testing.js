@@ -173,10 +173,10 @@ repeaterCall();
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.
 // -- Set usage limits in Google Cloud Console - since we know all requests will be using the enterprise option, we can set the generic query limit in quotas using free limit for the enterprise text search SKU (1000)
 // add sharing capabilites to other users - for view only, maybe just not render the edit tab?
-// maybe have collapsable weeks in the schedule portion, and maybe a max height too?
+// maybe have collapsable weeks in the schedule portion? When we drag over a collapsed week it can open.
+// export as csv??
 // check if i am counting days properly in the title
 // add a calender view different than editing view we already have
-// make the tabs font in vs code smaller
 // add token check when viewing schedule
 // refresh token
 // maybe find a way to log person out before they have make an api request

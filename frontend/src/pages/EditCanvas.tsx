@@ -27,6 +27,7 @@ import { type DraggingState, type Schedule } from "./EditVacationSchedule";
 import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
+import { prefixZero } from "../utils/timeHelpers";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -460,6 +461,8 @@ const EditCanvas = ({
   };
 
   // NEXT: decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list) -- might need styling for mouse cursor to appear "holding"
+
+  // FOR NEXT TIME: Continue testing dnd-kit in browser
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string

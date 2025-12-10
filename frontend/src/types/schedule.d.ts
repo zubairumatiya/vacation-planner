@@ -106,4 +106,20 @@ declare global {
     minute: string,
     meridiem: string
   ) => void;
+
+  type ListItemProps = {
+    v: Item;
+    i: number;
+    editItem: (
+      e: React.MouseEvent,
+      index: number,
+      itemId: UniqueIdentifier
+    ) => void;
+    handleCheckItem: (
+      e: React.MouseEvent,
+      currentState: boolean,
+      itemId: UniqueIdentifier,
+      index: number
+    ) => void;
+  };
 }

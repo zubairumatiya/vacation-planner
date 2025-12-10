@@ -18,9 +18,8 @@ import EditCanvas from "./pages/EditCanvas.tsx";
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
 
-const [costTotal, setCostTotal] = useState(0);
-
 function App() {
+  const [costTotal, setCostTotal] = useState(0);
   const auth = useContext(AuthContext);
   if (auth?.loggingOut) return null;
   return (

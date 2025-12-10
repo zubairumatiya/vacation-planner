@@ -207,21 +207,23 @@ const PlaceSearchWebComponent = ({
             <option value="4">4 Stars</option>
             <option value="4.5">4.5 Stars</option>
           </select>
-          <label htmlFor="number-of-reviews" className={styles.filterLabel}>
-            # of Reviews:
-          </label>
-          <select
-            name="min-reviews"
-            id="min-reviews"
-            className={styles.select}
-            ref={reviewCountRef}
-            onChange={checkDifferentSelection}
-          >
-            <option value="none">-</option>
-            <option value="1000">1000</option>
-            <option value="500">500</option>
-            <option value="250">250</option>
-          </select>
+          <div className={styles.reviewsFilterContainer}>
+            <label htmlFor="number-of-reviews" className={styles.filterLabel}>
+              # of Reviews:
+            </label>
+            <select
+              name="min-reviews"
+              id="min-reviews"
+              className={styles.select}
+              ref={reviewCountRef}
+              onChange={checkDifferentSelection}
+            >
+              <option value="none">-</option>
+              <option value="1000">1000</option>
+              <option value="500">500</option>
+              <option value="250">250</option>
+            </select>
+          </div>
           <div></div>
         </div>
 

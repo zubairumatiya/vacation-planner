@@ -4,8 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import trashIcon from "../assets/trash-icon.svg";
 import { AuthContext } from "../context/AuthContext";
 import CheckBubble from "../components/CheckBubble";
-import { useDraggable, type UniqueIdentifier } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
+import { type UniqueIdentifier } from "@dnd-kit/core";
+import ListItem from "../components/ListItem";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -15,7 +15,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const [newItem, setNewItem] = useState<string>("");
   const [addingNewItem, setAddingNewItem] = useState<boolean>(true);
   const [editItemId, setEditItemId] = useState<UniqueIdentifier>("-1");
-  const [isHolding, setIsHolding] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -203,15 +202,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       <hr />
       <ul>
         {props.list.map((v, i) => {
-          const { attributes, listeners, setNodeRef, transform } = useDraggable(
-            {
-              id: v.id,
-              data: { type: "list" } as DragData,
-            }
-          );
-          const style = {
-            transform: CSS.Translate.toString(transform),
-          };
           return v.id === editItemId ? (
             <li key={v.id} id={String(v.id)} className={styles.editListItem}>
               <div className={styles.checkBubbleWrapper}>
@@ -257,30 +247,12 @@ const WantToSeeList = (props: WantToSeeListProps) => {
               </div>
             </li>
           ) : (
-            <li key={v.id} id={String(v.id)} className={`${styles.listItem}`}>
-              <div
-                className={styles.checkBubbleWrapper}
-                onClick={(e) => handleCheckItem(e, v.itemAdded, v.id, i)}
-              >
-                <CheckBubble checked={v.itemAdded} />
-              </div>
-              <div
-                onDoubleClick={(e) => editItem(e, i, v.id)}
-                className={`${styles.itemValue} ${
-                  v.itemAdded && styles.itemChecked
-                }  ${isHolding && styles.grabbing}`}
-                //onMouseDown={() => setIsHolding(true)}
-                //onDragEnd={() => setIsHolding(false)}
-                //draggable="true"
-                //onDragStart={(e) => handleDragStart(e, v)}
-                ref={setNodeRef}
-                {...attributes}
-                {...listeners}
-                style={style}
-              >
-                {v.value}
-              </div>
-            </li>
+            <ListItem
+              v={v}
+              i={i}
+              editItem={editItem}
+              handleCheckItem={handleCheckItem}
+            />
           );
         })}{" "}
         {addingNewItem && (
