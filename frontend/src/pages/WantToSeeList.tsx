@@ -249,6 +249,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           ) : (
             <ListItem
               v={v}
+              key={v.id}
               i={i}
               editItem={editItem}
               handleCheckItem={handleCheckItem}

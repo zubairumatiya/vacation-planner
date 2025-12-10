@@ -714,6 +714,7 @@ const EditVacationSchedule = ({
             <div className={styles.tableCaption}>{dayObj.label}</div>
             <div className={styles.tableContainer}></div>
             <CustomTableComponent
+              key={dayObj.day}
               dayObj={dayObj}
               schedule={schedule}
               //ind={index} // DO we need this? i dont think so.
@@ -723,14 +724,6 @@ const EditVacationSchedule = ({
               //here
               //submitDelete={submitDelete} moved entirety
             />
-            <DragOverlay>
-              {props.dragRow ? (
-                <tr className={styles.tableRow}>
-                  <NormalRow value={props.dragRow} dayContainer={dayObj.day} />
-                </tr>
-              ) : null}{" "}
-              {/* will need container logic and finding index of id once we find container. Hmm, how do we access what's active? I think it will have to be a series of props and callbacks from EditCanvas right?*/}
-            </DragOverlay>
 
             {!individualAddition[index] ? (
               <button
@@ -878,6 +871,14 @@ const EditVacationSchedule = ({
           </div>
         );
       })}
+      <DragOverlay>
+        {props.dragRow ? (
+          <tr className={styles.tableRow}>
+            <NormalRow value={props.dragRow} dayContainer={"won't need this"} />
+          </tr>
+        ) : null}{" "}
+        {/* will need container logic and finding index of id once we find container. Hmm, how do we access what's active? I think it will have to be a series of props and callbacks from EditCanvas right?*/}
+      </DragOverlay>
     </div>
   );
 };
