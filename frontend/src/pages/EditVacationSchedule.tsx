@@ -1,25 +1,17 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useContext, useRef, Fragment } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/EditSchedule.module.css";
 import CustomTimePicker from "../components/CustomTimePicker";
 import "react-time-picker/dist/TimePicker.css";
 import "react-clock/dist/Clock.css";
-import editIcon from "../assets/edit-icon.svg";
-import dragIcon from "../assets/dragger.svg";
 import { polyfill } from "mobile-drag-drop";
 import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
-import {
-  DragOverlay,
-  useDroppable,
-  type DraggableAttributes,
-  type UniqueIdentifier,
-} from "@dnd-kit/core";
-import { SortableContext, useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { DragOverlay, type UniqueIdentifier } from "@dnd-kit/core";
 import CustomTableComponent from "../components/CustomTableComponent";
 import { EditScheduleContext } from "../context/EditScheduleContext";
+import { customISOTime } from "../utils/timeHelpers";
+import NormalRow from "../components/NormalRow";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -35,12 +27,6 @@ export type Schedule = {
   endTime: Date;
   cost: number;
   multiDay: boolean;
-};
-
-type timeObj = {
-  hour: string;
-  minute: string;
-  meridiem: string;
 };
 
 export type DraggingState = {
@@ -63,33 +49,35 @@ const EditVacationSchedule = ({
   setCostTotal,
   ...props
 }: ScheduleProps) => {
-  const editContext = useContext(EditScheduleContext);
-
   const {
     preFill,
     editLineId,
-    setEditLineId,
     addingItem,
     setAddingItem,
     dayOfTripRef,
+    cancelAdd,
+    editSubmitButtonRef,
     setEndError,
     setStartError,
     startTimePick,
     endTimePick,
     setLocationError,
-    handleEdit,
+    textAreaFocus,
+    holdEndTime,
+    holdStartTime,
+    detailEditRef,
+    multiDayEditRef,
+    setMultiDayStyle,
+    setEditMultiDay,
+    editMultiDay,
     constructDate,
-    editStartDate,
-    setEditStartDate,
-    editEndDate,
-    setEditEndDate,
     startError,
     endError,
     locationError,
     locationEditRef,
     costEditRef,
     handleTextInput,
-  } = editContext;
+  } = useContext(EditScheduleContext);
 
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
@@ -104,20 +92,8 @@ const EditVacationSchedule = ({
   const [message, setMessage] = useState("");
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const detailEditRef = useRef<HTMLTextAreaElement>(null);
-  const multiDayEditRef = useRef<HTMLInputElement>(null);
 
-  const dragIndexRef = useRef(-1);
-  const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
-  const [editStartTimeObject, setEditStartTimeObject] = useState<timeObj>(
-    {} as timeObj
-  );
-  const [holdEndTime, setHoldEndTime] = useState("");
-  const [holdStartTime, setHoldStartTime] = useState("");
   const [errMessage, setErrMessage] = useState("");
-  const [multiDayStyle, setMultiDayStyle] = useState(false);
-  const editSubmitButtonRef = useRef<HTMLButtonElement>(null);
-  const [editMultiDay, setEditMultiDay] = useState(false);
 
   useEffect(() => {
     const getTrip = async () => {
@@ -277,41 +253,6 @@ const EditVacationSchedule = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [editLineId, textAreaFocus, dayOfTripRef, endError, startError]);
 
-  /*
-  const setEndDate = (
-    newStartTime: Date,
-    currentEndTime: Date,
-    multiDayCheck: boolean,
-    fromList: boolean | undefined
-  ): Date => {
-    
-    const difference =
-      (currentEndTime.getTime() - newStartTime.getTime()) / (1000 * 60 * 60); // where i left off let's double check i am using the right timezone and if there isn't an easier way to do what i am doing, maybe
-    
-    if (currentEndTime.getTime() < newStartTime.getTime()) {
-      console.log("end time below");
-      console.log(new Date(newStartTime.getTime() + 60 * 60 * 1000));
-      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
-    } else if (difference > 24) {
-      console.log(
-        "greater than 24 hours",
-        new Date(newStartTime.getTime() + 23 * 60 * 60 * 1000)
-      );
-      return new Date(newStartTime.getTime() + 23 * 60 * 60 * 1000);
-    } else {
-      console.log("no change needed", currentEndTime);
-      return currentEndTime;
-    }
-    if (fromList) {
-      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
-    }
-    if (multiDayCheck) {
-      return new Date(newStartTime.getTime() + 60 * 60 * 24 * 1000);
-    } else {
-      return new Date(newStartTime.getTime() + 60 * 60 * 1000);
-    }
-  };*/
-
   useEffect(() => {
     if (locationEditRef.current) {
       locationEditRef.current.value = preFill.location;
@@ -326,22 +267,6 @@ const EditVacationSchedule = ({
       setEditMultiDay(preFill.multiDay);
     }
   }, [editLineId]);
-
-  const customISOTime = (date: string, time: string) => {
-    const timeSplit = time.split(" ");
-    const meridiem = timeSplit[1];
-    const hourNMinutes = timeSplit[0].split(":");
-    let hours = hourNMinutes[0];
-    const minutes = hourNMinutes[1];
-    if (meridiem.toLowerCase() === "pm" && hours !== "12") {
-      hours = String(Number(hours) + 12);
-    }
-    if (meridiem.toLowerCase() === "am" && hours === "12") {
-      hours = "00";
-    }
-
-    return `${date}T${hours}:${minutes}:00Z`;
-  };
 
   const submitAddItem = async (
     e: React.FormEvent<HTMLFormElement>,
@@ -438,83 +363,6 @@ const EditVacationSchedule = ({
       navigate("/redirect", {
         state: { message: "Session expired, redirecting to log in..." },
       });
-    }
-  };
-
-  const submitEdit = async (
-    dateAdded: string,
-    itemID: UniqueIdentifier,
-    e?: React.MouseEvent | React.KeyboardEvent
-  ) => {
-    e?.preventDefault();
-
-    console.log("startTime", holdStartTime);
-    const startDateAssembler = holdStartTime;
-
-    console.log("endTime", holdEndTime);
-    const endDateAssembler = holdEndTime;
-    /*
-    if (!startTimePick || startTimePick === ": ") {
-      startDateAssembler = customISOTime(startDateHold, "00:00 AM");
-    } else {
-      startDateAssembler = customISOTime(startDateHold, startTimePick);
-    }
-
-    if (!endTimePick || endTimePick === ": ") {
-      endDateAssembler = customISOTime(endDateHold, "00:00 AM"); // TO-DO this will have to be different for multi-day
-    } else {
-      endDateAssembler = customISOTime(endDateHold, endTimePick);
-    }
-      */
-
-    const details: string = detailEditRef.current
-      ? detailEditRef.current.value
-      : "";
-    const location: string = locationEditRef.current
-      ? locationEditRef.current.value
-      : "";
-    const cost: string = costEditRef.current ? costEditRef.current.value : "";
-    const multiDay: boolean = multiDayEditRef.current
-      ? multiDayEditRef.current.checked
-      : false;
-
-    try {
-      const response = await fetch(`${apiURL}/schedule/${itemID}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          start: startDateAssembler,
-          end: endDateAssembler,
-          location,
-          cost,
-          details,
-          multiDay,
-        }),
-      });
-      if (response.ok) {
-        console.log("YAHOOOO");
-        const data = await response.json();
-        setEditLineId(null);
-        setAddingItem(false);
-        setSchedule((prev) => ({
-          ...prev,
-          [dateAdded]: reSort(
-            prev[dateAdded].map((v) => (v.id === itemID ? data.updatedData : v))
-          ),
-        })); // yeah, you can stick a whole .map as a param haha really cool, because .map returns and array
-      } else if (response.status === 401) {
-        navigate("/redirect", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
-        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
-      } else {
-        console.log("something went wrong editing");
-      }
-    } catch (err) {
-      console.log("failed to update item ~~~~~ ", err);
     }
   };
 
@@ -861,33 +709,19 @@ const EditVacationSchedule = ({
   ) : (
     <div className={styles.pageWrapper}>
       {days.map((dayObj: DayContainer, index) => {
-        const { setNodeRef } = useDroppable({ id: dayObj.day });
         return (
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{dayObj.label}</div>
             <div className={styles.tableContainer}></div>
             <CustomTableComponent
               dayObj={dayObj}
-              editLineId={editLineId}
               schedule={schedule}
-              ind={index} // DO we need this? i dont think so.
-              endError={endError}
-              startError={startError}
+              //ind={index} // DO we need this? i dont think so.
               errMessage={errMessage}
               setSchedule={setSchedule}
               setCostTotal={setCostTotal}
               //here
               //submitDelete={submitDelete} moved entirety
-              hanldeEdit={handleEdit}
-              editStartDate={editStartDate}
-              setEditStartDate={setEditStartDate}
-              editEndDate={editEndDate}
-              setEditEndDate={setEditEndDate}
-              constructDate={constructDate}
-              locationError={locationError}
-              locationEditRef={locationEditRef}
-              costEditRef={costEditRef}
-              handleTextInput={handleTextInput}
             />
             <DragOverlay>
               {props.dragRow ? (

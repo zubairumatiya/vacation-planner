@@ -3,6 +3,8 @@ import { CSS } from "@dnd-kit/utilities";
 import styles from "../styles/EditSchedule.module.css";
 import EditableRow from "./EditableRow";
 import NormalRow from "./NormalRow";
+import { useContext } from "react";
+import { EditScheduleContext } from "../context/EditScheduleContext";
 
 const CustomTableRow = ({
   scheduleItem,
@@ -12,21 +14,10 @@ const CustomTableRow = ({
   endDate,
   setSchedule,
   setCostTotal,
-  schedule
-  handleEdit,
-  editLineId,
-  startError,
-  endError,
-  editStartDate,
-  setEditStartDate,
-  constructDate,
-  editEndDate,
-  setEditEndDate,
-  locationError,
-  locationEditRef,
-  costEditRef,
+  schedule,
 }: TableRowProps) => {
   // FOR NEXT TIME: need to either add ref
+  const { handleEdit, editLineId } = useContext(EditScheduleContext);
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
       id: scheduleItem.id,
@@ -42,7 +33,7 @@ const CustomTableRow = ({
       style={style}
       ref={setNodeRef}
       data-index={index}
-      className={`${index === dragIndexRef.current && styles.dragging} ${
+      className={`${/*index === dragIndexRef.current &&*/ styles.dragging} ${
         // will need to see how the drag styling on dnd-kit looks for the grab cursor
         styles.tableRow
       }`}
@@ -65,19 +56,9 @@ const CustomTableRow = ({
           value={scheduleItem}
           index={index}
           dayContainer={dayContainer}
-          startError={startError}
-          endError={endError}
           setSchedule={setSchedule}
           setCostTotal={setCostTotal}
           schedule={schedule}
-          editStartDate={editStartDate}
-          setEditStartDate={setEditStartDate}
-          constructDate={constructDate}
-          editEndDate={editEndDate}
-          setEditEndDate={setEditEndDate}
-          locationError={locationError}
-          locationEditRef={locationEditRef}
-          costEditRef={costEditRef}
         ></EditableRow>
       ) : (
         //          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Editing above : divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

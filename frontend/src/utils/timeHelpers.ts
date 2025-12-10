@@ -16,17 +16,44 @@ export const addMeridiem = (militaryTime: string) => {
   return `${hour}:${minute} ${meridiem}`;
 };
 
-export const fourDigitTime;
+export const fourDigitTime = (time: Date) => {
+  return time.toUTCString().slice(-12, -7);
+};
 
-export const prefixZero;
+export const prefixZero = (x: number): string => {
+  if (x >= 0 && x < 10) {
+    return "0" + x;
+  }
+  return "" + x;
+};
 
-export const testLessThan24 = (obj: {
-  which: string;
-  date: string | undefined;
-  hour: string;
-  minute: string;
-  meridiem: string;
-}) => {
+export const customISOTime = (date: string, time: string) => {
+  const timeSplit = time.split(" ");
+  const meridiem = timeSplit[1];
+  const hourNMinutes = timeSplit[0].split(":");
+  let hours = hourNMinutes[0];
+  const minutes = hourNMinutes[1];
+  if (meridiem.toLowerCase() === "pm" && hours !== "12") {
+    hours = String(Number(hours) + 12);
+  }
+  if (meridiem.toLowerCase() === "am" && hours === "12") {
+    hours = "00";
+  }
+
+  return `${date}T${hours}:${minutes}:00Z`;
+};
+
+export const testLessThan24 = (
+  obj: {
+    which: string;
+    date: string | undefined;
+    hour: string;
+    minute: string;
+    meridiem: string;
+  },
+  setHoldStartTime: React.Dispatch<React.SetStateAction<string>>,
+  setHoldEndTime: React.Dispatch<React.SetStateAction<string>>
+) => {
   let startISO: string = "";
   let endISO: string = "";
   if (

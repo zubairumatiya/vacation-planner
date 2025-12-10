@@ -9,25 +9,45 @@ import CustomTimePicker from "./CustomTimePicker";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import type { Schedule } from "../pages/EditVacationSchedule";
+import { EditScheduleContext } from "../context/EditScheduleContext";
 
 const EditableRow = ({
   value,
   index,
   dayContainer,
-  startError,
-  endError,
   setSchedule,
   setCostTotal,
   schedule,
-  editStartDate,
-  setEditStartDate,
-  constructDate,
-  editEndDate,
-  setEditEndDate,
-  locationError,
-  locationEditRef,
-  costEditRef,
 }: EditRowProps) => {
+  const {
+    setEditLineId,
+    setAddingItem,
+    holdStartTime,
+    holdEndTime,
+    detailEditRef,
+    locationEditRef,
+    costEditRef,
+    multiDayEditRef,
+    editStartDate,
+    setEditStartDate,
+    startError,
+    endError,
+    constructDate,
+    editEndDate,
+    setEditEndDate,
+    locationError,
+    handleTextInput,
+    setTextAreaFocus,
+    multiDayStyle,
+    editMultiDay,
+    setEditMultiDay,
+    editSubmitButtonRef,
+    cancelAdd,
+    setHoldEndTime,
+    setHoldStartTime,
+  } = useContext(EditScheduleContext);
+  const auth = useContext(AuthContext);
   const [editStartTimeObject, setEditStartTimeObject] = useState<TimeObj>(
     {} as TimeObj
   );
@@ -37,7 +57,6 @@ const EditableRow = ({
   const startDateEditRef = useRef<HTMLInputElement>(null);
   const endDateEditRef = useRef<HTMLInputElement>(null);
   const apiURL = import.meta.env.VITE_API_URL;
-  const auth = useContext(AuthContext);
   const token = auth?.token;
   const navigate = useNavigate();
 
@@ -78,6 +97,96 @@ const EditableRow = ({
     }
   };
 
+  const reSort = (arr: Array<Schedule>) => {
+    arr.map((v) => {
+      v.startTime = new Date(v.startTime);
+      v.endTime = new Date(v.endTime);
+      return v;
+    });
+    arr.sort(
+      (a: Schedule, b: Schedule) =>
+        a.startTime.getTime() - b.startTime.getTime()
+    );
+    return arr;
+  };
+
+  const submitEdit = async (
+    dateAdded: string,
+    itemID: UniqueIdentifier,
+    e?: React.MouseEvent | React.KeyboardEvent
+  ) => {
+    e?.preventDefault();
+
+    console.log("startTime", holdStartTime);
+    const startDateAssembler = holdStartTime;
+
+    console.log("endTime", holdEndTime);
+    const endDateAssembler = holdEndTime;
+    /*
+    if (!startTimePick || startTimePick === ": ") {
+      startDateAssembler = customISOTime(startDateHold, "00:00 AM");
+    } else {
+      startDateAssembler = customISOTime(startDateHold, startTimePick);
+    }
+
+    if (!endTimePick || endTimePick === ": ") {
+      endDateAssembler = customISOTime(endDateHold, "00:00 AM"); // TO-DO this will have to be different for multi-day
+    } else {
+      endDateAssembler = customISOTime(endDateHold, endTimePick);
+    }
+      */
+
+    const details: string = detailEditRef.current
+      ? detailEditRef.current.value
+      : "";
+    const location: string = locationEditRef.current
+      ? locationEditRef.current.value
+      : "";
+    const cost: string = costEditRef.current ? costEditRef.current.value : "";
+    const multiDay: boolean = multiDayEditRef.current
+      ? multiDayEditRef.current.checked
+      : false;
+
+    try {
+      const response = await fetch(`${apiURL}/schedule/${itemID}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          start: startDateAssembler,
+          end: endDateAssembler,
+          location,
+          cost,
+          details,
+          multiDay,
+        }),
+      });
+      if (response.ok) {
+        console.log("YAHOOOO");
+        const data = await response.json();
+        setEditLineId(null);
+        setAddingItem(false);
+        setSchedule((prev) => ({
+          ...prev,
+          [dateAdded]: reSort(
+            prev[dateAdded].map((v) => (v.id === itemID ? data.updatedData : v))
+          ),
+        }));
+      } else if (response.status === 401) {
+        navigate("/redirect", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+      } else {
+        console.log("something went wrong editing");
+      }
+    } catch (err) {
+      console.log("failed to update item ~~~~~ ", err);
+    }
+  };
+
   return (
     <>
       <td>
@@ -103,11 +212,15 @@ const EditableRow = ({
             value={editStartDate}
             onChange={(e) => {
               setEditStartDate(e.target.value);
-              testLessThan24({
-                which: "start",
-                date: e.target.value,
-                ...editStartTimeObject,
-              });
+              testLessThan24(
+                {
+                  which: "start",
+                  date: e.target.value,
+                  ...editStartTimeObject,
+                },
+                setHoldStartTime,
+                setHoldEndTime
+              );
             }}
             ref={startDateEditRef}
           />
@@ -121,13 +234,17 @@ const EditableRow = ({
               minute,
               meridiem,
             });
-            testLessThan24({
-              which: "start",
-              date: startDateEditRef?.current?.value,
-              hour,
-              minute,
-              meridiem,
-            });
+            testLessThan24(
+              {
+                which: "start",
+                date: startDateEditRef?.current?.value,
+                hour,
+                minute,
+                meridiem,
+              },
+              setHoldStartTime,
+              setHoldEndTime
+            );
           }}
           preTime={addMeridiem(fourDigitTime(value.startTime))}
         />
@@ -147,11 +264,15 @@ const EditableRow = ({
             className={`${styles.dateEditInput}`}
             onChange={(e) => {
               setEditEndDate(e.target.value);
-              testLessThan24({
-                which: "end",
-                date: e.target.value,
-                ...editEndTimeObject,
-              });
+              testLessThan24(
+                {
+                  which: "end",
+                  date: e.target.value,
+                  ...editEndTimeObject,
+                },
+                setHoldStartTime,
+                setHoldEndTime
+              );
             }}
             ref={endDateEditRef}
           />
@@ -170,13 +291,17 @@ const EditableRow = ({
               minute,
               meridiem,
             });
-            testLessThan24({
-              which: "end",
-              date: endDateEditRef?.current?.value,
-              hour,
-              minute,
-              meridiem,
-            });
+            testLessThan24(
+              {
+                which: "end",
+                date: endDateEditRef?.current?.value,
+                hour,
+                minute,
+                meridiem,
+              },
+              setHoldStartTime,
+              setHoldEndTime
+            );
           }}
           preTime={addMeridiem(fourDigitTime(value.endTime))}
         />

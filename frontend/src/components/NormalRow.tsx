@@ -1,3 +1,13 @@
+import type { Schedule } from "../pages/EditVacationSchedule";
+import type { DraggableAttributes } from "@dnd-kit/core";
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { addMeridiem, fourDigitTime, prefixZero } from "../utils/timeHelpers";
+import styles from "../styles/EditSchedule.module.css";
+import editIcon from "../assets/edit-icon.svg";
+import dragIcon from "../assets/dragger.svg";
+import { useContext } from "react";
+import { EditScheduleContext } from "../context/EditScheduleContext";
+
 type NormalRowProps = {
   value: Schedule;
   dayContainer: string;
@@ -6,6 +16,7 @@ type NormalRowProps = {
 };
 
 const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
+  const { handleEdit } = useContext(EditScheduleContext);
   let sTime;
   if (value.startTime) {
     sTime = addMeridiem(fourDigitTime(value.startTime));

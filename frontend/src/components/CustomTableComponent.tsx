@@ -4,27 +4,18 @@ import styles from "../styles/EditSchedule.module.css";
 import { Fragment } from "react/jsx-runtime";
 import type { Schedule } from "../pages/EditVacationSchedule";
 import CustomTableRow from "./CustomTableRow";
+import { useContext } from "react";
+import { EditScheduleContext } from "../context/EditScheduleContext";
 
 const CustomTableComponent = ({
   dayObj,
-  editLineId,
   schedule,
-  startError,
-  endError,
-  errMessage,
   setSchedule,
   setCostTotal,
-  //HERE
-  handleEdit,
-  editStartDate,
-  setEditStartDate,
-  constructDate,
-  editEndDate,
-  setEditEndDate,
-  locationError,
-  locationEditRef,
-  costEditRef,
+  errMessage,
 }: TableComponentProps) => {
+  const { startError, endError, editLineId } = useContext(EditScheduleContext);
+
   const { setNodeRef } = useDroppable({ id: dayObj.day });
   return (
     <table
@@ -73,21 +64,9 @@ const CustomTableComponent = ({
                   dayContainer={dayObj.day}
                   startDate={startDate}
                   endDate={endDate}
-                  setSchedule={setSchedule}
                   setCostTotal={setCostTotal}
+                  setSchedule={setSchedule}
                   schedule={schedule}
-                  handleEdit={handleEdit}
-                  editLineId={editLineId}
-                  startError={startError}
-                  endError={endError}
-                  editStartDate={editStartDate}
-                  setEditStartDate={setEditStartDate}
-                  constructDate={constructDate}
-                  editEndDate={editEndDate}
-                  setEditEndDate={setEditEndDate}
-                  locationError={locationError}
-                  locationEditRef={locationEditRef}
-                  costEditRef={costEditRef}
                 ></CustomTableRow>
                 {editLineId === item.id && (
                   <tr className={styles.errDiv}>

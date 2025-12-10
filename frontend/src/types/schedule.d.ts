@@ -49,23 +49,10 @@ declare global {
 
   type TableComponentProps = {
     dayObj: DayContainer;
-    editLineId: UniqueIdentifier | null;
     schedule: DaySchedule;
-    startError: boolean;
-    endError: boolean;
     errMessage: string;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     setCostTotal: React.Dispatch<React.SetStateAction<number>>;
-    //here
-    handleEdit: HandleEdit;
-    editStartDate: string;
-    setEditStartDate: React.Dispatch<React.SetStateAction<string>>;
-    constructDate: ConstructDate;
-    editEndDate: string;
-    setEditEndDate: React.Dispatch<React.SetStateAction<string>>;
-    locationError: boolean;
-    locationEditRef: React.RefObject<HTMLInputElement | null>;
-    costEditRef: React.RefObject<HTMLInputElement | null>;
   };
 
   type TableRowProps = {
@@ -77,37 +64,15 @@ declare global {
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     setCostTotal: React.Dispatch<React.SetStateAction<number>>;
     schedule: DaySchedule;
-    handleEdit: HandleEdit;
-    editLineId: UniqueIdentifier | null;
-    startError: boolean;
-    endError: boolean;
-    editStartDate: string;
-    setEditStartDate: React.Dispatch<React.SetStateAction<string>>;
-    constructDate: ConstructDate;
-    editEndDate: string;
-    setEditEndDate: React.Dispatch<React.SetStateAction<string>>;
-    locationError: boolean;
-    locationEditRef: React.RefObject<HTMLInputElement | null>;
-    costEditRef: React.RefObject<HTMLInputElement | null>;
   };
 
   type EditRowProps = {
     value: Schedule;
     index: number;
     dayContainer: string;
-    startError: boolean;
-    endError: boolean;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     setCostTotal: React.Dispatch<React.SetStateAction<number>>;
     schedule: DaySchedule;
-    editStartDate: string;
-    setEditStartDate: React.Dispatch<React.SetStateAction<string>>;
-    constructDate: ConstructDate;
-    editEndDate: string;
-    setEditEndDate: React.Dispatch<React.SetStateAction<string>>;
-    locationError: boolean;
-    locationEditRef: React.RefObject<HTMLInputElement | null>;
-    costEditRef: React.RefObject<HTMLInputElement | null>;
   };
 
   type HandleEdit = (

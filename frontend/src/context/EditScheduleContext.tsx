@@ -14,6 +14,20 @@ export type EditScheduleContext = {
   startTimePick: null | string;
   endTimePick: null | string;
   setLocationError: React.Dispatch<React.SetStateAction<boolean>>;
+  cancelAdd: () => void;
+  holdEndTime: string;
+  setHoldEndTime: React.Dispatch<React.SetStateAction<string>>;
+  holdStartTime: string;
+  setHoldStartTime: React.Dispatch<React.SetStateAction<string>>;
+  detailEditRef: React.RefObject<HTMLTextAreaElement | null>;
+  multiDayEditRef: React.RefObject<HTMLInputElement | null>;
+  editSubmitButtonRef: React.RefObject<HTMLButtonElement | null>;
+  textAreaFocus: boolean;
+  setTextAreaFocus: React.Dispatch<React.SetStateAction<boolean>>;
+  multiDayStyle: boolean;
+  setMultiDayStyle: React.Dispatch<React.SetStateAction<boolean>>;
+  editMultiDay: boolean;
+  setEditMultiDay: React.Dispatch<React.SetStateAction<boolean>>;
   // drilled that we need to switch to context
   handleEdit: HandleEdit;
   constructDate: ConstructDate;
@@ -57,6 +71,14 @@ export function EditScheduleProvider({
   const [locationError, setLocationError] = useState(false);
   const locationEditRef = useRef<HTMLInputElement>(null);
   const costEditRef = useRef<HTMLInputElement>(null);
+  const [holdEndTime, setHoldEndTime] = useState("");
+  const [holdStartTime, setHoldStartTime] = useState("");
+  const detailEditRef = useRef<HTMLTextAreaElement>(null);
+  const multiDayEditRef = useRef<HTMLInputElement>(null);
+  const editSubmitButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
+  const [multiDayStyle, setMultiDayStyle] = useState(false);
+  const [editMultiDay, setEditMultiDay] = useState(false);
 
   const handleEdit = (
     e: React.MouseEvent,
@@ -118,6 +140,13 @@ export function EditScheduleProvider({
     el.style.height = Math.min(el.scrollHeight, MAX_HEIGHT) + "px";
   };
 
+  const cancelAdd = () => {
+    setAddingItem(false);
+    setEditLineId(null);
+    setEndError(false);
+    setStartError(false);
+  };
+
   return (
     <EditScheduleContext.Provider
       value={{
@@ -132,6 +161,20 @@ export function EditScheduleProvider({
         startTimePick,
         endTimePick,
         setLocationError,
+        cancelAdd,
+        editSubmitButtonRef,
+        setTextAreaFocus,
+        textAreaFocus,
+        editMultiDay,
+        setEditMultiDay,
+        multiDayStyle,
+        setMultiDayStyle,
+        holdEndTime,
+        setHoldEndTime,
+        holdStartTime,
+        setHoldStartTime,
+        detailEditRef,
+        multiDayEditRef,
         handleEdit,
         constructDate,
         editStartDate,
