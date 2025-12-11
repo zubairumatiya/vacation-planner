@@ -552,25 +552,27 @@ const EditCanvas = ({
       collisionDetection={customCollisionsDetectionAlgorithm}
     >
       <div className={styles.pageWrapper}>
-        <EditScheduleProvider>
-          <EditVacationSchedule
-            loadFirst={() => setLoading(false)}
-            getMapValues={gValuesFn}
-            schedule={schedule}
-            setSchedule={setSchedule}
-            dragRow={dragRow}
-            setCostTotal={setCostTotal}
-          />
-        </EditScheduleProvider>
-        {!loading && (
-          <WantToSeeList
-            loadSecond={() => setLoading2(false)}
-            setList={setWishList}
-            list={wishList}
-            handleSubmitItem={handleSubmitItem}
-            handleDeleteItem={handleDeleteItem}
-          />
-        )}
+        <div className={styles.tableAndList}>
+          <EditScheduleProvider>
+            <EditVacationSchedule
+              loadFirst={() => setLoading(false)}
+              getMapValues={gValuesFn}
+              schedule={schedule}
+              setSchedule={setSchedule}
+              dragRow={dragRow}
+              setCostTotal={setCostTotal}
+            />
+          </EditScheduleProvider>
+          {!loading && (
+            <WantToSeeList
+              loadSecond={() => setLoading2(false)}
+              setList={setWishList}
+              list={wishList}
+              handleSubmitItem={handleSubmitItem}
+              handleDeleteItem={handleDeleteItem}
+            />
+          )}
+        </div>
         {!loading2 && (
           <MyMapComponent
             bounds={vp}

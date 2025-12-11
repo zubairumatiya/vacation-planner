@@ -3,3 +3,10 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+
+.tableAndList {
+  display: flex;
+  width: 100%;
+  gap: 8px;
+  flex-wrap: wrap;
+}

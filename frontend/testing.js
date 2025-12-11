@@ -181,6 +181,11 @@ repeaterCall();
 // refresh token
 // maybe find a way to log person out before they have make an api request
 // mailgun email styling
+// clean up comments
+// buy domain
+// host db
+// host front and back end
+// launch
 
 // nice to have - pressing enter while focused on customTimePicker does not submit the edit item
 // nice to have -  anki deck for react

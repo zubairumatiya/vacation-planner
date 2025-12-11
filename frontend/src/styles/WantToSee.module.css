@@ -1,17 +1,18 @@
 .pageWrapper {
   /*height: 100vh;
   min-height: 33vh;  not sure if i will need this, but it looks clean when it fills the space*/
-  width: 31%;
+  width: 100%;
   background-color: ivory;
   border: 1px solid white;
   border-radius: 10px;
   overflow-y: scroll;
   padding: 1rem;
+  flex: 0.5;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 700px) {
   .pageWrapper {
-    width: 100%; /* full width on smaller screens */
+    flex: none; /* full width on smaller screens */
   }
 }
 

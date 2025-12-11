@@ -8,7 +8,7 @@
 .gPlaces .placeListWrapper {
   display: flex;
   flex-direction: column;
-  overflow-y: hidden;
+  /*overflow-y: hidden;*/
 }
 
 @media (max-width: 700px) {
@@ -34,10 +34,13 @@
   min-width: 335px;
   display: flex;
   flex: 1;
+  max-height: 40vw;
+  min-height: 400px;
 }
 
 .placeListWrapper {
-  height: 40vw;
+  max-height: 40vw;
+  min-height: 400px;
   width: 300px;
 }
 
@@ -90,6 +93,10 @@
   position: relative;
 }
 
+.autocompleteWrapper {
+  justify-content: center;
+}
+
 .gPlaces .autocompleteWrapper {
   /*position: absolute;*/
   background-color: white;
@@ -136,8 +143,7 @@
   flex-direction: column;
   max-height: 500px;
   overflow-y: auto;
-
-  overflow: auto;
+  /*overflow: auto;*/
   flex: 1;
 }
 
@@ -244,8 +250,8 @@
   height: 100%;
   border: 1px solid #888;
   border-radius: 12px;
-  overflow: auto;
-  resize: both;
+  /*overflow: auto;
+  resize: both;*/
   margin-right: 10px;
   justify-content: space-between;
   min-width: 300px;

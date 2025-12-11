@@ -712,19 +712,19 @@ const EditVacationSchedule = ({
         return (
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{dayObj.label}</div>
-            <div className={styles.tableContainer}></div>
-            <CustomTableComponent
-              key={dayObj.day}
-              dayObj={dayObj}
-              schedule={schedule}
-              //ind={index} // DO we need this? i dont think so.
-              errMessage={errMessage}
-              setSchedule={setSchedule}
-              setCostTotal={setCostTotal}
-              //here
-              //submitDelete={submitDelete} moved entirety
-            />
-
+            <div className={styles.tableContainer}>
+              <CustomTableComponent
+                key={dayObj.day}
+                dayObj={dayObj}
+                schedule={schedule}
+                //ind={index} // DO we need this? i dont think so.
+                errMessage={errMessage}
+                setSchedule={setSchedule}
+                setCostTotal={setCostTotal}
+                //here
+                //submitDelete={submitDelete} moved entirety
+              />
+            </div>
             {!individualAddition[index] ? (
               <button
                 type="button"
