@@ -51,8 +51,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         setTitle(data.tripName);
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
-        const length = Math.ceil((UtcEnd - UtcStart) / (1000 * 60 * 60 * 24));
-        setTripLength(length); // add a day since it is not counting
+        const length = Math.floor((UtcEnd - UtcStart) / (1000 * 60 * 60 * 24));
+        setTripLength(length + 1); // add a day since it is not counting
       }
     };
     getTrip();

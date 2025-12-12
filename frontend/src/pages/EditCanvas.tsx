@@ -53,6 +53,7 @@ const EditCanvas = ({
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const auth = useContext(AuthContext);
   const tempScheduleItem = useRef<Schedule | null>(null);
+  const positionModRef = useRef<number>(0);
   const navigate = useNavigate();
 
   const sensors = useSensors(
@@ -197,6 +198,16 @@ const EditCanvas = ({
               ],
             };
       });
+    } else {
+      positionModRef.current =
+        over &&
+        active.rect.current.translated &&
+        active.rect.current.translated.top >
+          over.rect.top + over.rect.height / 2
+          ? 1
+          : 0; // when true, it means our active will be below our over, otherwise it will be above. This is diff than above, we will use this to modify where we get our start time from.
+      console.log(positionModRef.current);
+      //let's see if we can change the start time as we drag
     }
   };
 
@@ -216,19 +227,23 @@ const EditCanvas = ({
     let previous: DaySchedule;
 
     if (
-      activeIndex == null ||
-      activeInfo.container == null ||
-      overContainer == null
+      activeIndex === null ||
+      activeInfo.container === null ||
+      overContainer === null
     ) {
-      // this is not like drag over where a null index indicates and empty table, since we will have already set the active item in schedule, it should return an index. This is a catch all check.
+      // this is not like drag over where a null index indicates an empty table, since we will have already set the active item in schedule, it should return an index. This is a catch all check.
       setSchedule(clonedSchedule);
       setActiveId(null);
       setDragRow(null);
       tempScheduleItem.current = null;
       return;
     }
-
-    if (activeInfo.index !== overInfo.index) {
+    console.log(overInfo);
+    const originalPosition = findContainerAndIndex(active.id, clonedSchedule); // will have to check against clone because moving to different containers resets our state
+    if (
+      overInfo.container !== originalPosition.container ||
+      overInfo.index !== originalPosition.index
+    ) {
       setSchedule((prevSchedule) => {
         previous = prevSchedule;
         const newStartTime = changeDropTime(
@@ -325,6 +340,7 @@ const EditCanvas = ({
     setActiveId(null);
     setDragRow(null);
     tempScheduleItem.current = null;
+    recentlyMovedToNewContainer.current = false;
   };
 
   const changeEndDate = (
@@ -348,92 +364,125 @@ const EditCanvas = ({
     overIndex: number | null,
     overContainer: string
   ): Date => {
+    console.log("active index: ", activeIndex);
+    console.log("over index: ", overIndex);
+    // active index is still the original index despite it shifting around (for same table items)
     // ts-ignore
     let activeStartTime: Date =
       currentSchedule[overContainer][activeIndex].startTime;
     const holdTime = activeStartTime.toISOString().split("T")[1]; // the time should already be in UTC so going to ISOString should not change time: format hh:mm:ss.sssZ
-
-    if (!overIndex) {
-      // dropping on empty container
+    console.log("time at start: ", activeStartTime);
+    if (currentSchedule[overContainer].length === 1) {
+      // dropping on empty container but changing table resets state so we can't check with overIndex === null, we can instead check for a length of one. (Non-moved objects are omitted before calling changeDropTime)
       activeStartTime = new Date(`${overContainer}T${holdTime}`);
-    } else if (activeIndex === 0) {
+    } else if (overIndex === 0 && currentSchedule[overContainer].length > 1) {
+      // over index will be our new spot, but it isn't yet, so we can simply look at the 0 index of our current schedule, unless we have moved to a new table
       // will need time of below item
       activeStartTime = new Date(`${overContainer}T${holdTime}`);
-      const timeBelow =
-        currentSchedule[overContainer][activeIndex + 1].startTime;
-      if (activeStartTime.getTime() > timeBelow.getTime()) {
-        if (timeBelow.getUTCHours() === 0) {
-          activeStartTime = new Date(`${overContainer}T00:00:00Z`);
-        } else {
-          const newHour = prefixZero(timeBelow.getUTCHours() - 1);
-          const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
-          activeStartTime = new Date(
-            `${overContainer}T${newHour}:${sameMinute}:00Z`
-          );
-        }
-      } else {
-        // item is at the top of day, day is correct, time is before item below, no change needed.
-      }
-    } else {
-      //otherwise we can just grab the time from above
-      const timeAbove =
-        currentSchedule[overContainer][activeIndex - 1].startTime;
-      const timeBelow =
-        currentSchedule[overContainer][activeIndex + 1]?.startTime;
-      if (!timeBelow) {
-        if (timeAbove.getUTCHours() === 23) {
-          activeStartTime = new Date(
-            `${overContainer}T23:${prefixZero(
-              activeStartTime.getUTCMinutes()
-            )}:00Z`
-          );
-        } else {
-          if (activeStartTime.getTime() < timeAbove.getTime()) {
-            activeStartTime = new Date(
-              `${overContainer}T${prefixZero(
-                timeAbove.getUTCHours() + 1
-              )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
-            );
+      if (overIndex === activeIndex) {
+        // happens only when it's a new table drag and came in from that position (in this case, 0)
+        const timeBelow =
+          currentSchedule[overContainer][activeIndex + 1].startTime;
+        if (activeStartTime.getTime() > timeBelow.getTime()) {
+          if (timeBelow.getUTCHours() === 0) {
+            activeStartTime = new Date(`${overContainer}T00:00:00Z`);
           } else {
-            // day is correct, no item below, time is after item above, no action needed
+            const newHour = prefixZero(timeBelow.getUTCHours() - 1);
+            const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
+            activeStartTime = new Date(
+              `${overContainer}T${newHour}:${sameMinute}:00Z`
+            );
           }
         }
       } else {
-        // squeeze new item between two item start times
-        if (
-          timeAbove.getTime() <= activeStartTime.getTime() &&
-          timeBelow.getTime() >= activeStartTime.getTime()
-        ) {
-          // perfect squeeze, no action needed
-        } else {
-          if (
-            timeAbove.getTime() === timeBelow.getTime() ||
-            timeAbove.getUTCHours() === 23
-          ) {
-            activeStartTime = timeAbove;
+        const timeBelow = currentSchedule[overContainer][overIndex].startTime;
+        if (activeStartTime.getTime() > timeBelow.getTime()) {
+          if (timeBelow.getUTCHours() === 0) {
+            activeStartTime = new Date(`${overContainer}T00:00:00Z`);
           } else {
-            if (timeBelow.getUTCHours() - timeAbove.getUTCHours() > 1) {
+            const newHour = prefixZero(timeBelow.getUTCHours() - 1);
+            const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
+            activeStartTime = new Date(
+              `${overContainer}T${newHour}:${sameMinute}:00Z`
+            );
+          }
+        }
+      }
+    } else {
+      //otherwise we can just grab the time from above
+      if (overIndex === null) return activeStartTime;
+      const timeAbove =
+        currentSchedule[overContainer][overIndex - positionModRef.current]
+          .startTime;
+      const timeBelow =
+        currentSchedule[overContainer][overIndex - positionModRef.current + 1]
+          ?.startTime;
+      if (activeIndex === overIndex) {
+        // FOR NEXT TIME -- we can start with taking the time from above for a DCD from below. Just do overindex-1. FOR THE REST OF THESE WE CAN JUST USE THE ABOVE. It might be ready with just the changes I made above. Needs testing
+      } else {
+        if (!timeBelow) {
+          if (timeAbove.getUTCHours() === 23) {
+            activeStartTime = new Date(
+              `${overContainer}T23:${prefixZero(
+                activeStartTime.getUTCMinutes()
+              )}:00Z`
+            );
+          } else {
+            if (activeStartTime.getTime() < timeAbove.getTime()) {
               activeStartTime = new Date(
                 `${overContainer}T${prefixZero(
                   timeAbove.getUTCHours() + 1
                 )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
               );
             } else {
-              // will either be the same hour or 1 hour apart
-              if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
-                if (timeBelow.getUTCMinutes() > timeAbove.getUTCMinutes()) {
-                  // greater than an hour gap
-                  if (
-                    timeBelow.getUTCMinutes() > activeStartTime.getUTCMinutes()
-                  ) {
-                    // current minutes less than time below, can freely add an hour and keep minutes
-                    activeStartTime = new Date(
-                      `${overContainer}T${prefixZero(
-                        timeAbove.getUTCHours() + 1
-                      )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
-                    );
+              // day is correct, no item below, time is after item above, no action needed
+            }
+          }
+        } else {
+          // squeeze new item between two item start times
+          if (
+            timeAbove.getTime() <= activeStartTime.getTime() &&
+            timeBelow.getTime() >= activeStartTime.getTime()
+          ) {
+            // perfect squeeze, no action needed
+          } else {
+            if (
+              timeAbove.getTime() === timeBelow.getTime() ||
+              timeAbove.getUTCHours() === 23
+            ) {
+              activeStartTime = timeAbove;
+            } else {
+              if (timeBelow.getUTCHours() - timeAbove.getUTCHours() > 1) {
+                activeStartTime = new Date(
+                  `${overContainer}T${prefixZero(
+                    timeAbove.getUTCHours() + 1
+                  )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                );
+              } else {
+                // will either be the same hour or 1 hour apart
+                if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
+                  if (timeBelow.getUTCMinutes() > timeAbove.getUTCMinutes()) {
+                    // greater than an hour gap
+                    if (
+                      timeBelow.getUTCMinutes() >
+                      activeStartTime.getUTCMinutes()
+                    ) {
+                      // current minutes less than time below, can freely add an hour and keep minutes
+                      activeStartTime = new Date(
+                        `${overContainer}T${prefixZero(
+                          timeAbove.getUTCHours() + 1
+                        )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                      );
+                    } else {
+                      // current minutes greater. just add hour and zero the minutes instead of microing minutes
+                      activeStartTime = new Date(
+                        `${overContainer}T${prefixZero(
+                          timeAbove.getUTCHours() + 1
+                        )}:00:00Z`
+                      );
+                    }
                   } else {
-                    // current minutes greater. just add hour and zero the minutes instead of microing minutes
+                    // less than an hour gap when including minutes
                     activeStartTime = new Date(
                       `${overContainer}T${prefixZero(
                         timeAbove.getUTCHours() + 1
@@ -441,22 +490,16 @@ const EditCanvas = ({
                     );
                   }
                 } else {
-                  // less than an hour gap when including minutes
-                  activeStartTime = new Date(
-                    `${overContainer}T${prefixZero(
-                      timeAbove.getUTCHours() + 1
-                    )}:00:00Z`
-                  );
+                  // same hour
+                  activeStartTime = timeAbove;
                 }
-              } else {
-                // same hour
-                activeStartTime = timeAbove;
               }
             }
           }
         }
       }
     }
+    console.log("time at end: ", activeStartTime);
     return activeStartTime;
   };
 
@@ -465,21 +508,39 @@ const EditCanvas = ({
   // FOR NEXT TIME: Continue testing dnd-kit in browser
 
   const findContainerAndIndex = (
-    id: UniqueIdentifier | undefined | string
+    id: UniqueIdentifier | undefined | string,
+    specificSchedule?: DaySchedule
   ): DraggingState => {
     const containerAndIndex: DraggingState = { container: null, index: null };
     if (!id) return containerAndIndex;
-    if (id in schedule) {
-      // check if our id is actually just an empty table (container)
-      containerAndIndex["container"] = String(id);
-      return containerAndIndex;
-    }
-    for (const v of Object.keys(schedule)) {
-      for (let i = 0; i < schedule[v].length; i++) {
-        if (schedule[v][i].id === id) {
-          containerAndIndex["container"] = v;
-          containerAndIndex["index"] = i;
-          return containerAndIndex;
+    if (specificSchedule) {
+      if (id in specificSchedule) {
+        // check if our id is actually just an empty table (container)
+        containerAndIndex["container"] = String(id);
+        return containerAndIndex;
+      }
+      for (const v of Object.keys(specificSchedule)) {
+        for (let i = 0; i < specificSchedule[v].length; i++) {
+          if (specificSchedule[v][i].id === id) {
+            containerAndIndex["container"] = v;
+            containerAndIndex["index"] = i;
+            return containerAndIndex;
+          }
+        }
+      }
+    } else {
+      if (id in schedule) {
+        // check if our id is actually just an empty table (container)
+        containerAndIndex["container"] = String(id);
+        return containerAndIndex;
+      }
+      for (const v of Object.keys(schedule)) {
+        for (let i = 0; i < schedule[v].length; i++) {
+          if (schedule[v][i].id === id) {
+            containerAndIndex["container"] = v;
+            containerAndIndex["index"] = i;
+            return containerAndIndex;
+          }
         }
       }
     }

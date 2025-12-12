@@ -1,10 +1,7 @@
-import { useEffect, useState } from "react";
+//import { useEffect, useState } from "react";
 import styles from "../styles/CheckBubble.module.css";
 
 const CheckBubble = (props: CheckBubbleProps) => {
-  useEffect(() => {
-    console.log(props.checked);
-  }, [props.checked]);
   return (
     <svg
       className={styles.icon}
