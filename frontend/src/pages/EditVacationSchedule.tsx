@@ -39,6 +39,7 @@ type ScheduleProps = {
   getMapValues: (a: Vp, b: string, c: string) => void;
   schedule: DaySchedule;
   setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
+  activeItem: UniqueIdentifier | null;
   dragRow: Schedule | null;
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
 };
@@ -712,7 +713,11 @@ const EditVacationSchedule = ({
         return (
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{dayObj.label}</div>
-            <div className={styles.tableContainer}>
+            <div
+              className={`${styles.tableContainer} ${
+                props.activeItem && styles.tableContainerDragging
+              }`}
+            >
               <CustomTableComponent
                 key={dayObj.day}
                 dayObj={dayObj}
@@ -871,16 +876,18 @@ const EditVacationSchedule = ({
           </div>
         );
       })}
-      {/*
-      <DragOverlay>
-        {props.dragRow ? (
-          <tr className={styles.tableRow}>
-            <NormalRow value={props.dragRow} dayContainer={"won't need this"} />
-          </tr>
-        ) : null}{" "}
-
-      </DragOverlay>
-*/}
+      {
+        <DragOverlay>
+          {props.dragRow ? (
+            <tr className={styles.tableRow}>
+              <NormalRow
+                value={props.dragRow}
+                dayContainer={"won't need this"}
+              />
+            </tr>
+          ) : null}{" "}
+        </DragOverlay>
+      }
     </div>
   );
 };

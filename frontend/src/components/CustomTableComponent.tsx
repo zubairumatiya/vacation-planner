@@ -1,5 +1,8 @@
 import { useDroppable } from "@dnd-kit/core";
-import { SortableContext } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import styles from "../styles/EditSchedule.module.css";
 import { Fragment } from "react/jsx-runtime";
 import type { Schedule } from "../pages/EditVacationSchedule";
@@ -47,7 +50,10 @@ const CustomTableComponent = ({
         </tr>
       </thead>
       <tbody>
-        <SortableContext items={schedule[dayObj.day]}>
+        <SortableContext
+          items={schedule[dayObj.day]}
+          strategy={verticalListSortingStrategy}
+        >
           {schedule[dayObj.day].map((item: Schedule, ind) => {
             const startDate: string = item.startTime
               .toISOString()

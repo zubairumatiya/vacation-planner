@@ -27,7 +27,12 @@ import { type DraggingState, type Schedule } from "./EditVacationSchedule";
 import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
+//import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { prefixZero } from "../utils/timeHelpers";
+import {
+  restrictToFirstScrollableAncestor,
+  restrictToParentElement,
+} from "@dnd-kit/modifiers";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -70,7 +75,7 @@ const EditCanvas = ({
         pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args); // fallback on closest corners in case of keyboard sensor
 
       let overId = getFirstCollision(intersections, "id"); // i guess this will always be the container first? According to source code example?
-
+      console.log("collision detect", overId);
       if (overId !== null) {
         if (overId in schedule) {
           const containerItems = schedule[overId];
@@ -111,6 +116,7 @@ const EditCanvas = ({
   const handleDragStart = (e: DragStartEvent) => {
     setActiveId(e.active.id);
     setClonedSchedule(schedule);
+    document.body.classList.add("dnd-no-scroll"); // stop the entire page from scrolling by adding our class thats defined in index.css to the body element.
     if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
     const typeOfDrag = e.active.data.current;
     if (typeOfDrag.type === "list") {
@@ -147,10 +153,10 @@ const EditCanvas = ({
     const overInfo = findContainerAndIndex(over.id);
     const overContainer = overInfo.container;
 
+    console.log("overContainer", overContainer, "overIndex", overInfo.index);
     if (!overContainer || !activeContainer) {
       return;
     }
-
     if (activeContainer !== overContainer) {
       setSchedule((prevSchedule) => {
         const activeItems = prevSchedule[activeContainer]; // could be undefined
@@ -206,7 +212,6 @@ const EditCanvas = ({
           over.rect.top + over.rect.height / 2
           ? 1
           : 0; // when true, it means our active will be below our over, otherwise it will be above. This is diff than above, we will use this to modify where we get our start time from.
-      console.log(positionModRef.current);
       //let's see if we can change the start time as we drag
     }
   };
@@ -238,7 +243,6 @@ const EditCanvas = ({
       tempScheduleItem.current = null;
       return;
     }
-    console.log(overInfo);
     const originalPosition = findContainerAndIndex(active.id, clonedSchedule); // will have to check against clone because moving to different containers resets our state
     if (
       overInfo.container !== originalPosition.container ||
@@ -328,8 +332,12 @@ const EditCanvas = ({
             }
           );
           if (!result.ok) {
+            if (result.status === 401) {
+              navigate("/login", {
+                state: { message: "Session expired, redirecting to log in..." },
+              });
+            }
             setSchedule(clonedSchedule);
-            alert("error processing change");
           }
         }
       } catch {
@@ -337,6 +345,7 @@ const EditCanvas = ({
       }
     };
     sendScheduleToDb();
+    document.body.classList.remove("dnd-no-scroll");
     setActiveId(null);
     setDragRow(null);
     tempScheduleItem.current = null;
@@ -418,15 +427,22 @@ const EditCanvas = ({
         currentSchedule[overContainer][overIndex - positionModRef.current + 1]
           ?.startTime;
       if (activeIndex === overIndex) {
-        // FOR NEXT TIME -- we can start with taking the time from above for a DCD from below. Just do overindex-1. FOR THE REST OF THESE WE CAN JUST USE THE ABOVE. It might be ready with just the changes I made above. Needs testing
+        // will only be this if dragged from new container and from the bottom.
+        if (timeAbove.getUTCHours() === 23) {
+          activeStartTime = new Date(`${overContainer}T23:59:00Z`);
+        } else {
+          if (activeStartTime.getTime() < timeAbove.getTime()) {
+            activeStartTime = new Date(
+              `${overContainer}T${prefixZero(
+                timeAbove.getUTCHours() + 1
+              )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+            );
+          }
+        }
       } else {
         if (!timeBelow) {
           if (timeAbove.getUTCHours() === 23) {
-            activeStartTime = new Date(
-              `${overContainer}T23:${prefixZero(
-                activeStartTime.getUTCMinutes()
-              )}:00Z`
-            );
+            activeStartTime = new Date(`${overContainer}T23:59:00Z`);
           } else {
             if (activeStartTime.getTime() < timeAbove.getTime()) {
               activeStartTime = new Date(
@@ -611,6 +627,7 @@ const EditCanvas = ({
       onDragEnd={handleDragEnd}
       sensors={sensors}
       collisionDetection={customCollisionsDetectionAlgorithm}
+      modifiers={[restrictToFirstScrollableAncestor, restrictToParentElement]}
     >
       <div className={styles.pageWrapper}>
         <div className={styles.tableAndList}>
@@ -620,6 +637,7 @@ const EditCanvas = ({
               getMapValues={gValuesFn}
               schedule={schedule}
               setSchedule={setSchedule}
+              activeItem={activeId}
               dragRow={dragRow}
               setCostTotal={setCostTotal}
             />

@@ -278,9 +278,12 @@
   /*display: flex;
   justify-content: center;*/
   width: 100%;
-
   overflow-x: auto; /* enables horizontal scrolling */
   -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+}
+
+div .tableContainerDragging {
+  overflow: unset;
 }
 
 .tableNButtonContainer {

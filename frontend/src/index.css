@@ -16,6 +16,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.dnd-no-scroll {
+  overflow: unset !important; /* prevent scrolling */
+}
+
 a {
   font-weight: 500;
   color: #646cff;
