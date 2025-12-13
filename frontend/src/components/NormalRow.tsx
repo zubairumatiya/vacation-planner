@@ -43,7 +43,6 @@ const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
   return (
     <>
       <td
-        draggable="true"
         //onDragStart={(e) =>
         //  handleDragStart(e, value.id, index)
         //}

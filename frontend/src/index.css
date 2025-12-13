@@ -16,8 +16,8 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.dnd-no-scroll {
-  overflow: unset !important; /* prevent scrolling */
+html {
+  overscroll-behavior: none;
 }
 
 a {

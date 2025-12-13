@@ -29,10 +29,6 @@ import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
 //import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { prefixZero } from "../utils/timeHelpers";
-import {
-  restrictToFirstScrollableAncestor,
-  restrictToParentElement,
-} from "@dnd-kit/modifiers";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -60,12 +56,31 @@ const EditCanvas = ({
   const tempScheduleItem = useRef<Schedule | null>(null);
   const positionModRef = useRef<number>(0);
   const navigate = useNavigate();
+  const [initialListDrag, setInitialListDrag] = useState<boolean>(false);
 
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor),
     useSensor(KeyboardSensor)
   );
+
+  const scrollYRef = useRef(0);
+
+  const lockPageScroll = () => {
+    scrollYRef.current = window.scrollY;
+
+    document.documentElement.style.position = "fixed";
+    document.documentElement.style.top = `-${scrollYRef.current}px`;
+    document.documentElement.style.width = "100%";
+  };
+
+  const unlockPageScroll = () => {
+    document.documentElement.style.position = "";
+    document.documentElement.style.top = "";
+    document.documentElement.style.width = "";
+
+    window.scrollTo(0, scrollYRef.current);
+  };
 
   const customCollisionsDetectionAlgorithm: CollisionDetection = useCallback(
     (args) => {
@@ -75,7 +90,6 @@ const EditCanvas = ({
         pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args); // fallback on closest corners in case of keyboard sensor
 
       let overId = getFirstCollision(intersections, "id"); // i guess this will always be the container first? According to source code example?
-      console.log("collision detect", overId);
       if (overId !== null) {
         if (overId in schedule) {
           const containerItems = schedule[overId];
@@ -116,7 +130,7 @@ const EditCanvas = ({
   const handleDragStart = (e: DragStartEvent) => {
     setActiveId(e.active.id);
     setClonedSchedule(schedule);
-    document.body.classList.add("dnd-no-scroll"); // stop the entire page from scrolling by adding our class thats defined in index.css to the body element.
+    lockPageScroll();
     if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
     const typeOfDrag = e.active.data.current;
     if (typeOfDrag.type === "list") {
@@ -132,6 +146,7 @@ const EditCanvas = ({
         cost: 0,
         multiDay: false,
       };
+      setInitialListDrag(true);
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag.type === "schedule") {
       const containerAndIndex = findContainerAndIndex(e.active.id);
@@ -146,18 +161,19 @@ const EditCanvas = ({
     // sorting animation and shuffling seems to be the deafult within the same container!
     // see if dragged to new container
     if (!over) return;
-    const activeInfo = tempScheduleItem.current
-      ? { container: "-1", index: -1 }
-      : findContainerAndIndex(active.id); // list items wont be in schedule yet, AND list and schedule id's can clash so active.id won't be reliable moving forward
+    const activeInfo =
+      tempScheduleItem.current && initialListDrag
+        ? { container: "-1", index: -1 }
+        : findContainerAndIndex(active.id); // list items wont be in schedule yet, AND list and schedule id's can clash so active.id won't be reliable moving forward
     const activeContainer = activeInfo.container;
     const overInfo = findContainerAndIndex(over.id);
     const overContainer = overInfo.container;
 
-    console.log("overContainer", overContainer, "overIndex", overInfo.index);
     if (!overContainer || !activeContainer) {
       return;
     }
     if (activeContainer !== overContainer) {
+      setInitialListDrag(false);
       setSchedule((prevSchedule) => {
         const activeItems = prevSchedule[activeContainer]; // could be undefined
         const overItems = prevSchedule[overContainer];
@@ -218,6 +234,7 @@ const EditCanvas = ({
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     // for next time, let's continue to incorporate adding a list item to schedule.
+    unlockPageScroll();
     if (over?.id == null) {
       setActiveId(null);
       return;
@@ -250,12 +267,14 @@ const EditCanvas = ({
     ) {
       setSchedule((prevSchedule) => {
         previous = prevSchedule;
+        console.log("activeIndex:", activeIndex, "overIndex", overIndex);
         const newStartTime = changeDropTime(
           prevSchedule,
           activeIndex,
           overIndex,
           overContainer
         );
+        console.log("newStartTime", newStartTime);
         const newEndTime = changeEndDate(
           newStartTime,
           prevSchedule[overContainer][activeIndex].multiDay
@@ -345,7 +364,6 @@ const EditCanvas = ({
       }
     };
     sendScheduleToDb();
-    document.body.classList.remove("dnd-no-scroll");
     setActiveId(null);
     setDragRow(null);
     tempScheduleItem.current = null;
@@ -444,7 +462,7 @@ const EditCanvas = ({
           if (timeAbove.getUTCHours() === 23) {
             activeStartTime = new Date(`${overContainer}T23:59:00Z`);
           } else {
-            if (activeStartTime.getTime() < timeAbove.getTime()) {
+            if (activeStartTime.getTime() <= timeAbove.getTime()) {
               activeStartTime = new Date(
                 `${overContainer}T${prefixZero(
                   timeAbove.getUTCHours() + 1
@@ -466,7 +484,7 @@ const EditCanvas = ({
               timeAbove.getTime() === timeBelow.getTime() ||
               timeAbove.getUTCHours() === 23
             ) {
-              activeStartTime = timeAbove;
+              activeStartTime = new Date(timeAbove.toISOString());
             } else {
               if (timeBelow.getUTCHours() - timeAbove.getUTCHours() > 1) {
                 activeStartTime = new Date(
@@ -517,6 +535,15 @@ const EditCanvas = ({
     }
     console.log("time at end: ", activeStartTime);
     return activeStartTime;
+  };
+
+  const handleDragCancel = () => {
+    setSchedule(clonedSchedule);
+    unlockPageScroll();
+    setActiveId(null);
+    setDragRow(null);
+    tempScheduleItem.current = null;
+    recentlyMovedToNewContainer.current = false;
   };
 
   // NEXT: decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list) -- might need styling for mouse cursor to appear "holding"
@@ -625,9 +652,10 @@ const EditCanvas = ({
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
       sensors={sensors}
       collisionDetection={customCollisionsDetectionAlgorithm}
-      modifiers={[restrictToFirstScrollableAncestor, restrictToParentElement]}
+      // modifiers={[restrictToFirstScrollableAncestor, restrictToParentElement]}
     >
       <div className={styles.pageWrapper}>
         <div className={styles.tableAndList}>
