@@ -1,14 +1,25 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-
-interface MyPayload {
-  id: number;
-}
+import { MyPayload } from "../types/express";
 
 dotenv.config();
 
 const SECRET = process.env.SIGNATURE;
+
+function extractBearerToken(authHeader: string) {
+  if (!authHeader) return null;
+
+  const [scheme, token] = authHeader.split(" ");
+
+  if (scheme !== "Bearer") return null;
+  if (!token) return null;
+
+  // catch common coercion cases
+  if (token === "null" || token === "undefined") return null;
+
+  return token;
+}
 
 export default function ensureLoggedIn(
   req: Request,
@@ -16,9 +27,9 @@ export default function ensureLoggedIn(
   next: NextFunction
 ) {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    const token = extractBearerToken(req.headers.authorization);
     if (!token) {
-      console.log("no token!! ~~~~~ console logging");
+      console.log("malformed token/invalid auth!! ~~~~~ console logging");
       res.status(401).json({ message: "Token not found" });
       return;
     }

@@ -8,7 +8,8 @@ declare global {
     list: Item[];
     setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
     handleDeleteItem: (
-      a: UniqueIdentifier
+      a: UniqueIdentifier,
+      fromGoogle: boolean
     ) => Promise<UniqueIdentifier | undefined>;
     handleSubmitItem: (
       val: string,
@@ -30,7 +31,7 @@ declare global {
   type Item = {
     id: UniqueIdentifier;
     value: string;
-    fromGoogle: boolean;
+    fromGoogle: string | null;
     itemAdded: boolean;
   };
 

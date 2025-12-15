@@ -14,9 +14,9 @@ router.get("/home", ensureLoggedIn, async (req, res, next) => {
       "SELECT trip_id FROM user_trips WHERE user_id=$1",
       [req.user.id]
     );
-    const ids: Array<number> = results.rows.map((row) => row.trip_id); // make an array of id's instead of an array of objects
+    const ids: Array<string> = results.rows.map((row) => row.trip_id); // make an array of id's instead of an array of objects
     const results2 = await db.query(
-      "SELECT * FROM trips WHERE id = ANY($1::int[])", // query an array, matching if ANY id in the array matches
+      "SELECT * FROM trips WHERE id = ANY($1::uuid[])", // query an array, matching if ANY id in the array matches
       [ids]
     );
     res.status(200).json(results2.rows);
@@ -340,10 +340,10 @@ router.post("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
   try {
     let queryText: string;
     let queryParams: string[];
-    if (req.body.id) {
+    if (req.body.fromGoogle) {
       queryText =
-        "INSERT INTO trip_list (trip_id, value, id, from_google) VALUES ($1, $2, $3, true) RETURNING id, value, from_google";
-      queryParams = [req.params.tripId, req.body.value, req.body.id];
+        "INSERT INTO trip_list (trip_id, value, from_google) VALUES ($1, $2, $3) RETURNING id, value, from_google";
+      queryParams = [req.params.tripId, req.body.value, req.body.fromGoogle];
     } else {
       queryText =
         "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google";

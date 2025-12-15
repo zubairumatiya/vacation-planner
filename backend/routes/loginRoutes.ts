@@ -171,7 +171,7 @@ router.post("/login", async (req, res, next) => {
       } else {
         const token = jwt.sign(
           {
-            id: Number(foundUser.rows[0].id),
+            id: String(foundUser.rows[0].id),
             //name: foundUser.rows[0].first_name,    Prob don't need this either
             //email: foundUser.rows[0].email,      NOT SURE IF I SHOULD OR NEED TO SEND
           },

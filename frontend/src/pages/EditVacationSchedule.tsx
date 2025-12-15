@@ -879,12 +879,16 @@ const EditVacationSchedule = ({
       {
         <DragOverlay>
           {props.dragRow ? (
-            <tr className={styles.tableRow}>
-              <NormalRow
-                value={props.dragRow}
-                dayContainer={"won't need this"}
-              />
-            </tr>
+            <table>
+              <tbody>
+                <tr className={styles.tableRow}>
+                  <NormalRow
+                    value={props.dragRow}
+                    dayContainer={"won't need this"}
+                  />
+                </tr>
+              </tbody>
+            </table>
           ) : null}{" "}
         </DragOverlay>
       }

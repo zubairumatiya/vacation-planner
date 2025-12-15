@@ -180,6 +180,7 @@ repeaterCall();
 // add token check when viewing schedule
 // refresh token
 // maybe find a way to log person out before they have make an api request
+// change ID's to uuid v7
 // mailgun email styling
 // clean up comments
 // buy domain

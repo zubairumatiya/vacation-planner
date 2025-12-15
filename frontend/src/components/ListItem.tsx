@@ -3,7 +3,13 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import CheckBubble from "./CheckBubble";
 
-const ListItem = ({ v, i, editItem, handleCheckItem }: ListItemProps) => {
+const ListItem = ({
+  v,
+  i,
+  editItem,
+  handleCheckItem,
+  activeListId,
+}: ListItemProps) => {
   //const [isHolding, setIsHolding] = useState<boolean>(false);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: v.id,
@@ -12,7 +18,8 @@ const ListItem = ({ v, i, editItem, handleCheckItem }: ListItemProps) => {
   const style = {
     transform: CSS.Translate.toString(transform),
   };
-
+  console.log(v.value === "helloooo" && v.id);
+  console.log("activeList", activeListId);
   return (
     <li key={v.id} id={String(v.id)} className={`${styles.listItem}`}>
       <div
@@ -21,24 +28,45 @@ const ListItem = ({ v, i, editItem, handleCheckItem }: ListItemProps) => {
       >
         <CheckBubble checked={v.itemAdded} />
       </div>
-      <div
-        onDoubleClick={(e) => editItem(e, i, v.id)}
-        className={`${styles.itemValue} ${
-          v.itemAdded && styles.itemChecked
-        }`} /*${
+      {activeListId === v.id ? (
+        <div
+          onDoubleClick={(e) => editItem(e, i, v.id)}
+          className={`${styles.itemValue} ${
+            v.itemAdded && styles.itemChecked
+          }`} /*${
           isHolding && styles.grabbing
         }`}*/
-        //onMouseDown={() => setIsHolding(true)}
-        //onDragEnd={() => setIsHolding(false)}
-        //draggable="true"
-        //onDragStart={(e) => handleDragStart(e, v)}
-        ref={setNodeRef}
-        {...attributes}
-        {...listeners}
-        style={style}
-      >
-        {v.value}
-      </div>
+          //onMouseDown={() => setIsHolding(true)}
+          //onDragEnd={() => setIsHolding(false)}
+          //draggable="true"
+          //onDragStart={(e) => handleDragStart(e, v)}
+          //ref={setNodeRef}
+          //{...attributes}
+          //{...listeners}
+          //style={style}
+        >
+          {v.value}
+        </div>
+      ) : (
+        <div
+          onDoubleClick={(e) => editItem(e, i, v.id)}
+          className={`${styles.itemValue} ${
+            v.itemAdded && styles.itemChecked
+          }`} /*${
+          isHolding && styles.grabbing
+        }`}*/
+          //onMouseDown={() => setIsHolding(true)}
+          //onDragEnd={() => setIsHolding(false)}
+          //draggable="true"
+          //onDragStart={(e) => handleDragStart(e, v)}
+          ref={setNodeRef}
+          {...attributes}
+          {...listeners}
+          style={style}
+        >
+          {v.value}
+        </div>
+      )}
     </li>
   );
 };

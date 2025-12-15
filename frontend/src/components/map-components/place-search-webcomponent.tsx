@@ -173,7 +173,7 @@ const PlaceSearchWebComponent = ({
   ) => {
     e.preventDefault();
     e.stopPropagation();
-    handleDeleteItem(placeId);
+    handleDeleteItem(placeId, true);
   };
 
   const handleListAdd = (
@@ -259,7 +259,7 @@ const PlaceSearchWebComponent = ({
                     {place.formattedAddress}
                   </div>
                   <div>
-                    {list.find((v) => v.id === place.id) ? (
+                    {list.find((v) => v.fromGoogle === place.id) ? (
                       <button
                         className={`${styles.addToListButton}`}
                         onClick={(e) => handleListRemoval(e, place.id)}

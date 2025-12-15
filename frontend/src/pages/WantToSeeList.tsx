@@ -128,7 +128,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     itemId: UniqueIdentifier
   ) => {
     e.preventDefault();
-    const res = await props.handleDeleteItem(itemId);
+    const res = await props.handleDeleteItem(itemId, false);
 
     if (res === 200) {
       setEditItemId("-1");
@@ -225,7 +225,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
                     value={newItem}
                     onChange={(e) => setNewItem(e.target.value)}
                     id="newItem"
-                    disabled={v.fromGoogle}
+                    disabled={v.fromGoogle ? true : false}
                   />
                   <div className={`${styles.hiddenMessage}`}>
                     Places added from map cannot be edited
@@ -253,6 +253,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
               i={i}
               editItem={editItem}
               handleCheckItem={handleCheckItem}
+              activeListId={props.activeListId}
             />
           );
         })}{" "}

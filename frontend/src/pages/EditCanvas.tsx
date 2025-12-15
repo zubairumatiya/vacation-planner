@@ -56,7 +56,10 @@ const EditCanvas = ({
   const tempScheduleItem = useRef<Schedule | null>(null);
   const positionModRef = useRef<number>(0);
   const navigate = useNavigate();
-  const [initialListDrag, setInitialListDrag] = useState<boolean>(false);
+  const initialListDrag = useRef<boolean>(false);
+  const [activeListId, setActiveListId] = useState<UniqueIdentifier | null>(
+    null
+  );
 
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -86,8 +89,16 @@ const EditCanvas = ({
     (args) => {
       const pointerCollisions = pointerWithin(args); // we will use this for touch and pointer sensor
 
-      const intersections =
-        pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args); // fallback on closest corners in case of keyboard sensor
+      let intersections;
+      if (initialListDrag.current) {
+        intersections = pointerCollisions;
+      } else {
+        intersections =
+          pointerCollisions.length > 0
+            ? pointerCollisions
+            : closestCorners(args);
+      }
+      //pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args); // fallback on closest corners in case of keyboard sensor
 
       let overId = getFirstCollision(intersections, "id"); // i guess this will always be the container first? According to source code example?
       if (overId !== null) {
@@ -134,10 +145,11 @@ const EditCanvas = ({
     if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
     const typeOfDrag = e.active.data.current;
     if (typeOfDrag.type === "list") {
+      setActiveListId(e.active.id);
       const listValue =
         wishList.find((item) => item.id == e.active.id)?.value ?? "";
       tempScheduleItem.current = {
-        id: -1,
+        id: e.active.id, //-1,
         tripId: Number(tripId),
         location: listValue,
         details: "",
@@ -146,7 +158,7 @@ const EditCanvas = ({
         cost: 0,
         multiDay: false,
       };
-      setInitialListDrag(true);
+      initialListDrag.current = true;
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag.type === "schedule") {
       const containerAndIndex = findContainerAndIndex(e.active.id);
@@ -162,7 +174,7 @@ const EditCanvas = ({
     // see if dragged to new container
     if (!over) return;
     const activeInfo =
-      tempScheduleItem.current && initialListDrag
+      tempScheduleItem.current && initialListDrag.current
         ? { container: "-1", index: -1 }
         : findContainerAndIndex(active.id); // list items wont be in schedule yet, AND list and schedule id's can clash so active.id won't be reliable moving forward
     const activeContainer = activeInfo.container;
@@ -173,7 +185,7 @@ const EditCanvas = ({
       return;
     }
     if (activeContainer !== overContainer) {
-      setInitialListDrag(false);
+      initialListDrag.current = false;
       setSchedule((prevSchedule) => {
         const activeItems = prevSchedule[activeContainer]; // could be undefined
         const overItems = prevSchedule[overContainer];
@@ -181,7 +193,13 @@ const EditCanvas = ({
         const overIndex = overInfo.index;
 
         let newIndex: number;
-
+        console.log("dragover info: ", {
+          overId: over.id,
+          activeId: active.id,
+          overContainer,
+          overIndex,
+          activeIndex,
+        });
         if (over.id in schedule || overIndex === null) {
           newIndex = overItems.length + 1;
         } else {
@@ -235,8 +253,10 @@ const EditCanvas = ({
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     // for next time, let's continue to incorporate adding a list item to schedule.
     unlockPageScroll();
+    console.log(over);
     if (over?.id == null) {
-      setActiveId(null);
+      console.log("cancelled");
+      handleDragCancel();
       return;
     }
     const activeInfo = tempScheduleItem.current
@@ -267,14 +287,12 @@ const EditCanvas = ({
     ) {
       setSchedule((prevSchedule) => {
         previous = prevSchedule;
-        console.log("activeIndex:", activeIndex, "overIndex", overIndex);
         const newStartTime = changeDropTime(
           prevSchedule,
           activeIndex,
           overIndex,
           overContainer
         );
-        console.log("newStartTime", newStartTime);
         const newEndTime = changeEndDate(
           newStartTime,
           prevSchedule[overContainer][activeIndex].multiDay
@@ -294,6 +312,7 @@ const EditCanvas = ({
           ),
         };
       });
+      setWishList((prev) => structuredClone(prev));
     }
     // will be using optimistic UI updates for fast and snappy dragging.
     const refIdSnapshot = tempScheduleItem.current?.id; // need closure, ref always points to current
@@ -318,15 +337,18 @@ const EditCanvas = ({
           });
           if (result.ok) {
             const data = await result.json();
+            data.addedItem.startTime = new Date(data.addedItem.startTime);
+            data.addedItem.endTime = new Date(data.addedItem.endTime);
             setSchedule((prev) => ({
               ...prev,
               [overContainer]: prev[overContainer].map((v) =>
                 refIdSnapshot === v.id ? data.addedItem : v
               ),
             }));
+            setActiveListId(null);
             setWishList((prev) =>
-              prev.map((v) =>
-                v.id === activeId ? { ...v, itemAdded: true } : v
+              prev.map(
+                (v) => (v.id === activeId ? { ...v, itemAdded: true } : v) // TODO: the new itemAdded boolean value is not added to the db i think
               )
             );
           } else {
@@ -541,14 +563,12 @@ const EditCanvas = ({
     setSchedule(clonedSchedule);
     unlockPageScroll();
     setActiveId(null);
+    setActiveListId(null);
     setDragRow(null);
+    initialListDrag.current = false;
     tempScheduleItem.current = null;
     recentlyMovedToNewContainer.current = false;
   };
-
-  // NEXT: decide if I want drag overlay (hmm i wonder if i can have drag overlay change to a schedule item from list) -- might need styling for mouse cursor to appear "holding"
-
-  // FOR NEXT TIME: Continue testing dnd-kit in browser
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string,
@@ -605,7 +625,7 @@ const EditCanvas = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ value: val, id: id ?? null }),
+        body: JSON.stringify({ value: val, fromGoogle: id ?? null }),
       });
       if (response.status === 401) {
         navigate("/login", {
@@ -624,28 +644,32 @@ const EditCanvas = ({
     []
   );
 
-  const handleDeleteItem = useCallback(async (itemId: UniqueIdentifier) => {
-    const response = await fetch(`${apiURL}/list/${itemId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 401) {
-      navigate("/login", {
-        state: { message: "Session expired, redirecting to log in..." },
+  const handleDeleteItem = useCallback(
+    async (itemId: UniqueIdentifier, fromGoogle: boolean) => {
+      const response = await fetch(`${apiURL}/list/${itemId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fromGoogle }),
       });
-    }
-    if (response.status === 404) {
-      alert("Error: List not found");
-    }
-    if (response.ok) {
-      setWishList((prev) => prev.filter((v) => v.id != itemId));
-      return 200;
-    }
-  }, []);
+
+      if (response.status === 401) {
+        navigate("/login", {
+          state: { message: "Session expired, redirecting to log in..." },
+        });
+      }
+      if (response.status === 404) {
+        alert("Error: List not found");
+      }
+      if (response.ok) {
+        setWishList((prev) => prev.filter((v) => v.id != itemId));
+        return 200;
+      }
+    },
+    []
+  );
 
   return (
     <DndContext
@@ -677,6 +701,7 @@ const EditCanvas = ({
               list={wishList}
               handleSubmitItem={handleSubmitItem}
               handleDeleteItem={handleDeleteItem}
+              activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item)
             />
           )}
         </div>

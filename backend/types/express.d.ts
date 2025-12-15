@@ -1,7 +1,7 @@
 //import { JwtPayload } from "jsonwebtoken"
 
-interface MyPayload {
-  id: number;
+export interface MyPayload {
+  id: string;
 }
 
 declare global {
