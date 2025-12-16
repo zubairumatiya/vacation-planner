@@ -348,10 +348,11 @@ const EditCanvas = ({
             setActiveListId(null);
             setWishList((prev) =>
               prev.map(
-                (v) => (v.id === activeId ? { ...v, itemAdded: true } : v) // TODO: the new itemAdded boolean value is not added to the db i think
+                (v) => (v.id === refIdSnapshot ? { ...v, itemAdded: true } : v) // TODO: the new itemAdded boolean value is not added to the db i think
               )
             );
           } else {
+            setActiveListId(null);
             setSchedule(clonedSchedule);
             alert("error processing change");
           }
@@ -382,9 +383,22 @@ const EditCanvas = ({
           }
         }
       } catch {
+        setActiveListId(null);
         setSchedule(clonedSchedule);
       }
     };
+
+    /*
+    setWishList((prev) =>
+      prev.map(
+        (v) => (v.id === activeId ? { ...v, id: "-1TempId" } : v) // TODO: the new itemAdded boolean value is not added to the db i think
+      )
+    );
+    setWishList((prev) =>
+      prev.map(
+        (v) => (v.id === "-1TempId" ? { ...v, id: activeId ?? "" } : v) // TODO: the new itemAdded boolean value is not added to the db i think
+      )
+    );*/
     sendScheduleToDb();
     setActiveId(null);
     setDragRow(null);
@@ -701,7 +715,7 @@ const EditCanvas = ({
               list={wishList}
               handleSubmitItem={handleSubmitItem}
               handleDeleteItem={handleDeleteItem}
-              activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item)
+              activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
             />
           )}
         </div>

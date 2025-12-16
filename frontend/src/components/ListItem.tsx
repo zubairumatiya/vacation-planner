@@ -11,15 +11,20 @@ const ListItem = ({
   activeListId,
 }: ListItemProps) => {
   //const [isHolding, setIsHolding] = useState<boolean>(false);
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: v.id,
-    data: { type: "list" } as DragData,
-  });
-  const style = {
-    transform: CSS.Translate.toString(transform),
-  };
+  const { attributes, listeners, setNodeRef, transform } =
+    activeListId !== v.id
+      ? useDraggable({
+          id: v.id,
+          data: { type: "list" } as DragData,
+        })
+      : {};
+  const style =
+    activeListId !== v.id
+      ? {
+          transform: CSS.Translate.toString(transform!),
+        }
+      : {}; // we will conditionally render style and the draggable attributes. We could add a fake ID  but i don't won't to run useDraggable if i don't need it. Forcing TS to trust me that transform will be there, it can't see it cuz TS doesn't compare conditions outside the scope
   console.log(v.value === "helloooo" && v.id);
-  console.log("activeList", activeListId);
   return (
     <li key={v.id} id={String(v.id)} className={`${styles.listItem}`}>
       <div

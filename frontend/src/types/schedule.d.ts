@@ -15,6 +15,7 @@ declare global {
       val: string,
       id?: UniqueIdentifier
     ) => Promise<UniqueIdentifier | undefined>;
+    activeListId: UniqueIdentifier | null;
   }
 
   type Prefill = {
@@ -122,5 +123,6 @@ declare global {
       itemId: UniqueIdentifier,
       index: number
     ) => void;
+    activeListId: UniqueIdentifier | null;
   };
 }
