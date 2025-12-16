@@ -101,7 +101,7 @@ const EditCanvas = ({
       //pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args); // fallback on closest corners in case of keyboard sensor
 
       let overId = getFirstCollision(intersections, "id"); // i guess this will always be the container first? According to source code example?
-      if (overId !== null) {
+      if (overId != null) {
         if (overId in schedule) {
           const containerItems = schedule[overId];
 
@@ -145,6 +145,7 @@ const EditCanvas = ({
     if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
     const typeOfDrag = e.active.data.current;
     if (typeOfDrag.type === "list") {
+      initialListDrag.current = true;
       setActiveListId(e.active.id);
       const listValue =
         wishList.find((item) => item.id == e.active.id)?.value ?? "";
@@ -158,14 +159,14 @@ const EditCanvas = ({
         cost: 0,
         multiDay: false,
       };
-      initialListDrag.current = true;
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag.type === "schedule") {
       const containerAndIndex = findContainerAndIndex(e.active.id);
-      if (containerAndIndex.container && containerAndIndex.index)
+      if (containerAndIndex.container && containerAndIndex.index != null) {
         setDragRow(
           schedule[containerAndIndex?.container][containerAndIndex.index]
         );
+      }
     }
   };
 
@@ -248,6 +249,7 @@ const EditCanvas = ({
           : 0; // when true, it means our active will be below our over, otherwise it will be above. This is diff than above, we will use this to modify where we get our start time from.
       //let's see if we can change the start time as we drag
     }
+    console.log(positionModRef.current);
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -312,7 +314,6 @@ const EditCanvas = ({
           ),
         };
       });
-      setWishList((prev) => structuredClone(prev));
     }
     // will be using optimistic UI updates for fast and snappy dragging.
     const refIdSnapshot = tempScheduleItem.current?.id; // need closure, ref always points to current
@@ -387,18 +388,6 @@ const EditCanvas = ({
         setSchedule(clonedSchedule);
       }
     };
-
-    /*
-    setWishList((prev) =>
-      prev.map(
-        (v) => (v.id === activeId ? { ...v, id: "-1TempId" } : v) // TODO: the new itemAdded boolean value is not added to the db i think
-      )
-    );
-    setWishList((prev) =>
-      prev.map(
-        (v) => (v.id === "-1TempId" ? { ...v, id: activeId ?? "" } : v) // TODO: the new itemAdded boolean value is not added to the db i think
-      )
-    );*/
     sendScheduleToDb();
     setActiveId(null);
     setDragRow(null);
@@ -434,7 +423,10 @@ const EditCanvas = ({
     let activeStartTime: Date =
       currentSchedule[overContainer][activeIndex].startTime;
     const holdTime = activeStartTime.toISOString().split("T")[1]; // the time should already be in UTC so going to ISOString should not change time: format hh:mm:ss.sssZ
+    activeStartTime = new Date(`${overContainer}T${holdTime}`);
     console.log("time at start: ", activeStartTime);
+    console.log("flag");
+    debugger;
     if (currentSchedule[overContainer].length === 1) {
       // dropping on empty container but changing table resets state so we can't check with overIndex === null, we can instead check for a length of one. (Non-moved objects are omitted before calling changeDropTime)
       activeStartTime = new Date(`${overContainer}T${holdTime}`);
