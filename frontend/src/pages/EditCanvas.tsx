@@ -11,6 +11,7 @@ import {
   DndContext,
   getFirstCollision,
   KeyboardSensor,
+  MeasuringStrategy,
   MouseSensor,
   pointerWithin,
   TouchSensor,
@@ -54,9 +55,8 @@ const EditCanvas = ({
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const auth = useContext(AuthContext);
   const tempScheduleItem = useRef<Schedule | null>(null);
-  const positionModRef = useRef<number>(0);
   const navigate = useNavigate();
-  const initialListDrag = useRef<boolean>(false);
+  const initialListDrag = useRef<boolean>(true);
   const [activeListId, setActiveListId] = useState<UniqueIdentifier | null>(
     null
   );
@@ -139,13 +139,14 @@ const EditCanvas = ({
   }
 
   const handleDragStart = (e: DragStartEvent) => {
+    console.log(initialListDrag.current);
+    initialListDrag.current = true;
     setActiveId(e.active.id);
     setClonedSchedule(schedule);
     lockPageScroll();
     if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
     const typeOfDrag = e.active.data.current;
     if (typeOfDrag.type === "list") {
-      initialListDrag.current = true;
       setActiveListId(e.active.id);
       const listValue =
         wishList.find((item) => item.id == e.active.id)?.value ?? "";
@@ -161,6 +162,7 @@ const EditCanvas = ({
       };
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag.type === "schedule") {
+      initialListDrag.current = false;
       const containerAndIndex = findContainerAndIndex(e.active.id);
       if (containerAndIndex.container && containerAndIndex.index != null) {
         setDragRow(
@@ -217,7 +219,6 @@ const EditCanvas = ({
         }
 
         recentlyMovedToNewContainer.current = true;
-
         return activeItems === undefined &&
           activeIndex === -1 &&
           tempScheduleItem.current //  could make the conditional argument just my tempScheduleItem but I want to trust the process of my drag and have flow with my variables, maybe just being pedantic
@@ -238,18 +239,13 @@ const EditCanvas = ({
                 ...overItems.slice(newIndex, overItems.length),
               ],
             };
+        // FOR NEXT TIME ADD POSITION ALG FOR NEW CONTAINER BOYS, Easiest case would prob be to compare with clone. We can also look if the isBelow alg is working properly.
       });
     } else {
-      positionModRef.current =
-        over &&
-        active.rect.current.translated &&
-        active.rect.current.translated.top >
-          over.rect.top + over.rect.height / 2
-          ? 1
-          : 0; // when true, it means our active will be below our over, otherwise it will be above. This is diff than above, we will use this to modify where we get our start time from.
+      console.log(over.id);
+      // when true, it means our active will be below our over, otherwise it will be above. This is diff than above, we will use this to modify where we get our start time from.
       //let's see if we can change the start time as we drag
     }
-    console.log(positionModRef.current);
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
@@ -261,9 +257,7 @@ const EditCanvas = ({
       handleDragCancel();
       return;
     }
-    const activeInfo = tempScheduleItem.current
-      ? findContainerAndIndex(tempScheduleItem.current.id) // for list, id won't be reliable since it could technically be the same as an item in the container. So we can use the temp id we assigned
-      : findContainerAndIndex(active.id);
+    const activeInfo = findContainerAndIndex(active.id);
     const activeIndex = activeInfo.index;
     const overInfo = findContainerAndIndex(over.id);
     const overIndex = overInfo.index;
@@ -276,10 +270,7 @@ const EditCanvas = ({
       overContainer === null
     ) {
       // this is not like drag over where a null index indicates an empty table, since we will have already set the active item in schedule, it should return an index. This is a catch all check.
-      setSchedule(clonedSchedule);
-      setActiveId(null);
-      setDragRow(null);
-      tempScheduleItem.current = null;
+      handleDragCancel();
       return;
     }
     const originalPosition = findContainerAndIndex(active.id, clonedSchedule); // will have to check against clone because moving to different containers resets our state
@@ -314,6 +305,9 @@ const EditCanvas = ({
           ),
         };
       });
+    } else {
+      console.log("entering canned");
+      handleDragCancel();
     }
     // will be using optimistic UI updates for fast and snappy dragging.
     const refIdSnapshot = tempScheduleItem.current?.id; // need closure, ref always points to current
@@ -353,8 +347,12 @@ const EditCanvas = ({
               )
             );
           } else {
-            setActiveListId(null);
-            setSchedule(clonedSchedule);
+            if (result.status === 401) {
+              navigate("/login", {
+                state: { message: "Session expired, redirecting to log in..." },
+              });
+            }
+            handleDragCancel();
             alert("error processing change");
           }
         } else {
@@ -380,7 +378,7 @@ const EditCanvas = ({
                 state: { message: "Session expired, redirecting to log in..." },
               });
             }
-            setSchedule(clonedSchedule);
+            handleDragCancel();
           }
         }
       } catch {
@@ -393,6 +391,8 @@ const EditCanvas = ({
     setDragRow(null);
     tempScheduleItem.current = null;
     recentlyMovedToNewContainer.current = false;
+    console.log("initDrag: ", initialListDrag.current);
+    initialListDrag.current = true;
   };
 
   const changeEndDate = (
@@ -426,82 +426,48 @@ const EditCanvas = ({
     activeStartTime = new Date(`${overContainer}T${holdTime}`);
     console.log("time at start: ", activeStartTime);
     console.log("flag");
-    debugger;
+    //debugger;
+    if (currentSchedule[overContainer].length <= 0) {
+      // this should never run with the way we have dragging over empty containers (new containers) set up.
+      handleDragCancel();
+      return new Date();
+    }
     if (currentSchedule[overContainer].length === 1) {
       // dropping on empty container but changing table resets state so we can't check with overIndex === null, we can instead check for a length of one. (Non-moved objects are omitted before calling changeDropTime)
       activeStartTime = new Date(`${overContainer}T${holdTime}`);
-    } else if (overIndex === 0 && currentSchedule[overContainer].length > 1) {
-      // over index will be our new spot, but it isn't yet, so we can simply look at the 0 index of our current schedule, unless we have moved to a new table
-      // will need time of below item
-      activeStartTime = new Date(`${overContainer}T${holdTime}`);
-      if (overIndex === activeIndex) {
-        // happens only when it's a new table drag and came in from that position (in this case, 0)
-        const timeBelow =
-          currentSchedule[overContainer][activeIndex + 1].startTime;
-        if (activeStartTime.getTime() > timeBelow.getTime()) {
-          if (timeBelow.getUTCHours() === 0) {
-            activeStartTime = new Date(`${overContainer}T00:00:00Z`);
-          } else {
-            const newHour = prefixZero(timeBelow.getUTCHours() - 1);
-            const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
-            activeStartTime = new Date(
-              `${overContainer}T${newHour}:${sameMinute}:00Z`
-            );
-          }
-        }
-      } else {
-        const timeBelow = currentSchedule[overContainer][overIndex].startTime;
-        if (activeStartTime.getTime() > timeBelow.getTime()) {
-          if (timeBelow.getUTCHours() === 0) {
-            activeStartTime = new Date(`${overContainer}T00:00:00Z`);
-          } else {
-            const newHour = prefixZero(timeBelow.getUTCHours() - 1);
-            const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
-            activeStartTime = new Date(
-              `${overContainer}T${newHour}:${sameMinute}:00Z`
-            );
-          }
-        }
-      }
     } else {
-      //otherwise we can just grab the time from above
-      if (overIndex === null) return activeStartTime;
-      const timeAbove =
-        currentSchedule[overContainer][overIndex - positionModRef.current]
-          .startTime;
-      const timeBelow =
-        currentSchedule[overContainer][overIndex - positionModRef.current + 1]
-          ?.startTime;
-      if (activeIndex === overIndex) {
-        // will only be this if dragged from new container and from the bottom.
-        if (timeAbove.getUTCHours() === 23) {
-          activeStartTime = new Date(`${overContainer}T23:59:00Z`);
-        } else {
-          if (activeStartTime.getTime() < timeAbove.getTime()) {
+      if (overIndex === activeIndex) {
+        // will trigger on new table items (zero index, end of table, or dragging from list)
+        const timeAbove =
+          currentSchedule[overContainer][activeIndex - 1]?.startTime;
+        const timeBelow =
+          currentSchedule[overContainer][activeIndex + 1]?.startTime;
+        if (overIndex === 0) {
+          // top of container
+          if (activeStartTime.getTime() > timeBelow.getTime()) {
+            if (timeBelow.getUTCHours() === 0) {
+              activeStartTime = new Date(`${overContainer}T00:00:00Z`);
+            } else {
+              const newHour = prefixZero(timeBelow.getUTCHours() - 1);
+              const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
+              activeStartTime = new Date(
+                `${overContainer}T${newHour}:${sameMinute}:00Z`
+              );
+            }
+          }
+        } else if (overIndex === currentSchedule[overContainer].length - 1) {
+          // bottom of container
+          if (timeAbove.getUTCHours() === 23) {
+            activeStartTime = new Date(`${overContainer}T23:59:00Z`);
+          } else {
             activeStartTime = new Date(
               `${overContainer}T${prefixZero(
                 timeAbove.getUTCHours() + 1
               )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
             );
           }
-        }
-      } else {
-        if (!timeBelow) {
-          if (timeAbove.getUTCHours() === 23) {
-            activeStartTime = new Date(`${overContainer}T23:59:00Z`);
-          } else {
-            if (activeStartTime.getTime() <= timeAbove.getTime()) {
-              activeStartTime = new Date(
-                `${overContainer}T${prefixZero(
-                  timeAbove.getUTCHours() + 1
-                )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
-              );
-            } else {
-              // day is correct, no item below, time is after item above, no action needed
-            }
-          }
         } else {
-          // squeeze new item between two item start times
+          // somewhere inbetween (will be a list item)
           if (
             timeAbove.getTime() <= activeStartTime.getTime() &&
             timeBelow.getTime() >= activeStartTime.getTime()
@@ -559,6 +525,105 @@ const EditCanvas = ({
             }
           }
         }
+      } else {
+        if (overIndex === 0 && currentSchedule[overContainer].length > 1) {
+          const timeBelow = currentSchedule[overContainer][overIndex].startTime;
+          if (activeStartTime.getTime() > timeBelow.getTime()) {
+            if (timeBelow.getUTCHours() === 0) {
+              activeStartTime = new Date(`${overContainer}T00:00:00Z`);
+            } else {
+              const newHour = prefixZero(timeBelow.getUTCHours() - 1);
+              const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
+              activeStartTime = new Date(
+                `${overContainer}T${newHour}:${sameMinute}:00Z`
+              );
+            }
+          }
+        } else {
+          //otherwise we can just grab the time from above
+          if (overIndex === null) return activeStartTime;
+          const positionModifier = activeIndex < overIndex ? 0 : 1;
+          const timeAbove =
+            currentSchedule[overContainer][overIndex - positionModifier]
+              .startTime;
+          const timeBelow =
+            currentSchedule[overContainer][overIndex - positionModifier + 1]
+              ?.startTime;
+          if (timeBelow == null && timeAbove != null) {
+            // last item in list
+            if (timeAbove.getUTCHours() === 23) {
+              activeStartTime = new Date(`${overContainer}T23:59:00Z`);
+            } else {
+              if (activeStartTime.getTime() <= timeAbove.getTime()) {
+                activeStartTime = new Date(
+                  `${overContainer}T${prefixZero(
+                    timeAbove.getUTCHours() + 1
+                  )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                );
+              } else {
+                // day is correct, no item below, time is after item above, no action needed
+              }
+            }
+          } else {
+            // squeeze new item between two item start times
+            if (
+              timeAbove.getTime() <= activeStartTime.getTime() &&
+              timeBelow.getTime() >= activeStartTime.getTime()
+            ) {
+              // perfect squeeze, no action needed
+            } else {
+              if (
+                timeAbove.getTime() === timeBelow.getTime() ||
+                timeAbove.getUTCHours() === 23
+              ) {
+                activeStartTime = new Date(timeAbove.toISOString());
+              } else {
+                if (timeBelow.getUTCHours() - timeAbove.getUTCHours() > 1) {
+                  activeStartTime = new Date(
+                    `${overContainer}T${prefixZero(
+                      timeAbove.getUTCHours() + 1
+                    )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                  );
+                } else {
+                  // will either be the same hour or 1 hour apart
+                  if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
+                    if (timeBelow.getUTCMinutes() > timeAbove.getUTCMinutes()) {
+                      // greater than an hour gap
+                      if (
+                        timeBelow.getUTCMinutes() >
+                        activeStartTime.getUTCMinutes()
+                      ) {
+                        // current minutes less than time below, can freely add an hour and keep minutes
+                        activeStartTime = new Date(
+                          `${overContainer}T${prefixZero(
+                            timeAbove.getUTCHours() + 1
+                          )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                        );
+                      } else {
+                        // current minutes greater. just add hour and zero the minutes instead of microing minutes
+                        activeStartTime = new Date(
+                          `${overContainer}T${prefixZero(
+                            timeAbove.getUTCHours() + 1
+                          )}:00:00Z`
+                        );
+                      }
+                    } else {
+                      // less than an hour gap when including minutes
+                      activeStartTime = new Date(
+                        `${overContainer}T${prefixZero(
+                          timeAbove.getUTCHours() + 1
+                        )}:00:00Z`
+                      );
+                    }
+                  } else {
+                    // same hour
+                    activeStartTime = timeAbove;
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
     console.log("time at end: ", activeStartTime);
@@ -571,7 +636,7 @@ const EditCanvas = ({
     setActiveId(null);
     setActiveListId(null);
     setDragRow(null);
-    initialListDrag.current = false;
+    initialListDrag.current = true;
     tempScheduleItem.current = null;
     recentlyMovedToNewContainer.current = false;
   };
@@ -685,6 +750,8 @@ const EditCanvas = ({
       onDragCancel={handleDragCancel}
       sensors={sensors}
       collisionDetection={customCollisionsDetectionAlgorithm}
+      //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+      //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
       // modifiers={[restrictToFirstScrollableAncestor, restrictToParentElement]}
     >
       <div className={styles.pageWrapper}>

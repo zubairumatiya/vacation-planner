@@ -52,7 +52,7 @@ const CustomTableComponent = ({
       <tbody>
         <SortableContext
           items={schedule[dayObj.day]}
-          //strategy={verticalListSortingStrategy}
+          strategy={verticalListSortingStrategy}
         >
           {schedule[dayObj.day].map((item: Schedule, ind) => {
             const startDate: string = item.startTime

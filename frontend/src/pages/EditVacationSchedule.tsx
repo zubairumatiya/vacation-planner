@@ -879,7 +879,7 @@ const EditVacationSchedule = ({
       {
         <DragOverlay>
           {props.dragRow ? (
-            <table>
+            <table className={styles.table}>
               <tbody>
                 <tr className={styles.tableRow}>
                   <NormalRow

@@ -3,7 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 import styles from "../styles/EditSchedule.module.css";
 import EditableRow from "./EditableRow";
 import NormalRow from "./NormalRow";
-import { useContext } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { EditScheduleContext } from "../context/EditScheduleContext";
 
 const CustomTableRow = ({
@@ -16,22 +16,38 @@ const CustomTableRow = ({
   setCostTotal,
   schedule,
 }: TableRowProps) => {
-  // FOR NEXT TIME: need to either add ref
+  const [height, setHeight] = useState<number | null>(null);
   const { handleEdit, editLineId } = useContext(EditScheduleContext);
+  const itemRef = useRef<HTMLTableRowElement | null>(null);
+
+  useEffect(() => {
+    if (itemRef.current) {
+      setHeight(itemRef.current.getBoundingClientRect().height);
+    }
+  }, []);
+
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
       id: scheduleItem.id,
       data: { type: "schedule" } as DragData,
     });
+
   const style = {
+    height: height ? `${height}px` : undefined,
     transform: CSS.Transform.toString(transform),
     transition,
   };
+
+  const combinedRef = (el: HTMLTableRowElement) => {
+    setNodeRef(el);
+    itemRef.current = el;
+  };
+
   return (
     <tr
       key={scheduleItem.id}
       style={style}
-      ref={setNodeRef}
+      ref={combinedRef}
       data-index={index}
       className={`${/*index === dragIndexRef.current &&*/ styles.dragging} ${
         // will need to see how the drag styling on dnd-kit looks for the grab cursor
