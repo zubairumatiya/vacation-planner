@@ -18,6 +18,8 @@
 
 html {
   overscroll-behavior: none;
+  height: 100vh;
+  overflow: hidden;
 }
 html,
 body {
@@ -38,7 +40,16 @@ body {
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
+  /*min-height: 100vh;*/
+  scroll-behavior: auto;
+  overflow: scroll;
+  height: 100%;
+  /*width: 99.30vw;*/
+  width: 100%;
+}
+
+.freezeScroll {
+  overflow: hidden;
 }
 
 h1 {

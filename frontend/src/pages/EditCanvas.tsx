@@ -11,7 +11,6 @@ import {
   DndContext,
   getFirstCollision,
   KeyboardSensor,
-  MeasuringStrategy,
   MouseSensor,
   pointerWithin,
   TouchSensor,
@@ -30,6 +29,10 @@ import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
 //import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { prefixZero } from "../utils/timeHelpers";
+import {
+  restrictToFirstScrollableAncestor,
+  restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -66,28 +69,6 @@ const EditCanvas = ({
     useSensor(TouchSensor),
     useSensor(KeyboardSensor)
   );
-
-  /*
-  const scrollYRef = useRef(0);
-
-  const lockPageScroll = () => {
-    scrollYRef.current = window.scrollY;
-
-    document.documentElement.style.position = "fixed";
-    document.documentElement.style.top = `-${scrollYRef.current}px`;
-    document.documentElement.style.width = "100%";
-  };
-
-  const unlockPageScroll = () => {
-    document.documentElement.style.position = "";
-    document.documentElement.style.top = "";
-    document.documentElement.style.width = "";
-
-    window.scrollTo(0, scrollYRef.current);
-  };
-*/
-  const lockPageScroll = () => {};
-  const unlockPageScroll = () => {};
 
   const customCollisionsDetectionAlgorithm: CollisionDetection = useCallback(
     (args) => {
@@ -144,7 +125,7 @@ const EditCanvas = ({
     initialListDrag.current = true;
     setActiveId(e.active.id);
     setClonedSchedule(schedule);
-    lockPageScroll();
+    document.body.classList.add("freezeScroll");
     if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
     const typeOfDrag = e.active.data.current;
     if (typeOfDrag.type === "list") {
@@ -250,7 +231,7 @@ const EditCanvas = ({
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     // for next time, let's continue to incorporate adding a list item to schedule.
-    unlockPageScroll();
+    document.body.classList.remove("freezeScroll");
     console.log(over);
     if (over?.id == null) {
       console.log("cancelled");
@@ -627,7 +608,7 @@ const EditCanvas = ({
   const handleDragCancel = (noErrEnd?: boolean) => {
     if (noErrEnd == null) {
       setSchedule(clonedSchedule);
-      unlockPageScroll();
+      document.body.classList.remove("freezeScroll");
       setActiveListId(null);
     }
     setActiveId(null);
@@ -740,55 +721,58 @@ const EditCanvas = ({
   );
 
   return (
-    <div className={styles.grandDaddy}>
-      <DndContext
-        onDragStart={handleDragStart}
-        onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-        onDragCancel={() => handleDragCancel()}
-        sensors={sensors}
-        collisionDetection={customCollisionsDetectionAlgorithm}
-        //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
-        //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
-        // modifiers={[restrictToFirstScrollableAncestor, restrictToParentElement]}
-      >
-        <div className={styles.pageWrapper}>
-          <div className={styles.tableAndList}>
-            <EditScheduleProvider>
-              <EditVacationSchedule
-                loadFirst={() => setLoading(false)}
-                getMapValues={gValuesFn}
-                schedule={schedule}
-                setSchedule={setSchedule}
-                activeItem={activeId}
-                dragRow={dragRow}
-                setCostTotal={setCostTotal}
-              />
-            </EditScheduleProvider>
-            {!loading && (
-              <WantToSeeList
-                loadSecond={() => setLoading2(false)}
-                setList={setWishList}
-                list={wishList}
-                handleSubmitItem={handleSubmitItem}
-                handleDeleteItem={handleDeleteItem}
-                activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
-              />
-            )}
-          </div>
-          {!loading2 && (
-            <MyMapComponent
-              bounds={vp}
-              startLocation={location}
-              gId={gId}
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => handleDragCancel()}
+      sensors={sensors}
+      collisionDetection={customCollisionsDetectionAlgorithm}
+      autoScroll={{
+        enabled: true,
+        threshold: { x: 0.08, y: 0.25 },
+        acceleration: 2.5,
+      }}
+      //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+      //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
+      modifiers={[restrictToVerticalAxis]}
+    >
+      <div className={styles.pageWrapper}>
+        <div className={styles.tableAndList}>
+          <EditScheduleProvider>
+            <EditVacationSchedule
+              loadFirst={() => setLoading(false)}
+              getMapValues={gValuesFn}
+              schedule={schedule}
+              setSchedule={setSchedule}
+              activeItem={activeId}
+              dragRow={dragRow}
+              setCostTotal={setCostTotal}
+            />
+          </EditScheduleProvider>
+          {!loading && (
+            <WantToSeeList
+              loadSecond={() => setLoading2(false)}
+              setList={setWishList}
               list={wishList}
               handleSubmitItem={handleSubmitItem}
               handleDeleteItem={handleDeleteItem}
+              activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
             />
           )}
         </div>
-      </DndContext>
-    </div>
+        {!loading2 && (
+          <MyMapComponent
+            bounds={vp}
+            startLocation={location}
+            gId={gId}
+            list={wishList}
+            handleSubmitItem={handleSubmitItem}
+            handleDeleteItem={handleDeleteItem}
+          />
+        )}
+      </div>
+    </DndContext>
   );
 };
 

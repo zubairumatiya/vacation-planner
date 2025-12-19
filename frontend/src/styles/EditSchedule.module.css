@@ -274,6 +274,20 @@
   min-width: 800px;
 }
 
+.dragOverlayTable {
+  width: 100%;
+  min-width: 800px;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0 0.5rem;
+}
+
+.dragOverlayTableRow {
+  height: 3rem;
+  align-items: center;
+  touch-action: none;
+}
+
 .tableContainer {
   /*display: flex;
   justify-content: center;*/

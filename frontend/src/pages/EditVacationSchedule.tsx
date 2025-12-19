@@ -12,6 +12,7 @@ import CustomTableComponent from "../components/CustomTableComponent";
 import { EditScheduleContext } from "../context/EditScheduleContext";
 import { customISOTime } from "../utils/timeHelpers";
 import NormalRow from "../components/NormalRow";
+import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -877,11 +878,12 @@ const EditVacationSchedule = ({
         );
       })}
       {
-        <DragOverlay>
+        <DragOverlay modifiers={[restrictToFirstScrollableAncestor]}>
           {props.dragRow ? (
-            <table className={styles.table}>
+            //<div className={`${styles.tableContainer}`}>
+            <table className={styles.dragOverlayTable}>
               <tbody>
-                <tr className={styles.tableRow}>
+                <tr className={styles.dragOverlayTableRow}>
                   <NormalRow
                     value={props.dragRow}
                     dayContainer={"won't need this"}
@@ -889,7 +891,8 @@ const EditVacationSchedule = ({
                 </tr>
               </tbody>
             </table>
-          ) : null}{" "}
+          ) : //</div>
+          null}{" "}
         </DragOverlay>
       }
     </div>
