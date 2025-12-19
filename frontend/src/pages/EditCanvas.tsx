@@ -67,6 +67,7 @@ const EditCanvas = ({
     useSensor(KeyboardSensor)
   );
 
+  /*
   const scrollYRef = useRef(0);
 
   const lockPageScroll = () => {
@@ -84,11 +85,13 @@ const EditCanvas = ({
 
     window.scrollTo(0, scrollYRef.current);
   };
+*/
+  const lockPageScroll = () => {};
+  const unlockPageScroll = () => {};
 
   const customCollisionsDetectionAlgorithm: CollisionDetection = useCallback(
     (args) => {
       const pointerCollisions = pointerWithin(args); // we will use this for touch and pointer sensor
-
       let intersections;
       if (initialListDrag.current) {
         intersections = pointerCollisions;
@@ -99,7 +102,6 @@ const EditCanvas = ({
             : closestCorners(args);
       }
       //pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args); // fallback on closest corners in case of keyboard sensor
-
       let overId = getFirstCollision(intersections, "id"); // i guess this will always be the container first? According to source code example?
       if (overId != null) {
         if (overId in schedule) {
@@ -139,7 +141,6 @@ const EditCanvas = ({
   }
 
   const handleDragStart = (e: DragStartEvent) => {
-    console.log(initialListDrag.current);
     initialListDrag.current = true;
     setActiveId(e.active.id);
     setClonedSchedule(schedule);
@@ -183,8 +184,8 @@ const EditCanvas = ({
     const activeContainer = activeInfo.container;
     const overInfo = findContainerAndIndex(over.id);
     const overContainer = overInfo.container;
-
     if (!overContainer || !activeContainer) {
+      //handleDragCancel();
       return;
     }
     if (activeContainer !== overContainer) {
@@ -242,9 +243,8 @@ const EditCanvas = ({
         // FOR NEXT TIME ADD POSITION ALG FOR NEW CONTAINER BOYS, Easiest case would prob be to compare with clone. We can also look if the isBelow alg is working properly.
       });
     } else {
-      console.log(over.id);
       // when true, it means our active will be below our over, otherwise it will be above. This is diff than above, we will use this to modify where we get our start time from.
-      //let's see if we can change the start time as we drag
+      //let's see if we can change the start time as we drag - TBD if worth it
     }
   };
 
@@ -306,7 +306,6 @@ const EditCanvas = ({
         };
       });
     } else {
-      console.log("entering canned");
       handleDragCancel();
     }
     // will be using optimistic UI updates for fast and snappy dragging.
@@ -387,12 +386,7 @@ const EditCanvas = ({
       }
     };
     sendScheduleToDb();
-    setActiveId(null);
-    setDragRow(null);
-    tempScheduleItem.current = null;
-    recentlyMovedToNewContainer.current = false;
-    console.log("initDrag: ", initialListDrag.current);
-    initialListDrag.current = true;
+    handleDragCancel(true);
   };
 
   const changeEndDate = (
@@ -630,15 +624,18 @@ const EditCanvas = ({
     return activeStartTime;
   };
 
-  const handleDragCancel = () => {
-    setSchedule(clonedSchedule);
-    unlockPageScroll();
+  const handleDragCancel = (noErrEnd?: boolean) => {
+    if (noErrEnd == null) {
+      setSchedule(clonedSchedule);
+      unlockPageScroll();
+      setActiveListId(null);
+    }
     setActiveId(null);
-    setActiveListId(null);
     setDragRow(null);
-    initialListDrag.current = true;
     tempScheduleItem.current = null;
     recentlyMovedToNewContainer.current = false;
+    initialListDrag.current = true;
+    lastOverId.current = null;
   };
 
   const findContainerAndIndex = (
@@ -743,53 +740,55 @@ const EditCanvas = ({
   );
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-      sensors={sensors}
-      collisionDetection={customCollisionsDetectionAlgorithm}
-      //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
-      //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
-      // modifiers={[restrictToFirstScrollableAncestor, restrictToParentElement]}
-    >
-      <div className={styles.pageWrapper}>
-        <div className={styles.tableAndList}>
-          <EditScheduleProvider>
-            <EditVacationSchedule
-              loadFirst={() => setLoading(false)}
-              getMapValues={gValuesFn}
-              schedule={schedule}
-              setSchedule={setSchedule}
-              activeItem={activeId}
-              dragRow={dragRow}
-              setCostTotal={setCostTotal}
-            />
-          </EditScheduleProvider>
-          {!loading && (
-            <WantToSeeList
-              loadSecond={() => setLoading2(false)}
-              setList={setWishList}
+    <div className={styles.grandDaddy}>
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => handleDragCancel()}
+        sensors={sensors}
+        collisionDetection={customCollisionsDetectionAlgorithm}
+        //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+        //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
+        // modifiers={[restrictToFirstScrollableAncestor, restrictToParentElement]}
+      >
+        <div className={styles.pageWrapper}>
+          <div className={styles.tableAndList}>
+            <EditScheduleProvider>
+              <EditVacationSchedule
+                loadFirst={() => setLoading(false)}
+                getMapValues={gValuesFn}
+                schedule={schedule}
+                setSchedule={setSchedule}
+                activeItem={activeId}
+                dragRow={dragRow}
+                setCostTotal={setCostTotal}
+              />
+            </EditScheduleProvider>
+            {!loading && (
+              <WantToSeeList
+                loadSecond={() => setLoading2(false)}
+                setList={setWishList}
+                list={wishList}
+                handleSubmitItem={handleSubmitItem}
+                handleDeleteItem={handleDeleteItem}
+                activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
+              />
+            )}
+          </div>
+          {!loading2 && (
+            <MyMapComponent
+              bounds={vp}
+              startLocation={location}
+              gId={gId}
               list={wishList}
               handleSubmitItem={handleSubmitItem}
               handleDeleteItem={handleDeleteItem}
-              activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
             />
           )}
         </div>
-        {!loading2 && (
-          <MyMapComponent
-            bounds={vp}
-            startLocation={location}
-            gId={gId}
-            list={wishList}
-            handleSubmitItem={handleSubmitItem}
-            handleDeleteItem={handleDeleteItem}
-          />
-        )}
-      </div>
-    </DndContext>
+      </DndContext>
+    </div>
   );
 };
 

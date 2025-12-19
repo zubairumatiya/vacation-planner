@@ -19,6 +19,10 @@
 html {
   overscroll-behavior: none;
 }
+html,
+body {
+  touch-action: none;
+}
 
 a {
   font-weight: 500;
