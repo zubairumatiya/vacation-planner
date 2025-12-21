@@ -49,7 +49,9 @@ const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
         className={styles.dragCells}
         {...restOfProps}
       >
-        <img className={styles.dragButton} src={dragIcon} alt="drag" />
+        <div className={styles.dragWrapper}>
+          <img className={styles.dragButton} src={dragIcon} alt="drag" />
+        </div>
       </td>
       <td>{sTime}</td>
       {startDate !== endDate ? (

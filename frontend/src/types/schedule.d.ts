@@ -125,4 +125,9 @@ declare global {
     ) => void;
     activeListId: UniqueIdentifier | null;
   };
+
+  type OverlayWidths = {
+    container: number;
+    table: number;
+  };
 }

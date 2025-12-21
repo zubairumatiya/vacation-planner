@@ -53,6 +53,7 @@ const EditCanvas = ({
   const [schedule, setSchedule] = useState<DaySchedule>({});
   //const [dragItem, setDragItem] = useState<DraggingState | null>(null);
   const [dragRow, setDragRow] = useState<Schedule | null>(null);
+  const [dragFrom, setDragFrom] = useState<string>("");
   const [clonedSchedule, setClonedSchedule] = useState<DaySchedule>({});
   const recentlyMovedToNewContainer = useRef<boolean>(false);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
@@ -60,13 +61,16 @@ const EditCanvas = ({
   const tempScheduleItem = useRef<Schedule | null>(null);
   const navigate = useNavigate();
   const initialListDrag = useRef<boolean>(true);
+  const overlayWidthRef = useRef<OverlayWidths | null>(null);
   const [activeListId, setActiveListId] = useState<UniqueIdentifier | null>(
     null
   );
 
   const sensors = useSensors(
-    useSensor(MouseSensor),
-    useSensor(TouchSensor),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 3 },
+    }),
     useSensor(KeyboardSensor)
   );
 
@@ -123,12 +127,21 @@ const EditCanvas = ({
 
   const handleDragStart = (e: DragStartEvent) => {
     initialListDrag.current = true;
+    const container = document.querySelector("#tablesContainer") as HTMLElement;
+    const tableId = Object.keys(schedule)[0];
+    const table = document.getElementById(tableId) as HTMLElement;
+
+    overlayWidthRef.current = {
+      container: container.getBoundingClientRect().width,
+      table: table.getBoundingClientRect().width,
+    };
+    if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
+    const typeOfDrag = e.active.data.current;
+    setDragFrom(typeOfDrag.type);
     setActiveId(e.active.id);
     setClonedSchedule(schedule);
     document.body.classList.add("freezeScroll");
-    if (!isDragData(e.active.data.current)) return; // runtime and compile time type check function. DRY for the other drag functions to type check.
-    const typeOfDrag = e.active.data.current;
-    if (typeOfDrag.type === "list") {
+    if (typeOfDrag?.type === "list") {
       setActiveListId(e.active.id);
       const listValue =
         wishList.find((item) => item.id == e.active.id)?.value ?? "";
@@ -143,7 +156,7 @@ const EditCanvas = ({
         multiDay: false,
       };
       setDragRow(tempScheduleItem.current);
-    } else if (typeOfDrag.type === "schedule") {
+    } else if (typeOfDrag?.type === "schedule") {
       initialListDrag.current = false;
       const containerAndIndex = findContainerAndIndex(e.active.id);
       if (containerAndIndex.container && containerAndIndex.index != null) {
@@ -613,6 +626,7 @@ const EditCanvas = ({
     }
     setActiveId(null);
     setDragRow(null);
+    setDragFrom("");
     tempScheduleItem.current = null;
     recentlyMovedToNewContainer.current = false;
     initialListDrag.current = true;
@@ -735,7 +749,7 @@ const EditCanvas = ({
       }}
       //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
-      modifiers={[restrictToVerticalAxis]}
+      modifiers={[restrictToFirstScrollableAncestor]}
     >
       <div className={styles.pageWrapper}>
         <div className={styles.tableAndList}>
@@ -748,6 +762,8 @@ const EditCanvas = ({
               activeItem={activeId}
               dragRow={dragRow}
               setCostTotal={setCostTotal}
+              overlayWidthRef={overlayWidthRef.current}
+              dragFrom={dragFrom}
             />
           </EditScheduleProvider>
           {!loading && (

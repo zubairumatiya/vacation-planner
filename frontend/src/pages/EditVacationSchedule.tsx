@@ -13,6 +13,7 @@ import { EditScheduleContext } from "../context/EditScheduleContext";
 import { customISOTime } from "../utils/timeHelpers";
 import NormalRow from "../components/NormalRow";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
+import addToSchedule from "../assets/add-to-schedule.svg";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -43,6 +44,8 @@ type ScheduleProps = {
   activeItem: UniqueIdentifier | null;
   dragRow: Schedule | null;
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
+  overlayWidthRef: OverlayWidths | null;
+  dragFrom: string;
 };
 
 const EditVacationSchedule = ({
@@ -715,9 +718,10 @@ const EditVacationSchedule = ({
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{dayObj.label}</div>
             <div
+              id={"tablesContainer"}
               className={`${styles.tableContainer} ${
                 props.activeItem && styles.tableContainerDragging
-              }`}
+              } ${props.dragFrom === "list" ? styles.listDropZone : null}`}
             >
               <CustomTableComponent
                 key={dayObj.day}
@@ -878,21 +882,51 @@ const EditVacationSchedule = ({
         );
       })}
       {
-        <DragOverlay modifiers={[restrictToFirstScrollableAncestor]}>
+        <DragOverlay
+          modifiers={[restrictToFirstScrollableAncestor]}
+          dropAnimation={null}
+        >
           {props.dragRow ? (
-            //<div className={`${styles.tableContainer}`}>
-            <table className={styles.dragOverlayTable}>
-              <tbody>
-                <tr className={styles.dragOverlayTableRow}>
-                  <NormalRow
-                    value={props.dragRow}
-                    dayContainer={"won't need this"}
-                  />
-                </tr>
-              </tbody>
-            </table>
-          ) : //</div>
-          null}{" "}
+            props.dragFrom === "schedule" ? (
+              <div
+                className={`${styles.dragOverlayContainer}`}
+                style={{ width: props.overlayWidthRef?.container }}
+              >
+                <table
+                  className={styles.dragOverlayTable}
+                  style={{ minWidth: props.overlayWidthRef?.table }}
+                >
+                  <colgroup>
+                    <col className={styles.dragCol} />
+                    <col className={styles.startTimeCol} />
+                    <col className={styles.endTimeCol} />
+                    <col className={styles.placeCol} />
+                    <col className={styles.costCol} />
+                    <col className={styles.detailsCol} />
+                    <col className={styles.multiDayCol} />
+                    <col className={editLineId ? "w-20" : styles.editCol} />
+                  </colgroup>
+                  <tbody className={styles.dragOverlayTbody}>
+                    <tr className={styles.dragOverlayTableRow}>
+                      <NormalRow
+                        value={props.dragRow}
+                        dayContainer={"won't need this"}
+                      />
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className={styles.listDragOverlayContainer}>
+                <div className={styles.addToScheduleIconWrapper}>
+                  <img src={addToSchedule} alt="addToSchedule" />
+                </div>
+                <div className={styles.listDragOverlay}>
+                  {props.dragRow.location}
+                </div>
+              </div>
+            )
+          ) : null}{" "}
         </DragOverlay>
       }
     </div>

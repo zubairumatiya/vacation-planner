@@ -31,7 +31,9 @@ const CustomTableComponent = ({
     >
       <colgroup>
         <col className={styles.dragCol} />
-        <col span={3} />
+        <col className={styles.startTimeCol} />
+        <col className={styles.endTimeCol} />
+        <col className={styles.placeCol} />
         <col className={styles.costCol} />
         <col className={styles.detailsCol} />
         <col className={styles.multiDayCol} />
