@@ -29,10 +29,7 @@ import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
 //import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import { prefixZero } from "../utils/timeHelpers";
-import {
-  restrictToFirstScrollableAncestor,
-  restrictToVerticalAxis,
-} from "@dnd-kit/modifiers";
+import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -48,6 +45,7 @@ const EditCanvas = ({
   const [location, setLocation] = useState<string>("");
   const [gId, setGId] = useState<string>("");
   const [wishList, setWishList] = useState<Item[]>([]);
+  const [wishListClone, setWishListClone] = useState<Item[]>([]);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   //const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   const [schedule, setSchedule] = useState<DaySchedule>({});
@@ -140,6 +138,7 @@ const EditCanvas = ({
     setDragFrom(typeOfDrag.type);
     setActiveId(e.active.id);
     setClonedSchedule(schedule);
+    setWishListClone(wishList);
     document.body.classList.add("freezeScroll");
     if (typeOfDrag?.type === "list") {
       setActiveListId(e.active.id);
@@ -267,6 +266,7 @@ const EditCanvas = ({
       handleDragCancel();
       return;
     }
+    const refIdSnapshot = tempScheduleItem.current?.id; // need closure, ref always points to current
     const originalPosition = findContainerAndIndex(active.id, clonedSchedule); // will have to check against clone because moving to different containers resets our state
     if (
       overInfo.container !== originalPosition.container ||
@@ -299,55 +299,79 @@ const EditCanvas = ({
           ),
         };
       });
+      if (refIdSnapshot) {
+        setWishList((prev) =>
+          prev.map((v) =>
+            v.id === refIdSnapshot ? { ...v, itemAdded: true } : v
+          )
+        );
+      }
     } else {
       handleDragCancel();
     }
     // will be using optimistic UI updates for fast and snappy dragging.
-    const refIdSnapshot = tempScheduleItem.current?.id; // need closure, ref always points to current
 
     const sendScheduleToDb = async () => {
       try {
         if (refIdSnapshot) {
-          const result = await fetch(`${apiURL}/schedule/${tripId}`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              start: previous[overContainer][activeIndex].startTime,
-              end: previous[overContainer][activeIndex].endTime,
-              location: previous[overContainer][activeIndex].location,
-              cost: previous[overContainer][activeIndex].cost,
-              details: previous[overContainer][activeIndex].details,
-              multiDay: previous[overContainer][activeIndex].multiDay,
+          // combining check mark fetch and schedule new item post request.
+          const responses = await Promise.all([
+            fetch(`${apiURL}/schedule/${tripId}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                start: previous[overContainer][activeIndex].startTime,
+                end: previous[overContainer][activeIndex].endTime,
+                location: previous[overContainer][activeIndex].location,
+                cost: previous[overContainer][activeIndex].cost,
+                details: previous[overContainer][activeIndex].details,
+                multiDay: previous[overContainer][activeIndex].multiDay,
+              }),
             }),
-          });
-          if (result.ok) {
-            const data = await result.json();
-            data.addedItem.startTime = new Date(data.addedItem.startTime);
-            data.addedItem.endTime = new Date(data.addedItem.endTime);
-            setSchedule((prev) => ({
-              ...prev,
-              [overContainer]: prev[overContainer].map((v) =>
-                refIdSnapshot === v.id ? data.addedItem : v
-              ),
-            }));
-            setActiveListId(null);
-            setWishList((prev) =>
-              prev.map(
-                (v) => (v.id === refIdSnapshot ? { ...v, itemAdded: true } : v) // TODO: the new itemAdded boolean value is not added to the db i think
-              )
-            );
-          } else {
-            if (result.status === 401) {
+            fetch(`${apiURL}/check-list-item/${refIdSnapshot}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                newValue: true,
+              }),
+            }),
+          ]);
+          if (!responses[0].ok) {
+            if (responses[0].status === 401) {
               navigate("/login", {
                 state: { message: "Session expired, redirecting to log in..." },
               });
             }
             handleDragCancel();
-            alert("error processing change");
+            alert("error processing drag change");
+            return;
           }
+          if (!responses[1].ok) {
+            if (responses[1].status === 401) {
+              navigate("/login", {
+                state: { message: "Session expired, redirecting to log in..." },
+              });
+            }
+            handleDragCancel();
+            alert("Error: List not found");
+            return;
+          }
+          const data = await responses[0].json();
+          data.addedItem.startTime = new Date(data.addedItem.startTime);
+          data.addedItem.endTime = new Date(data.addedItem.endTime);
+          setSchedule((prev) => ({
+            ...prev,
+            [overContainer]: prev[overContainer].map((v) =>
+              refIdSnapshot === v.id ? data.addedItem : v
+            ),
+          }));
+          setActiveListId(null);
         } else {
           // for an existing item in schedule
           const updatedItem = previous[overContainer][activeIndex];
@@ -621,6 +645,7 @@ const EditCanvas = ({
   const handleDragCancel = (noErrEnd?: boolean) => {
     if (noErrEnd == null) {
       setSchedule(clonedSchedule);
+      setWishList(wishListClone);
       document.body.classList.remove("freezeScroll");
       setActiveListId(null);
     }

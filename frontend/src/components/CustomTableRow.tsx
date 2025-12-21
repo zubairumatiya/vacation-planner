@@ -15,6 +15,7 @@ const CustomTableRow = ({
   setSchedule,
   setCostTotal,
   schedule,
+  activeId,
 }: TableRowProps) => {
   const [height, setHeight] = useState<number | null>(null);
   const { handleEdit, editLineId } = useContext(EditScheduleContext);
@@ -36,6 +37,7 @@ const CustomTableRow = ({
     height: height ? `${height}px` : undefined,
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: activeId === scheduleItem.id ? 0.5 : 1,
   };
 
   const combinedRef = (el: HTMLTableRowElement) => {

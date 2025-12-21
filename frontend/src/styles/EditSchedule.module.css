@@ -308,6 +308,7 @@
   height: 3rem;
   align-items: center;
   touch-action: none;
+  opacity: 0.5;
 }
 
 @keyframes pulseShadow {
@@ -364,6 +365,7 @@
   width: 100%;
   overflow-x: auto; /* enables horizontal scrolling */
   -webkit-overflow-scrolling: touch; /* smooth scrolling on iOS */
+  touch-action: none;
 }
 
 div .tableContainerDragging {

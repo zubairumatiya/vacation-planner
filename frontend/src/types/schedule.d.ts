@@ -55,6 +55,7 @@ declare global {
     errMessage: string;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     setCostTotal: React.Dispatch<React.SetStateAction<number>>;
+    activeId: UniqueIdentifier | null;
   };
 
   type TableRowProps = {
@@ -66,6 +67,7 @@ declare global {
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     setCostTotal: React.Dispatch<React.SetStateAction<number>>;
     schedule: DaySchedule;
+    activeId: UniqueIdentifier | null;
   };
 
   type EditRowProps = {

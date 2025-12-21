@@ -731,6 +731,7 @@ const EditVacationSchedule = ({
                 errMessage={errMessage}
                 setSchedule={setSchedule}
                 setCostTotal={setCostTotal}
+                activeId={props.activeItem}
                 //here
                 //submitDelete={submitDelete} moved entirety
               />

@@ -16,6 +16,7 @@ const CustomTableComponent = ({
   setSchedule,
   setCostTotal,
   errMessage,
+  activeId,
 }: TableComponentProps) => {
   const { startError, endError, editLineId } = useContext(EditScheduleContext);
 
@@ -75,6 +76,7 @@ const CustomTableComponent = ({
                   setCostTotal={setCostTotal}
                   setSchedule={setSchedule}
                   schedule={schedule}
+                  activeId={activeId}
                 ></CustomTableRow>
                 {editLineId === item.id && (
                   <tr className={styles.errDiv}>
