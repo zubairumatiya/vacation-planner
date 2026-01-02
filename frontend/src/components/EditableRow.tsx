@@ -4,6 +4,7 @@ import {
   testLessThan24,
   addMeridiem,
   fourDigitTime,
+  newSortIndex,
 } from "../utils/timeHelpers";
 import CustomTimePicker from "./CustomTimePicker";
 import type { UniqueIdentifier } from "@dnd-kit/core";
@@ -146,7 +147,24 @@ const EditableRow = ({
     const multiDay: boolean = multiDayEditRef.current
       ? multiDayEditRef.current.checked
       : false;
-
+    const postEditDate = startDateAssembler.split("T")[0];
+    const newTable = postEditDate === dateAdded ? false : true;
+    const tempItem = { id: itemID, startTime: startDateAssembler };
+    const tempArr = reSort(
+      newTable
+        ? [...schedule[postEditDate], tempItem]
+        : schedule[postEditDate].map((v) => (v.id === itemID ? tempItem : v))
+    );
+    let newSortInd;
+    if (newTable) {
+      newSortInd = newSortIndex(itemID, tempArr);
+    } else {
+      newSortInd =
+        tempArr.findIndex((v) => v.id === itemID) ===
+        schedule[postEditDate].findIndex((v) => v.id === itemID)
+          ? schedule[dateAdded].find((v) => v.id === itemID).sortIndex
+          : newSortIndex(itemID, tempArr);
+    }
     try {
       const response = await fetch(`${apiURL}/schedule/${itemID}`, {
         method: "PATCH",
@@ -161,6 +179,7 @@ const EditableRow = ({
           cost,
           details,
           multiDay,
+          sortIndex: newSortInd,
         }),
       });
       if (response.ok) {
@@ -168,12 +187,34 @@ const EditableRow = ({
         const data = await response.json();
         setEditLineId(null);
         setAddingItem(false);
-        setSchedule((prev) => ({
-          ...prev,
-          [dateAdded]: reSort(
-            prev[dateAdded].map((v) => (v.id === itemID ? data.updatedData : v))
-          ),
-        }));
+        setSchedule((prev) =>
+          newTable
+            ? {
+                ...prev,
+                [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
+                [postEditDate]: tempArr.map((v) =>
+                  v.id === itemID
+                    ? {
+                        ...data.updatedData,
+                        startTime: new Date(data.updatedData.startTime),
+                        endTime: new Date(data.updatedData.endTime),
+                      }
+                    : v
+                ),
+              }
+            : {
+                ...prev,
+                [postEditDate]: tempArr.map((v) =>
+                  v.id === itemID
+                    ? {
+                        ...data.updatedData,
+                        startTime: new Date(data.updatedData.startTime),
+                        endTime: new Date(data.updatedData.endTime),
+                      }
+                    : v
+                ),
+              }
+        );
       } else if (response.status === 401) {
         navigate("/redirect", {
           state: { message: "Session expired, redirecting to log in..." },

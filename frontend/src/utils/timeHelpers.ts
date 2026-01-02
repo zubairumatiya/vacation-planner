@@ -1,3 +1,6 @@
+import type { UniqueIdentifier } from "@dnd-kit/core";
+import type { Schedule } from "../pages/EditVacationSchedule";
+
 export const addMeridiem = (militaryTime: string) => {
   let hour = Number(militaryTime.split(":")[0]);
   const minute = militaryTime.split(":")[1];
@@ -81,5 +84,22 @@ export const testLessThan24 = (
       `${obj.hour}:${obj.minute} ${obj.meridiem}`
     );
     setHoldEndTime(endISO);
+  }
+};
+
+export const newSortIndex = (id: UniqueIdentifier, newArray: Schedule[]) => {
+  if (newArray.length <= 1) {
+    return 0;
+  }
+  const newIndex = newArray.findIndex((v) => v.id === id);
+  if (newIndex === newArray.length - 1) {
+    // non-empty and at the bottom
+    return newArray[newIndex - 1].sortIndex + 10;
+  } else if (newIndex === 0) {
+    return newArray[newIndex + 1].sortIndex - 10;
+  } else {
+    const sortIndexAbove = newArray[newIndex - 1].sortIndex;
+    const sortIndexBelow = newArray[newIndex + 1].sortIndex;
+    return (sortIndexAbove + sortIndexBelow) / 2;
   }
 };

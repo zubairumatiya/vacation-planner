@@ -38,7 +38,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         alert("Error: List not found");
       }
       if (response.ok) {
-        //data.data.forEach((v: Item) => v.id);
         props.setList(data.data);
         props.loadSecond();
       }

@@ -4,6 +4,7 @@ import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
 import { snakeToCamel } from "../helpers/snakeToCamel.js";
+import { QueryResult } from "pg";
 
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
@@ -208,7 +209,7 @@ router.get("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
     snakeToCamel(result2.rows);
     console.log("~~~~~~~~~~~~~~~~~~~", req.params.id);
     const result3 = await db.query(
-      "SELECT * FROM trip_schedule WHERE trip_id=$1",
+      "SELECT * FROM trip_schedule WHERE trip_id=$1 ORDER BY start_time ASC, sort_index ASC",
       [req.params.id]
     );
     if (result3.rowCount > 0) {
@@ -238,7 +239,7 @@ router.post("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
       return;
     }
     const result = await db.query(
-      "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+      "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
       [
         match.rows[0].trip_id,
         req.body.start,
@@ -247,6 +248,7 @@ router.post("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
         req.body.cost,
         req.body.details,
         req.body.multiDay,
+        req.body.sortIndex,
       ]
     );
     if (result.rowCount > 0) {
@@ -265,7 +267,7 @@ router.post("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
 router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6 WHERE id=$7 RETURNING *",
+      "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, sort_index=$7, last_modified=NOW() WHERE id=$8 RETURNING *",
       [
         req.body.location,
         req.body.details,
@@ -273,6 +275,7 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
         req.body.end,
         req.body.cost,
         req.body.multiDay,
+        req.body.sortIndex,
         req.params.id,
       ]
     );
@@ -290,8 +293,8 @@ router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
 router.patch("/update-time/:id", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "UPDATE trip_schedule SET start_time=$1, end_time=$2 WHERE id=$3 RETURNING *",
-      [req.body.start, req.body.end, req.params.id]
+      "UPDATE trip_schedule SET start_time=$1, end_time=$2, sort_index=$3, last_modified=NOW() WHERE id=$4 RETURNING *",
+      [req.body.start, req.body.end, req.body.sortIndex, req.params.id]
     );
     if (result.rowCount > 0) {
       snakeToCamel(result.rows);
@@ -361,7 +364,7 @@ router.post("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
 router.patch("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
   try {
     const result = await db.query(
-      "UPDATE trip_list SET value=$1 WHERE id=$2 RETURNING *",
+      "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
       [req.body.value, req.params.itemId]
     );
     snakeToCamel(result.rows);
@@ -394,10 +397,17 @@ router.patch(
 
 router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
   try {
-    const result = await db.query(
-      "DELETE FROM trip_list WHERE id=$1 RETURNING *",
-      [req.params.itemId]
-    );
+    let result: QueryResult;
+    if (req.body.fromGoogle) {
+      result = await db.query(
+        "DELETE FROM trip_list WHERE from_google=$1 RETURNING *",
+        [req.params.itemId]
+      );
+    } else {
+      result = await db.query("DELETE FROM trip_list WHERE id=$1 RETURNING *", [
+        req.params.itemId,
+      ]);
+    }
     res.status(200).json({ deletedData: result.rows });
     return;
   } catch (err) {

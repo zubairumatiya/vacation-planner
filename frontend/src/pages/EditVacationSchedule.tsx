@@ -10,7 +10,7 @@ import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scro
 import { DragOverlay, type UniqueIdentifier } from "@dnd-kit/core";
 import CustomTableComponent from "../components/CustomTableComponent";
 import { EditScheduleContext } from "../context/EditScheduleContext";
-import { customISOTime } from "../utils/timeHelpers";
+import { customISOTime, newSortIndex } from "../utils/timeHelpers";
 import NormalRow from "../components/NormalRow";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import addToSchedule from "../assets/add-to-schedule.svg";
@@ -29,6 +29,7 @@ export type Schedule = {
   endTime: Date;
   cost: number;
   multiDay: boolean;
+  sortIndex: number;
 };
 
 export type DraggingState = {
@@ -90,9 +91,9 @@ const EditVacationSchedule = ({
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<DayContainer[]>([]); // each day(table)
-  const [individualAddition, setIndividualAddition] = useState<boolean[]>([
-    false,
-  ]);
+  const [individualAddition, setIndividualAddition] = useState<{
+    addingContainer: string;
+  }>({ addingContainer: "" });
   const [itemError, setItemError] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -220,17 +221,17 @@ const EditVacationSchedule = ({
     }
   }, [startError, endError, locationError]);
 
-  const addItemHelper = (i: number, cancel?: string) => {
+  const addItemHelper = (dayContainer: string, cancel?: string) => {
     if (cancel) {
       setAddingItem(false);
     } else {
       setAddingItem(true);
     }
-    setIndividualAddition((prev) => {
-      const newArr = [...prev];
-      newArr[i] = !newArr[i];
-      return newArr;
-    });
+    setIndividualAddition((prev) =>
+      prev.addingContainer
+        ? { addingContainer: "" }
+        : { addingContainer: dayContainer }
+    );
   };
 
   useEffect(() => {
@@ -275,8 +276,7 @@ const EditVacationSchedule = ({
 
   const submitAddItem = async (
     e: React.FormEvent<HTMLFormElement>,
-    dateAdded: string,
-    index: number
+    dateAdded: string
   ) => {
     e.preventDefault();
     setAddingItem(false);
@@ -323,6 +323,9 @@ const EditVacationSchedule = ({
       if (error) {
         return;
       } else {
+        const tempItem = { startTime: startDateAssembler, id: "temp" };
+        const tempArr = reSort([...schedule[dateAdded].slice(), tempItem]);
+        const newSortInd = newSortIndex("temp", tempArr);
         try {
           const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
             method: "POST",
@@ -337,6 +340,7 @@ const EditVacationSchedule = ({
               details: formData.get("details"),
               cost: formData.get("cost"),
               multiDay: formData.get("multiday"),
+              sortIndex: newSortInd,
             }),
           });
           if (addingReq.ok) {
@@ -344,13 +348,18 @@ const EditVacationSchedule = ({
             setSchedule((prev) => {
               return {
                 ...prev,
-                [dateAdded]: reSort([...prev[dateAdded], data.addedItem]),
+                [dateAdded]: tempArr.map((v) =>
+                  v.id === "temp"
+                    ? {
+                        ...data.addedItem,
+                        startTime: new Date(data.addedItem.startTime),
+                        endTime: new Date(data.addedItem.endTime),
+                      }
+                    : v
+                ),
               };
             });
-            setIndividualAddition((prev) => {
-              prev[index] = false;
-              return [...prev];
-            });
+            setIndividualAddition({ addingContainer: "" });
             setCostTotal((prev) => prev + Number(formData.get("cost")));
           }
           if (addingReq.status === 401) {
@@ -713,7 +722,7 @@ const EditVacationSchedule = ({
     <p>{message}</p>
   ) : (
     <div className={styles.pageWrapper}>
-      {days.map((dayObj: DayContainer, index) => {
+      {days.map((dayObj: DayContainer) => {
         return (
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
             <div className={styles.tableCaption}>{dayObj.label}</div>
@@ -736,11 +745,11 @@ const EditVacationSchedule = ({
                 //submitDelete={submitDelete} moved entirety
               />
             </div>
-            {!individualAddition[index] ? (
+            {individualAddition.addingContainer !== dayObj.day ? (
               <button
                 type="button"
                 disabled={addingItem}
-                onClick={() => addItemHelper(index)}
+                onClick={() => addItemHelper(dayObj.day)}
                 className={`${styles.addButton} btnPrimary`}
               >
                 Add Item
@@ -751,7 +760,7 @@ const EditVacationSchedule = ({
               <div className={styles.formWrapper}>
                 <form
                   className={styles.form}
-                  onSubmit={(e) => submitAddItem(e, dayObj.day, index)}
+                  onSubmit={(e) => submitAddItem(e, dayObj.day)}
                 >
                   <div
                     className={`${styles.itemElement} ${styles.timeWrapper}`}
@@ -871,7 +880,7 @@ const EditVacationSchedule = ({
                     <button
                       className={`btnPrimary ${styles.xButton}`}
                       type="button"
-                      onClick={() => addItemHelper(index, "cancel")}
+                      onClick={() => addItemHelper(dayObj.day, "cancel")}
                     >
                       X
                     </button>

@@ -87,6 +87,8 @@ const toCamelCase = (dbRows) => {
 };
 
 //toCamelCase(dbResult);
+const f = false;
+console.log(f ?? "poop");
 
 /*
 let countOfPlaces = 0;

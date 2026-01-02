@@ -28,7 +28,7 @@ import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
 //import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { prefixZero } from "../utils/timeHelpers";
+import { newSortIndex, prefixZero } from "../utils/timeHelpers";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -145,7 +145,7 @@ const EditCanvas = ({
       const listValue =
         wishList.find((item) => item.id == e.active.id)?.value ?? "";
       tempScheduleItem.current = {
-        id: e.active.id, //-1,
+        id: e.active.id,
         tripId: Number(tripId),
         location: listValue,
         details: "",
@@ -153,6 +153,7 @@ const EditCanvas = ({
         endTime: new Date(),
         cost: 0,
         multiDay: false,
+        sortIndex: 0,
       };
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag?.type === "schedule") {
@@ -190,13 +191,6 @@ const EditCanvas = ({
         const overIndex = overInfo.index;
 
         let newIndex: number;
-        console.log("dragover info: ", {
-          overId: over.id,
-          activeId: active.id,
-          overContainer,
-          overIndex,
-          activeIndex,
-        });
         if (over.id in schedule || overIndex === null) {
           newIndex = overItems.length + 1;
         } else {
@@ -284,19 +278,27 @@ const EditCanvas = ({
           newStartTime,
           prevSchedule[overContainer][activeIndex].multiDay
         );
-        prevSchedule[overContainer][activeIndex] = {
-          // mutation but we make a new ref upon returning
+        const newArr = arrayMove(
+          prevSchedule[overContainer],
+          activeIndex,
+          overIndex ?? 0
+        );
+        const newSortInd = newSortIndex(active.id, newArr);
+        const newItem = {
           ...prevSchedule[overContainer][activeIndex],
           startTime: newStartTime,
           endTime: newEndTime,
+          sortIndex: newSortInd,
         };
+        newArr[overIndex ?? 0] = newItem;
+        // new obj inserted into new array
+
+        prevSchedule[overContainer][activeIndex] = newItem;
+        // changing it here so changes are reflected in "previous" variable
+
         return {
           ...prevSchedule,
-          [overContainer]: arrayMove(
-            prevSchedule[overContainer],
-            activeIndex,
-            overIndex ?? 0
-          ),
+          [overContainer]: newArr,
         };
       });
       if (refIdSnapshot) {
@@ -329,6 +331,7 @@ const EditCanvas = ({
                 cost: previous[overContainer][activeIndex].cost,
                 details: previous[overContainer][activeIndex].details,
                 multiDay: previous[overContainer][activeIndex].multiDay,
+                sortIndex: previous[overContainer][activeIndex].sortIndex,
               }),
             }),
             fetch(`${apiURL}/check-list-item/${refIdSnapshot}`, {
@@ -386,6 +389,7 @@ const EditCanvas = ({
               body: JSON.stringify({
                 start: updatedItem.startTime,
                 end: updatedItem.endTime,
+                sortIndex: updatedItem.sortIndex,
               }),
             }
           );
@@ -740,7 +744,7 @@ const EditCanvas = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ fromGoogle }),
+        body: JSON.stringify({ fromGoogle: fromGoogle ?? false }),
       });
 
       if (response.status === 401) {
@@ -752,7 +756,10 @@ const EditCanvas = ({
         alert("Error: List not found");
       }
       if (response.ok) {
-        setWishList((prev) => prev.filter((v) => v.id != itemId));
+        const data = await response.json();
+        setWishList((prev) =>
+          prev.filter((v) => v.id !== data.deletedData[0].id)
+        );
         return 200;
       }
     },
