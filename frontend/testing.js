@@ -174,7 +174,7 @@ repeaterCall();
 // -- change API restriction to IP Address once I begin hosting Frontend → use referrer restriction (yourdomain.com) Backend → use IP restriction (the server’s static public IP). So will need two keys.
 // -- Any “write” or high-cost operations (like Places searches or Directions requests) are safer from abuse if done server-side.
 // -- Set usage limits in Google Cloud Console - since we know all requests will be using the enterprise option, we can set the generic query limit in quotas using free limit for the enterprise text search SKU (1000)
-// add sharing capabilites to other users - for view only, maybe just not render the edit tab?
+// add sharing/multi-user editing capabilites to other users - for view only, maybe just not render the edit tab?
 // maybe have collapsable weeks in the schedule portion? When we drag over a collapsed week it can open.
 // export as csv??
 // check if i am counting days properly in the title
