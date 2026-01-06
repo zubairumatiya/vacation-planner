@@ -84,7 +84,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ value: item }),
+      body: JSON.stringify({ value: item, tripId }),
     });
 
     if (response.status === 401) {
@@ -163,6 +163,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       },
       body: JSON.stringify({
         newValue,
+        tripId,
       }),
     });
     if (result.ok) {
@@ -183,14 +184,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       }
     }
   };
-
-  /*
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, item: Item) => {
-    if (e) {
-      const stringItem = JSON.stringify(item);
-      e.dataTransfer?.setData("application/json/list-item", stringItem);
-    }
-  };*/
 
   return (
     <div

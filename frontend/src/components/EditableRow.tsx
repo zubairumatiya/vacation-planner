@@ -4,13 +4,14 @@ import {
   testLessThan24,
   addMeridiem,
   fourDigitTime,
-  newSortIndex,
+  indexChunk,
+  makeContainers,
+  bucketizeSchedule,
 } from "../utils/timeHelpers";
 import CustomTimePicker from "./CustomTimePicker";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import type { Schedule } from "../pages/EditVacationSchedule";
+import { useNavigate, useParams } from "react-router-dom";
 import { EditScheduleContext } from "../context/EditScheduleContext";
 
 const EditableRow = ({
@@ -47,8 +48,11 @@ const EditableRow = ({
     cancelAdd,
     setHoldEndTime,
     setHoldStartTime,
+    utcEnd,
+    utcStart,
   } = useContext(EditScheduleContext);
   const auth = useContext(AuthContext);
+  const { tripId } = useParams();
   const [editStartTimeObject, setEditStartTimeObject] = useState<TimeObj>(
     {} as TimeObj
   );
@@ -75,6 +79,7 @@ const EditableRow = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ tripId }),
       });
       if (response.ok) {
         setEditLineId(null);
@@ -149,22 +154,25 @@ const EditableRow = ({
       : false;
     const postEditDate = startDateAssembler.split("T")[0];
     const newTable = postEditDate === dateAdded ? false : true;
-    const tempItem = { id: itemID, startTime: startDateAssembler };
+    const tempItem = {
+      startTime: new Date(startDateAssembler),
+      id: itemID,
+      endTime: new Date(endDateAssembler),
+      location: "",
+      details: "",
+      cost: 0,
+      multiDay: false,
+      sortIndex: 0,
+      tripId: tripId ?? 0,
+    } as Schedule;
     const tempArr = reSort(
       newTable
         ? [...schedule[postEditDate], tempItem]
         : schedule[postEditDate].map((v) => (v.id === itemID ? tempItem : v))
     );
-    let newSortInd;
-    if (newTable) {
-      newSortInd = newSortIndex(itemID, tempArr);
-    } else {
-      newSortInd =
-        tempArr.findIndex((v) => v.id === itemID) ===
-        schedule[postEditDate].findIndex((v) => v.id === itemID)
-          ? schedule[dateAdded].find((v) => v.id === itemID).sortIndex
-          : newSortIndex(itemID, tempArr);
-    }
+
+    const chunk: Chunk = indexChunk(itemID, tempArr);
+
     try {
       const response = await fetch(`${apiURL}/schedule/${itemID}`, {
         method: "PATCH",
@@ -179,7 +187,8 @@ const EditableRow = ({
           cost,
           details,
           multiDay,
-          sortIndex: newSortInd,
+          chunk,
+          tripId,
         }),
       });
       if (response.ok) {
@@ -220,6 +229,26 @@ const EditableRow = ({
           state: { message: "Session expired, redirecting to log in..." },
         });
         // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+      } else if (response.status === 409) {
+        const data = await response.json();
+
+        for (const i of data.newData) {
+          // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+          i.startTime = new Date(i.startTime);
+          i.endTime = new Date(i.endTime);
+          i.id = String(i.id);
+        }
+
+        const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+        const dayContainers: DayContainer[] = makeContainers(
+          length,
+          new Date(utcStart)
+        );
+        const bucketizeItems: DaySchedule = bucketizeSchedule(
+          dayContainers,
+          data.newData
+        );
+        setSchedule(bucketizeItems);
       } else {
         console.log("something went wrong editing");
       }

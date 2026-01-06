@@ -10,7 +10,12 @@ import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scro
 import { DragOverlay, type UniqueIdentifier } from "@dnd-kit/core";
 import CustomTableComponent from "../components/CustomTableComponent";
 import { EditScheduleContext } from "../context/EditScheduleContext";
-import { customISOTime, newSortIndex } from "../utils/timeHelpers";
+import {
+  bucketizeSchedule,
+  customISOTime,
+  indexChunk,
+  makeContainers,
+} from "../utils/timeHelpers";
 import NormalRow from "../components/NormalRow";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import addToSchedule from "../assets/add-to-schedule.svg";
@@ -19,18 +24,6 @@ polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 const apiURL = import.meta.env.VITE_API_URL;
-
-export type Schedule = {
-  id: UniqueIdentifier;
-  tripId: number;
-  location: string;
-  details: string;
-  startTime: Date;
-  endTime: Date;
-  cost: number;
-  multiDay: boolean;
-  sortIndex: number;
-};
 
 export type DraggingState = {
   container: string | null;
@@ -83,6 +76,8 @@ const EditVacationSchedule = ({
     locationEditRef,
     costEditRef,
     handleTextInput,
+    setUtcEnd,
+    setUtcStart,
   } = useContext(EditScheduleContext);
 
   const { tripId } = useParams();
@@ -138,60 +133,29 @@ const EditVacationSchedule = ({
         }
 
         //console.log(data.schedule);
-        data.schedule.sort(
-          (a: Schedule, b: Schedule) =>
-            a.startTime.getTime() - b.startTime.getTime()
-        );
+        //data.schedule.sort(
+        //  (a: Schedule, b: Schedule) =>
+        //    a.startTime.getTime() - b.startTime.getTime()
+        //);
 
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
+
+        setUtcEnd(UtcEnd);
+        setUtcStart(UtcStart);
+
         const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
-        const dayContainers: DayContainer[] = [];
 
-        for (let i = 0; i <= length; i++) {
-          if (i === 0) {
-            const day = new Intl.DateTimeFormat("en-us", {
-              weekday: "long",
-              timeZone: "UTC",
-            }).format(convertStart);
-            const date = new Intl.DateTimeFormat("en-us", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              timeZone: "UTC",
-            }).format(convertStart);
-
-            dayContainers.push({
-              day: convertStart.toISOString().split("T")[0],
-              label: `${day} - ${date}`,
-            });
-          } else {
-            convertStart.setDate(convertStart.getDate() + 1); // adding a day in local time, and then converting to UTC in method below: timeZone: "UTC"
-            const day = new Intl.DateTimeFormat("en-us", {
-              weekday: "long",
-              timeZone: "UTC",
-            }).format(convertStart);
-            const date = new Intl.DateTimeFormat("en-us", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-              timeZone: "UTC",
-            }).format(convertStart);
-            dayContainers.push({
-              day: convertStart.toISOString().split("T")[0],
-              label: `${day} - ${date}`,
-            });
-          }
-        }
-
-        const bucketizeItems: DaySchedule = {};
-        dayContainers.forEach(
-          (dayObj: DayContainer) =>
-            (bucketizeItems[dayObj.day] = data.schedule.filter(
-              (v: Schedule) =>
-                v.startTime.toISOString().split("T")[0] === dayObj.day
-            ))
+        const dayContainers: DayContainer[] = makeContainers(
+          length,
+          convertStart
         );
+
+        const bucketizeItems: DaySchedule = bucketizeSchedule(
+          dayContainers,
+          data.schedule
+        );
+
         setDays(dayContainers);
         setSchedule(bucketizeItems);
         setLoading(false);
@@ -323,9 +287,19 @@ const EditVacationSchedule = ({
       if (error) {
         return;
       } else {
-        const tempItem = { startTime: startDateAssembler, id: "temp" };
+        const tempItem = {
+          startTime: new Date(startDateAssembler),
+          id: "temp",
+          endTime: new Date(endDateAssembler),
+          location: "",
+          details: "",
+          cost: 0,
+          multiDay: false,
+          sortIndex: 0,
+          tripId: tripId ?? 0,
+        } as Schedule;
         const tempArr = reSort([...schedule[dateAdded].slice(), tempItem]);
-        const newSortInd = newSortIndex("temp", tempArr);
+        const chunk = indexChunk("temp", tempArr);
         try {
           const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
             method: "POST",
@@ -340,7 +314,7 @@ const EditVacationSchedule = ({
               details: formData.get("details"),
               cost: formData.get("cost"),
               multiDay: formData.get("multiday"),
-              sortIndex: newSortInd,
+              chunk,
             }),
           });
           if (addingReq.ok) {

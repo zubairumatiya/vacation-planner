@@ -41,6 +41,10 @@ export type EditScheduleContext = {
   locationEditRef: React.RefObject<HTMLInputElement | null>;
   costEditRef: React.RefObject<HTMLInputElement | null>;
   handleTextInput: (e: React.FormEvent<HTMLTextAreaElement>) => void;
+  utcEnd: number;
+  utcStart: number;
+  setUtcEnd: React.Dispatch<React.SetStateAction<number>>;
+  setUtcStart: React.Dispatch<React.SetStateAction<number>>;
 }; // Does context get recreated each time a child component is re-rendered??
 
 export const EditScheduleContext = createContext<EditScheduleContext>(
@@ -79,6 +83,8 @@ export function EditScheduleProvider({
   const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
   const [multiDayStyle, setMultiDayStyle] = useState(false);
   const [editMultiDay, setEditMultiDay] = useState(false);
+  const [utcStart, setUtcStart] = useState(0);
+  const [utcEnd, setUtcEnd] = useState(0);
 
   const handleEdit = (
     e: React.MouseEvent,
@@ -186,6 +192,10 @@ export function EditScheduleProvider({
       locationEditRef,
       costEditRef,
       handleTextInput,
+      utcStart,
+      setUtcStart,
+      utcEnd,
+      setUtcEnd,
     }),
     [
       preFill,
@@ -225,6 +235,10 @@ export function EditScheduleProvider({
       locationEditRef,
       costEditRef,
       handleTextInput,
+      utcStart,
+      setUtcStart,
+      utcEnd,
+      setUtcEnd,
     ]
   );
 

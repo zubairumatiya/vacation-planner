@@ -9,7 +9,7 @@ export default async function checkIndexSpacing(
   chunk: Chunk,
   tripId: string,
   add?: boolean | undefined
-): Promise<number | null> {
+): Promise<number | null | undefined> {
   const above = chunk.above?.sortIndex;
   const below = chunk.below?.sortIndex;
 
@@ -25,7 +25,11 @@ export default async function checkIndexSpacing(
       if (add) {
         return null;
       } else {
-        await renumberIndexDb();
+        const rowCount = await renumberIndexDb(tripId);
+        if (rowCount < 1) {
+          // renumbering failed
+          return undefined;
+        }
         return null;
       }
     } else {

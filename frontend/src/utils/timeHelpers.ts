@@ -1,5 +1,4 @@
 import type { UniqueIdentifier } from "@dnd-kit/core";
-import type { Schedule } from "../pages/EditVacationSchedule";
 
 export const addMeridiem = (militaryTime: string) => {
   let hour = Number(militaryTime.split(":")[0]);
@@ -87,19 +86,94 @@ export const testLessThan24 = (
   }
 };
 
-export const newSortIndex = (id: UniqueIdentifier, newArray: Schedule[]) => {
+export const indexChunk = (
+  id: UniqueIdentifier,
+  newArray: Schedule[]
+): Chunk => {
   if (newArray.length <= 1) {
-    return 0;
+    return {};
   }
   const newIndex = newArray.findIndex((v) => v.id === id);
   if (newIndex === newArray.length - 1) {
     // non-empty and at the bottom
-    return newArray[newIndex - 1].sortIndex + 10;
+    return {
+      above: {
+        id: newArray[newIndex - 1].id,
+        sortIndex: newArray[newIndex - 1].sortIndex,
+      },
+    };
   } else if (newIndex === 0) {
-    return newArray[newIndex + 1].sortIndex - 10;
+    return {
+      below: {
+        id: newArray[newIndex + 1].id,
+        sortIndex: newArray[newIndex + 1].sortIndex,
+      },
+    };
   } else {
-    const sortIndexAbove = newArray[newIndex - 1].sortIndex;
-    const sortIndexBelow = newArray[newIndex + 1].sortIndex;
-    return (sortIndexAbove + sortIndexBelow) / 2;
+    return {
+      above: {
+        id: newArray[newIndex - 1].id,
+        sortIndex: newArray[newIndex - 1].sortIndex,
+      },
+      below: {
+        id: newArray[newIndex + 1].id,
+        sortIndex: newArray[newIndex + 1].sortIndex,
+      },
+    };
   }
+};
+
+export const makeContainers = (length: number, startDate: Date) => {
+  const dayContainers: DayContainer[] = [];
+
+  for (let i = 0; i <= length; i++) {
+    if (i === 0) {
+      const day = new Intl.DateTimeFormat("en-us", {
+        weekday: "long",
+        timeZone: "UTC",
+      }).format(startDate);
+      const date = new Intl.DateTimeFormat("en-us", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      }).format(startDate);
+
+      dayContainers.push({
+        day: startDate.toISOString().split("T")[0],
+        label: `${day} - ${date}`,
+      });
+    } else {
+      startDate.setDate(startDate.getDate() + 1); // adding a day in local time, and then converting to UTC in method below: timeZone: "UTC"
+      const day = new Intl.DateTimeFormat("en-us", {
+        weekday: "long",
+        timeZone: "UTC",
+      }).format(startDate);
+      const date = new Intl.DateTimeFormat("en-us", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        timeZone: "UTC",
+      }).format(startDate);
+      dayContainers.push({
+        day: startDate.toISOString().split("T")[0],
+        label: `${day} - ${date}`,
+      });
+    }
+  }
+  return dayContainers;
+};
+
+export const bucketizeSchedule = (
+  dayContainers: DayContainer[],
+  arr: Schedule[]
+) => {
+  const bucketizeItems: DaySchedule = {};
+  dayContainers.forEach(
+    (dayObj: DayContainer) =>
+      (bucketizeItems[dayObj.day] = arr.filter(
+        (v: Schedule) => v.startTime.toISOString().split("T")[0] === dayObj.day
+      ))
+  );
+  return bucketizeItems;
 };

@@ -196,7 +196,7 @@ repeaterCall();
 // nice to have - can show pins from the items in the todo into google maps (will prob need some sort of ai interprettur on locations that can't be found)
 // nice to have - can automate all the planning given the items in the want to see list and add it to the schedule
 // nice to have - can also add things to the trip like popular destiantions if option is selected
-// nice to have - plan it for me feature where user gives destinations, length of time, must see sights, activity levels, budget, hotel fanciness, focus(history, art, live events, etc)
+// nice to have - plan it for me feature where user gives destinations, length of time, must see sights, activity levels, budget, hotel fanciness, focus(history, art, live events, etc). User can use their ChatGpt login so we don't have to pay.
 // nice to have - ease the booking process by sending users to the links of places that need booking, would be nice if we can go through up until the confirm booking page (maybe we can utilize browser information like credit card, user info, and address)
 // nice to have - and can house confirmation number maybe
 // nice to have  -  maybe add deletion warning on if something has a lot of details

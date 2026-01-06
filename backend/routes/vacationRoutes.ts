@@ -5,6 +5,11 @@ import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import dotenv from "dotenv";
 import { snakeToCamel } from "../helpers/snakeToCamel.js";
 import { QueryResult } from "pg";
+import checkIndexSpacing from "../helpers/checkIndexSpacing.js";
+import ensureOwnership from "../middleware/ensureOwnership.js";
+import renumberIndexDb from "../helpers/renumberIndexDb.js";
+import { Schedule } from "../types/express.js";
+import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
@@ -27,34 +32,31 @@ router.get("/home", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
-router.get("/add-vacation/:tripId", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const confirmUser = await db.query(
-      "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
-      [req.user.id, req.params.tripId, "owner", "editor"]
-    );
-    if (confirmUser.rowCount < 1) {
-      res.sendStatus(404);
-      return;
+router.get(
+  "/add-vacation/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
+      const results = await db.query("SELECT * FROM trips WHERE id=$1", [
+        req.params.tripId,
+      ]);
+      if (results.rowCount < 1) {
+        res.sendStatus(404);
+        return;
+      } else {
+        res.status(200).json({
+          gId: results.rows[0].g_id,
+          gLocation: results.rows[0].location,
+          gVp: results.rows[0].g_vp,
+        });
+        return;
+      }
+    } catch (err) {
+      next(err);
     }
-    const results = await db.query("SELECT * FROM trips WHERE id=$1", [
-      req.params.tripId,
-    ]);
-    if (results.rowCount < 1) {
-      res.sendStatus(404);
-      return;
-    } else {
-      res.status(200).json({
-        gId: results.rows[0].g_id,
-        gLocation: results.rows[0].location,
-        gVp: results.rows[0].g_vp,
-      });
-      return;
-    }
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
   if (
@@ -103,76 +105,66 @@ router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
   }
 });
 
-router.patch("/add-vacation/:id", ensureLoggedIn, async (req, res, next) => {
-  if (
-    !req.body.tripname ||
-    !req.body.location ||
-    !req.body.startDate ||
-    !req.body.endDate ||
-    !req.body.gId ||
-    !req.body.gVp
-  ) {
-    res
-      .status(403)
-      .json({ message: "Invalid input - make sure all the fields are filled" });
-    return;
-  }
-  const confirmUser = await db.query(
-    "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
-    [req.user.id, req.params.id, "owner", "editor"]
-  );
-  if (confirmUser.rowCount < 1) {
-    res.sendStatus(404);
-    return;
-  }
-  const startDate = new Date(req.body.startDate);
-  const endDate = new Date(req.body.endDate);
-
-  if (startDate > endDate) {
-    res
-      .status(403)
-      .json({ message: "Invalid date - End date cannot be before start date" });
-    return;
-  }
-
-  try {
-    const result = await db.query(
-      "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, g_id=$5, g_vp=$6, last_modified=NOW() WHERE id=$7 RETURNING *",
-      [
-        req.body.tripname,
-        req.body.startDate,
-        req.body.endDate,
-        req.body.location,
-        req.body.gId,
-        req.body.gVp,
-        req.params.id,
-      ]
-    );
-    if (result.rowCount > 0) {
-      res.status(200).json({ message: "success" });
+router.patch(
+  "/add-vacation/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    if (
+      !req.body.tripname ||
+      !req.body.location ||
+      !req.body.startDate ||
+      !req.body.endDate ||
+      !req.body.gId ||
+      !req.body.gVp
+    ) {
+      res.status(403).json({
+        message: "Invalid input - make sure all the fields are filled",
+      });
       return;
     }
-  } catch (err) {
-    next(err);
-  }
-});
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
 
-router.delete(
-  "/delete-vacation/:id",
-  ensureLoggedIn,
-  async (req, res, next) => {
+    if (startDate > endDate) {
+      res.status(403).json({
+        message: "Invalid date - End date cannot be before start date",
+      });
+      return;
+    }
+
     try {
-      const confirmUser = await db.query(
-        "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
-        [req.user.id, req.params.id, "owner", "editor"]
+      const result = await db.query(
+        "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, g_id=$5, g_vp=$6, last_modified=NOW() WHERE id=$7 RETURNING *",
+        [
+          req.body.tripname,
+          req.body.startDate,
+          req.body.endDate,
+          req.body.location,
+          req.body.gId,
+          req.body.gVp,
+          req.params.tripId,
+        ]
       );
-      if (confirmUser.rowCount < 1) {
-        res.sendStatus(404);
+      if (result.rowCount > 0) {
+        res.status(200).json({ message: "success" });
         return;
       }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  "/delete-vacation/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
       const result = await db.query(
         "DELETE FROM trips WHERE id=$1 RETURNING *",
-        [req.params.id]
+        [req.params.tripId]
       );
       if (result.rowCount > 0) {
         res.status(200).json({ message: "success" });
@@ -186,197 +178,307 @@ router.delete(
   }
 );
 
-router.get("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const result = await db.query(
-      "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
-      [req.user.id, req.params.id, "owner", "editor"]
-    );
-    if (result.rowCount < 1) {
-      console.log("~~~~LOG~~~~~ this trip is not assigned to this user");
-      res.sendStatus(404);
-      return;
-    }
-    const role = result.rows[0].role;
-    const result2 = await db.query("SELECT * FROM trips WHERE id=$1", [
-      req.params.id,
-    ]);
-    if (result2.rowCount < 1) {
-      console.log("~~~~LOG~~~~~ could not find trip info");
-      res.sendStatus(404);
-      return;
-    }
-    snakeToCamel(result2.rows);
-    console.log("~~~~~~~~~~~~~~~~~~~", req.params.id);
-    const result3 = await db.query(
-      "SELECT * FROM trip_schedule WHERE trip_id=$1 ORDER BY start_time ASC, sort_index ASC",
-      [req.params.id]
-    );
-    if (result3.rowCount > 0) {
-      snakeToCamel(result3.rows);
-    }
-    const arrCargo = result3.rowCount > 0 ? result3.rows : [];
+router.get(
+  "/schedule/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
+      const role = req.user.role;
+      const result2 = await db.query("SELECT * FROM trips WHERE id=$1", [
+        req.params.tripId,
+      ]);
+      if (result2.rowCount < 1) {
+        console.log("~~~~LOG~~~~~ could not find trip info");
+        res.sendStatus(404);
+        return;
+      }
+      snakeToCamel(result2.rows);
+      console.log("~~~~~~~~~~~~~~~~~~~", req.params.tripId);
+      const result3 = await db.query(
+        "SELECT * FROM trip_schedule WHERE trip_id=$1 ORDER BY start_time ASC, sort_index ASC",
+        [req.params.tripId]
+      );
+      if (result3.rowCount > 0) {
+        snakeToCamel(result3.rows);
+      }
+      const arrCargo = result3.rowCount > 0 ? result3.rows : [];
 
-    res.status(200).json({
-      role,
-      ...result2.rows[0],
-      schedule: arrCargo,
-    });
-    return;
-  } catch (err) {
-    next(err);
+      res.status(200).json({
+        role,
+        ...result2.rows[0],
+        schedule: arrCargo,
+      });
+      return;
+    } catch (err) {
+      next(err);
+    }
   }
-});
+);
 
-router.post("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const match = await db.query(
-      "SELECT * FROM user_trips WHERE user_id=$1 AND trip_id=$2 AND (role=$3 OR role=$4)",
-      [req.user.id, req.params.id, "owner", "editor"]
-    );
-    if (match.rowCount < 1) {
-      res.sendStatus(403);
-      return;
+router.post(
+  "/schedule/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
+      const newSortIndex = await checkIndexSpacing(
+        req.body.chunk,
+        req.params.tripId
+      );
+      let values: (string | number | Date | boolean)[];
+      if (newSortIndex === null) {
+        // insert item, call renumbering fn, call db to get item and add to response obj
+        const placeHolderIndex = req.body.chunk.above?.sortIndex + 1;
+        values = [
+          req.params.tripId,
+          req.body.start,
+          req.body.end,
+          req.body.location,
+          req.body.cost,
+          req.body.details,
+          req.body.multiDay,
+          placeHolderIndex,
+        ];
+      } else {
+        // add sort index to insert query and add to response obj
+        values = [
+          req.params.tripId,
+          req.body.start,
+          req.body.end,
+          req.body.location,
+          req.body.cost,
+          req.body.details,
+          req.body.multiDay,
+          newSortIndex,
+        ];
+      }
+      const result = await db.query<Schedule>(
+        "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
+        values
+      );
+
+      if (result.rowCount > 0) {
+        let rowsToReturn: QueryResult<Schedule> = result;
+        if (newSortIndex === null) {
+          const newItemId = result.rows[0].id;
+          const renumResult = await renumberIndexDb(req.params.tripId);
+          if (renumResult < 1) {
+            console.log("renumbering error");
+            res.status(500).json({ message: "Internal server error" });
+            return;
+          }
+          rowsToReturn = await db.query(
+            "SELECT * FROM trip_schedule WHERE id=$1",
+            [newItemId]
+          );
+        }
+        snakeToCamel(rowsToReturn.rows);
+        res.status(200).json({ addedItem: rowsToReturn.rows[0] });
+        return;
+      } else {
+        res.sendStatus(500);
+        return;
+      }
+    } catch (err) {
+      next(err);
     }
-    const result = await db.query(
-      "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
-      [
-        match.rows[0].trip_id,
-        req.body.start,
-        req.body.end,
-        req.body.location,
-        req.body.cost,
-        req.body.details,
-        req.body.multiDay,
-        req.body.sortIndex,
-      ]
-    );
-    if (result.rowCount > 0) {
+  }
+);
+
+router.patch(
+  "/schedule/:id",
+  ensureLoggedIn,
+  ensureOwnership,
+  stateAwareConfirmation,
+  async (req, res, next) => {
+    try {
+      const newSortIndex = await checkIndexSpacing(
+        req.body.chunk,
+        req.body.tripId
+      );
+      if (newSortIndex === undefined) {
+        console.log("Renumbering error");
+        res.sendStatus(500);
+        return;
+      }
+      let query: string;
+      let values: Array<string | number | object | boolean>;
+      if (newSortIndex === null) {
+        query =
+          "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, last_modified=NOW() WHERE id=$7 RETURNING *";
+        values = [
+          req.body.location,
+          req.body.details,
+          req.body.start,
+          req.body.end,
+          req.body.cost,
+          req.body.multiDay,
+          req.params.id,
+        ];
+      } else {
+        query =
+          "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, sort_index=$7, last_modified=NOW() WHERE id=$8 RETURNING *";
+        values = [
+          req.body.location,
+          req.body.details,
+          req.body.start,
+          req.body.end,
+          req.body.cost,
+          req.body.multiDay,
+          newSortIndex,
+          req.params.id,
+        ];
+      }
+      const result = await db.query(query, values);
+      if (result.rowCount > 0) {
+        snakeToCamel(result.rows);
+        res.status(200).json({ updatedData: result.rows[0] });
+        return;
+      }
+      // will have to update last-modified field in trips as well
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.patch(
+  "/update-time/:id",
+  ensureLoggedIn,
+  ensureOwnership,
+  stateAwareConfirmation,
+  async (req, res, next) => {
+    try {
+      const newSortIndex = await checkIndexSpacing(
+        req.body.chunk,
+        req.body.tripId
+      );
+      if (newSortIndex === undefined) {
+        console.log("Renumbering error");
+        res.sendStatus(500);
+        return;
+      }
+      let query: string;
+      let values: Array<string | number | object | boolean>;
+      if (newSortIndex === null) {
+        query =
+          "UPDATE trip_schedule SET start_time=$1, end_time=$2, last_modified=NOW() WHERE id=$3 RETURNING *";
+        values = [req.body.start, req.body.end, req.params.id];
+      } else {
+        query =
+          "UPDATE trip_schedule SET start_time=$1, end_time=$2, sort_index=$3, last_modified=NOW() WHERE id=$4 RETURNING *";
+        values = [req.body.start, req.body.end, newSortIndex, req.params.id];
+      }
+      const result = await db.query(query, values);
+      if (result.rowCount > 0) {
+        snakeToCamel(result.rows);
+        res.status(200).json({ updatedData: result.rows[0] });
+        return;
+      } else {
+        res.sendStatus(500);
+        return;
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.delete(
+  "/schedule/:id",
+  ensureLoggedIn,
+  ensureOwnership,
+  stateAwareConfirmation,
+  async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "DELETE FROM trip_schedule WHERE id=$1 RETURNING *",
+        [req.params.id]
+      );
+      if (result.rowCount > 0) {
+        snakeToCamel(result.rows);
+        res.status(200).json({ deletedData: result.rows[0] });
+        return;
+      } else {
+        res.sendStatus(404);
+        return;
+      }
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+router.get(
+  "/list/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "SELECT id, value, from_google, item_added FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
+        [req.params.tripId]
+      );
       snakeToCamel(result.rows);
-      res.status(200).json({ addedItem: result.rows[0] });
+      res.status(200).json({ data: result.rows });
       return;
-    } else {
-      res.sendStatus(500);
-      return;
+    } catch (err) {
+      next(err);
     }
-  } catch (err) {
-    next(err);
   }
-});
+);
 
-router.patch("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const result = await db.query(
-      "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, sort_index=$7, last_modified=NOW() WHERE id=$8 RETURNING *",
-      [
-        req.body.location,
-        req.body.details,
-        req.body.start,
-        req.body.end,
-        req.body.cost,
-        req.body.multiDay,
-        req.body.sortIndex,
-        req.params.id,
-      ]
-    );
-    if (result.rowCount > 0) {
+router.post(
+  "/list/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
+      let queryText: string;
+      let queryParams: Array<string>;
+      if (req.body.fromGoogle) {
+        queryText =
+          "INSERT INTO trip_list (trip_id, value, from_google) VALUES ($1, $2, $3) RETURNING id, value, from_google";
+        queryParams = [req.params.tripId, req.body.value, req.body.fromGoogle];
+      } else {
+        queryText =
+          "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google";
+        queryParams = [req.params.tripId, req.body.value];
+      }
+      const result = await db.query(queryText, queryParams);
       snakeToCamel(result.rows);
-      res.status(200).json({ updatedData: result.rows[0] });
+      res.status(200).json({ data: result.rows[0] });
       return;
+    } catch (err) {
+      next(err);
     }
-    // will have to update last-modified field in trips as well
-  } catch (err) {
-    next(err);
   }
-});
+);
 
-router.patch("/update-time/:id", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const result = await db.query(
-      "UPDATE trip_schedule SET start_time=$1, end_time=$2, sort_index=$3, last_modified=NOW() WHERE id=$4 RETURNING *",
-      [req.body.start, req.body.end, req.body.sortIndex, req.params.id]
-    );
-    if (result.rowCount > 0) {
+router.patch(
+  "/list/:itemId",
+  ensureLoggedIn,
+  ensureOwnership,
+  stateAwareConfirmation,
+  async (req, res, next) => {
+    try {
+      const result = await db.query(
+        "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
+        [req.body.value, req.params.itemId]
+      );
       snakeToCamel(result.rows);
-      res.status(200).json({ updatedData: result.rows[0] });
+      res.status(200).json({ data: result.rows });
       return;
-    } else {
-      res.sendStatus(500);
-      return;
+    } catch (err) {
+      next(err);
     }
-  } catch (err) {
-    next(err);
   }
-});
-
-router.delete("/schedule/:id", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const result = await db.query(
-      "DELETE FROM trip_schedule WHERE id=$1 RETURNING *",
-      [req.params.id]
-    );
-    if (result.rowCount > 0) {
-      snakeToCamel(result.rows);
-      res.status(200).json({ deletedData: result.rows[0] });
-      return;
-    }
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const result = await db.query(
-      "SELECT id, value, from_google, item_added FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
-      [req.params.tripId]
-    );
-    snakeToCamel(result.rows);
-    res.status(200).json({ data: result.rows });
-    return;
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.post("/list/:tripId", ensureLoggedIn, async (req, res, next) => {
-  try {
-    let queryText: string;
-    let queryParams: string[];
-    if (req.body.fromGoogle) {
-      queryText =
-        "INSERT INTO trip_list (trip_id, value, from_google) VALUES ($1, $2, $3) RETURNING id, value, from_google";
-      queryParams = [req.params.tripId, req.body.value, req.body.fromGoogle];
-    } else {
-      queryText =
-        "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google";
-      queryParams = [req.params.tripId, req.body.value];
-    }
-    const result = await db.query(queryText, queryParams);
-    snakeToCamel(result.rows);
-    res.status(200).json({ data: result.rows[0] });
-    return;
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.patch("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
-  try {
-    const result = await db.query(
-      "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
-      [req.body.value, req.params.itemId]
-    );
-    snakeToCamel(result.rows);
-    res.status(200).json({ data: result.rows });
-    return;
-  } catch (err) {
-    next(err);
-  }
-});
+);
 
 router.patch(
   "/check-list-item/:itemId",
+  ensureOwnership,
   ensureLoggedIn,
   async (req, res, next) => {
     try {
@@ -395,25 +497,31 @@ router.patch(
   }
 );
 
-router.delete("/list/:itemId", ensureLoggedIn, async (req, res, next) => {
-  try {
-    let result: QueryResult;
-    if (req.body.fromGoogle) {
-      result = await db.query(
-        "DELETE FROM trip_list WHERE from_google=$1 RETURNING *",
-        [req.params.itemId]
-      );
-    } else {
-      result = await db.query("DELETE FROM trip_list WHERE id=$1 RETURNING *", [
-        req.params.itemId,
-      ]);
+router.delete(
+  "/list/:itemId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
+      let result: QueryResult;
+      if (req.body.isGoogleId) {
+        result = await db.query(
+          "DELETE FROM trip_list WHERE from_google=$1 RETURNING *",
+          [req.params.itemId]
+        );
+      } else {
+        result = await db.query(
+          "DELETE FROM trip_list WHERE id=$1 RETURNING *",
+          [req.params.itemId]
+        );
+      }
+      res.status(200).json({ deletedData: result.rows });
+      return;
+    } catch (err) {
+      next(err);
     }
-    res.status(200).json({ deletedData: result.rows });
-    return;
-  } catch (err) {
-    next(err);
   }
-});
+);
 
 router.post("/map", async (req, res, next) => {
   let countOfPlaces = 0;

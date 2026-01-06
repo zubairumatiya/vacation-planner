@@ -5,7 +5,6 @@ import {
 } from "@dnd-kit/sortable";
 import styles from "../styles/EditSchedule.module.css";
 import { Fragment } from "react/jsx-runtime";
-import type { Schedule } from "../pages/EditVacationSchedule";
 import CustomTableRow from "./CustomTableRow";
 import { useContext } from "react";
 import { EditScheduleContext } from "../context/EditScheduleContext";

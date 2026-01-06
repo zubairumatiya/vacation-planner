@@ -1,5 +1,7 @@
 // src/types/google-maps-webcomponents.d.ts
 
+import type { UniqueIdentifier } from "@dnd-kit/core";
+
 export {}; // ensures it's a module
 
 declare global {
@@ -21,6 +23,23 @@ declare global {
       };
     };
     types: string[];
+  };
+
+  type Schedule = {
+    id: UniqueIdentifier;
+    tripId: string;
+    location: string;
+    details: string;
+    startTime: Date;
+    endTime: Date;
+    cost: number;
+    multiDay: boolean;
+    sortIndex: number;
+  };
+
+  type Chunk = {
+    above?: { id: UniqueIdentifier; sortIndex: number };
+    below?: { id: UniqueIdentifier; sortIndex: number };
   };
 
   type Vp = {

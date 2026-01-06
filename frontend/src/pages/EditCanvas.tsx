@@ -23,12 +23,12 @@ import {
   type DragStartEvent,
   type UniqueIdentifier,
 } from "@dnd-kit/core";
-import { type DraggingState, type Schedule } from "./EditVacationSchedule";
+import { type DraggingState } from "./EditVacationSchedule";
 import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
 //import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { newSortIndex, prefixZero } from "../utils/timeHelpers";
+import { indexChunk, prefixZero } from "../utils/timeHelpers";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -146,7 +146,7 @@ const EditCanvas = ({
         wishList.find((item) => item.id == e.active.id)?.value ?? "";
       tempScheduleItem.current = {
         id: e.active.id,
-        tripId: Number(tripId),
+        tripId: String(tripId),
         location: listValue,
         details: "",
         startTime: new Date(),
@@ -250,7 +250,7 @@ const EditCanvas = ({
     const overIndex = overInfo.index;
     const overContainer = overInfo.container;
     let previous: DaySchedule;
-
+    let chunk: Chunk;
     if (
       activeIndex === null ||
       activeInfo.container === null ||
@@ -283,12 +283,11 @@ const EditCanvas = ({
           activeIndex,
           overIndex ?? 0
         );
-        const newSortInd = newSortIndex(active.id, newArr);
+        chunk = indexChunk(active.id, newArr);
         const newItem = {
           ...prevSchedule[overContainer][activeIndex],
           startTime: newStartTime,
           endTime: newEndTime,
-          sortIndex: newSortInd,
         };
         newArr[overIndex ?? 0] = newItem;
         // new obj inserted into new array
@@ -332,6 +331,7 @@ const EditCanvas = ({
                 details: previous[overContainer][activeIndex].details,
                 multiDay: previous[overContainer][activeIndex].multiDay,
                 sortIndex: previous[overContainer][activeIndex].sortIndex,
+                chunk,
               }),
             }),
             fetch(`${apiURL}/check-list-item/${refIdSnapshot}`, {
@@ -342,6 +342,7 @@ const EditCanvas = ({
               },
               body: JSON.stringify({
                 newValue: true,
+                tripId,
               }),
             }),
           ]);
@@ -390,6 +391,8 @@ const EditCanvas = ({
                 start: updatedItem.startTime,
                 end: updatedItem.endTime,
                 sortIndex: updatedItem.sortIndex,
+                tripId,
+                chunk,
               }),
             }
           );
@@ -737,14 +740,14 @@ const EditCanvas = ({
   );
 
   const handleDeleteItem = useCallback(
-    async (itemId: UniqueIdentifier, fromGoogle: boolean) => {
+    async (itemId: UniqueIdentifier, isGoogleId: boolean) => {
       const response = await fetch(`${apiURL}/list/${itemId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ fromGoogle: fromGoogle ?? false }),
+        body: JSON.stringify({ isGoogleId, tripId }),
       });
 
       if (response.status === 401) {

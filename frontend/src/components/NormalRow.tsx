@@ -1,4 +1,3 @@
-import type { Schedule } from "../pages/EditVacationSchedule";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { addMeridiem, fourDigitTime, prefixZero } from "../utils/timeHelpers";
