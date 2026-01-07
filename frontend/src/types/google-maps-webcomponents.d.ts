@@ -35,6 +35,7 @@ declare global {
     cost: number;
     multiDay: boolean;
     sortIndex: number;
+    lastModified: string;
   };
 
   type Chunk = {

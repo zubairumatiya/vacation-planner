@@ -95,6 +95,52 @@ const EditableRow = ({
           state: { message: "Session expired, redirecting to log in..." },
         });
         // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+      } else if (response.status === 403) {
+        setEditLineId(null);
+        setAddingItem(false);
+        alert("You do not have permission to access this resource");
+      } else if (response.status === 404) {
+        setEditLineId(null);
+        setAddingItem(false);
+        const data = await response.json();
+        if (data.queryComplete != null) {
+          setCostTotal((prev) => prev - schedule[dateAdded][index].cost);
+          setSchedule((prev) => ({
+            ...prev,
+            [dateAdded]: prev[dateAdded].filter((v) => v.id !== data.deletedId),
+          }));
+        } else {
+          alert("Error: Trip not found");
+        }
+      } else if (response.status === 409) {
+        const data = await response.json();
+        setEditLineId(null);
+        setAddingItem(false);
+        for (const i of data.newData) {
+          // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+          i.startTime = new Date(i.startTime);
+          i.endTime = new Date(i.endTime);
+          i.id = String(i.id);
+        }
+        const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+        const dayContainers: DayContainer[] = makeContainers(
+          length,
+          new Date(utcStart)
+        );
+        const bucketizeItems: DaySchedule = bucketizeSchedule(
+          dayContainers,
+          data.newData
+        );
+        setSchedule(bucketizeItems);
+        alert(
+          "Another user has updated this resource, your change was not applied"
+        );
+      } else if (response.status >= 500) {
+        setEditLineId(null);
+        setAddingItem(false);
+        alert(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
       } else {
         console.log("~~~~ error deleting item");
       }
@@ -229,16 +275,24 @@ const EditableRow = ({
           state: { message: "Session expired, redirecting to log in..." },
         });
         // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+      } else if (response.status === 403) {
+        setEditLineId(null);
+        setAddingItem(false);
+        alert("You do not have permission to access this resource");
+      } else if (response.status === 404) {
+        setEditLineId(null);
+        setAddingItem(false);
+        alert("Error: Trip not found");
       } else if (response.status === 409) {
         const data = await response.json();
-
+        setEditLineId(null);
+        setAddingItem(false);
         for (const i of data.newData) {
           // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
           i.startTime = new Date(i.startTime);
           i.endTime = new Date(i.endTime);
           i.id = String(i.id);
         }
-
         const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
         const dayContainers: DayContainer[] = makeContainers(
           length,
@@ -249,6 +303,15 @@ const EditableRow = ({
           data.newData
         );
         setSchedule(bucketizeItems);
+        alert(
+          "Another user has updated this resource, your change was not applied"
+        );
+      } else if (response.status >= 500) {
+        setEditLineId(null);
+        setAddingItem(false);
+        alert(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
       } else {
         console.log("something went wrong editing");
       }

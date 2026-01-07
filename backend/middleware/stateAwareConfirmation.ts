@@ -21,13 +21,17 @@ export default async function stateAwareConfirmation(
       res.status(500).json({ message: "Server Error" });
       return;
     }
-    if (result.rowCount < 1) {
+    if (result.rowCount < 1 && req.method === "DELETE") {
+      // item has most likely been deleted already which is a conflict and should be in the statement below as well, only in DELETE does is it ok it's missing
       console.log("Item not found");
-      res.status(404).json({ message: "Item not found" });
+      res.status(404).json({ deletedId: req.params.id, queryComplete: "true" });
       return;
     }
     snakeToCamel(result.rows);
-    if (req.body.lastModified !== result.rows[0].lastModified) {
+    if (
+      req.body.lastModified !== result.rows?.[0]?.lastModified ||
+      result.rowCount < 1
+    ) {
       console.log("Conflict detected");
       if (path === "/schedule/:id" || path === "/update-time/:id") {
         queryText =
@@ -41,6 +45,7 @@ export default async function stateAwareConfirmation(
       res
         .status(409)
         .json({ message: "Conflict detected", newData: refreshData.rows });
+      return;
     } else if (req.body.lastModified === result.rows[0].lastModified) {
       next();
     }

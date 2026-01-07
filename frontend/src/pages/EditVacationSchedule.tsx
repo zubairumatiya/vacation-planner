@@ -109,11 +109,15 @@ const EditVacationSchedule = ({
         navigate("/login", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-      }
-      if (response.status === 404) {
+      } else if (response.status === 403) {
+        setMessage("You do not have permission to access this resource");
+      } else if (response.status === 404) {
         setMessage("Error: Trip not found");
-      }
-      if (response.ok) {
+      } else if (response.status >= 500) {
+        setMessage(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
+      } else if (response.ok) {
         //console.log(
         //  "name:",
         //  data.tripName,
@@ -335,12 +339,22 @@ const EditVacationSchedule = ({
             });
             setIndividualAddition({ addingContainer: "" });
             setCostTotal((prev) => prev + Number(formData.get("cost")));
-          }
-          if (addingReq.status === 401) {
+          } else if (addingReq.status === 401) {
             navigate("/redirect", {
               state: { message: "Session expired, redirecting to log in..." },
             });
             // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+          } else if (addingReq.status === 403) {
+            setIndividualAddition({ addingContainer: "" });
+            setMessage("You do not have permission to access this resource");
+          } else if (addingReq.status === 404) {
+            setIndividualAddition({ addingContainer: "" });
+            setMessage("Error: Trip not found");
+          } else if (addingReq.status >= 500) {
+            setIndividualAddition({ addingContainer: "" });
+            setMessage(
+              "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+            );
           }
         } catch (err) {
           console.log(err);

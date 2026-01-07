@@ -68,7 +68,7 @@ router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
     !req.body.gVp
   ) {
     res
-      .status(403)
+      .status(400)
       .json({ message: "Invalid input - make sure all the fields are filled" });
     return;
   }
@@ -77,7 +77,7 @@ router.post("/add-vacation", ensureLoggedIn, async (req, res, next) => {
 
   if (startDate > endDate) {
     res
-      .status(403)
+      .status(400)
       .json({ message: "Invalid date - End date cannot be before start date" });
     return;
   }
@@ -118,7 +118,7 @@ router.patch(
       !req.body.gId ||
       !req.body.gVp
     ) {
-      res.status(403).json({
+      res.status(400).json({
         message: "Invalid input - make sure all the fields are filled",
       });
       return;
@@ -127,7 +127,7 @@ router.patch(
     const endDate = new Date(req.body.endDate);
 
     if (startDate > endDate) {
-      res.status(403).json({
+      res.status(400).json({
         message: "Invalid date - End date cannot be before start date",
       });
       return;
@@ -400,8 +400,10 @@ router.delete(
         snakeToCamel(result.rows);
         res.status(200).json({ deletedData: result.rows[0] });
         return;
-      } else {
-        res.sendStatus(404);
+      } else if (result.rowCount === 0) {
+        res
+          .status(404)
+          .json({ deletedId: req.params.id, queryComplete: "true" });
         return;
       }
     } catch (err) {

@@ -71,6 +71,10 @@ const VacationForm = (props?: Props) => {
             location: props?.preFill?.location ?? data.gLocation,
             vp: data.gVp,
           });
+        } else if (result.status === 403) {
+          alert("You do not have permission to access this resource");
+        } else if (result.status === 404) {
+          alert("Error: Trip not found");
         }
       } catch (err) {
         console.log("Failed to fetch gValue:", err);
@@ -196,15 +200,20 @@ const VacationForm = (props?: Props) => {
             body: JSON.stringify(bodyObject),
           });
           const data = await res.json();
-          if (res.status === 403) {
+          if (res.status === 400) {
             setFieldError(true);
             setErrMessage(data.message);
-          }
-          if (res.status === 401 && data.error === "TokenExpired") {
+          } else if (res.status === 401) {
             auth?.logout();
             navigate("/redirecting", {
               state: { message: "Token error, redirecting to login" },
             });
+          } else if (res.status === 403) {
+            alert("You do not have permission to access this resource");
+            navigate("/home");
+          } else if (res.status === 404) {
+            alert("Error: Trip not found");
+            navigate("/home");
           }
           if (res.ok) {
             navigate("/");

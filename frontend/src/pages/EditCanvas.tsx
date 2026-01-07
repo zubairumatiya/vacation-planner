@@ -28,7 +28,12 @@ import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
 //import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { indexChunk, prefixZero } from "../utils/timeHelpers";
+import {
+  bucketizeSchedule,
+  indexChunk,
+  makeContainers,
+  prefixZero,
+} from "../utils/timeHelpers";
 import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -63,6 +68,10 @@ const EditCanvas = ({
   const [activeListId, setActiveListId] = useState<UniqueIdentifier | null>(
     null
   );
+  const [utcStart, setUtcStart] = useState(0);
+  const [utcEnd, setUtcEnd] = useState(0);
+  const [holdOverwrite, setHoldOverwrite] = useState<Schedule|null|string>(null);
+  const [bannerMsg, setBannerMsg] = useState<string|null>(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -154,6 +163,7 @@ const EditCanvas = ({
         cost: 0,
         multiDay: false,
         sortIndex: 0,
+        lastModified: "",
       };
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag?.type === "schedule") {
@@ -397,12 +407,49 @@ const EditCanvas = ({
             }
           );
           if (!result.ok) {
+            let b: boolean = false;
             if (result.status === 401) {
               navigate("/login", {
                 state: { message: "Session expired, redirecting to log in..." },
               });
+            } else if (result.status === 403) {
+              alert("You do not have permission to access this resource");
+            } else if (result.status === 404) {
+              alert("Error: Trip not found");
+            } else if (result.status === 409) {
+              const data = await result.json();
+              b = true;
+              for (const i of data.newData) {
+                // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+                i.startTime = new Date(i.startTime);
+                i.endTime = new Date(i.endTime);
+                i.id = String(i.id);
+              }
+              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+              const dayContainers: DayContainer[] = makeContainers(
+                length,
+                new Date(utcStart)
+              );
+              const bucketizeItems: DaySchedule = bucketizeSchedule(
+                dayContainers,
+                data.newData
+              );
+              setSchedule(bucketizeItems);
+              alert(
+                "Another user has updated this resource, your change was not applied"
+              );
+            } else if (result.status >= 500) {
+              alert(
+                "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+              );
+            } else {
+              console.log("something went wrong editing");
             }
-            handleDragCancel();
+            if (!b) {
+              handleDragCancel();
+            } else {
+              handleDragCancel(null, true);
+            }
           }
         }
       } catch {
@@ -649,9 +696,14 @@ const EditCanvas = ({
     return activeStartTime;
   };
 
-  const handleDragCancel = (noErrEnd?: boolean) => {
+  const handleDragCancel = (
+    noErrEnd?: boolean | null,
+    skipTheClone?: boolean
+  ) => {
     if (noErrEnd == null) {
-      setSchedule(clonedSchedule);
+      if (skipTheClone == null) {
+        setSchedule(clonedSchedule);
+      }
       setWishList(wishListClone);
       document.body.classList.remove("freezeScroll");
       setActiveListId(null);
@@ -726,11 +778,18 @@ const EditCanvas = ({
         navigate("/login", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-      }
-      if (response.status === 404) {
-        alert("Error: List not found");
-      }
-      if (response.ok) {
+      } else if (response.status === 403) {
+        alert("You do not have permission to access this resource");
+        return 400;
+      } else if (response.status === 404) {
+        alert("Error: Trip not found");
+        return 400;
+      } else if (response.status >= 500) {
+        alert(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
+        return 500;
+      } else if (response.ok) {
         const apiData: { data: Item } = await response.json();
         setWishList((prev) => [...prev, apiData.data]);
         return 200;
@@ -754,11 +813,18 @@ const EditCanvas = ({
         navigate("/login", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-      }
-      if (response.status === 404) {
-        alert("Error: List not found");
-      }
-      if (response.ok) {
+      } else if (response.status === 403) {
+        alert("You do not have permission to access this resource");
+        return 400;
+      } else if (response.status === 404) {
+        alert("Error: Trip not found");
+        return 400;
+      } else if (response.status >= 500) {
+        alert(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
+        return 500;
+      } else if (response.ok) {
         const data = await response.json();
         setWishList((prev) =>
           prev.filter((v) => v.id !== data.deletedData[0].id)
@@ -768,6 +834,10 @@ const EditCanvas = ({
     },
     []
   );
+
+  const handleOverwrite = (e: React.MouseEvent) => {
+    if()
+  }
 
   return (
     <DndContext
@@ -788,7 +858,12 @@ const EditCanvas = ({
     >
       <div className={styles.pageWrapper}>
         <div className={styles.tableAndList}>
-          <EditScheduleProvider>
+          <EditScheduleProvider
+            utcStart={utcStart}
+            utcEnd={utcEnd}
+            setUtcStart={setUtcStart}
+            setUtcEnd={setUtcEnd}
+          >
             <EditVacationSchedule
               loadFirst={() => setLoading(false)}
               getMapValues={gValuesFn}
@@ -823,7 +898,20 @@ const EditCanvas = ({
           />
         )}
       </div>
+      <div>
+        <div>
+        {holdOverwrite && 
+        <button onClick={handleOverwrite}>Overwrite changes?</button>/* can add a way to do 500 status retries later */
+        }
+        </div>
+        <div>
+          {bannerMsg && 
+          <div>{bannerMsg}</div>
+          }
+        </div>
+    </div>
     </DndContext>
+    
   );
 };
 

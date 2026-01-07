@@ -28,16 +28,20 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await response.json();
       if (response.status === 401) {
         navigate("/login", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-      }
-      if (response.status === 404) {
-        alert("Error: List not found");
-      }
-      if (response.ok) {
+      } else if (response.status === 403) {
+        alert("You do not have permission to access this resource");
+      } else if (response.status === 404) {
+        alert("This list could not be found");
+      } else if (response.status >= 500) {
+        alert(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
+      } else if (response.ok) {
+        const data = await response.json();
         props.setList(data.data);
         props.loadSecond();
       }
@@ -60,7 +64,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     const item = raw.trim();
     const res = await props.handleSubmitItem(item);
 
-    if (res === 200) {
+    if (res === 200 || res === 400 || res === 500) {
       setEditItemId("-1");
       setNewItem("");
     }
@@ -91,11 +95,23 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       navigate("/login", {
         state: { message: "Session expired, redirecting to log in..." },
       });
+    } else if (response.status === 403) {
+      alert("You do not have permission to access this resource");
+    } else if (response.status === 404) {
+      alert("Error: Trip not found");
+    } else if (response.status === 409) {
+      const data = await response.json();
+      props.setList(data.newData);
+      alert(
+        "Another user has updated this resource, your change was not applied"
+      );
+    } else if (response.status >= 500) {
+      alert(
+        "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+      );
+    } else {
+      alert("Error: Could not process change at this time");
     }
-    if (response.status === 404) {
-      alert("Error: List not found");
-    }
-
     const data = await response.json();
     if (response.ok) {
       props.setList((prev) => {
@@ -105,10 +121,10 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           ...prev.slice(index + 1),
         ];
       });
-      setEditItemId("-1");
-      setNewItem("");
-      setAddingNewItem(true);
     }
+    setEditItemId("-1");
+    setNewItem("");
+    setAddingNewItem(true);
   };
 
   const editItem = (
@@ -129,7 +145,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     e.preventDefault();
     const res = await props.handleDeleteItem(itemId, false);
 
-    if (res === 200) {
+    if (res === 200 || res === 400 || res === 500) {
       setEditItemId("-1");
       setNewItem("");
       setAddingNewItem(true);
@@ -178,9 +194,14 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         navigate("/login", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-      }
-      if (result.status === 404) {
-        alert("Error: List not found");
+      } else if (result.status === 403) {
+        alert("You do not have permission to access this resource");
+      } else if (result.status === 404) {
+        alert("Error: Trip not found");
+      } else if (result.status >= 500) {
+        alert(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
       }
     }
   };

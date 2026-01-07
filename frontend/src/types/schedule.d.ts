@@ -34,6 +34,7 @@ declare global {
     value: string;
     fromGoogle: string | null;
     itemAdded: boolean;
+    lastModified: string;
   };
 
   interface CheckBubbleProps {

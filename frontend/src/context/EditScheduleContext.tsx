@@ -53,8 +53,16 @@ export const EditScheduleContext = createContext<EditScheduleContext>(
 
 export function EditScheduleProvider({
   children,
+  utcStart,
+  utcEnd,
+  setUtcStart,
+  setUtcEnd,
 }: {
   children: React.ReactNode;
+  utcStart: number;
+  utcEnd: number;
+  setUtcStart: React.Dispatch<React.SetStateAction<number>>;
+  setUtcEnd: React.Dispatch<React.SetStateAction<number>>;
 }) {
   const [preFill, setPreFill] = useState<Prefill>({
     location: "",
@@ -83,8 +91,6 @@ export function EditScheduleProvider({
   const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
   const [multiDayStyle, setMultiDayStyle] = useState(false);
   const [editMultiDay, setEditMultiDay] = useState(false);
-  const [utcStart, setUtcStart] = useState(0);
-  const [utcEnd, setUtcEnd] = useState(0);
 
   const handleEdit = (
     e: React.MouseEvent,
