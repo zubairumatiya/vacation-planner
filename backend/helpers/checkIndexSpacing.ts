@@ -1,4 +1,4 @@
-import renumberIndexDb from "./renumberIndexDb";
+import renumberIndexDb from "./renumberIndexDb.js";
 
 type Chunk = {
   above?: { id: string; sortIndex: number };

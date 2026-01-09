@@ -102,7 +102,6 @@ const EditVacationSchedule = ({
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await response.json();
       if (response.status === 401) {
         navigate("/login", {
           state: { message: "Session expired, redirecting to log in..." },
@@ -124,6 +123,7 @@ const EditVacationSchedule = ({
         //  "enddate:",
         //  data.endDate
         //);
+        const data = await response.json();
         props.getMapValues(data.gVp, data.location, data.gId);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);

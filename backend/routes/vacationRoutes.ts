@@ -118,18 +118,14 @@ router.patch(
       !req.body.gId ||
       !req.body.gVp
     ) {
-      res.status(400).json({
-        message: "Invalid input - make sure all the fields are filled",
-      });
+      res.sendStatus(400);
       return;
     }
     const startDate = new Date(req.body.startDate);
     const endDate = new Date(req.body.endDate);
 
     if (startDate > endDate) {
-      res.status(400).json({
-        message: "Invalid date - End date cannot be before start date",
-      });
+      res.sendStatus(400);
       return;
     }
 
@@ -173,7 +169,6 @@ router.delete(
     } catch (err) {
       res.sendStatus(500);
       next(err);
-      return;
     }
   }
 );
@@ -183,6 +178,7 @@ router.get(
   ensureLoggedIn,
   ensureOwnership,
   async (req, res, next) => {
+    console.log("does it even enter get trip?");
     try {
       const role = req.user.role;
       const result2 = await db.query("SELECT * FROM trips WHERE id=$1", [
@@ -209,6 +205,7 @@ router.get(
         ...result2.rows[0],
         schedule: arrCargo,
       });
+      console.log("backend schedule", result3.rows);
       return;
     } catch (err) {
       next(err);
@@ -432,7 +429,7 @@ router.delete(
       } else if (result.rowCount === 0) {
         res
           .status(404)
-          .json({ deletedId: req.params.id, queryComplete: "true" });
+          .json({ deletedId: req.params.id, queryComplete: "true" }); //not really necessary since stateAware will catch it before. Super unlikely case but it can be triggered if another user deletes between stateAware and our deleteQuery since this is not atomized (BEGIN COMMIT)
         return;
       }
     } catch (err) {

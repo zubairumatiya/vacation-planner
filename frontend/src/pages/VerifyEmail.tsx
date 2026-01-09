@@ -65,8 +65,8 @@ const VerifyEmail = () => {
         setTimer("5");
         setNonRefreshTimeRestart((prev) => !prev);
       } else {
-        const data = await res.json();
         if (res.status === 429) {
+          const data = await res.json();
           alert(data.message);
         } else {
           alert(uhOh);

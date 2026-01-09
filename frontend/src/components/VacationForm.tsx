@@ -199,10 +199,9 @@ const VacationForm = (props?: Props) => {
             },
             body: JSON.stringify(bodyObject),
           });
-          const data = await res.json();
           if (res.status === 400) {
             setFieldError(true);
-            setErrMessage(data.message);
+            setErrMessage("Invalid input");
           } else if (res.status === 401) {
             auth?.logout();
             navigate("/redirecting", {
@@ -221,7 +220,6 @@ const VacationForm = (props?: Props) => {
               props.sendSubmissionResult(true);
             }
           }
-          console.log(data);
         } else {
           alert("you are not logged in - your trip will not be saved");
         }

@@ -32,14 +32,15 @@ const Home = () => {
       const res = await fetch(`${apiUrl}/home`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
       if (res.status === 401) {
         navigate("/redirect", {
           state: { message: "Session expired, redirecting to log in..." },
         });
+      } else if (res.ok) {
+        const data = await res.json();
+        setTrips(data);
+        setLoading(false);
       }
-      setTrips(data);
-      setLoading(false);
     };
     // add error handling for like expired tokens where we send a refresh token
     getTrips();

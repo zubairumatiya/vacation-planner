@@ -77,6 +77,7 @@ export const AutocompleteWebComponent = forwardRef(
               query: `${input}`,
             }),
           });
+          if (!result.ok) throw new Error(`Error: ${result.status}`);
           const data: SuggestionsResponse = await result.json();
           if (!data.suggestions) {
             data.suggestions = [];
@@ -151,6 +152,7 @@ export const AutocompleteWebComponent = forwardRef(
           },
         }
       );
+      if (!result.ok) throw new Error(`Error: ${result.status}`);
       const data = await result.json();
       if (storeValues) {
         storeValues(

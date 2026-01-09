@@ -34,7 +34,7 @@ const LoginPage = () => {
     if (res.status === 401) {
       setDisableChanges(false);
       setInvalidLogin(true);
-    } else if (res.status === 200) {
+    } else if (res.ok) {
       const data = await res.json();
       if (data.token) {
         auth?.login(data.token);

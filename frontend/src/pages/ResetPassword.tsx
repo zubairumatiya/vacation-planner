@@ -39,14 +39,12 @@ const ResetPassword = () => {
       setClearFields((prev) => !prev);
       if (res.status === 400) {
         setSubmissionErr("Invalid password criteria, try again");
-      }
-      if (res.status === 401) {
+      } else if (res.status === 401) {
         //this is for expired tokens / tampered tokens / incorrect tokens
         const data = await res.json();
         const email = data?.email || "";
         navigate(`/send-reset-link-to-email/?err=failed-reset&email=${email}`);
-      }
-      if (res.status === 422) {
+      } else if (res.status === 422) {
         setSubmissionErr("New password cannot be the same as the old password");
       }
     } else {

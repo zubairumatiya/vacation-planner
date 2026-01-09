@@ -25,16 +25,21 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           Authorization: `Bearer ${token}`,
         },
       });
-      const data = await response.json();
+
       if (response.status === 401) {
         navigate("/login", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-      }
-      if (response.status === 404) {
+      } else if (response.status === 403) {
+        alert("You do not have permission to access this resource");
+      } else if (response.status === 404) {
         alert("Error: Trip not found");
-      }
-      if (response.ok) {
+      } else if (response.status >= 500) {
+        alert(
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        );
+      } else if (response.ok) {
+        const data = await response.json();
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
         let costTotal = 0;

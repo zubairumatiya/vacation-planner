@@ -116,8 +116,8 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     } else {
       alert("Error: Could not process change at this time");
     }
-    const data = await response.json();
     if (response.ok) {
+      const data = await response.json();
       props.setList((prev) => {
         return [
           ...prev.slice(0, index),
