@@ -37,7 +37,6 @@ type ScheduleProps = {
   setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
   activeItem: UniqueIdentifier | null;
   dragRow: Schedule | null;
-  setCostTotal: React.Dispatch<React.SetStateAction<number>>;
   overlayWidthRef: OverlayWidths | null;
   dragFrom: string;
 };
@@ -45,7 +44,6 @@ type ScheduleProps = {
 const EditVacationSchedule = ({
   schedule,
   setSchedule,
-  setCostTotal,
   ...props
 }: ScheduleProps) => {
   const {
@@ -78,6 +76,8 @@ const EditVacationSchedule = ({
     handleTextInput,
     setUtcEnd,
     setUtcStart,
+    individualAddition,
+    setIndividualAddition,
   } = useContext(EditScheduleContext);
 
   const { tripId } = useParams();
@@ -86,9 +86,7 @@ const EditVacationSchedule = ({
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<DayContainer[]>([]); // each day(table)
-  const [individualAddition, setIndividualAddition] = useState<{
-    addingContainer: string;
-  }>({ addingContainer: "" });
+
   const [itemError, setItemError] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -338,7 +336,6 @@ const EditVacationSchedule = ({
               };
             });
             setIndividualAddition({ addingContainer: "" });
-            setCostTotal((prev) => prev + Number(formData.get("cost")));
           } else if (addingReq.status === 401) {
             navigate("/redirect", {
               state: { message: "Session expired, redirecting to log in..." },
@@ -727,7 +724,6 @@ const EditVacationSchedule = ({
                 //ind={index} // DO we need this? i dont think so.
                 errMessage={errMessage}
                 setSchedule={setSchedule}
-                setCostTotal={setCostTotal}
                 activeId={props.activeItem}
                 //here
                 //submitDelete={submitDelete} moved entirety

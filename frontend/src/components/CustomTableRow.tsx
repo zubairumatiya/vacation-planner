@@ -13,7 +13,6 @@ const CustomTableRow = ({
   startDate,
   endDate,
   setSchedule,
-  setCostTotal,
   schedule,
   activeId,
 }: TableRowProps) => {
@@ -75,7 +74,6 @@ const CustomTableRow = ({
           index={index}
           dayContainer={dayContainer}
           setSchedule={setSchedule}
-          setCostTotal={setCostTotal}
           schedule={schedule}
         ></EditableRow>
       ) : (

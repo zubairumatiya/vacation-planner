@@ -55,7 +55,6 @@ declare global {
     schedule: DaySchedule;
     errMessage: string;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
-    setCostTotal: React.Dispatch<React.SetStateAction<number>>;
     activeId: UniqueIdentifier | null;
   };
 
@@ -66,7 +65,6 @@ declare global {
     startDate: string;
     endDate: string;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
-    setCostTotal: React.Dispatch<React.SetStateAction<number>>;
     schedule: DaySchedule;
     activeId: UniqueIdentifier | null;
   };
@@ -76,7 +74,6 @@ declare global {
     index: number;
     dayContainer: string;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
-    setCostTotal: React.Dispatch<React.SetStateAction<number>>;
     schedule: DaySchedule;
   };
 

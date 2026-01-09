@@ -2,7 +2,7 @@ import EditVacationSchedule from "./EditVacationSchedule";
 import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
-import { useState, useCallback, useContext, useRef } from "react";
+import { useState, useCallback, useContext, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { EditScheduleProvider } from "../context/EditScheduleContext";
@@ -70,8 +70,31 @@ const EditCanvas = ({
   );
   const [utcStart, setUtcStart] = useState(0);
   const [utcEnd, setUtcEnd] = useState(0);
-  const [holdOverwrite, setHoldOverwrite] = useState<Schedule|null|string>(null);
-  const [bannerMsg, setBannerMsg] = useState<string|null>(null);
+  const [holdOverwrite, setHoldOverwrite] = useState<Schedule | null>(null);
+  const [bannerMsg, setBannerMsg] = useState<string | null>(null);
+  const lastEditWasDrag = useRef<boolean>(false);
+  const [harmlessFlipper, setHarmlessFlipper] = useState<boolean>(false);
+  const [individualAddition, setIndividualAddition] = useState<{
+    addingContainer: string;
+  }>({ addingContainer: "" });
+  const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
+  const [addingItem, setAddingItem] = useState<boolean>(false);
+
+  useEffect(() => {
+    lastEditWasDrag.current = false;
+  }, [harmlessFlipper, individualAddition, addingItem, editLineId]);
+  // lastEditWasDragRef is an imperative flag used to coordinate effects
+
+  useEffect(() => {
+    if (!lastEditWasDrag) {
+      setCostTotal(
+        Object.keys(schedule).reduce(
+          (acc, v) => acc + schedule[v].reduce((acc, v) => acc + v.cost, 0),
+          0
+        )
+      );
+    }
+  }, [schedule]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
@@ -134,6 +157,7 @@ const EditCanvas = ({
 
   const handleDragStart = (e: DragStartEvent) => {
     initialListDrag.current = true;
+    lastEditWasDrag.current = true;
     const container = document.querySelector("#tablesContainer") as HTMLElement;
     const tableId = Object.keys(schedule)[0];
     const table = document.getElementById(tableId) as HTMLElement;
@@ -403,6 +427,7 @@ const EditCanvas = ({
                 sortIndex: updatedItem.sortIndex,
                 tripId,
                 chunk,
+                lastModified: updatedItem.lastModified,
               }),
             }
           );
@@ -435,7 +460,8 @@ const EditCanvas = ({
                 data.newData
               );
               setSchedule(bucketizeItems);
-              alert(
+              setHoldOverwrite(previous[overContainer][activeIndex]);
+              setBannerMsg(
                 "Another user has updated this resource, your change was not applied"
               );
             } else if (result.status >= 500) {
@@ -835,9 +861,228 @@ const EditCanvas = ({
     []
   );
 
-  const handleOverwrite = (e: React.MouseEvent) => {
-    if()
-  }
+  const placeItemInSchedule = (
+    oldArr: Schedule[],
+    item: Schedule
+  ): Schedule[] => {
+    const itemStartItem = item.startTime.getTime();
+    let index: number = oldArr.findIndex((v) => {
+      if (v.startTime.getTime() > itemStartItem) {
+        // if our item should be at the end our index will be -1, will place same time items at the bottom of same time stack
+        return true;
+      } else {
+        return false;
+      }
+    });
+    index =
+      index - 1 === -2 ? oldArr.length - 1 : index - 1 === -1 ? 0 : index - 1;
+    return [...oldArr.slice(0, index), item, ...oldArr.slice(index)];
+  };
+
+  const handleOverwrite = async (e: React.MouseEvent) => {
+    // have to find the item inside the new schedule, if found, PATCH if not POST
+    e.preventDefault();
+    setHarmlessFlipper((prev) => !prev);
+    setEditLineId(null);
+    setAddingItem(false);
+    if (holdOverwrite == null) {
+      return;
+    }
+    const idToFind = holdOverwrite.id;
+    let itemFound: number = -1;
+    let newItemContainer: string = "";
+    let newItemIndex: number = -1;
+    for (const day of Object.keys(schedule)) {
+      itemFound = schedule[day].findIndex((v, i) => {
+        if (v.id === idToFind) {
+          newItemIndex = i;
+          return true;
+        }
+      });
+      if (itemFound !== -1) {
+        newItemContainer = day;
+        break;
+      }
+    }
+    const previousItemContainer = holdOverwrite.startTime
+      .toISOString()
+      .split("T")[0];
+    let chunk: Chunk;
+
+    // will still need to filter out the dupe when setting state later after fetch returns
+    let newArrOldItem: Schedule[];
+    if (itemFound === -1 || newItemContainer !== previousItemContainer) {
+      newArrOldItem = placeItemInSchedule(
+        schedule[previousItemContainer].slice(),
+        holdOverwrite
+      );
+      chunk = indexChunk(holdOverwrite.id, newArrOldItem);
+    } else {
+      //newItemContainer === previousItemContainer
+      const arrOfDay = schedule[newItemContainer]
+        .slice()
+        .filter((v) => v.id !== holdOverwrite.id);
+      newArrOldItem = placeItemInSchedule(arrOfDay, holdOverwrite);
+      chunk = indexChunk(holdOverwrite.id, newArrOldItem);
+    }
+
+    try {
+      if (itemFound === -1) {
+        const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            id: holdOverwrite.id,
+            start: holdOverwrite.startTime,
+            end: holdOverwrite.endTime,
+            location: holdOverwrite.location,
+            details: holdOverwrite.details,
+            cost: holdOverwrite.cost,
+            multiDay: holdOverwrite.multiDay,
+            chunk: chunk,
+          }),
+        });
+        if (addingReq.ok) {
+          const data = await addingReq.json();
+          const startTime = new Date(data.addedItem.startTime);
+          const day = startTime.toISOString().split("T")[0];
+          setSchedule((prev) => {
+            return {
+              ...prev,
+              [day]: schedule[day].map((v) =>
+                v.id === data.addedItem.id
+                  ? {
+                      ...data.addedItem,
+                      startTime: new Date(data.addedItem.startTime),
+                      endTime: new Date(data.addedItem.endTime),
+                    }
+                  : v
+              ),
+            };
+          });
+        } else if (addingReq.status === 401) {
+          navigate("/redirect", {
+            state: { message: "Session expired, redirecting to log in..." },
+          });
+          // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+        } else if (addingReq.status === 403) {
+          setHoldOverwrite(null);
+          alert("You do not have permission to access this resource");
+        } else if (addingReq.status === 404) {
+          setHoldOverwrite(null);
+          alert("Error: Trip not found");
+        } else if (addingReq.status >= 500) {
+          setHoldOverwrite(null);
+          alert(
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          );
+        }
+      } else {
+        const patchRes = await fetch(`${apiURL}/schedule/${holdOverwrite.id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            start: holdOverwrite.startTime,
+            end: holdOverwrite.endTime,
+            location: holdOverwrite.location,
+            details: holdOverwrite.details,
+            cost: holdOverwrite.cost,
+            multiDay: holdOverwrite.multiDay,
+            chunk,
+            tripId,
+            lastModified: schedule[newItemContainer][newItemIndex].lastModified,
+          }),
+        });
+        if (patchRes.ok) {
+          const data = await patchRes.json();
+          setHoldOverwrite(null);
+          setSchedule((prev) =>
+            newItemContainer !== previousItemContainer
+              ? {
+                  ...prev,
+                  [newItemContainer]: prev[newItemContainer].filter(
+                    (v) => v.id !== holdOverwrite.id
+                  ),
+                  [previousItemContainer]: newArrOldItem.map((v: Schedule) =>
+                    v.id === holdOverwrite.id
+                      ? {
+                          ...data.updatedData,
+                          startTime: new Date(data.updatedData.startTime),
+                          endTime: new Date(data.updatedData.endTime),
+                        }
+                      : v
+                  ),
+                }
+              : {
+                  ...prev,
+                  [previousItemContainer]: newArrOldItem.map((v) =>
+                    v.id === holdOverwrite.id
+                      ? {
+                          ...data.updatedData,
+                          startTime: new Date(data.updatedData.startTime),
+                          endTime: new Date(data.updatedData.endTime),
+                        }
+                      : v
+                  ),
+                }
+          );
+        } else if (patchRes.status === 401) {
+          navigate("/redirect", {
+            state: { message: "Session expired, redirecting to log in..." },
+          });
+          // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+        } else if (patchRes.status === 403) {
+          setHoldOverwrite(null);
+          alert("You do not have permission to access this resource");
+        } else if (patchRes.status === 404) {
+          setHoldOverwrite(null);
+          alert("Error: Trip not found");
+        } else if (patchRes.status === 409) {
+          const data = await patchRes.json();
+          setHoldOverwrite(null);
+          for (const i of data.newData) {
+            // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+            i.startTime = new Date(i.startTime);
+            i.endTime = new Date(i.endTime);
+            i.id = String(i.id);
+          }
+          const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+          const dayContainers: DayContainer[] = makeContainers(
+            length,
+            new Date(utcStart)
+          );
+          const bucketizeItems: DaySchedule = bucketizeSchedule(
+            dayContainers,
+            data.newData
+          );
+          setSchedule(bucketizeItems);
+          setHoldOverwrite({ ...holdOverwrite });
+          setBannerMsg(
+            "Another user has updated this resource AGAIN, your change was not applied"
+          );
+          alert(
+            "Another user has updated this resource, your change was not applied"
+          );
+        } else if (patchRes.status >= 500) {
+          setHoldOverwrite(null);
+          alert(
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          );
+        } else {
+          console.log("something went wrong editing");
+        }
+      }
+    } catch (err) {
+      console.log(err);
+      return;
+    }
+  };
 
   return (
     <DndContext
@@ -863,6 +1108,14 @@ const EditCanvas = ({
             utcEnd={utcEnd}
             setUtcStart={setUtcStart}
             setUtcEnd={setUtcEnd}
+            individualAddition={individualAddition}
+            setIndividualAddition={setIndividualAddition}
+            editLineId={editLineId}
+            setEditLineId={setEditLineId}
+            addingItem={addingItem}
+            setAddingItem={setAddingItem}
+            setHoldOverwrite={setHoldOverwrite}
+            setBannerMsg={setBannerMsg}
           >
             <EditVacationSchedule
               loadFirst={() => setLoading(false)}
@@ -871,7 +1124,6 @@ const EditCanvas = ({
               setSchedule={setSchedule}
               activeItem={activeId}
               dragRow={dragRow}
-              setCostTotal={setCostTotal}
               overlayWidthRef={overlayWidthRef.current}
               dragFrom={dragFrom}
             />
@@ -900,18 +1152,15 @@ const EditCanvas = ({
       </div>
       <div>
         <div>
-        {holdOverwrite && 
-        <button onClick={handleOverwrite}>Overwrite changes?</button>/* can add a way to do 500 status retries later */
-        }
-        </div>
-        <div>
-          {bannerMsg && 
-          <div>{bannerMsg}</div>
+          {
+            holdOverwrite && (
+              <button onClick={handleOverwrite}>Overwrite changes?</button>
+            ) /* can add a way to do 500 status retries later */
           }
         </div>
-    </div>
+        <div>{bannerMsg && <div>{bannerMsg}</div>}</div>
+      </div>
     </DndContext>
-    
   );
 };
 

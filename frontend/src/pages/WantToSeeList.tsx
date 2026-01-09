@@ -88,7 +88,11 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ value: item, tripId }),
+      body: JSON.stringify({
+        value: item,
+        tripId,
+        lastModified: props.list[index].lastModified,
+      }),
     });
 
     if (response.status === 401) {

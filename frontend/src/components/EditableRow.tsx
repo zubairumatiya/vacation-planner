@@ -19,7 +19,6 @@ const EditableRow = ({
   index,
   dayContainer,
   setSchedule,
-  setCostTotal,
   schedule,
 }: EditRowProps) => {
   const {
@@ -50,6 +49,8 @@ const EditableRow = ({
     setHoldStartTime,
     utcEnd,
     utcStart,
+    setBannerMsg,
+    setHoldOverwrite,
   } = useContext(EditScheduleContext);
   const auth = useContext(AuthContext);
   const { tripId } = useParams();
@@ -79,12 +80,14 @@ const EditableRow = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ tripId }),
+        body: JSON.stringify({
+          tripId,
+          lastModified: schedule[dateAdded][index].lastModified,
+        }),
       });
       if (response.ok) {
         setEditLineId(null);
         setAddingItem(false);
-        setCostTotal((prev) => prev - schedule[dateAdded][index].cost);
         setSchedule((prev) => ({
           ...prev,
           [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
@@ -104,7 +107,6 @@ const EditableRow = ({
         setAddingItem(false);
         const data = await response.json();
         if (data.queryComplete != null) {
-          setCostTotal((prev) => prev - schedule[dateAdded][index].cost);
           setSchedule((prev) => ({
             ...prev,
             [dateAdded]: prev[dateAdded].filter((v) => v.id !== data.deletedId),
@@ -132,7 +134,8 @@ const EditableRow = ({
           data.newData
         );
         setSchedule(bucketizeItems);
-        alert(
+        setHoldOverwrite({ ...schedule[dateAdded][index] });
+        setBannerMsg(
           "Another user has updated this resource, your change was not applied"
         );
       } else if (response.status >= 500) {
@@ -219,6 +222,17 @@ const EditableRow = ({
 
     const chunk: Chunk = indexChunk(itemID, tempArr);
 
+    const sItem = {
+      location,
+      cost,
+      details,
+      multiDay,
+      lastModified:
+        schedule[dateAdded][
+          schedule[dateAdded].findIndex((v) => v.id === itemID)
+        ].lastModified,
+    };
+
     try {
       const response = await fetch(`${apiURL}/schedule/${itemID}`, {
         method: "PATCH",
@@ -227,14 +241,11 @@ const EditableRow = ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          start: startDateAssembler,
-          end: endDateAssembler,
-          location,
-          cost,
-          details,
-          multiDay,
+          sItem,
           chunk,
           tripId,
+          start: startDateAssembler,
+          end: endDateAssembler,
         }),
       });
       if (response.ok) {
@@ -303,7 +314,8 @@ const EditableRow = ({
           data.newData
         );
         setSchedule(bucketizeItems);
-        alert(
+        setHoldOverwrite({ ...schedule[dateAdded][index] });
+        setBannerMsg(
           "Another user has updated this resource, your change was not applied"
         );
       } else if (response.status >= 500) {

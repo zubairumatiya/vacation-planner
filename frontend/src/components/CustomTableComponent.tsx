@@ -13,7 +13,6 @@ const CustomTableComponent = ({
   dayObj,
   schedule,
   setSchedule,
-  setCostTotal,
   errMessage,
   activeId,
 }: TableComponentProps) => {
@@ -72,7 +71,6 @@ const CustomTableComponent = ({
                   dayContainer={dayObj.day}
                   startDate={startDate}
                   endDate={endDate}
-                  setCostTotal={setCostTotal}
                   setSchedule={setSchedule}
                   schedule={schedule}
                   activeId={activeId}

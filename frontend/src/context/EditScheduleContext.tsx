@@ -45,6 +45,16 @@ export type EditScheduleContext = {
   utcStart: number;
   setUtcEnd: React.Dispatch<React.SetStateAction<number>>;
   setUtcStart: React.Dispatch<React.SetStateAction<number>>;
+  individualAddition: {
+    addingContainer: string;
+  };
+  setIndividualAddition: React.Dispatch<
+    React.SetStateAction<{
+      addingContainer: string;
+    }>
+  >;
+  setHoldOverwrite: React.Dispatch<React.SetStateAction<Schedule | null>>;
+  setBannerMsg: React.Dispatch<React.SetStateAction<string | null>>;
 }; // Does context get recreated each time a child component is re-rendered??
 
 export const EditScheduleContext = createContext<EditScheduleContext>(
@@ -57,12 +67,34 @@ export function EditScheduleProvider({
   utcEnd,
   setUtcStart,
   setUtcEnd,
+  individualAddition,
+  setIndividualAddition,
+  editLineId,
+  setEditLineId,
+  addingItem,
+  setAddingItem,
+  setHoldOverwrite,
+  setBannerMsg,
 }: {
   children: React.ReactNode;
   utcStart: number;
   utcEnd: number;
   setUtcStart: React.Dispatch<React.SetStateAction<number>>;
   setUtcEnd: React.Dispatch<React.SetStateAction<number>>;
+  individualAddition: {
+    addingContainer: string;
+  };
+  setIndividualAddition: React.Dispatch<
+    React.SetStateAction<{
+      addingContainer: string;
+    }>
+  >;
+  editLineId: UniqueIdentifier | null;
+  setEditLineId: React.Dispatch<React.SetStateAction<UniqueIdentifier | null>>;
+  addingItem: boolean;
+  setAddingItem: React.Dispatch<React.SetStateAction<boolean>>;
+  setHoldOverwrite: React.Dispatch<React.SetStateAction<Schedule | null>>;
+  setBannerMsg: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
   const [preFill, setPreFill] = useState<Prefill>({
     location: "",
@@ -71,8 +103,6 @@ export function EditScheduleProvider({
     multiDay: false,
   });
 
-  const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
-  const [addingItem, setAddingItem] = useState<boolean>(false);
   const [editStartDate, setEditStartDate] = useState<string>("");
   const [editEndDate, setEditEndDate] = useState<string>("");
   const dayOfTripRef = useRef<string>("");
@@ -202,6 +232,10 @@ export function EditScheduleProvider({
       setUtcStart,
       utcEnd,
       setUtcEnd,
+      individualAddition,
+      setIndividualAddition,
+      setHoldOverwrite,
+      setBannerMsg,
     }),
     [
       preFill,
@@ -245,6 +279,10 @@ export function EditScheduleProvider({
       setUtcStart,
       utcEnd,
       setUtcEnd,
+      individualAddition,
+      setIndividualAddition,
+      setHoldOverwrite,
+      setBannerMsg,
     ]
   );
 

@@ -227,6 +227,8 @@ router.post(
         req.params.tripId
       );
       let values: (string | number | Date | boolean)[];
+      let queryText: string =
+        "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *";
       if (newSortIndex === null) {
         // insert item, call renumbering fn, call db to get item and add to response obj
         const placeHolderIndex = req.body.chunk.above?.sortIndex + 1;
@@ -240,6 +242,21 @@ router.post(
           req.body.multiDay,
           placeHolderIndex,
         ];
+        if (req.body.id) {
+          queryText =
+            "INSERT INTO trip_schedule (id, trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *";
+          values = [
+            req.body.id,
+            req.params.tripId,
+            req.body.start,
+            req.body.end,
+            req.body.location,
+            req.body.cost,
+            req.body.details,
+            req.body.multiDay,
+            placeHolderIndex,
+          ];
+        }
       } else {
         // add sort index to insert query and add to response obj
         values = [
@@ -252,11 +269,23 @@ router.post(
           req.body.multiDay,
           newSortIndex,
         ];
+        if (req.body.id) {
+          queryText =
+            "INSERT INTO trip_schedule (id, trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *";
+          values = [
+            req.body.id,
+            req.params.tripId,
+            req.body.start,
+            req.body.end,
+            req.body.location,
+            req.body.cost,
+            req.body.details,
+            req.body.multiDay,
+            newSortIndex,
+          ];
+        }
       }
-      const result = await db.query<Schedule>(
-        "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
-        values
-      );
+      const result = await db.query<Schedule>(queryText, values);
 
       if (result.rowCount > 0) {
         let rowsToReturn: QueryResult<Schedule> = result;
