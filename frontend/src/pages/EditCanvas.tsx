@@ -194,6 +194,10 @@ const EditCanvas = ({
       initialListDrag.current = false;
       const containerAndIndex = findContainerAndIndex(e.active.id);
       if (containerAndIndex.container && containerAndIndex.index != null) {
+        console.log(
+          "DRAG ITEM:",
+          schedule[containerAndIndex?.container][containerAndIndex.index]
+        );
         setDragRow(
           schedule[containerAndIndex?.container][containerAndIndex.index]
         );
@@ -450,6 +454,7 @@ const EditCanvas = ({
                 i.endTime = new Date(i.endTime);
                 i.id = String(i.id);
               }
+              console.log("ERROR NEW DATA:", data.newData);
               const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
               const dayContainers: DayContainer[] = makeContainers(
                 length,
@@ -476,6 +481,30 @@ const EditCanvas = ({
             } else {
               handleDragCancel(null, true);
             }
+          } else if (result.ok) {
+            const data: { updatedData: Schedule } = await result.json();
+            console.log("ENTERING SETTING DRAGGED ITEM", data.updatedData);
+            data.updatedData.startTime = new Date(data.updatedData.startTime);
+            data.updatedData.endTime = new Date(data.updatedData.endTime);
+            setSchedule((prev) => {
+              {
+                const obj: DaySchedule = {
+                  ...prev,
+                  [overContainer]: prev[overContainer].map((v) =>
+                    v.id === data.updatedData.id ? data.updatedData : v
+                  ),
+                };
+                console.log(
+                  "DID IT UPDATE?",
+                  obj[overContainer][
+                    obj[overContainer].findIndex(
+                      (v) => v.id === data.updatedData.id
+                    )
+                  ]
+                );
+                return obj;
+              }
+            });
           }
         }
       } catch {

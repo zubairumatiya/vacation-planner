@@ -178,7 +178,6 @@ router.get(
   ensureLoggedIn,
   ensureOwnership,
   async (req, res, next) => {
-    console.log("does it even enter get trip?");
     try {
       const role = req.user.role;
       const result2 = await db.query("SELECT * FROM trips WHERE id=$1", [
@@ -205,7 +204,6 @@ router.get(
         ...result2.rows[0],
         schedule: arrCargo,
       });
-      console.log("backend schedule", result3.rows);
       return;
     } catch (err) {
       next(err);
@@ -387,6 +385,7 @@ router.patch(
       }
       let query: string;
       let values: Array<string | number | object | boolean>;
+      console.log("newSortIndex in update-time", newSortIndex);
       if (newSortIndex === null) {
         query =
           "UPDATE trip_schedule SET start_time=$1, end_time=$2, last_modified=NOW() WHERE id=$3 RETURNING *";
@@ -445,7 +444,7 @@ router.get(
   async (req, res, next) => {
     try {
       const result = await db.query(
-        "SELECT id, value, from_google, item_added FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
+        "SELECT id, value, from_google, item_added, last_modified FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
         [req.params.tripId]
       );
       snakeToCamel(result.rows);
@@ -467,11 +466,11 @@ router.post(
       let queryParams: Array<string>;
       if (req.body.fromGoogle) {
         queryText =
-          "INSERT INTO trip_list (trip_id, value, from_google) VALUES ($1, $2, $3) RETURNING id, value, from_google";
+          "INSERT INTO trip_list (trip_id, value, from_google) VALUES ($1, $2, $3) RETURNING id, value, from_google, last_modified, item_added";
         queryParams = [req.params.tripId, req.body.value, req.body.fromGoogle];
       } else {
         queryText =
-          "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google";
+          "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google, last_modified, item_added";
         queryParams = [req.params.tripId, req.body.value];
       }
       const result = await db.query(queryText, queryParams);
@@ -485,7 +484,7 @@ router.post(
 );
 
 router.patch(
-  "/list/:itemId",
+  "/list/:id",
   ensureLoggedIn,
   ensureOwnership,
   stateAwareConfirmation,
@@ -493,7 +492,7 @@ router.patch(
     try {
       const result = await db.query(
         "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
-        [req.body.value, req.params.itemId]
+        [req.body.value, req.params.id]
       );
       snakeToCamel(result.rows);
       res.status(200).json({ data: result.rows });
@@ -506,12 +505,13 @@ router.patch(
 
 router.patch(
   "/check-list-item/:itemId",
+  ensureLoggedIn,
   ensureOwnership,
   ensureLoggedIn,
   async (req, res, next) => {
     try {
       const result = await db.query(
-        "UPDATE trip_list SET item_added=$1 WHERE id=$2 RETURNING *",
+        "UPDATE trip_list SET item_added=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
         [req.body.newValue, req.params.itemId]
       );
       snakeToCamel(result.rows);

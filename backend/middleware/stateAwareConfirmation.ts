@@ -10,9 +10,12 @@ export default async function stateAwareConfirmation(
   const path: string = req.path;
   try {
     let queryText: string;
-    if (path === "/schedule/:id" || path === "/update-time/:id") {
+    if (
+      /^\/schedule\/[^/]+$/.test(path) ||
+      /^\/update-time\/[^/]+$/.test(path)
+    ) {
       queryText = "SELECT * FROM trip_schedule WHERE id=$1";
-    } else if (path === "/list/:itemId") {
+    } else if (/^\/list\/[^/]+$/.test(path)) {
       queryText = "SELECT * FROM trip_list WHERE id=$1";
     }
     const result = await db.query(queryText, [req.params.id]);
@@ -28,15 +31,26 @@ export default async function stateAwareConfirmation(
       return;
     }
     snakeToCamel(result.rows);
+    console.log(
+      "lastModifiedBody",
+      req.body.lastModified,
+      "lastModifiedDB:",
+      result.rows?.[0]?.lastModified.toISOString(),
+      "equal:",
+      req.body.lastModified === result.rows?.[0]?.lastModified.toISOString()
+    );
     if (
-      req.body.lastModified !== result.rows?.[0]?.lastModified ||
+      req.body.lastModified !== result.rows?.[0]?.lastModified.toISOString() ||
       result.rowCount < 1
     ) {
       console.log("Conflict detected");
-      if (path === "/schedule/:id" || path === "/update-time/:id") {
+      if (
+        /^\/schedule\/[^/]+$/.test(path) ||
+        /^\/update-time\/[^/]+$/.test(path)
+      ) {
         queryText =
           "SELECT * FROM trip_schedule WHERE trip_id=$1 ORDER BY start_time ASC, sort_index ASC";
-      } else if (path === "/list/:itemId") {
+      } else if (/^\/list\/[^/]+$/.test(path)) {
         queryText =
           "SELECT id, value, from_google, item_added FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC";
       }
@@ -46,10 +60,14 @@ export default async function stateAwareConfirmation(
         .status(409)
         .json({ message: "Conflict detected", newData: refreshData.rows });
       return;
-    } else if (req.body.lastModified === result.rows[0].lastModified) {
+    } else if (
+      req.body.lastModified === result.rows[0].lastModified.toISOString()
+    ) {
+      console.log("No conflict detected :)))");
       next();
     }
   } catch (err) {
+    console.log("thorwwwwwwwwwwwww", err);
     next(err);
   }
 }

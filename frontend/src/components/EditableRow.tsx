@@ -241,7 +241,7 @@ const EditableRow = ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          sItem,
+          ...sItem,
           chunk,
           tripId,
           start: startDateAssembler,

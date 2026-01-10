@@ -82,6 +82,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       return;
     }
     const item: string = raw.trim();
+    console.log(props.list[index]);
     const response = await fetch(`${apiURL}/list/${itemId}`, {
       method: "PATCH",
       headers: {
@@ -94,7 +95,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         lastModified: props.list[index].lastModified,
       }),
     });
-
+    console.log("lastModified:", props.list[index].lastModified);
     if (response.status === 401) {
       navigate("/login", {
         state: { message: "Session expired, redirecting to log in..." },
@@ -113,19 +114,19 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       alert(
         "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
       );
-    } else {
-      alert("Error: Could not process change at this time");
-    }
-    if (response.ok) {
+    } else if (response.ok) {
       const data = await response.json();
       props.setList((prev) => {
         return [
           ...prev.slice(0, index),
-          { ...prev[index], value: data.data[0].value },
+          { ...data.data[0] },
           ...prev.slice(index + 1),
         ];
       });
+    } else {
+      alert("Error: Could not process change at this time");
     }
+
     setEditItemId("-1");
     setNewItem("");
     setAddingNewItem(true);
@@ -190,7 +191,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       const data = await result.json();
       props.setList((prev) => [
         ...prev.slice(0, index),
-        { ...prev[index], itemAdded: data.data[0].itemAdded },
+        { ...data.data[0] },
         ...prev.slice(index + 1),
       ]);
     } else {
