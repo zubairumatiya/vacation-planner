@@ -253,34 +253,53 @@ const EditableRow = ({
         const data = await response.json();
         setEditLineId(null);
         setAddingItem(false);
-        setSchedule((prev) =>
-          newTable
-            ? {
-                ...prev,
-                [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
-                [postEditDate]: tempArr.map((v) =>
-                  v.id === itemID
-                    ? {
-                        ...data.updatedData,
-                        startTime: new Date(data.updatedData.startTime),
-                        endTime: new Date(data.updatedData.endTime),
-                      }
-                    : v
-                ),
-              }
-            : {
-                ...prev,
-                [postEditDate]: tempArr.map((v) =>
-                  v.id === itemID
-                    ? {
-                        ...data.updatedData,
-                        startTime: new Date(data.updatedData.startTime),
-                        endTime: new Date(data.updatedData.endTime),
-                      }
-                    : v
-                ),
-              }
-        );
+        if (data.newlyIndexedSchedule != null) {
+          for (const i of data.newlyIndexedSchedule) {
+            // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+            i.startTime = new Date(i.startTime);
+            i.endTime = new Date(i.endTime);
+            i.id = String(i.id);
+          }
+          const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+          const dayContainers: DayContainer[] = makeContainers(
+            length,
+            new Date(utcStart)
+          );
+          const bucketizeItems: DaySchedule = bucketizeSchedule(
+            dayContainers,
+            data.newlyIndexedSchedule
+          );
+          setSchedule(bucketizeItems);
+        } else if (data.updatedData != null) {
+          setSchedule((prev) =>
+            newTable
+              ? {
+                  ...prev,
+                  [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
+                  [postEditDate]: tempArr.map((v) =>
+                    v.id === itemID
+                      ? {
+                          ...data.updatedData,
+                          startTime: new Date(data.updatedData.startTime),
+                          endTime: new Date(data.updatedData.endTime),
+                        }
+                      : v
+                  ),
+                }
+              : {
+                  ...prev,
+                  [postEditDate]: tempArr.map((v) =>
+                    v.id === itemID
+                      ? {
+                          ...data.updatedData,
+                          startTime: new Date(data.updatedData.startTime),
+                          endTime: new Date(data.updatedData.endTime),
+                        }
+                      : v
+                  ),
+                }
+          );
+        }
       } else if (response.status === 401) {
         navigate("/redirect", {
           state: { message: "Session expired, redirecting to log in..." },

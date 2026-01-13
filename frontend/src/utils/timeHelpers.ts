@@ -94,6 +94,12 @@ export const indexChunk = (
     return {};
   }
   const newIndex = newArray.findIndex((v) => v.id === id);
+  console.log(
+    "making our chunk - above:",
+    newArray[newIndex - 1]?.sortIndex,
+    "below:",
+    newArray[newIndex + 1]?.sortIndex
+  );
   if (newIndex === newArray.length - 1) {
     // non-empty and at the bottom
     return {

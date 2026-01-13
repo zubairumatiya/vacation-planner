@@ -76,6 +76,8 @@ const EditVacationSchedule = ({
     handleTextInput,
     setUtcEnd,
     setUtcStart,
+    utcEnd,
+    utcStart,
     individualAddition,
     setIndividualAddition,
   } = useContext(EditScheduleContext);
@@ -321,20 +323,39 @@ const EditVacationSchedule = ({
           });
           if (addingReq.ok) {
             const data = await addingReq.json();
-            setSchedule((prev) => {
-              return {
-                ...prev,
-                [dateAdded]: tempArr.map((v) =>
-                  v.id === "temp"
-                    ? {
-                        ...data.addedItem,
-                        startTime: new Date(data.addedItem.startTime),
-                        endTime: new Date(data.addedItem.endTime),
-                      }
-                    : v
-                ),
-              };
-            });
+            if (data.newlyIndexedSchedule != null) {
+              for (const i of data.newlyIndexedSchedule) {
+                // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+                i.startTime = new Date(i.startTime);
+                i.endTime = new Date(i.endTime);
+                i.id = String(i.id);
+              }
+              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+              const dayContainers: DayContainer[] = makeContainers(
+                length,
+                new Date(utcStart)
+              );
+              const bucketizeItems: DaySchedule = bucketizeSchedule(
+                dayContainers,
+                data.newlyIndexedSchedule
+              );
+              setSchedule(bucketizeItems);
+            } else if (data.addedItem != null) {
+              setSchedule((prev) => {
+                return {
+                  ...prev,
+                  [dateAdded]: tempArr.map((v) =>
+                    v.id === "temp"
+                      ? {
+                          ...data.addedItem,
+                          startTime: new Date(data.addedItem.startTime),
+                          endTime: new Date(data.addedItem.endTime),
+                        }
+                      : v
+                  ),
+                };
+              });
+            }
             setIndividualAddition({ addingContainer: "" });
           } else if (addingReq.status === 401) {
             navigate("/redirect", {

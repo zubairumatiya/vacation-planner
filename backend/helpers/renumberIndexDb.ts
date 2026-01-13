@@ -1,10 +1,12 @@
-import db from "../db/db.js";
+import { PoolClient } from "pg";
+import { Schedule } from "../types/express";
 
-export default async function renumberIndexDb(tripId: string): Promise<number> {
-  await db.query("BEGIN");
-  try {
-    const result = await db.query(
-      `WITH ordered AS (
+export default async function renumberIndexDb(
+  tripId: string,
+  client: PoolClient
+): Promise<Schedule[]> {
+  const result = await client.query(
+    `WITH ordered AS (
       SELECT
       id,
       ROW_NUMBER() OVER (ORDER BY start_time ASC, sort_index ASC) AS rn
@@ -14,14 +16,10 @@ export default async function renumberIndexDb(tripId: string): Promise<number> {
       UPDATE trip_schedule t
       SET sort_index = ordered.rn * 1000
       FROM ordered
-      WHERE t.id = ordered.id;`,
-      [tripId]
-    );
-    await db.query("COMMIT");
-    console.log(`Updated rows: ${result.rowCount}`);
-    return result.rowCount;
-  } catch (err) {
-    await db.query("ROLLBACK");
-    throw err;
-  }
+      WHERE t.id = ordered.id
+      RETURNING *;`,
+    [tripId]
+  );
+  console.log(`Updated rows: ${result.rows}`);
+  return result.rows;
 }

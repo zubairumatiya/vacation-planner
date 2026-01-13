@@ -86,10 +86,12 @@ const EditCanvas = ({
   // lastEditWasDragRef is an imperative flag used to coordinate effects
 
   useEffect(() => {
-    if (!lastEditWasDrag) {
+    if (!lastEditWasDrag.current) {
+      console.log(schedule);
       setCostTotal(
         Object.keys(schedule).reduce(
-          (acc, v) => acc + schedule[v].reduce((acc, v) => acc + v.cost, 0),
+          (acc, v) =>
+            acc + schedule[v].reduce((acc, v) => acc + Number(v.cost), 0),
           0
         )
       );
@@ -194,10 +196,6 @@ const EditCanvas = ({
       initialListDrag.current = false;
       const containerAndIndex = findContainerAndIndex(e.active.id);
       if (containerAndIndex.container && containerAndIndex.index != null) {
-        console.log(
-          "DRAG ITEM:",
-          schedule[containerAndIndex?.container][containerAndIndex.index]
-        );
         setDragRow(
           schedule[containerAndIndex?.container][containerAndIndex.index]
         );
@@ -405,14 +403,33 @@ const EditCanvas = ({
             return;
           }
           const data = await responses[0].json();
-          data.addedItem.startTime = new Date(data.addedItem.startTime);
-          data.addedItem.endTime = new Date(data.addedItem.endTime);
-          setSchedule((prev) => ({
-            ...prev,
-            [overContainer]: prev[overContainer].map((v) =>
-              refIdSnapshot === v.id ? data.addedItem : v
-            ),
-          }));
+          if (data.newlyIndexedSchedule != null) {
+            for (const i of data.newlyIndexedSchedule) {
+              // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+              i.startTime = new Date(i.startTime);
+              i.endTime = new Date(i.endTime);
+              i.id = String(i.id);
+            }
+            const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+            const dayContainers: DayContainer[] = makeContainers(
+              length,
+              new Date(utcStart)
+            );
+            const bucketizeItems: DaySchedule = bucketizeSchedule(
+              dayContainers,
+              data.newlyIndexedSchedule
+            );
+            setSchedule(bucketizeItems);
+          } else if (data.addedItem != null) {
+            data.addedItem.startTime = new Date(data.addedItem.startTime);
+            data.addedItem.endTime = new Date(data.addedItem.endTime);
+            setSchedule((prev) => ({
+              ...prev,
+              [overContainer]: prev[overContainer].map((v) =>
+                refIdSnapshot === v.id ? data.addedItem : v
+              ),
+            }));
+          }
           setActiveListId(null);
         } else {
           // for an existing item in schedule
@@ -482,29 +499,42 @@ const EditCanvas = ({
               handleDragCancel(null, true);
             }
           } else if (result.ok) {
-            const data: { updatedData: Schedule } = await result.json();
-            console.log("ENTERING SETTING DRAGGED ITEM", data.updatedData);
-            data.updatedData.startTime = new Date(data.updatedData.startTime);
-            data.updatedData.endTime = new Date(data.updatedData.endTime);
-            setSchedule((prev) => {
-              {
-                const obj: DaySchedule = {
-                  ...prev,
-                  [overContainer]: prev[overContainer].map((v) =>
-                    v.id === data.updatedData.id ? data.updatedData : v
-                  ),
-                };
-                console.log(
-                  "DID IT UPDATE?",
-                  obj[overContainer][
-                    obj[overContainer].findIndex(
-                      (v) => v.id === data.updatedData.id
-                    )
-                  ]
-                );
-                return obj;
+            const data: {
+              updatedData?: Schedule;
+              newlyIndexedSchedule?: Schedule[];
+            } = await result.json();
+            if (data.newlyIndexedSchedule != null) {
+              for (const i of data.newlyIndexedSchedule) {
+                // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
+                i.startTime = new Date(i.startTime);
+                i.endTime = new Date(i.endTime);
+                i.id = String(i.id);
               }
-            });
+              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+              const dayContainers: DayContainer[] = makeContainers(
+                length,
+                new Date(utcStart)
+              );
+              const bucketizeItems: DaySchedule = bucketizeSchedule(
+                dayContainers,
+                data.newlyIndexedSchedule
+              );
+              setSchedule(bucketizeItems);
+            } else if (data.updatedData != null) {
+              data.updatedData.startTime = new Date(data.updatedData.startTime);
+              data.updatedData.endTime = new Date(data.updatedData.endTime);
+              setSchedule((prev) => {
+                {
+                  const obj: DaySchedule = {
+                    ...prev,
+                    [overContainer]: prev[overContainer].map((v) =>
+                      v.id === data.updatedData?.id ? data.updatedData : v
+                    ),
+                  };
+                  return obj;
+                }
+              });
+            }
           }
         }
       } catch {

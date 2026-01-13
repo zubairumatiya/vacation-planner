@@ -216,15 +216,19 @@ router.post(
   ensureLoggedIn,
   ensureOwnership,
   async (req, res, next) => {
+    const client = await db.connect();
+
     try {
+      await client.query("BEGIN");
       const newSortIndex = await checkIndexSpacing(
-        req.body.chunk,
+        req.body,
+        client,
         req.params.tripId
       );
       let values: (string | number | Date | boolean)[];
       let queryText: string =
         "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *";
-      if (newSortIndex === null) {
+      if (newSortIndex === undefined) {
         // insert item, call renumbering fn, call db to get item and add to response obj
         const placeHolderIndex = req.body.chunk.above?.sortIndex + 1;
         values = [
@@ -280,32 +284,40 @@ router.post(
           ];
         }
       }
-      const result = await db.query<Schedule>(queryText, values);
+      const result = await client.query<Schedule>(queryText, values);
 
       if (result.rowCount > 0) {
-        let rowsToReturn: QueryResult<Schedule> = result;
-        if (newSortIndex === null) {
-          const newItemId = result.rows[0].id;
-          const renumResult = await renumberIndexDb(req.params.tripId);
-          if (renumResult < 1) {
+        if (newSortIndex === undefined) {
+          const renumRows = await renumberIndexDb(req.params.tripId, client);
+          if (renumRows.length < 1) {
             console.log("renumbering error");
+            await client.query("ROLLBACK");
             res.status(500).json({ message: "Internal server error" });
             return;
           }
-          rowsToReturn = await db.query(
-            "SELECT * FROM trip_schedule WHERE id=$1",
-            [newItemId]
-          );
+          snakeToCamel(renumRows);
+          await client.query("COMMIT");
+          res.status(200).json({ newlyIndexedSchedule: renumRows });
+          return;
         }
-        snakeToCamel(rowsToReturn.rows);
-        res.status(200).json({ addedItem: rowsToReturn.rows[0] });
+        const rowToReturn: QueryResult<Schedule> = await client.query(
+          "SELECT * FROM trip_schedule WHERE id=$1",
+          [result.rows[0].id]
+        );
+        snakeToCamel(rowToReturn.rows);
+        await client.query("COMMIT");
+        res.status(200).json({ addedItem: rowToReturn.rows[0] });
         return;
       } else {
+        await client.query("ROLLBACK");
         res.sendStatus(500);
         return;
       }
     } catch (err) {
+      await client.query("ROLLBACK");
       next(err);
+    } finally {
+      client.release();
     }
   }
 );
@@ -316,19 +328,25 @@ router.patch(
   ensureOwnership,
   stateAwareConfirmation,
   async (req, res, next) => {
+    const client = await db.connect();
     try {
+      await client.query("BEGIN");
       const newSortIndex = await checkIndexSpacing(
-        req.body.chunk,
-        req.body.tripId
+        req.body,
+        client,
+        undefined,
+        undefined,
+        req.params.id
       );
       if (newSortIndex === undefined) {
         console.log("Renumbering error");
+        await client.query("ROLLBACK");
         res.sendStatus(500);
         return;
       }
       let query: string;
       let values: Array<string | number | object | boolean>;
-      if (newSortIndex === null) {
+      if (typeof newSortIndex === "object") {
         query =
           "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, last_modified=NOW() WHERE id=$7 RETURNING *";
         values = [
@@ -354,15 +372,31 @@ router.patch(
           req.params.id,
         ];
       }
-      const result = await db.query(query, values);
+      const result = await client.query(query, values);
       if (result.rowCount > 0) {
-        snakeToCamel(result.rows);
-        res.status(200).json({ updatedData: result.rows[0] });
+        await client.query("COMMIT");
+        if (typeof newSortIndex === "object") {
+          const newlyIndexedSchedule = newSortIndex.map((v) =>
+            v.id === result.rows[0].id ? result.rows[0] : v
+          );
+          snakeToCamel(newlyIndexedSchedule);
+          res.status(200).json({ newlyIndexedSchedule });
+        } else {
+          snakeToCamel(result.rows);
+          res.status(200).json({ updatedData: result.rows[0] });
+          return;
+        }
+      } else {
+        await client.query("ROLLBACK");
+        res.sendStatus(500);
         return;
       }
       // will have to update last-modified field in trips as well
     } catch (err) {
+      await client.query("ROLLBACK");
       next(err);
+    } finally {
+      client.release();
     }
   }
 );
@@ -373,20 +407,26 @@ router.patch(
   ensureOwnership,
   stateAwareConfirmation,
   async (req, res, next) => {
+    const client = await db.connect();
     try {
+      client.query("BEGIN");
       const newSortIndex = await checkIndexSpacing(
-        req.body.chunk,
-        req.body.tripId
+        req.body,
+        client,
+        undefined,
+        undefined,
+        req.params.id
       );
       if (newSortIndex === undefined) {
         console.log("Renumbering error");
+        await client.query("ROLLBACK");
         res.sendStatus(500);
         return;
       }
       let query: string;
       let values: Array<string | number | object | boolean>;
       console.log("newSortIndex in update-time", newSortIndex);
-      if (newSortIndex === null) {
+      if (typeof newSortIndex === "object") {
         query =
           "UPDATE trip_schedule SET start_time=$1, end_time=$2, last_modified=NOW() WHERE id=$3 RETURNING *";
         values = [req.body.start, req.body.end, req.params.id];
@@ -395,17 +435,34 @@ router.patch(
           "UPDATE trip_schedule SET start_time=$1, end_time=$2, sort_index=$3, last_modified=NOW() WHERE id=$4 RETURNING *";
         values = [req.body.start, req.body.end, newSortIndex, req.params.id];
       }
-      const result = await db.query(query, values);
+
+      const result = await client.query(query, values);
+
       if (result.rowCount > 0) {
-        snakeToCamel(result.rows);
-        res.status(200).json({ updatedData: result.rows[0] });
-        return;
+        console.log("CHANGING TIME WAS A SUCCESS, COMMITING NOW....");
+        await client.query("COMMIT");
+        if (typeof newSortIndex === "object") {
+          const newlyIndexedSchedule = newSortIndex.map((v) =>
+            v.id === result.rows[0].id ? result.rows[0] : v
+          );
+          snakeToCamel(newlyIndexedSchedule);
+          res.status(200).json({ newlyIndexedSchedule });
+        } else {
+          snakeToCamel(result.rows);
+          res.status(200).json({ updatedData: result.rows[0] });
+          return;
+        }
       } else {
+        await client.query("ROLLBACK");
         res.sendStatus(500);
         return;
       }
     } catch (err) {
+      await client.query("ROLLBACK");
+      console.log("CATCH ERR:", err);
       next(err);
+    } finally {
+      client.release();
     }
   }
 );
