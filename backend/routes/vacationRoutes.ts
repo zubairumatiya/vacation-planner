@@ -228,6 +228,7 @@ router.post(
       let values: (string | number | Date | boolean)[];
       let queryText: string =
         "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *";
+      req.body.multiDay = req.body.multiDay ?? false;
       if (newSortIndex === undefined) {
         // insert item, call renumbering fn, call db to get item and add to response obj
         const placeHolderIndex = req.body.chunk.above?.sortIndex + 1;

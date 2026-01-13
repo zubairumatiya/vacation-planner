@@ -17,7 +17,7 @@ import {
   makeContainers,
 } from "../utils/timeHelpers";
 import NormalRow from "../components/NormalRow";
-import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
+//import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import addToSchedule from "../assets/add-to-schedule.svg";
 
 polyfill({
@@ -898,7 +898,7 @@ const EditVacationSchedule = ({
       })}
       {
         <DragOverlay
-          modifiers={[restrictToFirstScrollableAncestor]}
+          //modifiers={[restrictToFirstScrollableAncestor]}
           dropAnimation={null}
         >
           {props.dragRow ? (

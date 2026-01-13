@@ -224,7 +224,7 @@ const EditableRow = ({
 
     const sItem = {
       location,
-      cost,
+      cost: Number(cost),
       details,
       multiDay,
       lastModified:
@@ -333,7 +333,15 @@ const EditableRow = ({
           data.newData
         );
         setSchedule(bucketizeItems);
-        setHoldOverwrite({ ...schedule[dateAdded][index] });
+        const holdIntent = {
+          ...sItem,
+          id: itemID,
+          sortIndex: 0,
+          tripId: tripId ?? "",
+          startTime: new Date(startDateAssembler),
+          endTime: new Date(endDateAssembler),
+        };
+        setHoldOverwrite(holdIntent);
         setBannerMsg(
           "Another user has updated this resource, your change was not applied"
         );

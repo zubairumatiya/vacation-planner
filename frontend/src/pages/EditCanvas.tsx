@@ -27,14 +27,14 @@ import { type DraggingState } from "./EditVacationSchedule";
 import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
-//import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import {
   bucketizeSchedule,
   indexChunk,
   makeContainers,
   prefixZero,
 } from "../utils/timeHelpers";
-import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
+
+import clearCircle from "../assets/clear-circle.svg";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -79,6 +79,17 @@ const EditCanvas = ({
   }>({ addingContainer: "" });
   const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
   const [addingItem, setAddingItem] = useState<boolean>(false);
+  const refTimerStarted = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (bannerMsg && !refTimerStarted.current) {
+      refTimerStarted.current = true;
+      setTimeout(() => {
+        refTimerStarted.current = false;
+        clearOverwriteBanner();
+      }, 8000);
+    }
+  }, [bannerMsg]);
 
   useEffect(() => {
     lastEditWasDrag.current = false;
@@ -87,7 +98,6 @@ const EditCanvas = ({
 
   useEffect(() => {
     if (!lastEditWasDrag.current) {
-      console.log(schedule);
       setCostTotal(
         Object.keys(schedule).reduce(
           (acc, v) =>
@@ -987,6 +997,7 @@ const EditCanvas = ({
 
     try {
       if (itemFound === -1) {
+        console.log("Previously deleted, restoring...");
         const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
           method: "POST",
           headers: {
@@ -1008,18 +1019,22 @@ const EditCanvas = ({
           const data = await addingReq.json();
           const startTime = new Date(data.addedItem.startTime);
           const day = startTime.toISOString().split("T")[0];
+          console.log("sched", schedule);
           setSchedule((prev) => {
+            const addedItem = {
+              ...data.addedItem,
+              startTime: new Date(data.addedItem.startTime),
+              endTime: new Date(data.addedItem.endTime),
+            };
+            console.log(addedItem);
+            prev[day].push(addedItem);
+            prev[day].sort(
+              (a: Schedule, b: Schedule) =>
+                a.startTime.getTime() - b.startTime.getTime()
+            );
             return {
               ...prev,
-              [day]: schedule[day].map((v) =>
-                v.id === data.addedItem.id
-                  ? {
-                      ...data.addedItem,
-                      startTime: new Date(data.addedItem.startTime),
-                      endTime: new Date(data.addedItem.endTime),
-                    }
-                  : v
-              ),
+              [day]: [...prev[day]],
             };
           });
         } else if (addingReq.status === 401) {
@@ -1028,13 +1043,13 @@ const EditCanvas = ({
           });
           // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
         } else if (addingReq.status === 403) {
-          setHoldOverwrite(null);
+          clearOverwriteBanner();
           alert("You do not have permission to access this resource");
         } else if (addingReq.status === 404) {
-          setHoldOverwrite(null);
+          clearOverwriteBanner();
           alert("Error: Trip not found");
         } else if (addingReq.status >= 500) {
-          setHoldOverwrite(null);
+          clearOverwriteBanner();
           alert(
             "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
           );
@@ -1060,7 +1075,7 @@ const EditCanvas = ({
         });
         if (patchRes.ok) {
           const data = await patchRes.json();
-          setHoldOverwrite(null);
+          clearOverwriteBanner();
           setSchedule((prev) =>
             newItemContainer !== previousItemContainer
               ? {
@@ -1097,14 +1112,13 @@ const EditCanvas = ({
           });
           // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
         } else if (patchRes.status === 403) {
-          setHoldOverwrite(null);
+          clearOverwriteBanner();
           alert("You do not have permission to access this resource");
         } else if (patchRes.status === 404) {
-          setHoldOverwrite(null);
+          clearOverwriteBanner();
           alert("Error: Trip not found");
         } else if (patchRes.status === 409) {
           const data = await patchRes.json();
-          setHoldOverwrite(null);
           for (const i of data.newData) {
             // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
             i.startTime = new Date(i.startTime);
@@ -1129,7 +1143,7 @@ const EditCanvas = ({
             "Another user has updated this resource, your change was not applied"
           );
         } else if (patchRes.status >= 500) {
-          setHoldOverwrite(null);
+          clearOverwriteBanner();
           alert(
             "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
           );
@@ -1141,6 +1155,46 @@ const EditCanvas = ({
       console.log(err);
       return;
     }
+  };
+
+  const Overwrite = () => {
+    return (
+      <div className={styles.overwrite}>
+        {
+          holdOverwrite && (
+            <button
+              className={styles.overwriteButton}
+              onClick={handleOverwrite}
+            >
+              Overwrite change?
+            </button>
+          ) /* can add a way to do 500 status retries later */
+        }
+      </div>
+    );
+  };
+
+  const Banner = () => {
+    return (
+      <div className={`${styles.bannerAndOverwrite}`}>
+        <div className={styles.clearBnO}>
+          <button className={styles.clearButton} onClick={clearOverwriteBanner}>
+            <img src={clearCircle} alt="clearCircle" />
+          </button>
+        </div>
+        <div className={styles.banner}>
+          {bannerMsg && <div className={styles.bannerMsg}>{bannerMsg}</div>}
+        </div>
+        <div className={styles.timerBar}></div>
+        {holdOverwrite && <Overwrite />}
+      </div>
+    );
+  };
+
+  const clearOverwriteBanner = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    setBannerMsg(null);
+    setHoldOverwrite(null);
   };
 
   return (
@@ -1158,7 +1212,7 @@ const EditCanvas = ({
       }}
       //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
-      modifiers={[restrictToFirstScrollableAncestor]}
+      //modifiers={[restrictToFirstScrollableAncestor]}
     >
       <div className={styles.pageWrapper}>
         <div className={styles.tableAndList}>
@@ -1209,16 +1263,7 @@ const EditCanvas = ({
           />
         )}
       </div>
-      <div>
-        <div>
-          {
-            holdOverwrite && (
-              <button onClick={handleOverwrite}>Overwrite changes?</button>
-            ) /* can add a way to do 500 status retries later */
-          }
-        </div>
-        <div>{bannerMsg && <div>{bannerMsg}</div>}</div>
-      </div>
+      {bannerMsg && <Banner />}
     </DndContext>
   );
 };

@@ -54,7 +54,9 @@ export default async function stateAwareConfirmation(
         queryText =
           "SELECT id, value, from_google, item_added FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC";
       }
-      const refreshData = await db.query(queryText, [result.rows[0].tripId]);
+      const refreshData = await db.query(queryText, [
+        result.rows[0]?.tripId ?? req.body.tripId,
+      ]);
       snakeToCamel(refreshData.rows);
       res
         .status(409)

@@ -63,7 +63,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     getTrip();
   }, []);
   return (
-    <div>
+    <div className={styles.entirePage}>
       <div className={styles.costAndHeader}>
         <div className={styles.backAndTotal}>
           <div className={styles.backWrapper}>

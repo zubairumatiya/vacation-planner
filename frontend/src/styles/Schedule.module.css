@@ -1,3 +1,7 @@
+.entirePage {
+  position: relative;
+}
+
 .costAndHeader {
   display: flex;
   flex-direction: column;
