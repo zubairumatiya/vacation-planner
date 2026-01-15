@@ -1,6 +1,7 @@
 import styles from "../styles/EditCanvas.module.css";
 import clearCircle from "../assets/clear-circle.svg";
 import Overwrite from "./Overwrite";
+import { useEffect } from "react";
 
 export default function Banner({
   bannerMsg,
@@ -13,6 +14,15 @@ export default function Banner({
   handleOverwrite: (e: React.MouseEvent) => Promise<void>;
   clearOverwriteBanner: (e?: React.MouseEvent) => void;
 }) {
+  useEffect(() => {
+    const t = setTimeout(() => {
+      clearOverwriteBanner();
+    }, 8000);
+    return () => {
+      clearTimeout(t);
+    };
+  }, []);
+
   return (
     <div className={`${styles.bannerAndOverwrite}`}>
       <div className={styles.clearBnO}>

@@ -54,7 +54,6 @@ export type EditScheduleContext = {
     }>
   >;
   setHoldOverwrite: React.Dispatch<React.SetStateAction<Schedule | null>>;
-  setBannerMsg: React.Dispatch<React.SetStateAction<string | null>>;
 }; // Does context get recreated each time a child component is re-rendered??
 
 export const EditScheduleContext = createContext<EditScheduleContext>(
@@ -74,7 +73,6 @@ export function EditScheduleProvider({
   addingItem,
   setAddingItem,
   setHoldOverwrite,
-  setBannerMsg,
 }: {
   children: React.ReactNode;
   utcStart: number;
@@ -94,7 +92,6 @@ export function EditScheduleProvider({
   addingItem: boolean;
   setAddingItem: React.Dispatch<React.SetStateAction<boolean>>;
   setHoldOverwrite: React.Dispatch<React.SetStateAction<Schedule | null>>;
-  setBannerMsg: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
   const [preFill, setPreFill] = useState<Prefill>({
     location: "",
@@ -235,7 +232,6 @@ export function EditScheduleProvider({
       individualAddition,
       setIndividualAddition,
       setHoldOverwrite,
-      setBannerMsg,
     }),
     [
       preFill,
@@ -282,7 +278,6 @@ export function EditScheduleProvider({
       individualAddition,
       setIndividualAddition,
       setHoldOverwrite,
-      setBannerMsg,
     ]
   );
 

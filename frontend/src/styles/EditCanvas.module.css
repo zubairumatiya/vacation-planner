@@ -18,7 +18,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: #4f464fc9;
+  background-color: #000000e0;
   gap: 10px 5px;
   border: 4px solid #d23725;
   border-radius: 8px;
@@ -46,6 +46,7 @@
 .banner {
   display: flex;
   width: 80%;
+  justify-content: center;
 }
 
 .bannerMsg {
@@ -72,9 +73,9 @@
   z-index: -1;
   inset: 0;
   top: 0;
-  background: #ff000029;
+  background: #ffffff36;
   transform-origin: left;
-  animation: drain 8s linear forwards;
+  animation: drain 7.98s linear forwards;
 }
 
 @keyframes drain {

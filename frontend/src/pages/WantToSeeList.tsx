@@ -6,6 +6,7 @@ import { AuthContext } from "../context/AuthContext";
 import CheckBubble from "../components/CheckBubble";
 import { type UniqueIdentifier } from "@dnd-kit/core";
 import ListItem from "../components/ListItem";
+import { BannerContext } from "../context/BannerContext";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -20,6 +21,8 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const token = auth?.token;
   const navigate = useNavigate();
 
+  const { setBannerMsg } = useContext(BannerContext);
+
   useEffect(() => {
     const getTripList = async () => {
       const response = await fetch(`${apiURL}/list/${tripId}`, {
@@ -33,11 +36,11 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           state: { message: "Session expired, redirecting to log in..." },
         });
       } else if (response.status === 403) {
-        alert("You do not have permission to access this resource");
+        setBannerMsg("You do not have permission to access this resource");
       } else if (response.status === 404) {
-        alert("This list could not be found");
+        setBannerMsg("This list could not be found");
       } else if (response.status >= 500) {
-        alert(
+        setBannerMsg(
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else if (response.ok) {
@@ -101,17 +104,17 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         state: { message: "Session expired, redirecting to log in..." },
       });
     } else if (response.status === 403) {
-      alert("You do not have permission to access this resource");
+      setBannerMsg("You do not have permission to access this resource");
     } else if (response.status === 404) {
-      alert("Error: Trip not found");
+      setBannerMsg("Error: Trip not found");
     } else if (response.status === 409) {
       const data = await response.json();
       props.setList(data.newData);
-      alert(
+      setBannerMsg(
         "Another user has updated this resource, your change was not applied"
       );
     } else if (response.status >= 500) {
-      alert(
+      setBannerMsg(
         "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
       );
     } else if (response.ok) {
@@ -124,7 +127,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         ];
       });
     } else {
-      alert("Error: Could not process change at this time");
+      setBannerMsg("Error: Could not process change at this time");
     }
 
     setEditItemId("-1");
@@ -200,11 +203,11 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           state: { message: "Session expired, redirecting to log in..." },
         });
       } else if (result.status === 403) {
-        alert("You do not have permission to access this resource");
+        setBannerMsg("You do not have permission to access this resource");
       } else if (result.status === 404) {
-        alert("Error: Trip not found");
+        setBannerMsg("Error: Trip not found");
       } else if (result.status >= 500) {
-        alert(
+        setBannerMsg(
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       }

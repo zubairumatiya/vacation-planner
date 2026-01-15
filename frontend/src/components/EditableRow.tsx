@@ -14,6 +14,7 @@ import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditScheduleContext } from "../context/EditScheduleContext";
+import { BannerContext } from "../context/BannerContext";
 
 const EditableRow = ({
   value,
@@ -50,10 +51,10 @@ const EditableRow = ({
     setHoldStartTime,
     utcEnd,
     utcStart,
-    setBannerMsg,
     setHoldOverwrite,
   } = useContext(EditScheduleContext);
   const auth = useContext(AuthContext);
+  const { setBannerMsg } = useContext(BannerContext);
   const { tripId } = useParams();
   const [editStartTimeObject, setEditStartTimeObject] = useState<TimeObj>(
     {} as TimeObj
@@ -102,7 +103,7 @@ const EditableRow = ({
       } else if (response.status === 403) {
         setEditLineId(null);
         setAddingItem(false);
-        alert("You do not have permission to access this resource");
+        setBannerMsg("You do not have permission to access this resource");
       } else if (response.status === 404) {
         setEditLineId(null);
         setAddingItem(false);
@@ -113,7 +114,7 @@ const EditableRow = ({
             [dateAdded]: prev[dateAdded].filter((v) => v.id !== data.deletedId),
           }));
         } else {
-          alert("Error: Trip not found");
+          setBannerMsg("Error: Trip not found");
         }
       } else if (response.status === 409) {
         const data = await response.json();
@@ -142,7 +143,7 @@ const EditableRow = ({
       } else if (response.status >= 500) {
         setEditLineId(null);
         setAddingItem(false);
-        alert(
+        setBannerMsg(
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else {
@@ -309,11 +310,12 @@ const EditableRow = ({
       } else if (response.status === 403) {
         setEditLineId(null);
         setAddingItem(false);
-        alert("You do not have permission to access this resource");
+        setBannerMsg("You do not have permission to access this resource");
       } else if (response.status === 404) {
         setEditLineId(null);
         setAddingItem(false);
-        alert("Error: Trip not found");
+        setBannerMsg("Error 1: Trip not found");
+        setHoldOverwrite(schedule[dayContainer][0]);
       } else if (response.status === 409) {
         const data = await response.json();
         setEditLineId(null);
@@ -349,7 +351,7 @@ const EditableRow = ({
       } else if (response.status >= 500) {
         setEditLineId(null);
         setAddingItem(false);
-        alert(
+        setBannerMsg(
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else {

@@ -35,6 +35,8 @@ import {
   prefixZero,
 } from "../utils/timeHelpers";
 
+import { BannerContextProvider } from "../context/BannerContext";
+
 import Banner from "../components/Banner";
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -80,17 +82,17 @@ const EditCanvas = ({
   }>({ addingContainer: "" });
   const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
   const [addingItem, setAddingItem] = useState<boolean>(false);
-  const refTimerStarted = useRef<boolean>(false);
+  const [remountKey, setRemountKey] = useState<number>(0);
 
+  /*
   useEffect(() => {
     if (bannerMsg && !refTimerStarted.current) {
-      refTimerStarted.current = true;
-      setTimeout(() => {
-        refTimerStarted.current = false;
+      console.log("insdie ran", bannerMsg);
+      refTimerStarted.current = setTimeout(() => {
         clearOverwriteBanner();
       }, 8000);
     }
-  }, [bannerMsg]);
+  }, [bannerMsg]);*/
 
   useEffect(() => {
     lastEditWasDrag.current = false;
@@ -400,7 +402,7 @@ const EditCanvas = ({
               });
             }
             handleDragCancel();
-            alert("error processing drag change");
+            setBannerMsg("error processing drag change");
             return;
           }
           if (!responses[1].ok) {
@@ -410,7 +412,7 @@ const EditCanvas = ({
               });
             }
             handleDragCancel();
-            alert("Error: List not found");
+            setBannerMsg("Error: List not found");
             return;
           }
           const data = await responses[0].json();
@@ -470,9 +472,11 @@ const EditCanvas = ({
                 state: { message: "Session expired, redirecting to log in..." },
               });
             } else if (result.status === 403) {
-              alert("You do not have permission to access this resource");
+              setBannerMsg(
+                "You do not have permission to access this resource"
+              );
             } else if (result.status === 404) {
-              alert("Error: Trip not found");
+              setBannerMsg("Error: Trip not found");
             } else if (result.status === 409) {
               const data = await result.json();
               b = true;
@@ -500,7 +504,7 @@ const EditCanvas = ({
                 "Another user has updated this resource, your change was not applied"
               );
             } else if (result.status >= 500) {
-              alert(
+              setBannerMsg(
                 "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
               );
             } else {
@@ -877,13 +881,13 @@ const EditCanvas = ({
           state: { message: "Session expired, redirecting to log in..." },
         });
       } else if (response.status === 403) {
-        alert("You do not have permission to access this resource");
+        setBannerMsg("You do not have permission to access this resource");
         return 400;
       } else if (response.status === 404) {
-        alert("Error: Trip not found");
+        setBannerMsg("Error: Trip not found");
         return 400;
       } else if (response.status >= 500) {
-        alert(
+        setBannerMsg(
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
         return 500;
@@ -912,13 +916,13 @@ const EditCanvas = ({
           state: { message: "Session expired, redirecting to log in..." },
         });
       } else if (response.status === 403) {
-        alert("You do not have permission to access this resource");
+        setBannerMsg("You do not have permission to access this resource");
         return 400;
       } else if (response.status === 404) {
-        alert("Error: Trip not found");
+        setBannerMsg("Error: Trip not found");
         return 400;
       } else if (response.status >= 500) {
-        alert(
+        setBannerMsg(
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
         return 500;
@@ -1056,13 +1060,13 @@ const EditCanvas = ({
           // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
         } else if (addingReq.status === 403) {
           clearOverwriteBanner();
-          alert("You do not have permission to access this resource");
+          setBannerMsg("You do not have permission to access this resource");
         } else if (addingReq.status === 404) {
           clearOverwriteBanner();
-          alert("Error: Trip not found");
+          setBannerMsg("Error: Trip not found");
         } else if (addingReq.status >= 500) {
           clearOverwriteBanner();
-          alert(
+          setBannerMsg(
             "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
           );
         }
@@ -1125,10 +1129,10 @@ const EditCanvas = ({
           // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
         } else if (patchRes.status === 403) {
           clearOverwriteBanner();
-          alert("You do not have permission to access this resource");
+          setBannerMsg("You do not have permission to access this resource");
         } else if (patchRes.status === 404) {
           clearOverwriteBanner();
-          alert("Error: Trip not found");
+          setBannerMsg("Error: Trip not found");
         } else if (patchRes.status === 409) {
           const data = await patchRes.json();
           for (const i of data.newData) {
@@ -1151,12 +1155,15 @@ const EditCanvas = ({
           setBannerMsg(
             "Another user has updated this resource AGAIN, your change was not applied"
           );
-          alert(
+          setBannerMsg(
             "Another user has updated this resource, your change was not applied"
           );
         } else if (patchRes.status >= 500) {
           clearOverwriteBanner();
-          alert(
+          setBannerMsg(
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          );
+          setBannerMsg(
             "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
           );
         } else {
@@ -1170,9 +1177,13 @@ const EditCanvas = ({
   };
 
   const clearOverwriteBanner = (e?: React.MouseEvent) => {
+    console.log("clear called");
     e?.preventDefault();
     setBannerMsg(null);
     setHoldOverwrite(null);
+    //clearTimeout(refTimerStarted.current ?? 0);
+    //refTimerStarted.current = null;
+    setRemountKey((prev) => prev + 1);
   };
 
   return (
@@ -1192,63 +1203,65 @@ const EditCanvas = ({
       //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
       //modifiers={[restrictToFirstScrollableAncestor]}
     >
-      <div className={styles.pageWrapper}>
-        <div className={styles.tableAndList}>
-          <EditScheduleProvider
-            utcStart={utcStart}
-            utcEnd={utcEnd}
-            setUtcStart={setUtcStart}
-            setUtcEnd={setUtcEnd}
-            individualAddition={individualAddition}
-            setIndividualAddition={setIndividualAddition}
-            editLineId={editLineId}
-            setEditLineId={setEditLineId}
-            addingItem={addingItem}
-            setAddingItem={setAddingItem}
-            setHoldOverwrite={setHoldOverwrite}
-            setBannerMsg={setBannerMsg}
-          >
-            <EditVacationSchedule
-              loadFirst={() => setLoading(false)}
-              getMapValues={gValuesFn}
-              schedule={schedule}
-              setSchedule={setSchedule}
-              activeItem={activeId}
-              dragRow={dragRow}
-              overlayWidthRef={overlayWidthRef.current}
-              dragFrom={dragFrom}
-            />
-          </EditScheduleProvider>
-          {!loading && (
-            <WantToSeeList
-              loadSecond={() => setLoading2(false)}
-              setList={setWishList}
+      <BannerContextProvider bannerMsg={bannerMsg} setBannerMsg={setBannerMsg}>
+        <div className={styles.pageWrapper}>
+          <div className={styles.tableAndList}>
+            <EditScheduleProvider
+              utcStart={utcStart}
+              utcEnd={utcEnd}
+              setUtcStart={setUtcStart}
+              setUtcEnd={setUtcEnd}
+              individualAddition={individualAddition}
+              setIndividualAddition={setIndividualAddition}
+              editLineId={editLineId}
+              setEditLineId={setEditLineId}
+              addingItem={addingItem}
+              setAddingItem={setAddingItem}
+              setHoldOverwrite={setHoldOverwrite}
+            >
+              <EditVacationSchedule
+                loadFirst={() => setLoading(false)}
+                getMapValues={gValuesFn}
+                schedule={schedule}
+                setSchedule={setSchedule}
+                activeItem={activeId}
+                dragRow={dragRow}
+                overlayWidthRef={overlayWidthRef.current}
+                dragFrom={dragFrom}
+              />
+            </EditScheduleProvider>
+            {!loading && (
+              <WantToSeeList
+                loadSecond={() => setLoading2(false)}
+                setList={setWishList}
+                list={wishList}
+                handleSubmitItem={handleSubmitItem}
+                handleDeleteItem={handleDeleteItem}
+                activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
+              />
+            )}
+          </div>
+          {!loading2 && (
+            <MyMapComponent
+              bounds={vp}
+              startLocation={location}
+              gId={gId}
               list={wishList}
               handleSubmitItem={handleSubmitItem}
               handleDeleteItem={handleDeleteItem}
-              activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
             />
           )}
         </div>
-        {!loading2 && (
-          <MyMapComponent
-            bounds={vp}
-            startLocation={location}
-            gId={gId}
-            list={wishList}
-            handleSubmitItem={handleSubmitItem}
-            handleDeleteItem={handleDeleteItem}
+        {bannerMsg && (
+          <Banner
+            key={remountKey}
+            bannerMsg={bannerMsg}
+            holdOverwrite={holdOverwrite}
+            handleOverwrite={handleOverwrite}
+            clearOverwriteBanner={clearOverwriteBanner}
           />
         )}
-      </div>
-      {bannerMsg && (
-        <Banner
-          bannerMsg={bannerMsg}
-          holdOverwrite={holdOverwrite}
-          handleOverwrite={handleOverwrite}
-          clearOverwriteBanner={clearOverwriteBanner}
-        />
-      )}
+      </BannerContextProvider>
     </DndContext>
   );
 };

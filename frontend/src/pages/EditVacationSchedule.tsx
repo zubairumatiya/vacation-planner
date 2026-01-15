@@ -19,6 +19,7 @@ import {
 import NormalRow from "../components/NormalRow";
 //import { restrictToFirstScrollableAncestor } from "@dnd-kit/modifiers";
 import addToSchedule from "../assets/add-to-schedule.svg";
+import { BannerContext } from "../context/BannerContext";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -82,6 +83,8 @@ const EditVacationSchedule = ({
     setIndividualAddition,
   } = useContext(EditScheduleContext);
 
+  const { bannerMsg, setBannerMsg } = useContext(BannerContext);
+
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -90,7 +93,6 @@ const EditVacationSchedule = ({
   const [days, setDays] = useState<DayContainer[]>([]); // each day(table)
 
   const [itemError, setItemError] = useState(false);
-  const [message, setMessage] = useState("");
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -109,11 +111,11 @@ const EditVacationSchedule = ({
           state: { message: "Session expired, redirecting to log in..." },
         });
       } else if (response.status === 403) {
-        setMessage("You do not have permission to access this resource");
+        setBannerMsg("You do not have permission to access this resource");
       } else if (response.status === 404) {
-        setMessage("Error: Trip not found");
+        setBannerMsg("Error: Trip not found");
       } else if (response.status >= 500) {
-        setMessage(
+        setBannerMsg(
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else if (response.ok) {
@@ -259,7 +261,7 @@ const EditVacationSchedule = ({
       if (!startTimePick) {
         error = true;
         setStartError(true);
-        alert("start time invalid");
+        setBannerMsg("start time invalid");
         return;
       }*/
       if (!startTimePick || startTimePick === ": ") {
@@ -271,7 +273,7 @@ const EditVacationSchedule = ({
       if (!endTimePick) {
         error = true;
         setEndError(true);
-        alert("end time invalid");
+        setBannerMsg("end time invalid");
         return;
       }*/
 
@@ -283,7 +285,7 @@ const EditVacationSchedule = ({
       if (!location) {
         error = true;
         setLocationError(true);
-        alert("location invalid value");
+        setBannerMsg("location invalid value");
         return;
       }
       console.log("startTimePick:", startTimePick, "endTimePick:", endTimePick);
@@ -364,13 +366,13 @@ const EditVacationSchedule = ({
             // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
           } else if (addingReq.status === 403) {
             setIndividualAddition({ addingContainer: "" });
-            setMessage("You do not have permission to access this resource");
+            setBannerMsg("You do not have permission to access this resource");
           } else if (addingReq.status === 404) {
             setIndividualAddition({ addingContainer: "" });
-            setMessage("Error: Trip not found");
+            setBannerMsg("Error: Trip not found");
           } else if (addingReq.status >= 500) {
             setIndividualAddition({ addingContainer: "" });
-            setMessage(
+            setBannerMsg(
               "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
             );
           }
@@ -530,7 +532,7 @@ const EditVacationSchedule = ({
         finalArr[targetIndex] = data.addedItem;
         setSchedule(finalArr);
       } else {
-        alert("error processing change");
+        setBannerMsg("error processing change");
       }
     }
     // for a new item from list, let's add a post request instead but do the same result.ok
@@ -549,7 +551,7 @@ const EditVacationSchedule = ({
     if (result.ok) {
       setSchedule(finalArr);
     } else {
-      alert("error processing change");
+      setBannerMsg("error processing change");
     }
     dragIndexRef.current = -1;
   };
@@ -725,7 +727,7 @@ const EditVacationSchedule = ({
   }, [holdEndTime, holdStartTime, editMultiDay]);
 
   return loading ? (
-    <p>{message}</p>
+    <p>{bannerMsg}</p>
   ) : (
     <div className={styles.pageWrapper}>
       {days.map((dayObj: DayContainer) => {
