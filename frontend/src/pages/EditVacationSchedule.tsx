@@ -778,7 +778,7 @@ const EditVacationSchedule = ({
                         minute: string,
                         meridiem: string
                       ) => constructDate("start", hour, minute, meridiem)}
-                      preTime={undefined}
+                      preTime={() => undefined}
                     />
                   </div>
 
@@ -793,7 +793,7 @@ const EditVacationSchedule = ({
                         minute: string,
                         meridiem: string
                       ) => constructDate("end", hour, minute, meridiem)}
-                      preTime={undefined}
+                      preTime={() => undefined}
                     />
                   </div>
                   {/*

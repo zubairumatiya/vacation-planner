@@ -129,6 +129,27 @@ export const indexChunk = (
   }
 };
 
+export const calculateNewSortIndex = (chunk: Chunk): number => {
+  const above = chunk.above?.sortIndex;
+  const below = chunk.below?.sortIndex;
+
+  if (above == null && below == null) {
+    return 0;
+  } else if (above == null) {
+    console.log("No above in chunk");
+    if (below != null) {
+      return below - 1000;
+    }
+  } else if (below == null) {
+    console.log("No below in chunk");
+    return above + 1000;
+  } else {
+    console.log("our middle spot:", Math.floor((above + below) / 2));
+    return Math.floor((above + below) / 2);
+  }
+  return 0;
+};
+
 export const makeContainers = (length: number, startDate: Date) => {
   const dayContainers: DayContainer[] = [];
 

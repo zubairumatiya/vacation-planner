@@ -29,12 +29,13 @@ import { arrayMove } from "@dnd-kit/sortable";
 import type { AnyData } from "@dnd-kit/core/dist/store/types";
 import {
   bucketizeSchedule,
+  calculateNewSortIndex,
   indexChunk,
   makeContainers,
   prefixZero,
 } from "../utils/timeHelpers";
 
-import clearCircle from "../assets/clear-circle.svg";
+import Banner from "../components/Banner";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -492,6 +493,8 @@ const EditCanvas = ({
                 data.newData
               );
               setSchedule(bucketizeItems);
+              previous[overContainer][activeIndex].sortIndex =
+                calculateNewSortIndex(chunk);
               setHoldOverwrite(previous[overContainer][activeIndex]);
               setBannerMsg(
                 "Another user has updated this resource, your change was not applied"
@@ -934,18 +937,31 @@ const EditCanvas = ({
     oldArr: Schedule[],
     item: Schedule
   ): Schedule[] => {
-    const itemStartItem = item.startTime.getTime();
+    /*const itemStartItem = item.startTime.getTime();
+    let sameItem = null;
+    let sameBoolean = false;
     let index: number = oldArr.findIndex((v) => {
+      if(v.startTime.getTime() === itemStartItem){
+
+      }
       if (v.startTime.getTime() > itemStartItem) {
+        // placing ABOVE found index, aside from none found -
         // if our item should be at the end our index will be -1, will place same time items at the bottom of same time stack
         return true;
       } else {
         return false;
       }
     });
-    index =
-      index - 1 === -2 ? oldArr.length - 1 : index - 1 === -1 ? 0 : index - 1;
+    
+    index = index === -1 ? oldArr.length : index === 0 ? 0 : index;
     return [...oldArr.slice(0, index), item, ...oldArr.slice(index)];
+    */
+    return [...oldArr, item].sort((a: Schedule, b: Schedule) => {
+      if (a.startTime.getTime() === b.startTime.getTime()) {
+        return a.sortIndex - b.sortIndex;
+      }
+      return a.startTime.getTime() - b.startTime.getTime();
+    });
   };
 
   const handleOverwrite = async (e: React.MouseEvent) => {
@@ -1019,24 +1035,20 @@ const EditCanvas = ({
           const data = await addingReq.json();
           const startTime = new Date(data.addedItem.startTime);
           const day = startTime.toISOString().split("T")[0];
-          console.log("sched", schedule);
           setSchedule((prev) => {
             const addedItem = {
               ...data.addedItem,
               startTime: new Date(data.addedItem.startTime),
               endTime: new Date(data.addedItem.endTime),
             };
-            console.log(addedItem);
-            prev[day].push(addedItem);
-            prev[day].sort(
-              (a: Schedule, b: Schedule) =>
-                a.startTime.getTime() - b.startTime.getTime()
-            );
             return {
               ...prev,
-              [day]: [...prev[day]],
+              [day]: newArrOldItem.map((v) =>
+                v.id === addedItem.id ? addedItem : v
+              ),
             };
           });
+          clearOverwriteBanner();
         } else if (addingReq.status === 401) {
           navigate("/redirect", {
             state: { message: "Session expired, redirecting to log in..." },
@@ -1076,8 +1088,8 @@ const EditCanvas = ({
         if (patchRes.ok) {
           const data = await patchRes.json();
           clearOverwriteBanner();
-          setSchedule((prev) =>
-            newItemContainer !== previousItemContainer
+          setSchedule((prev) => {
+            return newItemContainer !== previousItemContainer
               ? {
                   ...prev,
                   [newItemContainer]: prev[newItemContainer].filter(
@@ -1104,8 +1116,8 @@ const EditCanvas = ({
                         }
                       : v
                   ),
-                }
-          );
+                };
+          });
         } else if (patchRes.status === 401) {
           navigate("/redirect", {
             state: { message: "Session expired, redirecting to log in..." },
@@ -1155,40 +1167,6 @@ const EditCanvas = ({
       console.log(err);
       return;
     }
-  };
-
-  const Overwrite = () => {
-    return (
-      <div className={styles.overwrite}>
-        {
-          holdOverwrite && (
-            <button
-              className={styles.overwriteButton}
-              onClick={handleOverwrite}
-            >
-              Overwrite change?
-            </button>
-          ) /* can add a way to do 500 status retries later */
-        }
-      </div>
-    );
-  };
-
-  const Banner = () => {
-    return (
-      <div className={`${styles.bannerAndOverwrite}`}>
-        <div className={styles.clearBnO}>
-          <button className={styles.clearButton} onClick={clearOverwriteBanner}>
-            <img src={clearCircle} alt="clearCircle" />
-          </button>
-        </div>
-        <div className={styles.banner}>
-          {bannerMsg && <div className={styles.bannerMsg}>{bannerMsg}</div>}
-        </div>
-        <div className={styles.timerBar}></div>
-        {holdOverwrite && <Overwrite />}
-      </div>
-    );
   };
 
   const clearOverwriteBanner = (e?: React.MouseEvent) => {
@@ -1263,7 +1241,14 @@ const EditCanvas = ({
           />
         )}
       </div>
-      {bannerMsg && <Banner />}
+      {bannerMsg && (
+        <Banner
+          bannerMsg={bannerMsg}
+          holdOverwrite={holdOverwrite}
+          handleOverwrite={handleOverwrite}
+          clearOverwriteBanner={clearOverwriteBanner}
+        />
+      )}
     </DndContext>
   );
 };

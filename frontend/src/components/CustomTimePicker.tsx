@@ -6,7 +6,7 @@ import dropDownArrow from "../assets/arrow-drop.svg";
 type Props = {
   onChange: (hour: string, minute: string, meridiem: string) => void;
   className: string | undefined;
-  preTime: string | undefined;
+  preTime: () => string | undefined;
 };
 
 const CustomTimePicker = (props: Props) => {
@@ -34,16 +34,40 @@ const CustomTimePicker = (props: Props) => {
   const [hourAnchor, setHourAnchor] = useState<HTMLElement | null>(null);
   const [minuteBlurCheck, setMinuteBlurCheck] = useState<boolean>(false);
   const [hourBlurCheck, setHourBlurCheck] = useState<boolean>(false);
+  const [loaded, setLoaded] = useState<boolean>(false);
 
   useEffect(() => {
-    props.onChange(hourSelection, minuteSelection, meridiemSelection);
-  }, [hourSelection, minuteSelection, meridiemSelection]);
+    if (!loaded) {
+      if (props.preTime) {
+        const preTime = props.preTime();
+        if (preTime == null) {
+          setLoaded(true);
+          return;
+        }
+        const hourNMinute = preTime.split(":");
+        const justMinute = hourNMinute[1].split(" ")[0];
+        const getMeridiem = preTime.split(" ")[1];
+        if (Number(hourNMinute[0]) < 10) {
+          setHourSelection("0" + hourNMinute[0]);
+        } else {
+          setHourSelection(hourNMinute[0]);
+        }
+        setMinuteSelection(justMinute);
+        setMeridiemSelection(getMeridiem);
+      }
+      setLoaded(true);
+    } else {
+      props.onChange(hourSelection, minuteSelection, meridiemSelection);
+    }
+  }, [hourSelection, minuteSelection, meridiemSelection, loaded]);
 
-  useEffect(() => {
+  /* useEffect(() => {
     if (props.preTime) {
-      const hourNMinute = props.preTime.split(":");
+      const preTime = props.preTime();
+      if (preTime == null) return;
+      const hourNMinute = preTime.split(":");
       const justMinute = hourNMinute[1].split(" ")[0];
-      const getMeridiem = props.preTime.split(" ")[1];
+      const getMeridiem = preTime.split(" ")[1];
       if (Number(hourNMinute[0]) < 10) {
         setHourSelection("0" + hourNMinute[0]);
       } else {
@@ -52,7 +76,7 @@ const CustomTimePicker = (props: Props) => {
       setMinuteSelection(justMinute);
       setMeridiemSelection(getMeridiem);
     }
-  }, []);
+  }, []);*/
 
   useEffect(() => {
     if (hourSelection) {
@@ -483,6 +507,7 @@ const CustomTimePicker = (props: Props) => {
             onFocus={() => {
               setHideMinutes(true);
             }}
+            value={meridiemSelection}
           >
             <option value="AM">AM</option>
             <option value="PM">PM</option>

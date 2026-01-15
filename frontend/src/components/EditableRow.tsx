@@ -7,6 +7,7 @@ import {
   indexChunk,
   makeContainers,
   bucketizeSchedule,
+  calculateNewSortIndex,
 } from "../utils/timeHelpers";
 import CustomTimePicker from "./CustomTimePicker";
 import type { UniqueIdentifier } from "@dnd-kit/core";
@@ -134,7 +135,7 @@ const EditableRow = ({
           data.newData
         );
         setSchedule(bucketizeItems);
-        setHoldOverwrite({ ...schedule[dateAdded][index] });
+
         setBannerMsg(
           "Another user has updated this resource, your change was not applied"
         );
@@ -336,7 +337,7 @@ const EditableRow = ({
         const holdIntent = {
           ...sItem,
           id: itemID,
-          sortIndex: 0,
+          sortIndex: calculateNewSortIndex(chunk),
           tripId: tripId ?? "",
           startTime: new Date(startDateAssembler),
           endTime: new Date(endDateAssembler),
@@ -418,7 +419,7 @@ const EditableRow = ({
               setHoldEndTime
             );
           }}
-          preTime={addMeridiem(fourDigitTime(value.startTime))}
+          preTime={() => addMeridiem(fourDigitTime(value.startTime))}
         />
       </td>
 
@@ -475,7 +476,7 @@ const EditableRow = ({
               setHoldEndTime
             );
           }}
-          preTime={addMeridiem(fourDigitTime(value.endTime))}
+          preTime={() => addMeridiem(fourDigitTime(value.endTime))}
         />
       </td>
 
