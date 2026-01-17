@@ -50,10 +50,7 @@ const CustomTableRow = ({
       style={style}
       ref={combinedRef}
       data-index={index}
-      className={`${/*index === dragIndexRef.current &&*/ styles.dragging} ${
-        // will need to see how the drag styling on dnd-kit looks for the grab cursor
-        styles.tableRow
-      }`}
+      className={`${styles.tableRow}`}
       onDoubleClick={(e) =>
         handleEdit(
           e,
@@ -77,8 +74,6 @@ const CustomTableRow = ({
           schedule={schedule}
         ></EditableRow>
       ) : (
-        //          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Editing above : divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
         <NormalRow
           value={scheduleItem}
           dayContainer={dayContainer}

@@ -8,14 +8,12 @@ export default async function ensureOwnership(
 ) {
   try {
     if (!req.user?.id) {
-      console.log("User information not found");
       res.status(500).json({ message: "User information not found" });
       return;
     }
     const tripId = req.params.tripId ?? req.body.tripId;
 
     if (tripId == null) {
-      console.log("Trip id not found in request");
       res.sendStatus(404);
       return;
     }
@@ -24,11 +22,9 @@ export default async function ensureOwnership(
       [tripId, req.user.id, "owner", "editor"]
     );
     if (!result || result.rowCount < 1) {
-      console.log("Wrong owner");
       res.sendStatus(403);
       return;
     } else {
-      console.log("does ensureOwner enter success condition?");
       req.user.role = result.rows[0].role;
       next();
     }

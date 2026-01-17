@@ -149,7 +149,6 @@ declare global {
   }
 
   interface SearchBarProps {
-    setLocationId: (placeId: string | undefined) => void;
     placeType: PlaceType;
     setPlaceType: (placeType: PlaceType) => void;
     setLocationName: (placeDisplayName: string) => void;

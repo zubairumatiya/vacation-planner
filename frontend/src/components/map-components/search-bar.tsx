@@ -15,7 +15,6 @@ import { useMap } from "@vis.gl/react-google-maps";
 export const SearchBar = memo(function SearchBar({
   placeType,
   setPlaceType,
-  setLocationId,
   setLocationName,
   locationName,
   searchDisabled,
@@ -98,7 +97,6 @@ export const SearchBar = memo(function SearchBar({
         new google.maps.LatLng(vp.high.latitude, vp.high.longitude)
       );
       const holdValues = () => {
-        setLocationId(id);
         setLocationName(name);
         setViewport(vp);
         map?.fitBounds(bounds);

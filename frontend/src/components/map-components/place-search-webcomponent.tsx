@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from "react";
-//import { useMap, useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 import starIcon from "../../assets/star-icon.svg";
 import addToList from "../../assets/add-to-list.svg";
@@ -45,7 +44,6 @@ const PlaceSearchWebComponent = ({
     const pages = Math.floor(total / 10);
     const leftover = total % 10;
     return { pages, leftover };
-    // want to return: pages added(10), leftover
   };
 
   useEffect(() => {
@@ -140,7 +138,7 @@ const PlaceSearchWebComponent = ({
   }, [pageCountSwitch]);
 
   const checkDifferentSelection = () => {
-    // can use this to check other setttings like placeType and location. But we will need a state in parent to also communicate with search bar to disable the submit button
+    // can use this to check other setttings like placeType and location. We also have a state in parent to communicate with search bar to disable the submit button
     if (
       rememberFilter.rating !== ratingRef?.current?.value ||
       rememberFilter.reviews !== reviewCountRef?.current?.value
@@ -185,9 +183,6 @@ const PlaceSearchWebComponent = ({
     e.stopPropagation();
     handleSubmitItem(placeName, placeId);
   };
-
-  // Return the Google Maps Place List Web Component
-  // This component is rendered as a custom HTML element (Web Component) provided by Google
   return (
     <>
       <div className={styles.listParentContainer}>
@@ -328,10 +323,3 @@ const PlaceSearchWebComponent = ({
 };
 
 export default React.memo(PlaceSearchWebComponent);
-
-/**
- * Augments the React JSX namespace to add type definitions for the
- * Places UI Kit  web components. This provides
- * type-checking and autocompletion for their props, including custom
- * events, within JSX.
- */

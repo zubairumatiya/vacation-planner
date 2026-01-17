@@ -41,13 +41,7 @@ const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
 
   return (
     <>
-      <td
-        //onDragStart={(e) =>
-        //  handleDragStart(e, value.id, index)
-        //}
-        className={styles.dragCells}
-        {...restOfProps}
-      >
+      <td className={styles.dragCells} {...restOfProps}>
         <div className={styles.dragWrapper}>
           <img className={styles.dragButton} src={dragIcon} alt="drag" />
         </div>

@@ -12,7 +12,6 @@ const apiURL = import.meta.env.VITE_API_URL;
 
 const WantToSeeList = (props: WantToSeeListProps) => {
   const { tripId } = useParams();
-  //const [list, props.setList] = useState<Item[]>([]);
   const [newItem, setNewItem] = useState<string>("");
   const [addingNewItem, setAddingNewItem] = useState<boolean>(true);
   const [editItemId, setEditItemId] = useState<UniqueIdentifier>("-1");

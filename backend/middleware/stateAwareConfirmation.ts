@@ -20,30 +20,20 @@ export default async function stateAwareConfirmation(
     }
     const result = await db.query(queryText, [req.params.id]);
     if (!result) {
-      console.log("Server Error");
       res.status(500).json({ message: "Server Error" });
       return;
     }
     if (result.rowCount < 1 && req.method === "DELETE") {
       // item has most likely been deleted already which is a conflict and should be in the statement below as well, only in DELETE does is it ok it's missing
-      console.log("Item not found");
+
       res.status(404).json({ deletedId: req.params.id, queryComplete: "true" });
       return;
     }
     snakeToCamel(result.rows);
-    console.log(
-      "lastModifiedBody",
-      req.body.lastModified,
-      "lastModifiedDB:",
-      result.rows?.[0]?.lastModified.toISOString(),
-      "equal:",
-      req.body.lastModified === result.rows?.[0]?.lastModified.toISOString()
-    );
     if (
       req.body.lastModified !== result.rows?.[0]?.lastModified.toISOString() ||
       result.rowCount < 1
     ) {
-      console.log("Conflict detected");
       if (
         /^\/schedule\/[^/]+$/.test(path) ||
         /^\/update-time\/[^/]+$/.test(path)
@@ -65,11 +55,9 @@ export default async function stateAwareConfirmation(
     } else if (
       req.body.lastModified === result.rows[0].lastModified.toISOString()
     ) {
-      console.log("No conflict detected :)))");
       next();
     }
   } catch (err) {
-    console.log("thorwwwwwwwwwwwww", err);
     next(err);
   }
 }

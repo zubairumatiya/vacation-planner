@@ -25,24 +25,14 @@ export default async function checkIndexSpacing(
   const above = body.chunk.above?.sortIndex;
   const below = body.chunk.below?.sortIndex;
   const tripId = paramTripId ?? body.tripId;
-  console.log("tripId in check index:", tripId);
-  console.log(
-    "aboveId:",
-    body.chunk.above?.id,
-    "belowId:",
-    body.chunk.above?.id
-  );
   if (above == null && below == null) {
     return 0;
   } else if (above == null) {
-    console.log("No above in chunk");
     return below - 1000;
   } else if (below == null) {
-    console.log("No below in chunk");
     return above + 1000;
   } else {
     if (below - above <= 4) {
-      console.log("TOO CLOSE...reindexing");
       // the same as middle - above <= 2 || below - middle <= 2 but easier to read represents the gap
       if (add) {
         return undefined;
@@ -63,7 +53,6 @@ export default async function checkIndexSpacing(
         return renumRows;
       }
     } else {
-      console.log("our middle spot:", Math.floor((above + below) / 2));
       return Math.floor((above + below) / 2);
     }
   }

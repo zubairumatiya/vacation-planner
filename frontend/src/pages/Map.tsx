@@ -1,15 +1,13 @@
 // Copyright (c) 2023 Vis.gl contributors
 // Licensed under the MIT License
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 
 import { PlaceDetailsMarker } from "../components/map-components/place-details-marker";
 import PlaceSearchWebComponent from "../components/map-components/place-search-webcomponent";
 import { SearchBar } from "../components/map-components/search-bar";
-// This registers ALL `<gmp-...>` components globally
 
-//import ControlPanel from '../components/map-components/place-details-marker';
 import styles from "../styles/Map.module.css";
 
 const API_KEY = import.meta.env.VITE_MAPS_API_KEY;
@@ -32,7 +30,6 @@ const MAP_CONFIG = {
 type Props = {
   bounds: Vp | null;
   startLocation: string;
-  gId: string;
   list: Item[];
   handleSubmitItem: WantToSeeListProps["handleSubmitItem"];
   handleDeleteItem: WantToSeeListProps["handleDeleteItem"];
@@ -41,7 +38,6 @@ type Props = {
 const MyMapComponent = ({
   bounds,
   startLocation,
-  gId,
   list,
   handleSubmitItem,
   handleDeleteItem,
@@ -50,7 +46,7 @@ const MyMapComponent = ({
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined
   );
-  const [locationId, setLocationId] = useState<string | undefined>(gId);
+
   const [locationName, setLocationName] = useState<string>(startLocation ?? "");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
   const [searchDisabled, setSearchDisabled] = useState<boolean>(true);
@@ -64,8 +60,8 @@ const MyMapComponent = ({
           low: { latitude: 0, longitude: 0 },
         }
   );
-  const [detailsSize, setDetailsSize] = useState<DetailsSize>("FULL");
-  const [colorScheme, setColorScheme] = useState<ColorScheme>("light");
+  const colorScheme = useRef<ColorScheme>("light"); //if we incorporate changing colors in the future, a state hook would work better
+  const detailsSize = useRef<DetailsSize>("FULL");
 
   useEffect(() => {
     if (bounds) {
@@ -95,15 +91,20 @@ const MyMapComponent = ({
   }, [places, selectedPlaceId, detailsSize]);
 
   return (
-    // APIProvider sets up the Google Maps JavaScript API with the specified key
-    // Using 'alpha' version to access the latest features including UI Kit components
     <APIProvider apiKey={API_KEY}>
-      <div className={styles.gPlaces} style={{ colorScheme: colorScheme }}>
+      <div
+        className={styles.gPlaces}
+        style={{ colorScheme: colorScheme.current }}
+      >
         <div className={styles.mapContainer}>
+          {/*
+            SearchBar allows users to:
+            - Select the type of place they want to find
+            - Search for a specific location to center the map on
+          */}
           <SearchBar
             placeType={placeType}
             setPlaceType={setPlaceType}
-            setLocationId={setLocationId}
             setLocationName={setLocationName}
             locationName={locationName}
             searchDisabled={searchDisabled}
@@ -144,65 +145,9 @@ const MyMapComponent = ({
               </Map>
             </div>
           </div>
-          {/*
-            SearchBar allows users to:
-            - Select the type of place they want to find
-            - Search for a specific location to center the map on
-          */}
-
-          {/*
-            ControlPanel provides UI controls for adjusting the size of place details
-            displayed in the InfoWindow
-          */}
-          {/*
-
-              <ControlPanel
-              detailsSize={detailsSize}
-              onDetailSizeChange={setDetailsSize}
-              colorScheme={colorScheme}
-              onColorSchemeChange={setColorScheme}
-              />
-            */}
         </div>
       </div>
     </APIProvider>
   );
 };
 export default MyMapComponent;
-
-{
-  /*
-    import { APIProvider } from "@vis.gl/react-google-maps";
-    
-    const API_KEY = import.meta.env.VITE_MAPS_API_KEY;
-    
-    export const PlaceTextSearchMinimal = () => {
-        return (
-            <APIProvider apiKey={API_KEY} version="beta" libraries={["places"]}>
-            <div style={{ padding: "1rem", border: "1px solid gray" }}>
-            <h2>Text Search Minimal</h2>
-            
-            <gmp-place-search
-            ongmp-load={(e: any) => {
-                console.log("✅ gmp-place-search loaded");
-            }}
-            // Listen for text search responses at the parent
-            onGmpPlacestextsearchresponse={(ev: any) =>
-            console.log("✅ Text search response (bubbled):", ev.detail)
-        }
-        >
-        <gmp-place-text-search-request
-        text-query="coffee in Austin"
-        ></gmp-place-text-search-request>
-        
-        <gmp-place-all-content></gmp-place-all-content>
-        </gmp-place-search>
-        </div>
-        </APIProvider>
-    );
-};
-
-export default PlaceTextSearchMinimal;
-
-*/
-}

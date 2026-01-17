@@ -20,14 +20,7 @@ const CustomTableComponent = ({
 
   const { setNodeRef } = useDroppable({ id: dayObj.day });
   return (
-    <table
-      //onDrop={(e) => handleDragDrop(e)}
-      //onDragOver={(e) => e.preventDefault()}
-      //onDragEnter={(e) => e.preventDefault()}
-      className={styles.table}
-      id={dayObj.day}
-      ref={setNodeRef}
-    >
+    <table className={styles.table} id={dayObj.day} ref={setNodeRef}>
       <colgroup>
         <col className={styles.dragCol} />
         <col className={styles.startTimeCol} />
@@ -61,8 +54,6 @@ const CustomTableComponent = ({
               .split("T")[0];
 
             const endDate: string = item.endTime.toISOString().split("T")[0];
-            //        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Iterate divider~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
             return (
               <Fragment key={item.id}>
                 <CustomTableRow

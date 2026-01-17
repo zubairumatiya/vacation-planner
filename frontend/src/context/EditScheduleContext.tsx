@@ -54,7 +54,7 @@ export type EditScheduleContext = {
     }>
   >;
   setHoldOverwrite: React.Dispatch<React.SetStateAction<Schedule | null>>;
-}; // Does context get recreated each time a child component is re-rendered??
+};
 
 export const EditScheduleContext = createContext<EditScheduleContext>(
   {} as EditScheduleContext // Not using null because i am confident i will only use this context in components who are wrapped by the provider.

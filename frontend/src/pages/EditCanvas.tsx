@@ -17,8 +17,6 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-
-  //type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
   type UniqueIdentifier,
@@ -51,13 +49,10 @@ const EditCanvas = ({
   const [loading2, setLoading2] = useState<boolean>(true);
   const [vp, setVp] = useState<null | Vp>(null);
   const [location, setLocation] = useState<string>("");
-  const [gId, setGId] = useState<string>("");
   const [wishList, setWishList] = useState<Item[]>([]);
   const [wishListClone, setWishListClone] = useState<Item[]>([]);
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  //const [overId, setOverId] = useState<UniqueIdentifier | null>(null);
   const [schedule, setSchedule] = useState<DaySchedule>({});
-  //const [dragItem, setDragItem] = useState<DraggingState | null>(null);
   const [dragRow, setDragRow] = useState<Schedule | null>(null);
   const [dragFrom, setDragFrom] = useState<string>("");
   const [clonedSchedule, setClonedSchedule] = useState<DaySchedule>({});
@@ -83,16 +78,6 @@ const EditCanvas = ({
   const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
   const [addingItem, setAddingItem] = useState<boolean>(false);
   const [remountKey, setRemountKey] = useState<number>(0);
-
-  /*
-  useEffect(() => {
-    if (bannerMsg && !refTimerStarted.current) {
-      console.log("insdie ran", bannerMsg);
-      refTimerStarted.current = setTimeout(() => {
-        clearOverwriteBanner();
-      }, 8000);
-    }
-  }, [bannerMsg]);*/
 
   useEffect(() => {
     lastEditWasDrag.current = false;
@@ -121,7 +106,7 @@ const EditCanvas = ({
 
   const customCollisionsDetectionAlgorithm: CollisionDetection = useCallback(
     (args) => {
-      const pointerCollisions = pointerWithin(args); // we will use this for touch and pointer sensor
+      const pointerCollisions = pointerWithin(args);
       let intersections;
       if (initialListDrag.current) {
         intersections = pointerCollisions;
@@ -131,8 +116,7 @@ const EditCanvas = ({
             ? pointerCollisions
             : closestCorners(args);
       }
-      //pointerCollisions.length > 0 ? pointerCollisions : closestCorners(args); // fallback on closest corners in case of keyboard sensor
-      let overId = getFirstCollision(intersections, "id"); // i guess this will always be the container first? According to source code example?
+      let overId = getFirstCollision(intersections, "id");
       if (overId != null) {
         if (overId in schedule) {
           const containerItems = schedule[overId];
@@ -145,7 +129,7 @@ const EditCanvas = ({
                   container.id !== overId &&
                   containerItems.find((v) => container.id === v.id)
               ),
-            })[0]?.id; // return closest container that is not our parent container and is actually inside the parent container we are over. Not just closest in general.
+            })[0]?.id;
           }
         }
         lastOverId.current = overId;
@@ -217,24 +201,21 @@ const EditCanvas = ({
   };
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
-    // sorting animation and shuffling seems to be the deafult within the same container!
-    // see if dragged to new container
     if (!over) return;
     const activeInfo =
       tempScheduleItem.current && initialListDrag.current
         ? { container: "-1", index: -1 }
-        : findContainerAndIndex(active.id); // list items wont be in schedule yet, AND list and schedule id's can clash so active.id won't be reliable moving forward
+        : findContainerAndIndex(active.id); // list items wont be in schedule yet
     const activeContainer = activeInfo.container;
     const overInfo = findContainerAndIndex(over.id);
     const overContainer = overInfo.container;
     if (!overContainer || !activeContainer) {
-      //handleDragCancel();
       return;
     }
     if (activeContainer !== overContainer) {
       initialListDrag.current = false;
       setSchedule((prevSchedule) => {
-        const activeItems = prevSchedule[activeContainer]; // could be undefined
+        const activeItems = prevSchedule[activeContainer];
         const overItems = prevSchedule[overContainer];
         const activeIndex = activeInfo.index;
         const overIndex = overInfo.index;
@@ -243,7 +224,7 @@ const EditCanvas = ({
         if (over.id in schedule || overIndex === null) {
           newIndex = overItems.length + 1;
         } else {
-          const isBelowOverItem = // we have to decide if our item is going above or below the item we are over (which is returned from our colision alg). Specifically when switching containers, we need a simple calc to see where to place it
+          const isBelowOverItem = //this formula is only for table switching, otherwise dnd is calculated w pointer
             over &&
             active.rect.current.translated &&
             active.rect.current.translated.top >
@@ -258,7 +239,7 @@ const EditCanvas = ({
         recentlyMovedToNewContainer.current = true;
         return activeItems === undefined &&
           activeIndex === -1 &&
-          tempScheduleItem.current //  could make the conditional argument just my tempScheduleItem but I want to trust the process of my drag and have flow with my variables, maybe just being pedantic
+          tempScheduleItem.current
           ? {
               ...prevSchedule,
               [overContainer]: [
@@ -276,20 +257,14 @@ const EditCanvas = ({
                 ...overItems.slice(newIndex, overItems.length),
               ],
             };
-        // FOR NEXT TIME ADD POSITION ALG FOR NEW CONTAINER BOYS, Easiest case would prob be to compare with clone. We can also look if the isBelow alg is working properly.
       });
-    } else {
-      // when true, it means our active will be below our over, otherwise it will be above. This is diff than above, we will use this to modify where we get our start time from.
-      //let's see if we can change the start time as we drag - TBD if worth it
     }
   };
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
-    // for next time, let's continue to incorporate adding a list item to schedule.
     document.body.classList.remove("freezeScroll");
-    console.log(over);
+
     if (over?.id == null) {
-      console.log("cancelled");
       handleDragCancel();
       return;
     }
@@ -305,7 +280,7 @@ const EditCanvas = ({
       activeInfo.container === null ||
       overContainer === null
     ) {
-      // this is not like drag over where a null index indicates an empty table, since we will have already set the active item in schedule, it should return an index. This is a catch all check.
+      //it should return an index. This is a catch all check.
       handleDragCancel();
       return;
     }
@@ -339,7 +314,6 @@ const EditCanvas = ({
           endTime: newEndTime,
         };
         newArr[overIndex ?? 0] = newItem;
-        // new obj inserted into new array
 
         prevSchedule[overContainer][activeIndex] = newItem;
         // changing it here so changes are reflected in "previous" variable
@@ -364,7 +338,6 @@ const EditCanvas = ({
     const sendScheduleToDb = async () => {
       try {
         if (refIdSnapshot) {
-          // combining check mark fetch and schedule new item post request.
           const responses = await Promise.all([
             fetch(`${apiURL}/schedule/${tripId}`, {
               method: "POST",
@@ -418,7 +391,6 @@ const EditCanvas = ({
           const data = await responses[0].json();
           if (data.newlyIndexedSchedule != null) {
             for (const i of data.newlyIndexedSchedule) {
-              // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
               i.startTime = new Date(i.startTime);
               i.endTime = new Date(i.endTime);
               i.id = String(i.id);
@@ -481,12 +453,11 @@ const EditCanvas = ({
               const data = await result.json();
               b = true;
               for (const i of data.newData) {
-                // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
                 i.startTime = new Date(i.startTime);
                 i.endTime = new Date(i.endTime);
                 i.id = String(i.id);
               }
-              console.log("ERROR NEW DATA:", data.newData);
+
               const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
               const dayContainers: DayContainer[] = makeContainers(
                 length,
@@ -508,7 +479,7 @@ const EditCanvas = ({
                 "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
               );
             } else {
-              console.log("something went wrong editing");
+              setBannerMsg("Uh oh. Something went wrong.");
             }
             if (!b) {
               handleDragCancel();
@@ -522,7 +493,6 @@ const EditCanvas = ({
             } = await result.json();
             if (data.newlyIndexedSchedule != null) {
               for (const i of data.newlyIndexedSchedule) {
-                // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
                 i.startTime = new Date(i.startTime);
                 i.endTime = new Date(i.endTime);
                 i.id = String(i.id);
@@ -540,17 +510,12 @@ const EditCanvas = ({
             } else if (data.updatedData != null) {
               data.updatedData.startTime = new Date(data.updatedData.startTime);
               data.updatedData.endTime = new Date(data.updatedData.endTime);
-              setSchedule((prev) => {
-                {
-                  const obj: DaySchedule = {
-                    ...prev,
-                    [overContainer]: prev[overContainer].map((v) =>
-                      v.id === data.updatedData?.id ? data.updatedData : v
-                    ),
-                  };
-                  return obj;
-                }
-              });
+              setSchedule((prev) => ({
+                ...prev,
+                [overContainer]: prev[overContainer].map((v) =>
+                  v.id === data.updatedData?.id ? data.updatedData : v
+                ),
+              }));
             }
           }
         }
@@ -584,34 +549,25 @@ const EditCanvas = ({
     overIndex: number | null,
     overContainer: string
   ): Date => {
-    console.log("active index: ", activeIndex);
-    console.log("over index: ", overIndex);
     // active index is still the original index despite it shifting around (for same table items)
     // ts-ignore
     let activeStartTime: Date =
       currentSchedule[overContainer][activeIndex].startTime;
-    const holdTime = activeStartTime.toISOString().split("T")[1]; // the time should already be in UTC so going to ISOString should not change time: format hh:mm:ss.sssZ
+    const holdTime = activeStartTime.toISOString().split("T")[1];
     activeStartTime = new Date(`${overContainer}T${holdTime}`);
-    console.log("time at start: ", activeStartTime);
-    console.log("flag");
-    //debugger;
     if (currentSchedule[overContainer].length <= 0) {
-      // this should never run with the way we have dragging over empty containers (new containers) set up.
       handleDragCancel();
       return new Date();
     }
     if (currentSchedule[overContainer].length === 1) {
-      // dropping on empty container but changing table resets state so we can't check with overIndex === null, we can instead check for a length of one. (Non-moved objects are omitted before calling changeDropTime)
       activeStartTime = new Date(`${overContainer}T${holdTime}`);
     } else {
       if (overIndex === activeIndex) {
-        // will trigger on new table items (zero index, end of table, or dragging from list)
         const timeAbove =
           currentSchedule[overContainer][activeIndex - 1]?.startTime;
         const timeBelow =
           currentSchedule[overContainer][activeIndex + 1]?.startTime;
         if (overIndex === 0) {
-          // top of container
           if (activeStartTime.getTime() > timeBelow.getTime()) {
             if (timeBelow.getUTCHours() === 0) {
               activeStartTime = new Date(`${overContainer}T00:00:00Z`);
@@ -624,7 +580,6 @@ const EditCanvas = ({
             }
           }
         } else if (overIndex === currentSchedule[overContainer].length - 1) {
-          // bottom of container
           if (timeAbove.getUTCHours() === 23) {
             activeStartTime = new Date(`${overContainer}T23:59:00Z`);
           } else {
@@ -635,12 +590,11 @@ const EditCanvas = ({
             );
           }
         } else {
-          // somewhere inbetween (will be a list item)
           if (
             timeAbove.getTime() <= activeStartTime.getTime() &&
             timeBelow.getTime() >= activeStartTime.getTime()
           ) {
-            // perfect squeeze, no action needed
+            // no action needed
           } else {
             if (
               timeAbove.getTime() === timeBelow.getTime() ||
@@ -655,22 +609,18 @@ const EditCanvas = ({
                   )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
                 );
               } else {
-                // will either be the same hour or 1 hour apart
                 if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
                   if (timeBelow.getUTCMinutes() > timeAbove.getUTCMinutes()) {
-                    // greater than an hour gap
                     if (
                       timeBelow.getUTCMinutes() >
                       activeStartTime.getUTCMinutes()
                     ) {
-                      // current minutes less than time below, can freely add an hour and keep minutes
                       activeStartTime = new Date(
                         `${overContainer}T${prefixZero(
                           timeAbove.getUTCHours() + 1
                         )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
                       );
                     } else {
-                      // current minutes greater. just add hour and zero the minutes instead of microing minutes
                       activeStartTime = new Date(
                         `${overContainer}T${prefixZero(
                           timeAbove.getUTCHours() + 1
@@ -678,7 +628,6 @@ const EditCanvas = ({
                       );
                     }
                   } else {
-                    // less than an hour gap when including minutes
                     activeStartTime = new Date(
                       `${overContainer}T${prefixZero(
                         timeAbove.getUTCHours() + 1
@@ -686,7 +635,6 @@ const EditCanvas = ({
                     );
                   }
                 } else {
-                  // same hour
                   activeStartTime = timeAbove;
                 }
               }
@@ -708,7 +656,6 @@ const EditCanvas = ({
             }
           }
         } else {
-          //otherwise we can just grab the time from above
           if (overIndex === null) return activeStartTime;
           const positionModifier = activeIndex < overIndex ? 0 : 1;
           const timeAbove =
@@ -718,7 +665,6 @@ const EditCanvas = ({
             currentSchedule[overContainer][overIndex - positionModifier + 1]
               ?.startTime;
           if (timeBelow == null && timeAbove != null) {
-            // last item in list
             if (timeAbove.getUTCHours() === 23) {
               activeStartTime = new Date(`${overContainer}T23:59:00Z`);
             } else {
@@ -733,7 +679,6 @@ const EditCanvas = ({
               }
             }
           } else {
-            // squeeze new item between two item start times
             if (
               timeAbove.getTime() <= activeStartTime.getTime() &&
               timeBelow.getTime() >= activeStartTime.getTime()
@@ -753,22 +698,18 @@ const EditCanvas = ({
                     )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
                   );
                 } else {
-                  // will either be the same hour or 1 hour apart
                   if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
                     if (timeBelow.getUTCMinutes() > timeAbove.getUTCMinutes()) {
-                      // greater than an hour gap
                       if (
                         timeBelow.getUTCMinutes() >
                         activeStartTime.getUTCMinutes()
                       ) {
-                        // current minutes less than time below, can freely add an hour and keep minutes
                         activeStartTime = new Date(
                           `${overContainer}T${prefixZero(
                             timeAbove.getUTCHours() + 1
                           )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
                         );
                       } else {
-                        // current minutes greater. just add hour and zero the minutes instead of microing minutes
                         activeStartTime = new Date(
                           `${overContainer}T${prefixZero(
                             timeAbove.getUTCHours() + 1
@@ -776,7 +717,6 @@ const EditCanvas = ({
                         );
                       }
                     } else {
-                      // less than an hour gap when including minutes
                       activeStartTime = new Date(
                         `${overContainer}T${prefixZero(
                           timeAbove.getUTCHours() + 1
@@ -784,7 +724,6 @@ const EditCanvas = ({
                       );
                     }
                   } else {
-                    // same hour
                     activeStartTime = timeAbove;
                   }
                 }
@@ -794,7 +733,7 @@ const EditCanvas = ({
         }
       }
     }
-    console.log("time at end: ", activeStartTime);
+
     return activeStartTime;
   };
 
@@ -827,7 +766,6 @@ const EditCanvas = ({
     if (!id) return containerAndIndex;
     if (specificSchedule) {
       if (id in specificSchedule) {
-        // check if our id is actually just an empty table (container)
         containerAndIndex["container"] = String(id);
         return containerAndIndex;
       }
@@ -842,7 +780,6 @@ const EditCanvas = ({
       }
     } else {
       if (id in schedule) {
-        // check if our id is actually just an empty table (container)
         containerAndIndex["container"] = String(id);
         return containerAndIndex;
       }
@@ -859,10 +796,12 @@ const EditCanvas = ({
     return containerAndIndex;
   };
 
-  const gValuesFn = (vp: Vp, gLocation: string, gId: string) => {
+  const gValuesFn = (
+    vp: Vp,
+    gLocation: string /* optional gId if needed */
+  ) => {
     setVp(vp);
     setLocation(gLocation);
-    setGId(gId);
   };
 
   const handleSubmitItem = useCallback(
@@ -941,25 +880,6 @@ const EditCanvas = ({
     oldArr: Schedule[],
     item: Schedule
   ): Schedule[] => {
-    /*const itemStartItem = item.startTime.getTime();
-    let sameItem = null;
-    let sameBoolean = false;
-    let index: number = oldArr.findIndex((v) => {
-      if(v.startTime.getTime() === itemStartItem){
-
-      }
-      if (v.startTime.getTime() > itemStartItem) {
-        // placing ABOVE found index, aside from none found -
-        // if our item should be at the end our index will be -1, will place same time items at the bottom of same time stack
-        return true;
-      } else {
-        return false;
-      }
-    });
-    
-    index = index === -1 ? oldArr.length : index === 0 ? 0 : index;
-    return [...oldArr.slice(0, index), item, ...oldArr.slice(index)];
-    */
     return [...oldArr, item].sort((a: Schedule, b: Schedule) => {
       if (a.startTime.getTime() === b.startTime.getTime()) {
         return a.sortIndex - b.sortIndex;
@@ -969,7 +889,6 @@ const EditCanvas = ({
   };
 
   const handleOverwrite = async (e: React.MouseEvent) => {
-    // have to find the item inside the new schedule, if found, PATCH if not POST
     e.preventDefault();
     setHarmlessFlipper((prev) => !prev);
     setEditLineId(null);
@@ -998,7 +917,6 @@ const EditCanvas = ({
       .split("T")[0];
     let chunk: Chunk;
 
-    // will still need to filter out the dupe when setting state later after fetch returns
     let newArrOldItem: Schedule[];
     if (itemFound === -1 || newItemContainer !== previousItemContainer) {
       newArrOldItem = placeItemInSchedule(
@@ -1017,7 +935,6 @@ const EditCanvas = ({
 
     try {
       if (itemFound === -1) {
-        console.log("Previously deleted, restoring...");
         const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
           method: "POST",
           headers: {
@@ -1057,7 +974,6 @@ const EditCanvas = ({
           navigate("/redirect", {
             state: { message: "Session expired, redirecting to log in..." },
           });
-          // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
         } else if (addingReq.status === 403) {
           clearOverwriteBanner();
           setBannerMsg("You do not have permission to access this resource");
@@ -1126,7 +1042,6 @@ const EditCanvas = ({
           navigate("/redirect", {
             state: { message: "Session expired, redirecting to log in..." },
           });
-          // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
         } else if (patchRes.status === 403) {
           clearOverwriteBanner();
           setBannerMsg("You do not have permission to access this resource");
@@ -1136,7 +1051,6 @@ const EditCanvas = ({
         } else if (patchRes.status === 409) {
           const data = await patchRes.json();
           for (const i of data.newData) {
-            // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
             i.startTime = new Date(i.startTime);
             i.endTime = new Date(i.endTime);
             i.id = String(i.id);
@@ -1167,22 +1081,19 @@ const EditCanvas = ({
             "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
           );
         } else {
-          console.log("something went wrong editing");
+          setBannerMsg("Uh oh. Something went wrong.");
         }
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return;
     }
   };
 
   const clearOverwriteBanner = (e?: React.MouseEvent) => {
-    console.log("clear called");
     e?.preventDefault();
     setBannerMsg(null);
     setHoldOverwrite(null);
-    //clearTimeout(refTimerStarted.current ?? 0);
-    //refTimerStarted.current = null;
     setRemountKey((prev) => prev + 1);
   };
 
@@ -1199,9 +1110,6 @@ const EditCanvas = ({
         threshold: { x: 0.08, y: 0.25 },
         acceleration: 2.5,
       }}
-      //measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
-      //layoutMeasuring={{strategy: LayoutMeasuringStrategy.Always}}
-      //modifiers={[restrictToFirstScrollableAncestor]}
     >
       <BannerContextProvider bannerMsg={bannerMsg} setBannerMsg={setBannerMsg}>
         <div className={styles.pageWrapper}>
@@ -1237,7 +1145,7 @@ const EditCanvas = ({
                 list={wishList}
                 handleSubmitItem={handleSubmitItem}
                 handleDeleteItem={handleDeleteItem}
-                activeListId={activeListId} // FOR NEXT TIME, work on fixing same ID drag not working in list (consecutive drags from list of same item), possibly get rid of active list id state.
+                activeListId={activeListId}
               />
             )}
           </div>
@@ -1245,7 +1153,6 @@ const EditCanvas = ({
             <MyMapComponent
               bounds={vp}
               startLocation={location}
-              gId={gId}
               list={wishList}
               handleSubmitItem={handleSubmitItem}
               handleDeleteItem={handleDeleteItem}

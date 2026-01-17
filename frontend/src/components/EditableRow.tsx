@@ -94,12 +94,10 @@ const EditableRow = ({
           ...prev,
           [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
         }));
-        // might have to remove from our react schedule item using itemID
       } else if (response.status === 401) {
         navigate("/redirect", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
       } else if (response.status === 403) {
         setEditLineId(null);
         setAddingItem(false);
@@ -121,7 +119,6 @@ const EditableRow = ({
         setEditLineId(null);
         setAddingItem(false);
         for (const i of data.newData) {
-          // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
           i.startTime = new Date(i.startTime);
           i.endTime = new Date(i.endTime);
           i.id = String(i.id);
@@ -179,19 +176,6 @@ const EditableRow = ({
 
     console.log("endTime", holdEndTime);
     const endDateAssembler = holdEndTime;
-    /*
-    if (!startTimePick || startTimePick === ": ") {
-      startDateAssembler = customISOTime(startDateHold, "00:00 AM");
-    } else {
-      startDateAssembler = customISOTime(startDateHold, startTimePick);
-    }
-
-    if (!endTimePick || endTimePick === ": ") {
-      endDateAssembler = customISOTime(endDateHold, "00:00 AM"); // TO-DO this will have to be different for multi-day
-    } else {
-      endDateAssembler = customISOTime(endDateHold, endTimePick);
-    }
-      */
 
     const details: string = detailEditRef.current
       ? detailEditRef.current.value
@@ -257,7 +241,6 @@ const EditableRow = ({
         setAddingItem(false);
         if (data.newlyIndexedSchedule != null) {
           for (const i of data.newlyIndexedSchedule) {
-            // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
             i.startTime = new Date(i.startTime);
             i.endTime = new Date(i.endTime);
             i.id = String(i.id);
@@ -306,7 +289,6 @@ const EditableRow = ({
         navigate("/redirect", {
           state: { message: "Session expired, redirecting to log in..." },
         });
-        // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
       } else if (response.status === 403) {
         setEditLineId(null);
         setAddingItem(false);
@@ -314,14 +296,12 @@ const EditableRow = ({
       } else if (response.status === 404) {
         setEditLineId(null);
         setAddingItem(false);
-        setBannerMsg("Error 1: Trip not found");
-        setHoldOverwrite(schedule[dayContainer][0]);
+        setBannerMsg("Error: Trip not found");
       } else if (response.status === 409) {
         const data = await response.json();
         setEditLineId(null);
         setAddingItem(false);
         for (const i of data.newData) {
-          // times are already stored in db with timezone (should be UTC), so doing this just makes date objects in utc time.
           i.startTime = new Date(i.startTime);
           i.endTime = new Date(i.endTime);
           i.id = String(i.id);
@@ -454,12 +434,7 @@ const EditableRow = ({
         }
         <CustomTimePicker
           className={endError ? "border-red-500" : undefined}
-          onChange={(
-            // im pretty sure using a callback function here is not necessary, could just put constructDate, however we will lose "end" since it's closed over
-            hour: string,
-            minute: string,
-            meridiem: string
-          ) => {
+          onChange={(hour: string, minute: string, meridiem: string) => {
             constructDate("end", hour, minute, meridiem);
             setEditEndTimeObject({
               hour,

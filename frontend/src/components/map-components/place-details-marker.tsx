@@ -6,15 +6,11 @@ import {
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
 
-//import { DetailsSize } from "../app";
-
 export const PlaceDetailsMarker = memo(
   ({ place, selected, onClick, detailsSize }: PlaceDetailsMarkerProps) => {
     const [markerRef, marker] = useAdvancedMarkerRef();
-    // Load required Google Maps library for places
     useMapsLibrary("places");
 
-    // Handle marker click to select this place
     const handleMarkerClick = useCallback(() => {
       onClick(place?.id);
     }, [onClick, place.id]);
@@ -42,15 +38,6 @@ export const PlaceDetailsMarker = memo(
             maxWidth={400}
             headerDisabled={true}
           >
-            {/* 
-             gmp-place-details is a Google Maps Web Component that displays detailed information
-             about a place, including photos, reviews, open hours, etc.
-             The size parameter controls how much information is displayed.
-             
-             
-             gmp-place-details-compact is a Google Maps Web Component that displays a lot of the same
-             information as the full version but in a more compact format.
-           */}
             {detailsSize === "FULL" ? (
               <gmp-place-details>
                 <gmp-place-details-place-request

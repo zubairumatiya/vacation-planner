@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import { isDate } from "util/types";
 const nextDay = new Date("2025-08-01T02:00:00.000Z");
 
 console.log(nextDay.getDate());
@@ -89,6 +90,11 @@ const toCamelCase = (dbRows) => {
 //toCamelCase(dbResult);
 const f = false;
 console.log(f ?? "poop");
+
+const z = Number("1");
+console.log(Number(z));
+console.log(isNaN(z));
+// lets see if we can add some checks to add item and edit item
 
 /*
 let countOfPlaces = 0;
