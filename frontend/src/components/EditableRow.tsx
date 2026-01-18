@@ -1,5 +1,5 @@
 import styles from "../styles/EditSchedule.module.css";
-import { useState, useRef, useContext } from "react";
+import { useState, useRef, useContext, useEffect } from "react";
 import {
   testLessThan24,
   addMeridiem,
@@ -36,6 +36,8 @@ const EditableRow = ({
     setEditStartDate,
     startError,
     endError,
+    setEndError,
+    setStartError,
     constructDate,
     editEndDate,
     setEditEndDate,
@@ -44,6 +46,8 @@ const EditableRow = ({
     setTextAreaFocus,
     multiDayStyle,
     editMultiDay,
+    setMultiDayStyle,
+    setErrMessage,
     setEditMultiDay,
     editSubmitButtonRef,
     cancelAdd,
@@ -51,7 +55,11 @@ const EditableRow = ({
     setHoldStartTime,
     utcEnd,
     utcStart,
+    preFill,
+    editLineId,
     setHoldOverwrite,
+    dayOfTripRef,
+    textAreaFocus,
   } = useContext(EditScheduleContext);
   const auth = useContext(AuthContext);
   const { setBannerMsg } = useContext(BannerContext);
@@ -67,6 +75,81 @@ const EditableRow = ({
   const apiURL = import.meta.env.VITE_API_URL;
   const token = auth?.token;
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (holdStartTime && holdEndTime) {
+      const startD: Date = new Date(holdStartTime);
+      const endD: Date = new Date(holdEndTime);
+      let oneProblemAtATime = 0;
+      const differenceInHours: number = Math.floor(
+        (endD.getTime() - startD.getTime()) / (1000 * 60 * 60)
+      );
+      if (endD.getTime() < startD.getTime()) {
+        setEndError(true);
+        setStartError(true);
+        setErrMessage("Error, end time cannot be before start time");
+        oneProblemAtATime++;
+      } else {
+        setEndError(false);
+        setStartError(false);
+        setErrMessage("");
+        setMultiDayStyle(false);
+      }
+
+      if (!oneProblemAtATime) {
+        if (differenceInHours >= 24) {
+          console.log("checked:", editMultiDay);
+          if (!editMultiDay) {
+            setEndError(true);
+            setStartError(true);
+            setErrMessage(
+              "Error, event greater than 24 hours, please select multi-day"
+            );
+            setMultiDayStyle(true);
+          }
+        } else if (differenceInHours < 24 && editMultiDay) {
+          setErrMessage("Error, item is not multiple days");
+          setEndError(true);
+          setMultiDayStyle(true);
+        } else {
+          setEndError(false);
+          setStartError(false);
+          setErrMessage("");
+          setMultiDayStyle(false);
+        }
+      }
+    }
+  }, [holdEndTime, holdStartTime, editMultiDay]);
+
+  useEffect(() => {
+    if (locationEditRef.current) {
+      locationEditRef.current.value = preFill.location;
+    }
+    if (costEditRef.current) {
+      costEditRef.current.value = String(preFill.cost);
+    }
+    if (detailEditRef.current) {
+      detailEditRef.current.value = preFill.details;
+    }
+    if (multiDayEditRef.current) {
+      setEditMultiDay(preFill.multiDay);
+    }
+  }, [editLineId]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        editSubmitButtonRef?.current?.focus();
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        cancelAdd();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [editLineId, textAreaFocus, dayOfTripRef, endError, startError]);
 
   const submitDelete = async (
     e: React.MouseEvent,

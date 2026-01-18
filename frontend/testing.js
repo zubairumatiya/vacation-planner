@@ -88,12 +88,17 @@ const toCamelCase = (dbRows) => {
 };
 
 //toCamelCase(dbResult);
-const f = false;
-console.log(f ?? "poop");
 
-const z = Number("1");
-console.log(Number(z));
-console.log(isNaN(z));
+let z = "";
+z = isNaN(Number(z)) || z === "" ? 0 : z;
+console.log(z);
+//console.log(isNaN(Number(z)));
+
+const date = "2026-01-17";
+const hours = "01";
+const minutes = "43";
+const d = new Date(`${date}T${hours}:${minutes}:00Z`);
+console.log(isNaN(d.getTime()));
 // lets see if we can add some checks to add item and edit item
 
 /*

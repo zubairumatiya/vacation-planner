@@ -13,10 +13,10 @@ const CustomTableComponent = ({
   dayObj,
   schedule,
   setSchedule,
-  errMessage,
   activeId,
 }: TableComponentProps) => {
-  const { startError, endError, editLineId } = useContext(EditScheduleContext);
+  const { startError, endError, editLineId, errMessage } =
+    useContext(EditScheduleContext);
 
   const { setNodeRef } = useDroppable({ id: dayObj.day });
   return (

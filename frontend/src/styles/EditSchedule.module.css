@@ -77,8 +77,9 @@
 
 .formWrapper {
   display: flex;
-  justify-content: center;
+  justify-content: end;
   width: 60vw;
+  flex-direction: column;
 }
 
 .form {
@@ -91,6 +92,7 @@
 
 .itemElement {
   margin: 0 0.5rem;
+  margin-bottom: 0.5rem;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -437,4 +439,41 @@ div .tableContainerDragging {
 .testWrapper {
   scroll-behavior: auto;
   overflow: auto;
+}
+
+.addingErrMessage {
+  color: red;
+}
+
+.addItemFirstGroup {
+  display: flex;
+  justify-content: center;
+  align-items: end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 744px) {
+  .addItemFirstGroup {
+    justify-content: start;
+  }
+}
+
+@media (max-width: 744px) {
+  .form {
+    justify-content: start;
+  }
+}
+
+.formWrapper > div:nth-of-type(1) {
+  display: flex;
+  height: 100%;
+}
+
+.addItemFirstGroup > div:nth-child(3),
+.addItemFirstGroup > div:nth-child(4) {
+  margin-bottom: 1rem;
+}
+
+.errFormBorder {
+  border: 3px solid red;
 }

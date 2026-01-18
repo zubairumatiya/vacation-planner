@@ -53,7 +53,6 @@ declare global {
   type TableComponentProps = {
     dayObj: DayContainer;
     schedule: DaySchedule;
-    errMessage: string;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     activeId: UniqueIdentifier | null;
   };
