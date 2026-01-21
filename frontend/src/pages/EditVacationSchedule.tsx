@@ -146,6 +146,19 @@ const EditVacationSchedule = ({
     getTrip();
   }, []);
 
+  useEffect(() => {
+    const keyHandle = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        clearAdd();
+      }
+    };
+
+    document.addEventListener("keydown", keyHandle);
+
+    return () => document.removeEventListener("keydown", keyHandle);
+  }, []);
+
   const reSort = (arr: Array<Schedule>) => {
     arr.map((v) => {
       v.startTime = new Date(v.startTime);
@@ -181,13 +194,10 @@ const EditVacationSchedule = ({
       clearAdd();
     } else {
       setAddingItem(true);
+      setIndividualAddition({ addingContainer: dayContainer });
+
+      setDay(dayContainer);
     }
-    setDay(dayContainer);
-    setIndividualAddition((prev) =>
-      prev.addingContainer
-        ? { addingContainer: "" }
-        : { addingContainer: dayContainer }
-    );
   };
 
   const submitAddItem = async (
@@ -273,19 +283,15 @@ const EditVacationSchedule = ({
               };
             });
           }
-          setIndividualAddition({ addingContainer: "" });
         } else if (addingReq.status === 401) {
           navigate("/redirect", {
             state: { message: "Session expired, redirecting to log in..." },
           });
         } else if (addingReq.status === 403) {
-          setIndividualAddition({ addingContainer: "" });
           setBannerMsg("You do not have permission to access this resource");
         } else if (addingReq.status === 404) {
-          setIndividualAddition({ addingContainer: "" });
           setBannerMsg("Error: Trip not found");
         } else if (addingReq.status >= 500) {
-          setIndividualAddition({ addingContainer: "" });
           setBannerMsg(
             "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
           );
@@ -408,6 +414,8 @@ const EditVacationSchedule = ({
     setEError(false);
     setItemError(false);
     locationRef.current = null;
+    setAddingItem(false);
+    setIndividualAddition({ addingContainer: "" });
   };
 
   return loading ? (

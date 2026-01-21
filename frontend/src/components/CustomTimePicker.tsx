@@ -106,10 +106,6 @@ const CustomTimePicker = (props: Props) => {
     }
   }, [hideMinutes, minuteSelection]);
 
-  useEffect(() => {
-    setAnchor(hideMinutes ? null : minuteButtonRef.current);
-  }, [hideMinutes]);
-
   /*
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -176,12 +172,31 @@ const CustomTimePicker = (props: Props) => {
       }
     };
 
-    const handleClick = (e: MouseEvent) => {
+    const keyDownIsTab = (e: KeyboardEvent) => {
+      if (e.key === "Tab") {
+        if (document.activeElement === hourInputRef.current) {
+          setHideHours(false);
+          setHideMinutes(true);
+        } else if (document.activeElement === minuteInputRef.current) {
+          setHideHours(true);
+          setHideMinutes(false);
+        } else {
+          setHideHours(true);
+          setHideMinutes(true);
+        }
+      }
+    };
+
+    const handleClick = (e: MouseEvent | KeyboardEvent) => {
+      if (hourButtonRef.current?.contains(e.target as Node)) {
+        e.preventDefault();
+        hourInputRef.current?.focus();
+      }
+
       if (hourInputRef.current?.contains(e.target as Node)) {
         setHideHours(false);
       } else if (hourButtonRef.current?.contains(e.target as Node)) {
         if (hideHours === true) {
-          debugger;
           hourInputRef.current?.focus();
         }
         setHideHours((prev) => !prev);
@@ -190,6 +205,9 @@ const CustomTimePicker = (props: Props) => {
       } else if (minuteInputRef.current?.contains(e.target as Node)) {
         setHideMinutes(false);
       } else if (minuteButtonRef.current?.contains(e.target as Node)) {
+        if (hideMinutes === true) {
+          minuteInputRef.current?.focus();
+        }
         setHideMinutes((prev) => !prev);
       } else if (minuteUlRef.current?.contains(e.target as Node)) {
         setHideMinutes(true);
@@ -199,22 +217,28 @@ const CustomTimePicker = (props: Props) => {
       }
     };
 
-    document.addEventListener("focusout", handleFocus);
-    document.addEventListener("mousedown", handleClick);
-
+    // document.addEventListener("focusout", handleFocus);
+    document.addEventListener("click", handleClick);
+    document.addEventListener("keyup", keyDownIsTab);
     return () => {
-      document.removeEventListener("focusin", handleFocus);
-      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("click", handleClick);
+      document.removeEventListener("keyup", keyDownIsTab);
     };
   }, []);
 
   useEffect(() => {
     if (hideHours === false) {
-      //
+      //setHideMinutes(true);
     }
 
     // I want to focus into input when button is clicked so I can type numbers
   }, [hideHours]);
+
+  useEffect(() => {
+    if (hideMinutes === false) {
+      //setHideHours(true);
+    }
+  }, [hideMinutes]);
 
   /*
 

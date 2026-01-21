@@ -201,6 +201,7 @@ repeaterCall();
 // host front and back end
 // launch
 
+// nice to have - mobile pointerdown events on timePicker so we can trigger dropdown. ??maybe, not sure if it functions fine on mobile yet
 // nice to have - pressing enter while focused on customTimePicker does not submit the edit item
 // nice to have -  anki deck for react
 // nice to have - can add a bunch of things to the todo from google maps
