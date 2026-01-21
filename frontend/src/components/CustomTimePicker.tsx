@@ -110,10 +110,7 @@ const CustomTimePicker = (props: Props) => {
     setAnchor(hideMinutes ? null : minuteButtonRef.current);
   }, [hideMinutes]);
 
-  useEffect(() => {
-    setHourAnchor(hideHours ? null : hourButtonRef.current);
-  }, [hideHours]);
-
+  /*
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -128,6 +125,7 @@ const CustomTimePicker = (props: Props) => {
       ) {
         setHideHours(true);
         setHideMinutes(true);
+        return;
       }
 
       if (
@@ -144,10 +142,81 @@ const CustomTimePicker = (props: Props) => {
         setHideHours((prev) => !prev);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [hideHours, hideMinutes]);
+  */
+
+  // SHOULD BE
+  // clicking on input = false
+  // clicking on button = toggle
+  // focusing in = false (show)
+  // focusing out = true (hide)
+  // PROBLEM
+  //clicking button
+  // --> unfocuses input
+  // --> true (hide)
+  // --> focuses on input again
+  // --> false (show)
+
+  // the problem seems to be focus. in an ideal world, a click on input or button would not unfocus it
+  // maybe we don't need focus at all, anyone who is using tab to focus elements won't start scrolling seeking a number, although it is almost trained when a dropdown pops up to use it.
+
+  useEffect(() => {
+    const handleFocus = (e: FocusEvent) => {
+      //const isFocused
+      if (hourInputRef.current?.contains(e.target as Node)) {
+        console.log("hqwouihre");
+        //setHideHours(true);
+      } else {
+        //setHideHours(true);
+      }
+      if (minuteInputRef.current?.contains(e.target as Node)) {
+        //setHideMinutes(true);
+      }
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (hourInputRef.current?.contains(e.target as Node)) {
+        setHideHours(false);
+      } else if (hourButtonRef.current?.contains(e.target as Node)) {
+        if (hideHours === true) {
+          debugger;
+          hourInputRef.current?.focus();
+        }
+        setHideHours((prev) => !prev);
+      } else if (hourUlRef.current?.contains(e.target as Node)) {
+        setHideHours(true);
+      } else if (minuteInputRef.current?.contains(e.target as Node)) {
+        setHideMinutes(false);
+      } else if (minuteButtonRef.current?.contains(e.target as Node)) {
+        setHideMinutes((prev) => !prev);
+      } else if (minuteUlRef.current?.contains(e.target as Node)) {
+        setHideMinutes(true);
+      } else {
+        setHideHours(true);
+        setHideMinutes(true);
+      }
+    };
+
+    document.addEventListener("focusout", handleFocus);
+    document.addEventListener("mousedown", handleClick);
+
+    return () => {
+      document.removeEventListener("focusin", handleFocus);
+      document.removeEventListener("mousedown", handleClick);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (hideHours === false) {
+      //
+    }
+
+    // I want to focus into input when button is clicked so I can type numbers
+  }, [hideHours]);
+
+  /*
 
   function Dropdown({
     anchorEl,
@@ -156,9 +225,47 @@ const CustomTimePicker = (props: Props) => {
     anchorEl: HTMLElement | null;
     children: React.ReactNode;
   }) {
-    if (!anchorEl) return null;
+    const [rect, setRect] = useState<DOMRect | null>(null);
 
-    const rect = anchorEl.getBoundingClientRect();
+    useEffect(() => {
+      if (!anchorEl) return;
+
+      const updatePosition = () => setRect(anchorEl.getBoundingClientRect());
+
+      updatePosition(); // initial position
+
+      // Find scrollable ancestor elements
+      const scrollParents: HTMLElement[] = [];
+      let parent = anchorEl.parentElement;
+      while (parent) {
+        const overflowY = getComputedStyle(parent).overflowY;
+        if (overflowY === "auto" || overflowY === "scroll") {
+          scrollParents.push(parent);
+        }
+        parent = parent.parentElement;
+      }
+
+      // Add scroll listeners to ancestors
+      const onScroll = () => updatePosition();
+      scrollParents.forEach((el) =>
+        el.addEventListener("scroll", onScroll, true)
+      );
+
+      // Add window scroll and resize listeners separately
+      const onResize = () => updatePosition();
+      window.addEventListener("scroll", onScroll);
+      window.addEventListener("resize", onResize);
+
+      return () => {
+        scrollParents.forEach((el) =>
+          el.removeEventListener("scroll", onScroll, true)
+        );
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("resize", onResize);
+      };
+    }, [anchorEl]);
+
+    if (!anchorEl || !rect) return null;
 
     return createPortal(
       <div
@@ -166,15 +273,15 @@ const CustomTimePicker = (props: Props) => {
           position: "absolute",
           top: rect.bottom + window.scrollY,
           left: rect.left + window.scrollX,
-          zIndex: 9999,
+          zIndex: 10,
         }}
       >
-        {children} {/* your preexisting <ul> goes here */}
+        {children}
       </div>,
       document.body
     );
   }
-
+*/
   const captureMinuteSelection = (e: React.MouseEvent) => {
     const li = e.target as HTMLLIElement;
     console.log(li.innerText);
@@ -345,6 +452,7 @@ const CustomTimePicker = (props: Props) => {
             value={hourSelection}
             onChange={handleHourChange} // TODO -- would like to allow specific type of key
             ref={hourInputRef}
+            /*
             onFocus={() => {
               setHideMinutes(true);
               if (skipNextHourFocus.current) {
@@ -360,6 +468,7 @@ const CustomTimePicker = (props: Props) => {
                 setHourBlurCheck(false);
               }, 250);
             }}
+            */
             onKeyDown={handleKeyDownForHour}
           />
 
@@ -370,6 +479,7 @@ const CustomTimePicker = (props: Props) => {
                 ref={hourButtonRef}
                 type="button"
                 tabIndex={-1}
+                /*
                 onClick={() => {
                   if (hourBlurCheck) {
                     setHourBlurCheck(false);
@@ -377,6 +487,7 @@ const CustomTimePicker = (props: Props) => {
                     handleHourToggleClick();
                   }
                 }}
+                  */
               >
                 <img
                   src={dropDownArrow}
@@ -388,31 +499,29 @@ const CustomTimePicker = (props: Props) => {
                 />
               </button>
             </div>
-            <div>
-              <Dropdown anchorEl={hourAnchor}>
-                <ul
-                  ref={hourUlRef}
-                  hidden={hideHours}
-                  className={styles.scrollContainer}
-                  onMouseDown={captureHourSelection}
-                >
-                  {[...new Array(12)].map((_, i) => {
-                    return (
-                      <li
-                        key={i}
-                        id={i + ""}
-                        ref={i === focusedHourIndex ? hourLiRef : null}
-                        className={`${styles.listItem} ${
-                          i === focusedHourIndex && styles.focused
-                        }`}
-                      >
-                        {i < 9 ? "0" + (i + 1) : i + 1}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </Dropdown>
-            </div>
+
+            <ul
+              ref={hourUlRef}
+              hidden={hideHours}
+              className={styles.scrollContainer}
+              onMouseDown={captureHourSelection}
+              tabIndex={-1}
+            >
+              {[...new Array(12)].map((_, i) => {
+                return (
+                  <li
+                    key={i}
+                    id={i + ""}
+                    ref={i === focusedHourIndex ? hourLiRef : null}
+                    className={`${styles.listItem} ${
+                      i === focusedHourIndex && styles.focused
+                    }`}
+                  >
+                    {i < 9 ? "0" + (i + 1) : i + 1}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         </div>
 
@@ -427,7 +536,7 @@ const CustomTimePicker = (props: Props) => {
             value={minuteSelection}
             onChange={handleMinuteChange}
             //onClick={() => setHideMinutes(false)} // can do this if i want it open no matter how many times i click on input
-
+            /*
             onFocus={() => {
               setHideHours(true);
               if (skipNextMinuteFocus.current) {
@@ -442,7 +551,7 @@ const CustomTimePicker = (props: Props) => {
               setTimeout(() => {
                 setMinuteBlurCheck(false);
               }, 250);
-            }}
+            }}*/
             onKeyDown={handleKeyDownForMinute}
           />{" "}
           <div className={styles.dropDownWrapper}>
@@ -452,6 +561,7 @@ const CustomTimePicker = (props: Props) => {
                 ref={minuteButtonRef}
                 type="button"
                 tabIndex={-1}
+                /*
                 onClick={() => {
                   if (minuteBlurCheck) {
                     setMinuteBlurCheck(false);
@@ -459,6 +569,7 @@ const CustomTimePicker = (props: Props) => {
                     handleMinuteToggleClick();
                   }
                 }}
+                  */
               >
                 <img
                   src={dropDownArrow}
@@ -470,29 +581,28 @@ const CustomTimePicker = (props: Props) => {
               </button>
             </div>
             <div>
-              <Dropdown anchorEl={anchor}>
-                <ul
-                  hidden={hideMinutes}
-                  className={styles.scrollContainer}
-                  onMouseDown={captureMinuteSelection}
-                  ref={minuteUlRef}
-                >
-                  {[...new Array(60)].map((_, i) => {
-                    return (
-                      <li
-                        key={i}
-                        id={i + ""}
-                        ref={i === focusedMinuteIndex ? minuteLiRef : null}
-                        className={`${styles.listItem} ${
-                          i === focusedMinuteIndex && styles.focused
-                        }`}
-                      >
-                        {i < 10 ? "0" + i : i}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </Dropdown>
+              <ul
+                hidden={hideMinutes}
+                className={styles.scrollContainer}
+                onMouseDown={captureMinuteSelection}
+                ref={minuteUlRef}
+                tabIndex={-1}
+              >
+                {[...new Array(60)].map((_, i) => {
+                  return (
+                    <li
+                      key={i}
+                      id={i + ""}
+                      ref={i === focusedMinuteIndex ? minuteLiRef : null}
+                      className={`${styles.listItem} ${
+                        i === focusedMinuteIndex && styles.focused
+                      }`}
+                    >
+                      {i < 10 ? "0" + i : i}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           </div>
         </div>

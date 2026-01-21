@@ -33,7 +33,6 @@
   top: 100%;
   background-color: black;
   z-index: 9999;
-
   box-shadow: 0 2px 5px rgb(11, 168, 87);
 }
 
@@ -67,4 +66,8 @@
 .minuteButton:active,
 .hourButton:active {
   background-color: black;
+}
+
+.scrollParent {
+  position: relative;
 }
