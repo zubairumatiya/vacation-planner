@@ -1,12 +1,12 @@
 import styles from "../styles/CustomTimePicker.module.css";
 import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
 import dropDownArrow from "../assets/arrow-drop.svg";
 
 type Props = {
   onChange: (hour: string, minute: string, meridiem: string) => void;
   className: string | undefined;
   preTime: () => string | undefined;
+  focusRef?: React.RefObject<HTMLInputElement | null>;
 };
 
 const CustomTimePicker = (props: Props) => {
@@ -27,13 +27,7 @@ const CustomTimePicker = (props: Props) => {
   );
   const hourInputRef = useRef<HTMLInputElement>(null);
   const minuteInputRef = useRef<HTMLInputElement>(null);
-  const skipNextHourFocus = useRef(false);
-  const skipNextMinuteFocus = useRef(false);
   const hourImageRef = useRef<HTMLImageElement>(null);
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const [hourAnchor, setHourAnchor] = useState<HTMLElement | null>(null);
-  const [minuteBlurCheck, setMinuteBlurCheck] = useState<boolean>(false);
-  const [hourBlurCheck, setHourBlurCheck] = useState<boolean>(false);
   const [loaded, setLoaded] = useState<boolean>(false);
 
   useEffect(() => {
@@ -60,23 +54,6 @@ const CustomTimePicker = (props: Props) => {
       props.onChange(hourSelection, minuteSelection, meridiemSelection);
     }
   }, [hourSelection, minuteSelection, meridiemSelection, loaded]);
-
-  /* useEffect(() => {
-    if (props.preTime) {
-      const preTime = props.preTime();
-      if (preTime == null) return;
-      const hourNMinute = preTime.split(":");
-      const justMinute = hourNMinute[1].split(" ")[0];
-      const getMeridiem = preTime.split(" ")[1];
-      if (Number(hourNMinute[0]) < 10) {
-        setHourSelection("0" + hourNMinute[0]);
-      } else {
-        setHourSelection(hourNMinute[0]);
-      }
-      setMinuteSelection(justMinute);
-      setMeridiemSelection(getMeridiem);
-    }
-  }, []);*/
 
   useEffect(() => {
     if (hourSelection) {
@@ -106,72 +83,7 @@ const CustomTimePicker = (props: Props) => {
     }
   }, [hideMinutes, minuteSelection]);
 
-  /*
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        minuteUlRef.current &&
-        hourUlRef.current &&
-        minuteButtonRef.current &&
-        hourButtonRef.current &&
-        !minuteUlRef.current.contains(e.target as Node) &&
-        !hourUlRef.current.contains(e.target as Node) &&
-        !minuteButtonRef.current.contains(e.target as Node) &&
-        !hourButtonRef.current.contains(e.target as Node)
-      ) {
-        setHideHours(true);
-        setHideMinutes(true);
-        return;
-      }
-
-      if (
-        hideMinutes === false &&
-        hourButtonRef.current?.contains(e.target as Node)
-      ) {
-        setHideMinutes((prev) => !prev);
-      }
-
-      if (
-        hideHours === false &&
-        minuteButtonRef.current?.contains(e.target as Node)
-      ) {
-        setHideHours((prev) => !prev);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [hideHours, hideMinutes]);
-  */
-
-  // SHOULD BE
-  // clicking on input = false
-  // clicking on button = toggle
-  // focusing in = false (show)
-  // focusing out = true (hide)
-  // PROBLEM
-  //clicking button
-  // --> unfocuses input
-  // --> true (hide)
-  // --> focuses on input again
-  // --> false (show)
-
-  // the problem seems to be focus. in an ideal world, a click on input or button would not unfocus it
-  // maybe we don't need focus at all, anyone who is using tab to focus elements won't start scrolling seeking a number, although it is almost trained when a dropdown pops up to use it.
-
-  useEffect(() => {
-    const handleFocus = (e: FocusEvent) => {
-      //const isFocused
-      if (hourInputRef.current?.contains(e.target as Node)) {
-        console.log("hqwouihre");
-        //setHideHours(true);
-      } else {
-        //setHideHours(true);
-      }
-      if (minuteInputRef.current?.contains(e.target as Node)) {
-        //setHideMinutes(true);
-      }
-    };
-
     const keyDownIsTab = (e: KeyboardEvent) => {
       if (e.key === "Tab") {
         if (document.activeElement === hourInputRef.current) {
@@ -217,7 +129,6 @@ const CustomTimePicker = (props: Props) => {
       }
     };
 
-    // document.addEventListener("focusout", handleFocus);
     document.addEventListener("click", handleClick);
     document.addEventListener("keyup", keyDownIsTab);
     return () => {
@@ -228,84 +139,16 @@ const CustomTimePicker = (props: Props) => {
 
   useEffect(() => {
     if (hideHours === false) {
-      //setHideMinutes(true);
+      setHideMinutes(true);
     }
-
-    // I want to focus into input when button is clicked so I can type numbers
   }, [hideHours]);
 
   useEffect(() => {
     if (hideMinutes === false) {
-      //setHideHours(true);
+      setHideHours(true);
     }
   }, [hideMinutes]);
 
-  /*
-
-  function Dropdown({
-    anchorEl,
-    children,
-  }: {
-    anchorEl: HTMLElement | null;
-    children: React.ReactNode;
-  }) {
-    const [rect, setRect] = useState<DOMRect | null>(null);
-
-    useEffect(() => {
-      if (!anchorEl) return;
-
-      const updatePosition = () => setRect(anchorEl.getBoundingClientRect());
-
-      updatePosition(); // initial position
-
-      // Find scrollable ancestor elements
-      const scrollParents: HTMLElement[] = [];
-      let parent = anchorEl.parentElement;
-      while (parent) {
-        const overflowY = getComputedStyle(parent).overflowY;
-        if (overflowY === "auto" || overflowY === "scroll") {
-          scrollParents.push(parent);
-        }
-        parent = parent.parentElement;
-      }
-
-      // Add scroll listeners to ancestors
-      const onScroll = () => updatePosition();
-      scrollParents.forEach((el) =>
-        el.addEventListener("scroll", onScroll, true)
-      );
-
-      // Add window scroll and resize listeners separately
-      const onResize = () => updatePosition();
-      window.addEventListener("scroll", onScroll);
-      window.addEventListener("resize", onResize);
-
-      return () => {
-        scrollParents.forEach((el) =>
-          el.removeEventListener("scroll", onScroll, true)
-        );
-        window.removeEventListener("scroll", onScroll);
-        window.removeEventListener("resize", onResize);
-      };
-    }, [anchorEl]);
-
-    if (!anchorEl || !rect) return null;
-
-    return createPortal(
-      <div
-        style={{
-          position: "absolute",
-          top: rect.bottom + window.scrollY,
-          left: rect.left + window.scrollX,
-          zIndex: 10,
-        }}
-      >
-        {children}
-      </div>,
-      document.body
-    );
-  }
-*/
   const captureMinuteSelection = (e: React.MouseEvent) => {
     const li = e.target as HTMLLIElement;
     console.log(li.innerText);
@@ -313,7 +156,6 @@ const CustomTimePicker = (props: Props) => {
     minuteLiRef.current = li;
     const toNumber = Number(li.innerText);
     setFocusedMinuteIndex(toNumber);
-    //setHideMinutes((prev) => !prev);
   };
 
   const captureHourSelection = (e: React.MouseEvent) => {
@@ -323,7 +165,6 @@ const CustomTimePicker = (props: Props) => {
     hourLiRef.current = li;
     const toNumber = Number(li.innerText);
     setFocusedHourIndex(toNumber - 1);
-    //setHideHours((prev) => !prev);
   };
 
   const handleKeyDownForHour = (e: React.KeyboardEvent) => {
@@ -396,20 +237,7 @@ const CustomTimePicker = (props: Props) => {
     }
   };
 
-  const handleHourToggleClick = () => {
-    skipNextHourFocus.current = true;
-    hourInputRef.current?.focus();
-    setHideHours((prev) => !prev);
-  };
-
-  const handleMinuteToggleClick = () => {
-    skipNextMinuteFocus.current = true;
-    minuteInputRef.current?.focus();
-    setHideMinutes((prev) => !prev);
-  };
-
   const handleHourChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //NEED TODO - change the scrollinto behavior on the number we type
     const toNumber = Number(e.target.value);
     if (e.target.value === "" || e.target.value === "0") {
       setFocusedHourIndex(0);
@@ -444,7 +272,6 @@ const CustomTimePicker = (props: Props) => {
   };
 
   const handleMinuteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    ////NEED TODO - change the scrollinto behavior on the number we type
     const toNumber = Number(e.target.value);
     if (isNaN(toNumber)) {
       return;
@@ -463,6 +290,11 @@ const CustomTimePicker = (props: Props) => {
     }
   };
 
+  const combinedRef = (el: HTMLInputElement) => {
+    hourInputRef.current = el;
+    if (props.focusRef) props.focusRef.current = el;
+  };
+
   return (
     <div className="flex">
       <div className={styles.wrapper}>
@@ -474,25 +306,8 @@ const CustomTimePicker = (props: Props) => {
             name="hourInput"
             id="hourInput"
             value={hourSelection}
-            onChange={handleHourChange} // TODO -- would like to allow specific type of key
-            ref={hourInputRef}
-            /*
-            onFocus={() => {
-              setHideMinutes(true);
-              if (skipNextHourFocus.current) {
-                skipNextHourFocus.current = false;
-                return;
-              }
-              setHideHours(false);
-            }}
-            onBlur={() => {
-              setHideHours((prev) => !prev);
-              setHourBlurCheck(true);
-              setTimeout(() => {
-                setHourBlurCheck(false);
-              }, 250);
-            }}
-            */
+            onChange={handleHourChange}
+            ref={combinedRef}
             onKeyDown={handleKeyDownForHour}
           />
 
@@ -503,15 +318,6 @@ const CustomTimePicker = (props: Props) => {
                 ref={hourButtonRef}
                 type="button"
                 tabIndex={-1}
-                /*
-                onClick={() => {
-                  if (hourBlurCheck) {
-                    setHourBlurCheck(false);
-                  } else {
-                    handleHourToggleClick();
-                  }
-                }}
-                  */
               >
                 <img
                   src={dropDownArrow}
@@ -559,23 +365,6 @@ const CustomTimePicker = (props: Props) => {
             ref={minuteInputRef}
             value={minuteSelection}
             onChange={handleMinuteChange}
-            //onClick={() => setHideMinutes(false)} // can do this if i want it open no matter how many times i click on input
-            /*
-            onFocus={() => {
-              setHideHours(true);
-              if (skipNextMinuteFocus.current) {
-                skipNextMinuteFocus.current = false;
-                return;
-              }
-              setHideMinutes(false);
-            }}
-            onBlur={() => {
-              setHideMinutes((prev) => !prev);
-              setMinuteBlurCheck(true);
-              setTimeout(() => {
-                setMinuteBlurCheck(false);
-              }, 250);
-            }}*/
             onKeyDown={handleKeyDownForMinute}
           />{" "}
           <div className={styles.dropDownWrapper}>
@@ -585,15 +374,6 @@ const CustomTimePicker = (props: Props) => {
                 ref={minuteButtonRef}
                 type="button"
                 tabIndex={-1}
-                /*
-                onClick={() => {
-                  if (minuteBlurCheck) {
-                    setMinuteBlurCheck(false);
-                  } else {
-                    handleMinuteToggleClick();
-                  }
-                }}
-                  */
               >
                 <img
                   src={dropDownArrow}

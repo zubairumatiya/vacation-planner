@@ -85,6 +85,7 @@ const EditVacationSchedule = ({
   const [endDate, setEndDate] = useState<string | null>(null);
   const [multiDay, setMultiDay] = useState<boolean>(false);
   const moniterInputRef = useRef<boolean>(false);
+  const tabStartRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const getTrip = async () => {
@@ -145,6 +146,13 @@ const EditVacationSchedule = ({
 
     getTrip();
   }, []);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      tabStartRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [individualAddition]);
 
   useEffect(() => {
     const keyHandle = (e: KeyboardEvent) => {
@@ -421,7 +429,7 @@ const EditVacationSchedule = ({
   return loading ? (
     <p>{bannerMsg}</p>
   ) : (
-    <div className={styles.pageWrapper}>
+    <div className={styles.pageWrapper} tabIndex={-1}>
       {days.map((dayObj: DayContainer) => {
         return (
           <div key={dayObj.day} className={styles.tableNButtonContainer}>
@@ -431,6 +439,7 @@ const EditVacationSchedule = ({
               className={`${styles.tableContainer} ${
                 props.activeItem && styles.tableContainerDragging
               } ${props.dragFrom === "list" ? styles.listDropZone : null}`}
+              tabIndex={-1}
             >
               <CustomTableComponent
                 key={dayObj.day}
@@ -471,6 +480,7 @@ const EditVacationSchedule = ({
                             meridiem: string
                           ) => constructDate("start", hour, minute, meridiem)}
                           preTime={() => undefined}
+                          focusRef={tabStartRef}
                         />
                       </div>
                       <div className={styles.endTimeWrapper}>

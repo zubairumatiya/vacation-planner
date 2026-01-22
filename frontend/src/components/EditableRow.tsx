@@ -72,12 +72,25 @@ const EditableRow = ({
   );
   const startDateEditRef = useRef<HTMLInputElement>(null);
   const endDateEditRef = useRef<HTMLInputElement>(null);
+  const deleteButtonRef = useRef<HTMLButtonElement>(null);
   const apiURL = import.meta.env.VITE_API_URL;
   const token = auth?.token;
   const navigate = useNavigate();
 
   useEffect(() => {
+    deleteButtonRef?.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      setHoldEndTime("");
+      setHoldStartTime("");
+    };
+  }, []);
+
+  useEffect(() => {
     if (holdStartTime && holdEndTime) {
+      console.log(holdStartTime, holdEndTime);
       const startD: Date = new Date(holdStartTime);
       const endD: Date = new Date(holdEndTime);
       let oneProblemAtATime = 0;
@@ -98,7 +111,6 @@ const EditableRow = ({
 
       if (!oneProblemAtATime) {
         if (differenceInHours >= 24) {
-          console.log("checked:", editMultiDay);
           if (!editMultiDay) {
             setEndError(true);
             setStartError(true);
@@ -431,6 +443,7 @@ const EditableRow = ({
         <button
           type="button"
           className={styles.xButton}
+          ref={deleteButtonRef}
           onClick={(e) => submitDelete(e, value.id, index, dayContainer)}
         >
           delete
@@ -607,7 +620,9 @@ const EditableRow = ({
             disabled={endError || startError}
             ref={editSubmitButtonRef}
             onKeyUp={(e) => {
-              submitEdit(dayContainer, value.id, e);
+              if (e.key === "Enter") {
+                submitEdit(dayContainer, value.id, e);
+              }
             }}
           >
             Submit
