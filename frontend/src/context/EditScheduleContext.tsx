@@ -54,8 +54,8 @@ export type EditScheduleContext = {
     }>
   >;
   setHoldOverwrite: React.Dispatch<React.SetStateAction<Schedule | null>>;
-  errMessage: string;
-  setErrMessage: React.Dispatch<React.SetStateAction<string>>;
+  errMessage: string | null;
+  setErrMessage: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 export const EditScheduleContext = createContext<EditScheduleContext>(
@@ -120,7 +120,7 @@ export function EditScheduleProvider({
   const [textAreaFocus, setTextAreaFocus] = useState<boolean>(false);
   const [multiDayStyle, setMultiDayStyle] = useState(false);
   const [editMultiDay, setEditMultiDay] = useState(false);
-  const [errMessage, setErrMessage] = useState("");
+  const [errMessage, setErrMessage] = useState<string | null>(null);
 
   const handleEdit = (
     e: React.MouseEvent,

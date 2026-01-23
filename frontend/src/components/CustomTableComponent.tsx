@@ -68,7 +68,7 @@ const CustomTableComponent = ({
                 ></CustomTableRow>
                 {editLineId === item.id && (
                   <tr className={styles.errDiv}>
-                    {(endError || startError) && (
+                    {(endError || startError || errMessage !== null) && (
                       <td colSpan={8} className={"text-red-600"}>
                         {errMessage}
                       </td>

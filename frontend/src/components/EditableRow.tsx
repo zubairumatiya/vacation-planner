@@ -47,6 +47,7 @@ const EditableRow = ({
     multiDayStyle,
     editMultiDay,
     setMultiDayStyle,
+    errMessage,
     setErrMessage,
     setEditMultiDay,
     editSubmitButtonRef,
@@ -73,6 +74,17 @@ const EditableRow = ({
   const startDateEditRef = useRef<HTMLInputElement>(null);
   const endDateEditRef = useRef<HTMLInputElement>(null);
   const deleteButtonRef = useRef<HTMLButtonElement>(null);
+  const [location, setLocation] = useState<string | null>(null);
+  const [cost, setCost] = useState<number | null>(null);
+  const [details, setDetails] = useState<string | null>(null);
+  const initialStart = useRef<string>("");
+  const initialEnd = useRef<string>("");
+  const initialLocation = useRef<string>("");
+  const initialCost = useRef<number | null>(null);
+  const initialDetails = useRef<string>("");
+  const initialMultiDay = useRef<boolean | null>(null);
+  const [disabled, setDisabled] = useState<boolean>(true);
+  const renderCount = useRef<number>(0);
   const apiURL = import.meta.env.VITE_API_URL;
   const token = auth?.token;
   const navigate = useNavigate();
@@ -90,7 +102,11 @@ const EditableRow = ({
 
   useEffect(() => {
     if (holdStartTime && holdEndTime) {
-      console.log(holdStartTime, holdEndTime);
+      if (renderCount.current === 0) {
+        initialEnd.current = holdEndTime;
+        initialStart.current = holdStartTime;
+        renderCount.current++;
+      }
       const startD: Date = new Date(holdStartTime);
       const endD: Date = new Date(holdEndTime);
       let oneProblemAtATime = 0;
@@ -105,7 +121,7 @@ const EditableRow = ({
       } else {
         setEndError(false);
         setStartError(false);
-        setErrMessage("");
+        setErrMessage(null);
         setMultiDayStyle(false);
       }
 
@@ -123,30 +139,54 @@ const EditableRow = ({
           setErrMessage("Error, item is not multiple days");
           setEndError(true);
           setMultiDayStyle(true);
+        } else if (location === "") {
+          setErrMessage("Location cannot be empty");
         } else {
           setEndError(false);
           setStartError(false);
-          setErrMessage("");
+          setErrMessage(null);
           setMultiDayStyle(false);
         }
       }
     }
-  }, [holdEndTime, holdStartTime, editMultiDay]);
+  }, [holdEndTime, holdStartTime, editMultiDay, location]);
 
   useEffect(() => {
     if (locationEditRef.current) {
       locationEditRef.current.value = preFill.location;
+      initialLocation.current = preFill.location;
+      setLocation(preFill.location);
     }
     if (costEditRef.current) {
       costEditRef.current.value = String(preFill.cost);
+      setCost(preFill.cost);
+      initialCost.current = preFill.cost;
     }
     if (detailEditRef.current) {
       detailEditRef.current.value = preFill.details;
+      initialDetails.current = preFill.details;
+      setDetails(preFill.details);
     }
     if (multiDayEditRef.current) {
       setEditMultiDay(preFill.multiDay);
+      initialMultiDay.current = preFill.multiDay;
     }
   }, [editLineId]);
+
+  useEffect(() => {
+    if (
+      location !== initialLocation.current ||
+      holdStartTime !== initialStart.current ||
+      holdEndTime !== initialEnd.current ||
+      cost != initialCost.current ||
+      details !== initialDetails.current ||
+      editMultiDay !== initialMultiDay.current
+    ) {
+      setDisabled(false);
+    } else {
+      setDisabled(true);
+    }
+  }, [location, holdEndTime, holdStartTime, editMultiDay, cost, details]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -239,10 +279,10 @@ const EditableRow = ({
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else {
-        console.log("~~~~ error deleting item");
+        console.error("error deleting item");
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -266,10 +306,8 @@ const EditableRow = ({
   ) => {
     e?.preventDefault();
 
-    console.log("startTime", holdStartTime);
     const startDateAssembler = holdStartTime;
 
-    console.log("endTime", holdEndTime);
     const endDateAssembler = holdEndTime;
 
     const details: string = detailEditRef.current
@@ -330,7 +368,6 @@ const EditableRow = ({
         }),
       });
       if (response.ok) {
-        console.log("YAHOOOO");
         const data = await response.json();
         setEditLineId(null);
         setAddingItem(false);
@@ -430,10 +467,10 @@ const EditableRow = ({
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else {
-        console.log("something went wrong editing");
+        console.error("something went wrong editing");
       }
     } catch (err) {
-      console.log("failed to update item ~~~~~ ", err);
+      console.error("failed to update item", err);
     }
   };
 
@@ -445,6 +482,7 @@ const EditableRow = ({
           className={styles.xButton}
           ref={deleteButtonRef}
           onClick={(e) => submitDelete(e, value.id, index, dayContainer)}
+          onKeyDown={(e) => (e.key === " " ? e.preventDefault() : undefined)}
         >
           delete
         </button>
@@ -560,6 +598,7 @@ const EditableRow = ({
           id="location"
           maxLength={300}
           className={`${locationError && "border-red-500"} ${styles.input}`}
+          onChange={(e) => setLocation(e.target.value)}
           ref={locationEditRef}
         />
       </td>
@@ -573,6 +612,7 @@ const EditableRow = ({
           step="0.01"
           min="0"
           ref={costEditRef}
+          onChange={(e) => setCost(Number(e.target.value))}
         />
       </td>
 
@@ -588,6 +628,7 @@ const EditableRow = ({
           ref={detailEditRef}
           onFocus={() => setTextAreaFocus(true)}
           onBlur={() => setTextAreaFocus(false)}
+          onChange={(e) => setDetails(e.target.value)}
         />
       </td>
       <td>
@@ -614,10 +655,10 @@ const EditableRow = ({
           <button
             type="button"
             className={`${styles.buttonsWhileEditing}  ${
-              endError || startError ? "" : styles.submitEditButton
+              endError || startError || disabled ? "" : styles.submitEditButton
             }`}
             onClick={(e) => submitEdit(dayContainer, value.id, e)}
-            disabled={endError || startError}
+            disabled={endError || startError || errMessage !== null || disabled}
             ref={editSubmitButtonRef}
             onKeyUp={(e) => {
               if (e.key === "Enter") {
