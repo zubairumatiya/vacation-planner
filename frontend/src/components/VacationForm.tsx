@@ -30,14 +30,33 @@ const VacationForm = (props?: Props) => {
   const token = auth?.token;
 
   const today = new Date().toISOString().slice(0, 10);
+
   const date = new Date();
   date.setFullYear(date.getFullYear() + 1);
   const oneYear = date.toISOString().slice(0, 10);
+
+  const date1 = new Date();
+  date1.setFullYear(date1.getFullYear() + 10);
+  const tenYearsFromNow = date1.toISOString().slice(0, 10);
+  const [sHtmlDateErr, setSHtmlDateErr] = useState<boolean>(true);
+  const [eHtmlDateErr, setEHtmlDateErr] = useState<boolean>(true);
+
   const locationInputRef = useRef<HTMLInputElement>(null);
   const [gValues, setGValues] = useState<GValues | null>(null);
   const [clickClear, setClickClear] = useState<boolean>(true);
+  const autocompleteRef = useRef<{
+    handleKeyDown: (key: string) => void;
+  }>(null);
+  const tripNameRef = useRef<HTMLInputElement>(null);
+  const startDateRef = useRef<HTMLInputElement>(null);
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      tripNameRef.current?.focus();
+    });
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -136,6 +155,7 @@ const VacationForm = (props?: Props) => {
   const [tripName, setTripName] = useState(props?.preFill?.trip_name ?? "");
   const [location, setLocation] = useState(props?.preFill?.location ?? "");
   const [hideSuggestions, setHideSuggestions] = useState(true);
+  const skipEORef = useRef<boolean | undefined>(undefined);
 
   useEffect(() => {
     props?.disableOrNah(fieldError);
@@ -148,16 +168,31 @@ const VacationForm = (props?: Props) => {
     if (
       !tripName ||
       !location ||
+      !gValues ||
       isNaN(start.getTime()) ||
       isNaN(end.getTime()) ||
       start > end ||
-      !gValues
+      !sHtmlDateErr ||
+      !eHtmlDateErr
     ) {
       setFieldError(true);
     } else {
       setFieldError(false);
     }
-  }, [startDate, endDate, location, tripName, gValues]);
+    if (!sHtmlDateErr || !eHtmlDateErr) {
+      setErrMessage(
+        "Make sure trip start is not past 10 years from today AND start of trip and end of trip does not exceed 365 days"
+      );
+    }
+  }, [
+    startDate,
+    endDate,
+    location,
+    tripName,
+    gValues,
+    sHtmlDateErr,
+    eHtmlDateErr,
+  ]);
 
   useEffect(() => {
     if (props?.submit === true) {
@@ -175,6 +210,7 @@ const VacationForm = (props?: Props) => {
           endDate: string;
           gId: string;
           gVp: GValues["vp"];
+          skipEO: boolean | undefined;
           id?: string;
         } = {
           tripname: tripName,
@@ -183,13 +219,13 @@ const VacationForm = (props?: Props) => {
           endDate: endDate,
           gId: gValues.id,
           gVp: gValues.vp,
+          skipEO: skipEORef.current,
         };
         if (props?.method === "PATCH") {
           method = "PATCH";
           bodyObject.id = props?.preFill?.id;
           url = url + "/" + bodyObject.id;
         }
-
         if (token) {
           const res = await fetch(url, {
             method: method,
@@ -224,18 +260,22 @@ const VacationForm = (props?: Props) => {
           alert("you are not logged in - your trip will not be saved");
         }
       };
-
       formSubmit();
     }
   }, [props?.submit]);
 
+  useEffect(() => {
+    if (props?.method === "PATCH") {
+      skipEORef.current = undefined;
+    } else {
+      skipEORef.current = true;
+    }
+  }, []);
+
   const startDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.value);
     const start = new Date(e.target.value);
     const end = new Date(endDate);
-    console.log("start:", start, "end", end);
     if (start > end) {
-      console.log("evaluating date");
       const pushEndDate = start.toISOString().slice(0, 10);
       setEndDate(pushEndDate);
     }
@@ -244,10 +284,12 @@ const VacationForm = (props?: Props) => {
     start.setFullYear(start.getFullYear() + 1);
     const oneYear = start.toISOString().slice(0, 10);
     setOneYearRange(oneYear);
+    setSHtmlDateErr(e.target.validity.valid);
   };
 
   const endDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEndDate(e.target.value);
+    setEHtmlDateErr(e.target.validity.valid);
   };
 
   const divs = "flex justify-center my-4 w-full";
@@ -268,6 +310,7 @@ const VacationForm = (props?: Props) => {
                 Trip name:{" "}
               </label>
               <input
+                ref={tripNameRef}
                 className={clsx(fieldError && styles.dateError, inputs)}
                 type="text"
                 name="tripname"
@@ -304,7 +347,21 @@ const VacationForm = (props?: Props) => {
                     }
                     setHideSuggestions(false);
                   }}
-                  //onBlur={() => setHideSuggestions(true)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                    if (
+                      e.key === "ArrowUp" ||
+                      e.key === "ArrowDown" ||
+                      e.key === "Enter"
+                    ) {
+                      e.preventDefault();
+                    }
+                    autocompleteRef.current?.handleKeyDown(e.key);
+                  }}
+                  onKeyUp={(e: React.KeyboardEvent<HTMLInputElement>) => {
+                    if (e.key === "Enter") {
+                      startDateRef?.current?.focus();
+                    }
+                  }}
                   value={location}
                   id="location"
                   placeholder="country, city, etc"
@@ -312,10 +369,13 @@ const VacationForm = (props?: Props) => {
                 />
                 {!hideSuggestions && (
                   <AutocompleteWebComponent
+                    ref={autocompleteRef}
                     inputValue={location}
                     setInputVal={setLocation}
                     setHideSuggestions={setHideSuggestions}
                     storeValues={storeValues}
+                    tripIdProp={props?.preFill?.id}
+                    skipEO={skipEORef.current}
                   />
                 )}
               </div>
@@ -325,12 +385,14 @@ const VacationForm = (props?: Props) => {
                 Start date:{" "}
               </label>
               <input
+                ref={startDateRef}
                 className={clsx(fieldError && styles.dateError, inputs)}
                 type="date"
                 name="startdate"
                 id="startdate"
                 value={startDate}
                 min={props?.method === "PATCH" ? undefined : today}
+                max={tenYearsFromNow}
                 onChange={startDateChange}
               />
             </div>

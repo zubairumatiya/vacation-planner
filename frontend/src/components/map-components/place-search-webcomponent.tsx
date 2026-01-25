@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import styles from "../../styles/Map.module.css";
 import starIcon from "../../assets/star-icon.svg";
 import addToList from "../../assets/add-to-list.svg";
 import added from "../../assets/check-mark.svg";
 import type { UniqueIdentifier } from "@dnd-kit/core";
+import { AuthContext } from "../../context/AuthContext";
+import { useParams } from "react-router-dom";
 
 const apiURL = import.meta.env.VITE_API_URL;
 const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
@@ -20,6 +22,8 @@ const PlaceSearchWebComponent = ({
   handleSubmitItem,
   handleDeleteItem,
 }: PlaceSearchProps) => {
+  const token = useContext(AuthContext)?.token;
+  const { tripId } = useParams();
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
   const [newParams, setNewParams] = useState<boolean>(false);
@@ -62,6 +66,7 @@ const PlaceSearchWebComponent = ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             ratingFilter:
@@ -76,6 +81,7 @@ const PlaceSearchWebComponent = ({
             placeType,
             locationName,
             viewport,
+            tripId,
           }),
         });
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);

@@ -9,6 +9,13 @@
   width: 100%;
   gap: 8px;
   flex-wrap: wrap;
+  overflow: auto;
+}
+
+@media (max-width: 700px) {
+  .tableAndList {
+    height: 500px;
+  }
 }
 
 .bannerAndOverwrite {

@@ -167,7 +167,7 @@ router.delete(
         return;
       }
     } catch (err) {
-      res.sendStatus(500);
+      console.log(err);
       next(err);
     }
   }
@@ -616,7 +616,7 @@ router.delete(
   }
 );
 
-router.post("/map", async (req, res, next) => {
+router.post("/map", ensureLoggedIn, ensureOwnership, async (req, res, next) => {
   let countOfPlaces = 0;
   const gatherPlaces = [];
   let holdToken =
@@ -684,55 +684,65 @@ router.post("/map", async (req, res, next) => {
   }
 });
 
-router.post("/autocomplete", async (req, res, next) => {
-  const query = req.body.query;
-  try {
-    const result = await fetch(
-      "https://places.googleapis.com/v1/places:autocomplete",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": "suggestions.placePrediction",
-        },
-        body: JSON.stringify({
-          input: `${query}`,
-          includedPrimaryTypes: ["locality", "country", "political"], // will suggest cities, countries, political boundaries, etc, instead of places of business
-        }),
-      }
-    );
-    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
-    const data = await result.json();
-    res.status(200).json(data);
-  } catch (err) {
-    next(err);
-  }
-});
-
-router.get("/details/:itemId", async (req, res, next) => {
-  try {
-    if (!req.params.itemId) {
-      throw new Error("Error finishing req");
+router.post(
+  "/autocomplete",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    const query = req.body.query;
+    try {
+      const result = await fetch(
+        "https://places.googleapis.com/v1/places:autocomplete",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": `${API_KEY}`,
+            "X-Goog-FieldMask": "suggestions.placePrediction",
+          },
+          body: JSON.stringify({
+            input: `${query}`,
+            includedPrimaryTypes: ["locality", "country", "political"], // will suggest cities, countries, political boundaries, etc, instead of places of business
+          }),
+        }
+      );
+      if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+      const data = await result.json();
+      res.status(200).json(data);
+    } catch (err) {
+      next(err);
     }
-    const result = await fetch(
-      `https://places.googleapis.com/v1/places/${req.params.itemId}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-Api-Key": `${API_KEY}`,
-          "X-Goog-FieldMask": "viewport",
-        },
-      }
-    );
-    if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
-    const data = await result.json();
-    res.status(200).json(data);
-  } catch (err) {
-    next(err);
   }
-});
+);
+
+router.post(
+  "/details/:itemId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (req, res, next) => {
+    try {
+      if (!req.params.itemId) {
+        throw new Error("Error finishing req");
+      }
+      const result = await fetch(
+        `https://places.googleapis.com/v1/places/${req.params.itemId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": `${API_KEY}`,
+            "X-Goog-FieldMask": "viewport",
+          },
+        }
+      );
+      if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
+      const data = await result.json();
+      res.status(200).json(data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 /*
 router.post("/map", async (req, res, next) => {

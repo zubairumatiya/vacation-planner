@@ -4,24 +4,40 @@ import {
   forwardRef,
   useImperativeHandle,
   type SetStateAction,
+  useContext,
 } from "react";
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
+import { AuthContext } from "../../context/AuthContext";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface Props {
   inputValue: string;
   setInputVal: React.Dispatch<SetStateAction<string>>;
   setHideSuggestions: React.Dispatch<SetStateAction<boolean>>;
   storeValues?: (id: string, name: string, vp: Viewport) => void;
+  tripIdProp?: string;
+  skipEO?: boolean;
 }
 
 const apiURL = import.meta.env.VITE_API_URL;
 
 export const AutocompleteWebComponent = forwardRef(
   (
-    { inputValue, setInputVal, setHideSuggestions, storeValues }: Props,
+    {
+      inputValue,
+      setInputVal,
+      setHideSuggestions,
+      storeValues,
+      tripIdProp,
+      skipEO,
+    }: Props,
     ref
   ) => {
+    const token = useContext(AuthContext)?.token;
+    const tripId = useParams().tripId ?? tripIdProp;
+    const navigate = useNavigate();
+    const sEO = skipEO === true ? true : undefined;
     const handleKeyDown = (e: string) => {
       if (!e) return;
       if (suggestions.length < 0 && focusedSelection === -1) return;
@@ -65,19 +81,29 @@ export const AutocompleteWebComponent = forwardRef(
         setSuggestions([]);
         return;
       }
-      console.log(inputValue);
       const autocompleteReq = async (input: string) => {
         try {
           const result = await fetch(`${apiURL}/autocomplete`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({
               query: `${input}`,
+              tripId,
+              skipEO: sEO,
             }),
           });
-          if (!result.ok) throw new Error(`Error: ${result.status}`);
+          if (!result.ok) {
+            if (result.status === 401) {
+              navigate("/redirect", {
+                state: { message: "Session expired, redirecting to log in..." },
+              });
+            } else {
+              throw new Error(`Error: ${result.status}`);
+            }
+          }
           const data: SuggestionsResponse = await result.json();
           if (!data.suggestions) {
             data.suggestions = [];
@@ -106,10 +132,15 @@ export const AutocompleteWebComponent = forwardRef(
       const result = await fetch(
         `${apiURL}/details/${element.placePrediction?.placeId}`,
         {
-          method: "GET",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify({
+            tripId,
+            skipEO: sEO,
+          }),
         }
       );
       if (!result.ok) throw new Error(`Error: ${result.status}`);

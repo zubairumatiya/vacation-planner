@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Home.module.css";
@@ -21,11 +21,27 @@ const Home = () => {
     end_date: string;
   };
   const [editing, setEditing] = useState(false);
+  const editingRef = useRef<boolean>(false);
   const [editingId, setEditingId] = useState<string>("");
   const [submitButtonDisabled, setSubmitButtonDisabled] =
     useState<boolean>(false);
   const [submitClicked, setSubmitClicked] = useState<boolean>(false);
   const [updateList, setUpdateList] = useState<boolean>(false);
+
+  useEffect(() => {
+    const cancel = (e: KeyboardEvent) => {
+      if (editingRef.current === true) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setEditing(false);
+          editingRef.current = false;
+          setEditingId("");
+        }
+      }
+    };
+    document.addEventListener("keydown", cancel);
+    return () => document.removeEventListener("keydown", cancel);
+  }, []);
 
   useEffect(() => {
     const getTrips = async () => {
@@ -48,6 +64,7 @@ const Home = () => {
 
   const editTrip = (tripId: string) => {
     setEditing(true);
+    editingRef.current = true;
     setEditingId(tripId);
   };
 
@@ -57,6 +74,7 @@ const Home = () => {
 
   const handleCancel = () => {
     setEditing(false);
+    editingRef.current = false;
     setEditingId("");
   };
 
@@ -69,6 +87,7 @@ const Home = () => {
     if (result) {
       setUpdateList((prev) => !prev);
       setEditingId("");
+      editingRef.current = false;
       setEditing(false);
       setSubmitClicked(false);
     }
@@ -85,6 +104,7 @@ const Home = () => {
     if (result.ok) {
       setTrips((prev) => prev.filter((v: Trip) => v.id !== id));
       setEditing(false);
+      editingRef.current = false;
       setEditingId("");
     } else if (result.status === 401) {
       navigate("/redirect", {

@@ -1,10 +1,22 @@
 import VacationForm from "../components/VacationForm";
-import { Link } from "react-router-dom";
-import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 const AddVacation = () => {
   const [submitButtonDisabled, setSubmitButtonDisabled] =
     useState<boolean>(true);
   const [submitClicked, setSubmitClicked] = useState<boolean>(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const cancel = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        navigate("/");
+      }
+    };
+    document.addEventListener("keydown", cancel);
+    return () => document.removeEventListener("keydown", cancel);
+  }, []);
 
   const checkError = (fieldError: boolean) => {
     setSubmitButtonDisabled(fieldError);
