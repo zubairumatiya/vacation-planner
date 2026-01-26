@@ -101,6 +101,11 @@ const d = new Date(`${date}T${hours}:${minutes}:00Z`);
 console.log(isNaN(d.getTime()));
 // lets see if we can add some checks to add item and edit item
 
+console.log(
+  `UbBX+tLWyqAsKjRq+Kbu6P827W+YMNgUeTNNqyEVR6nYrDLFCCBlhN+/FHFau9gU
+Ob6tQrcYtzRKF8VkQaXC0w==`.split("").length
+);
+
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];

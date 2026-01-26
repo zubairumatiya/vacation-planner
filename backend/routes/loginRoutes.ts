@@ -8,6 +8,9 @@ import jwt from "jsonwebtoken";
 import { isValidPassword } from "../../shared/passwordUtils.js";
 import { isValidEmail } from "../../shared/emailUtils.js";
 import { emailSender } from "../helpers/emailSender.js";
+import createNewRefreshToken from "../helpers/createNewRefreshToken.js";
+import * as cookie from "cookie";
+
 dotenv.config();
 
 interface PgError extends Error {
@@ -27,6 +30,7 @@ if (process.env.SIGNATURE === undefined) {
   throw new Error("SIGNATURE is undefined");
 }
 const SECRET: string = process.env.SIGNATURE;
+const SECRET2 = process.env.SIGNATURE2;
 
 const registerSubj = `${appName}: Verify Your Email Address`;
 const sendRegistrationEmail = (userEmail: string, passToken: string) =>
@@ -178,9 +182,70 @@ router.post("/login", async (req, res, next) => {
           SECRET,
           { expiresIn: "1h" }
         );
+
+        const refToken = createNewRefreshToken(String(foundUser.rows[0].id));
+        res.cookie("refreshToken", refToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "strict",
+          path: "/auth/refresh",
+        });
+
         res.status(200).json({ message: "Success!", token });
         return;
       }
+    }
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/auth/refresh", async (req, res, next) => {
+  try {
+    const cookies = cookie.parseCookie(req.headers.cookie);
+    const refToken = cookies.refreshToken;
+    if (!refToken) {
+      res.sendStatus(401);
+      return;
+    }
+    const decodedRefToken = jwt.verify(refToken, SECRET2);
+    if (
+      decodedRefToken &&
+      typeof decodedRefToken === "object" &&
+      !Array.isArray(decodedRefToken)
+    ) {
+      const result = await db.query(
+        "UPDATE refresh_tokens SET revoked=$1 WHERE jti=$2 AND revoked=FALSE RETURNING *",
+        [true, decodedRefToken.jti]
+      );
+      if (result.rowCount < 1) {
+        res.status(401).json({ error: "Could not find" }); // frontend receieves this in 401 request and will log user out
+        return;
+      }
+      const newRefToken = createNewRefreshToken(String(decodedRefToken.sub));
+      if (newRefToken == null) {
+        res.sendStatus(500);
+        return;
+      }
+
+      const token = jwt.sign(
+        {
+          id: String(decodedRefToken.sub),
+        },
+        SECRET,
+        { expiresIn: "1h" }
+      );
+
+      res
+        .status(200)
+        .cookie("refreshToken", newRefToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: "strict",
+          path: "/auth/refresh",
+        })
+        .json({ token });
+      return;
     }
   } catch (err) {
     next(err);

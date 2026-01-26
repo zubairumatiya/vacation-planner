@@ -39,7 +39,7 @@ export default function ensureLoggedIn(
         .json({ message: "Unable to Authenticate Token, check secret" });
       return;
     }
-    const decodedToken = jwt.verify(token, SECRET);
+    const decodedToken = jwt.verify(token, SECRET); // throws err if wrong, no need to error check
     req.user = decodedToken as MyPayload;
     next();
   } catch (err) {
