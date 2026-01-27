@@ -36,6 +36,7 @@ import {
 import { BannerContextProvider } from "../context/BannerContext";
 
 import Banner from "../components/Banner";
+import refreshFn from "../utils/refreshFn";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -146,6 +147,8 @@ const EditCanvas = ({
   );
 
   const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
 
   function isDragData(data: DragData | AnyData | undefined): data is DragData {
     if (data === undefined) {
@@ -440,9 +443,23 @@ const EditCanvas = ({
           if (!result.ok) {
             let b: boolean = false;
             if (result.status === 401) {
-              navigate("/login", {
-                state: { message: "Session expired, redirecting to log in..." },
-              });
+              console.log("401 hit!");
+              const continueReq = await refreshFn(apiURL, result);
+              if (continueReq?.status === 200) {
+                console.log("continueReq");
+                if (login) {
+                  login(continueReq.token);
+                }
+                // insert continuing original request
+              } else if (continueReq?.status === 500) {
+                navigate("login", {
+                  state: { message: "Please log in again, redirecting..." },
+                });
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
             } else if (result.status === 403) {
               setBannerMsg(
                 "You do not have permission to access this resource"

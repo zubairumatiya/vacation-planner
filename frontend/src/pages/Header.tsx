@@ -26,9 +26,18 @@ const Header = () => {
         setSideBarOpen(false);
       }
     };
+    const scrollHide = () => {
+      if (isSideBarOpen) {
+        setSideBarOpen(false);
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.body.addEventListener("scroll", scrollHide);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.body.removeEventListener("scroll", scrollHide);
+    };
+  }, [isSideBarOpen]);
 
   return (
     <header className={styles.header}>

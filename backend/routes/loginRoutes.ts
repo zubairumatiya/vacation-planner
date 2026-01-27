@@ -180,30 +180,76 @@ router.post("/login", async (req, res, next) => {
             //email: foundUser.rows[0].email,      NOT SURE IF I SHOULD OR NEED TO SEND
           },
           SECRET,
-          { expiresIn: "1h" }
+          { expiresIn: "10s" }
         );
-
-        const refToken = createNewRefreshToken(String(foundUser.rows[0].id));
-        res.cookie("refreshToken", refToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: "strict",
-          path: "/auth/refresh",
-        });
-
-        res.status(200).json({ message: "Success!", token });
+        const refToken = await createNewRefreshToken(
+          String(foundUser.rows[0].id)
+        );
+        res
+          .cookie("refreshToken", refToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            path: "/",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+          })
+          .status(200)
+          .json({ message: "Success!", token });
         return;
       }
+    }
+  } catch (err) {
+    console.log(err);
+    next(err);
+  }
+});
+
+router.get("auth/logout", async (req, res, next) => {
+  try {
+    const cookieHeader = req.headers.cookie;
+    if (!cookieHeader) {
+      console.log("NO COOKIE!!");
+      res.sendStatus(401);
+      return;
+    }
+    const cookies = cookie.parse(cookieHeader);
+    const refToken = cookies.refreshToken;
+    const decodedRefToken = jwt.decode(refToken);
+    if (
+      decodedRefToken &&
+      typeof decodedRefToken === "object" &&
+      !Array.isArray(decodedRefToken)
+    ) {
+      await db.query(
+        "UPDATE refresh_tokens SET revoked=$1 WHERE jti=$2 RETURNING *",
+        [true, decodedRefToken.jti]
+      );
+      console.log("logging out - backend");
+      res.status(200).clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+      return;
     }
   } catch (err) {
     next(err);
   }
 });
 
-router.post("/auth/refresh", async (req, res, next) => {
+router.get("/auth/refresh", async (req, res, next) => {
   try {
-    const cookies = cookie.parseCookie(req.headers.cookie);
+    const cookieHeader = req.headers.cookie;
+    if (!cookieHeader) {
+      console.log("NO COOKIE!!");
+      res.sendStatus(401);
+      return;
+    }
+    const cookies = cookie.parse(cookieHeader);
     const refToken = cookies.refreshToken;
+    console.log("cookies:", cookies, "~~~ refToken:", refToken);
     if (!refToken) {
       res.sendStatus(401);
       return;
@@ -222,32 +268,47 @@ router.post("/auth/refresh", async (req, res, next) => {
         res.status(401).json({ error: "Could not find" }); // frontend receieves this in 401 request and will log user out
         return;
       }
-      const newRefToken = createNewRefreshToken(String(decodedRefToken.sub));
+      const exp = decodedRefToken.exp;
+      const newRefToken = await createNewRefreshToken(
+        String(decodedRefToken.sub),
+        exp
+      );
       if (newRefToken == null) {
+        console.log("newRefreshCould not be created");
         res.sendStatus(500);
         return;
       }
-
       const token = jwt.sign(
         {
           id: String(decodedRefToken.sub),
         },
         SECRET,
-        { expiresIn: "1h" }
+        { expiresIn: "10s" }
       );
-
+      console.log("success refreshing token");
       res
         .status(200)
         .cookie("refreshToken", newRefToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: "strict",
-          path: "/auth/refresh",
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
         })
         .json({ token });
       return;
+    } else {
+      console.log("something else!!");
+      res.sendStatus(500);
+      return;
     }
   } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      console.log("token expired --- logging");
+      res.status(401).json({ error: "TokenExpired" });
+      return;
+    }
+    console.log(err);
     next(err);
   }
 });

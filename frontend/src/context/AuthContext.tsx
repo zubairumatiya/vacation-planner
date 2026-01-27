@@ -4,13 +4,15 @@ import type { ReactNode } from "react";
 type AuthContextType = {
   token: string | null;
   login: (newToken: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   loggingOut: boolean;
 };
 
 type AuthProviderProps = {
   children: ReactNode;
 };
+
+const apiURL = import.meta.env.VITE_API_URL;
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -32,10 +34,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setToken(newToken);
   };
 
-  const logout = () => {
-    setLoggingOut(true);
-    localStorage.removeItem("token");
-    setToken(null);
+  const logout = async (): Promise<void> => {
+    try {
+      await fetch(`${apiURL}/logout`, {
+        method: "GET",
+        credentials: "include",
+      });
+      setLoggingOut(true);
+      localStorage.removeItem("token");
+      setToken(null);
+    } catch (err) {
+      setLoggingOut(true);
+      localStorage.removeItem("token");
+      setToken(null);
+      console.error(err);
+    }
   };
 
   return (

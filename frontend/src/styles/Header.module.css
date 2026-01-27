@@ -33,6 +33,7 @@
   width: 15vw;
   transition: transform 0.3s ease;
   transform: translate(-57%, 100%); /* hidden */
+  z-index: 1;
 }
 
 .sidebar.open {

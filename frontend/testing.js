@@ -205,6 +205,7 @@ repeaterCall();
 // host db
 // host front and back end
 // launch
+// when in production, change cookie arguments back to safer standards. Change auth/refresh from GET to POST since we will have https enabled
 
 // nice to have - mobile pointerdown events on timePicker so we can trigger dropdown. ??maybe, not sure if it functions fine on mobile yet
 // nice to have - pressing enter while focused on customTimePicker does not submit the edit item

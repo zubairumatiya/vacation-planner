@@ -48,6 +48,10 @@ export default function ensureLoggedIn(
       res.status(401).json({ error: "TokenExpired" });
       return;
     }
+    if (err.name === "JsonWebTokenError") {
+      res.status(401).json({ error: "JwtError" });
+      return;
+    }
     next(err);
   }
 }
