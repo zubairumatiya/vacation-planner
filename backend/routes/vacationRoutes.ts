@@ -189,7 +189,6 @@ router.get(
         return;
       }
       snakeToCamel(result2.rows);
-      console.log("~~~~~~~~~~~~~~~~~~~", req.params.tripId);
       const result3 = await db.query(
         "SELECT * FROM trip_schedule WHERE trip_id=$1 ORDER BY start_time ASC, sort_index ASC",
         [req.params.tripId]
@@ -229,7 +228,6 @@ router.post(
         isNaN(Number(req.body.cost)) || req.body.cost === ""
           ? 0
           : req.body.cost;
-      console.log(req.body.cost);
       let values: (string | number | Date | boolean)[];
       let queryText: string =
         "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *";
@@ -296,7 +294,6 @@ router.post(
         if (newSortIndex === undefined) {
           const renumRows = await renumberIndexDb(req.params.tripId, client);
           if (renumRows.length < 1) {
-            console.log("renumbering error");
             await client.query("ROLLBACK");
             res.status(500).json({ message: "Internal server error" });
             return;
@@ -316,7 +313,6 @@ router.post(
         return;
       } else {
         await client.query("ROLLBACK");
-        console.log("rolling this way");
         res.sendStatus(500);
         return;
       }
@@ -621,8 +617,6 @@ router.post("/map", ensureLoggedIn, ensureOwnership, async (req, res, next) => {
   const gatherPlaces = [];
   let holdToken =
     req.body.nextPageToken === undefined ? "" : req.body.nextPageToken;
-  console.log(req.body.locationName);
-  console.log(req.body.placeType);
   try {
     if (req.body.nextPageToken === undefined) {
       res.sendStatus(406);

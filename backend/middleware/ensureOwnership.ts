@@ -11,7 +11,6 @@ export default async function ensureOwnership(
       res.status(500).json({ message: "User information not found" });
       return;
     }
-    console.log(req.body?.skipEO);
     if (req.body?.skipEO) {
       next();
       return;

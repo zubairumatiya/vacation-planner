@@ -1,4 +1,4 @@
 *.env
-*.md
-
+*.pem
 node_modules/
+/backend/certs/

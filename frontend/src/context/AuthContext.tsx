@@ -12,7 +12,7 @@ type AuthProviderProps = {
   children: ReactNode;
 };
 
-const apiURL = import.meta.env.VITE_API_URL;
+const apiURL = import.meta.env.VITE_API_URL; // will need this for logout route in PROD
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -33,11 +33,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.setItem("token", newToken);
     setToken(newToken);
   };
-
   const logout = async (): Promise<void> => {
     try {
-      await fetch(`${apiURL}/logout`, {
-        method: "GET",
+      await fetch(`${apiURL}/auth/logout`, {
+        method: "POST",
         credentials: "include",
       });
       setLoggingOut(true);

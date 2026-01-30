@@ -6,7 +6,7 @@ export default async function refreshFn(apiURL: string, priorResult: Response) {
     return { status: 500, error: "JwtError" };
   }
   const result = await fetch(`${apiURL}/auth/refresh`, {
-    method: "GET",
+    method: "POST",
     credentials: "include",
   });
   if (!result.ok) {

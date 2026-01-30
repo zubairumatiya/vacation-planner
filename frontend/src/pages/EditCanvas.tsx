@@ -341,41 +341,101 @@ const EditCanvas = ({
     const sendScheduleToDb = async () => {
       try {
         if (refIdSnapshot) {
+          const reqObj0 = {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              start: previous[overContainer][activeIndex].startTime,
+              end: previous[overContainer][activeIndex].endTime,
+              location: previous[overContainer][activeIndex].location,
+              cost: previous[overContainer][activeIndex].cost,
+              details: previous[overContainer][activeIndex].details,
+              multiDay: previous[overContainer][activeIndex].multiDay,
+              sortIndex: previous[overContainer][activeIndex].sortIndex,
+              chunk,
+            }),
+          };
+          const reqObj1 = {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              newValue: true,
+              tripId,
+            }),
+          };
           const responses = await Promise.all([
-            fetch(`${apiURL}/schedule/${tripId}`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                start: previous[overContainer][activeIndex].startTime,
-                end: previous[overContainer][activeIndex].endTime,
-                location: previous[overContainer][activeIndex].location,
-                cost: previous[overContainer][activeIndex].cost,
-                details: previous[overContainer][activeIndex].details,
-                multiDay: previous[overContainer][activeIndex].multiDay,
-                sortIndex: previous[overContainer][activeIndex].sortIndex,
-                chunk,
-              }),
-            }),
-            fetch(`${apiURL}/check-list-item/${refIdSnapshot}`, {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                newValue: true,
-                tripId,
-              }),
-            }),
+            fetch(`${apiURL}/schedule/${tripId}`, reqObj0),
+            fetch(`${apiURL}/check-list-item/${refIdSnapshot}`, reqObj1),
           ]);
           if (!responses[0].ok) {
             if (responses[0].status === 401) {
               navigate("/login", {
                 state: { message: "Session expired, redirecting to log in..." },
               });
+              console.log("401 hit!");
+              const continueReq = await refreshFn(apiURL, responses[0]);
+              if (continueReq?.status === 200) {
+                console.log("continueReq");
+                if (login) {
+                  login(continueReq.token);
+                }
+                const retryReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+                  ...reqObj0,
+                  headers: {
+                    ...reqObj0.headers,
+                    Authorization: `Bearer ${continueReq.token}`,
+                  },
+                });
+                if (!retryReq.ok) {
+                  setBannerMsg("Trouble completing req, please try again");
+                } else if (retryReq.ok) {
+                  console.log("retry complete");
+                  const data = await retryReq.json();
+                  if (data.newlyIndexedSchedule != null) {
+                    for (const i of data.newlyIndexedSchedule) {
+                      i.startTime = new Date(i.startTime);
+                      i.endTime = new Date(i.endTime);
+                      i.id = String(i.id);
+                    }
+                    const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+                    const dayContainers: DayContainer[] = makeContainers(
+                      length,
+                      new Date(utcStart)
+                    );
+                    const bucketizeItems: DaySchedule = bucketizeSchedule(
+                      dayContainers,
+                      data.newlyIndexedSchedule
+                    );
+                    setSchedule(bucketizeItems);
+                  } else if (data.addedItem != null) {
+                    data.addedItem.startTime = new Date(
+                      data.addedItem.startTime
+                    );
+                    data.addedItem.endTime = new Date(data.addedItem.endTime);
+                    setSchedule((prev) => ({
+                      ...prev,
+                      [overContainer]: prev[overContainer].map((v) =>
+                        refIdSnapshot === v.id ? data.addedItem : v
+                      ),
+                    }));
+                  }
+                  setActiveListId(null);
+                }
+              } else if (continueReq?.status === 500) {
+                navigate("/login", {
+                  state: { message: "Please log in again, redirecting..." },
+                });
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
             }
             handleDragCancel();
             setBannerMsg("error processing drag change");
@@ -391,6 +451,7 @@ const EditCanvas = ({
             setBannerMsg("Error: List not found");
             return;
           }
+
           const data = await responses[0].json();
           if (data.newlyIndexedSchedule != null) {
             for (const i of data.newlyIndexedSchedule) {
@@ -422,37 +483,86 @@ const EditCanvas = ({
         } else {
           // for an existing item in schedule
           const updatedItem = previous[overContainer][activeIndex];
+          const reqObj = {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              start: updatedItem.startTime,
+              end: updatedItem.endTime,
+              sortIndex: updatedItem.sortIndex,
+              tripId,
+              chunk,
+              lastModified: updatedItem.lastModified,
+            }),
+          };
           const result = await fetch(
             `${apiURL}/update-time/${updatedItem.id}`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                start: updatedItem.startTime,
-                end: updatedItem.endTime,
-                sortIndex: updatedItem.sortIndex,
-                tripId,
-                chunk,
-                lastModified: updatedItem.lastModified,
-              }),
-            }
+            reqObj
           );
+
+          const okResFn = async (okRes: Response) => {
+            const data: {
+              updatedData?: Schedule;
+              newlyIndexedSchedule?: Schedule[];
+            } = await okRes.json();
+            console.log("entering ok res fn");
+            if (data.newlyIndexedSchedule != null) {
+              for (const i of data.newlyIndexedSchedule) {
+                i.startTime = new Date(i.startTime);
+                i.endTime = new Date(i.endTime);
+                i.id = String(i.id);
+              }
+              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+              const dayContainers: DayContainer[] = makeContainers(
+                length,
+                new Date(utcStart)
+              );
+              const bucketizeItems: DaySchedule = bucketizeSchedule(
+                dayContainers,
+                data.newlyIndexedSchedule
+              );
+              setSchedule(bucketizeItems);
+            } else if (data.updatedData != null) {
+              data.updatedData.startTime = new Date(data.updatedData.startTime);
+              data.updatedData.endTime = new Date(data.updatedData.endTime);
+              setSchedule((prev) => ({
+                ...prev,
+                [overContainer]: prev[overContainer].map((v) =>
+                  v.id === data.updatedData?.id ? data.updatedData : v
+                ),
+              }));
+            }
+          };
           if (!result.ok) {
             let b: boolean = false;
             if (result.status === 401) {
-              console.log("401 hit!");
               const continueReq = await refreshFn(apiURL, result);
               if (continueReq?.status === 200) {
-                console.log("continueReq");
                 if (login) {
                   login(continueReq.token);
                 }
-                // insert continuing original request
+                const retryReq = await fetch(
+                  `${apiURL}/update-time/${updatedItem.id}`,
+                  {
+                    ...reqObj,
+                    headers: {
+                      ...reqObj.headers,
+                      Authorization: `Bearer ${continueReq.token}`,
+                    },
+                  }
+                );
+                if (!retryReq.ok) {
+                  setBannerMsg("Trouble completing req, please try again");
+                } else if (retryReq.ok) {
+                  b = true;
+                  await okResFn(retryReq);
+                  // insert continuing original request
+                }
               } else if (continueReq?.status === 500) {
-                navigate("login", {
+                navigate("/login", {
                   state: { message: "Please log in again, redirecting..." },
                 });
                 if (logout) {
@@ -504,36 +614,7 @@ const EditCanvas = ({
               handleDragCancel(null, true);
             }
           } else if (result.ok) {
-            const data: {
-              updatedData?: Schedule;
-              newlyIndexedSchedule?: Schedule[];
-            } = await result.json();
-            if (data.newlyIndexedSchedule != null) {
-              for (const i of data.newlyIndexedSchedule) {
-                i.startTime = new Date(i.startTime);
-                i.endTime = new Date(i.endTime);
-                i.id = String(i.id);
-              }
-              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
-              const dayContainers: DayContainer[] = makeContainers(
-                length,
-                new Date(utcStart)
-              );
-              const bucketizeItems: DaySchedule = bucketizeSchedule(
-                dayContainers,
-                data.newlyIndexedSchedule
-              );
-              setSchedule(bucketizeItems);
-            } else if (data.updatedData != null) {
-              data.updatedData.startTime = new Date(data.updatedData.startTime);
-              data.updatedData.endTime = new Date(data.updatedData.endTime);
-              setSchedule((prev) => ({
-                ...prev,
-                [overContainer]: prev[overContainer].map((v) =>
-                  v.id === data.updatedData?.id ? data.updatedData : v
-                ),
-              }));
-            }
+            await okResFn(result);
           }
         }
       } catch {

@@ -6,11 +6,14 @@ import loginRoutes from "./routes/loginRoutes.js";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
+import https from "https";
+import fs from "fs";
 
 dotenv.config();
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://localhost:5173",
     credentials: true,
   })
 );
@@ -43,6 +46,11 @@ if (app.get("env") === "development") {
   });
 }
 
-app.listen(port, () => {
-  console.log(`server listening on port: ${port}`);
+const options = {
+  key: fs.readFileSync("./certs/localhost-key.pem"),
+  cert: fs.readFileSync("./certs/localhost.pem"),
+};
+
+https.createServer(options, app).listen(port, () => {
+  console.log(`HTTPS backend running on port: ${port}`);
 });

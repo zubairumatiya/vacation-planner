@@ -14,14 +14,13 @@ export default async function createNewRefreshToken(
     {
       sub: userId,
       jti,
+      exp: exp ?? Math.floor(Date.now() / 1000) + 10800, // time stamp instead of time duration using expires in.
     },
-    SECRET2,
-    { expiresIn: exp ?? "30s" }
+    SECRET2
   );
   const decoded = jwt.decode(refreshToken);
   if (decoded && typeof decoded === "object" && !Array.isArray(decoded)) {
     const exp = decoded.exp;
-    console.log("exp:", exp);
     const addRefTokenToDb = await db.query(
       "INSERT INTO refresh_tokens (user_id, jti, expires_at) VALUES ($1,$2,$3) RETURNING *",
       [userId, jti, new Date(exp * 1000)]

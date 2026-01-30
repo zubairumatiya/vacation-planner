@@ -155,7 +155,7 @@ router.get("/verify", async (req, res, next) => {
   }
 });
 
-router.post("/login", async (req, res, next) => {
+router.post("/auth/login", async (req, res, next) => {
   const email = req.body.email;
   try {
     const foundUser = await db.query("SELECT * FROM users WHERE email=$1", [
@@ -188,9 +188,9 @@ router.post("/login", async (req, res, next) => {
         res
           .cookie("refreshToken", refToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
+            secure: true, //process.env.NODE_ENV === "production",
             sameSite: "lax",
-            path: "/",
+            path: "/auth",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           })
           .status(200)
@@ -204,7 +204,8 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-router.get("auth/logout", async (req, res, next) => {
+router.post("/auth/logout", async (req, res, next) => {
+  console.log("LOGOUT ROUTE HIT");
   try {
     const cookieHeader = req.headers.cookie;
     if (!cookieHeader) {
@@ -225,13 +226,29 @@ router.get("auth/logout", async (req, res, next) => {
         [true, decodedRefToken.jti]
       );
       console.log("logging out - backend");
-      res.status(200).clearCookie("refreshToken", {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      res
+        .clearCookie("refreshToken", {
+          httpOnly: true,
+          secure: true, //process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/auth",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
+        .sendStatus(200);
+
+      console.log("DONEZO");
+      return;
+    } else {
+      console.log("could not deconde token!");
+      res
+        .clearCookie("refreshToken", {
+          httpOnly: true,
+          secure: true, //process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          path: "/auth",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+        })
+        .sendStatus(200);
       return;
     }
   } catch (err) {
@@ -239,7 +256,7 @@ router.get("auth/logout", async (req, res, next) => {
   }
 });
 
-router.get("/auth/refresh", async (req, res, next) => {
+router.post("/auth/refresh", async (req, res, next) => {
   try {
     const cookieHeader = req.headers.cookie;
     if (!cookieHeader) {
@@ -249,7 +266,7 @@ router.get("/auth/refresh", async (req, res, next) => {
     }
     const cookies = cookie.parse(cookieHeader);
     const refToken = cookies.refreshToken;
-    console.log("cookies:", cookies, "~~~ refToken:", refToken);
+    console.log("~~~ refToken:", refToken);
     if (!refToken) {
       res.sendStatus(401);
       return;
@@ -260,6 +277,11 @@ router.get("/auth/refresh", async (req, res, next) => {
       typeof decodedRefToken === "object" &&
       !Array.isArray(decodedRefToken)
     ) {
+      console.log("time now:", new Date().toISOString().split("T")[1]);
+      console.log(
+        "token expiration:",
+        new Date(decodedRefToken.exp * 1000).toISOString().split("T")[1]
+      );
       const result = await db.query(
         "UPDATE refresh_tokens SET revoked=$1 WHERE jti=$2 AND revoked=FALSE RETURNING *",
         [true, decodedRefToken.jti]
@@ -290,9 +312,9 @@ router.get("/auth/refresh", async (req, res, next) => {
         .status(200)
         .cookie("refreshToken", newRefToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: true, //process.env.NODE_ENV === "production",
           sameSite: "lax",
-          path: "/",
+          path: "/auth",
           maxAge: 7 * 24 * 60 * 60 * 1000,
         })
         .json({ token });
