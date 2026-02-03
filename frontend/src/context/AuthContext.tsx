@@ -1,4 +1,4 @@
-import { useState, createContext, useEffect } from "react";
+import { useState, createContext, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 
 type AuthContextType = {
@@ -6,6 +6,10 @@ type AuthContextType = {
   login: (newToken: string) => void;
   logout: () => Promise<void>;
   loggingOut: boolean;
+  refreshInFlightRef: React.RefObject<Promise<{
+    token: string | null;
+    err: boolean;
+  }> | null>;
 };
 
 type AuthProviderProps = {
@@ -24,6 +28,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoggingOut(false);
     }
   }, [loggingOut]);
+
+  const refreshInFlightRef = useRef<Promise<{
+    token: string | null;
+    err: boolean;
+  }> | null>(null);
 
   const [token, setToken] = useState<AuthContextType["token"]>(
     localStorage.getItem("token")
@@ -51,7 +60,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   return (
-    <AuthContext.Provider value={{ token, login, logout, loggingOut }}>
+    <AuthContext.Provider
+      value={{ token, login, logout, loggingOut, refreshInFlightRef }}
+    >
       {children}
     </AuthContext.Provider>
   );

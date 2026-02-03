@@ -106,6 +106,8 @@ console.log(
 Ob6tQrcYtzRKF8VkQaXC0w==`.split("").length
 );
 
+console.log(new Date(date));
+
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];

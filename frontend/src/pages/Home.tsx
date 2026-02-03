@@ -4,12 +4,16 @@ import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Home.module.css";
 import editIcon from "../assets/edit-icon.svg";
 import VacationForm from "../components/VacationForm";
+import refreshFn from "../utils/refreshFn";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const Home = () => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
   const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,20 +49,59 @@ const Home = () => {
 
   useEffect(() => {
     const getTrips = async () => {
-      const res = await fetch(`${apiUrl}/home`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.status === 401) {
-        navigate("/redirect", {
-          state: { message: "Session expired, redirecting to log in..." },
+      try {
+        const res = await fetch(`${apiUrl}/home`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-      } else if (res.ok) {
-        const data = await res.json();
-        setTrips(data);
-        setLoading(false);
+        if (res.status === 401) {
+          const resData = await res.json();
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiUrl, refreshInFlightRef);
+
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
+            const retryReq = await fetch(`${apiUrl}/home`, {
+              headers: { Authorization: `Bearer ${continueReq.token}` },
+            });
+            if (!retryReq.ok) {
+              alert("Trouble completing request, please try again");
+            } else if (retryReq.ok) {
+              const retryData = await retryReq.json();
+              setTrips(retryData);
+              setLoading(false);
+            }
+          } else if (continueReq.err) {
+            navigate("/login", {
+              state: { message: "Please log in again, redirecting..." },
+            });
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+        } else if (res.ok) {
+          const data = await res.json();
+          setTrips(data);
+          setLoading(false);
+        } else {
+          alert("Trouble completing req, please try again");
+        }
+      } catch (err) {
+        console.error(err);
       }
     };
-    // add error handling for like expired tokens where we send a refresh token
     getTrips();
   }, [updateList]);
 
@@ -107,10 +150,48 @@ const Home = () => {
       editingRef.current = false;
       setEditingId("");
     } else if (result.status === 401) {
-      navigate("/redirect", {
-        state: { message: "Session expired, redirecting to log in..." },
-      });
-      // should prob replace this with a function inside auth to renew token via refresh token, and if i can't find any or the refresh is expired then navigate to login
+      const resData = await result.json();
+      if (resData.error === "JwtError") {
+        if (logout) {
+          await logout();
+        }
+        return;
+      }
+      if (refreshInFlightRef == null) {
+        console.error("Auth flight ref not set");
+        return;
+      }
+      const continueReq: { token: string | null; err: boolean } =
+        await refreshFn(apiUrl, refreshInFlightRef);
+      if (!continueReq.err) {
+        if (login && continueReq.token) {
+          login(String(continueReq.token));
+        }
+        const retryReq = await fetch(`${apiUrl}/delete-vacation/${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${continueReq.token}`,
+          },
+        });
+        if (!retryReq.ok) {
+          alert("Trouble completing request, please try again");
+        } else if (retryReq.ok) {
+          //const retryData = await retryReq.json();
+          setTrips((prev) => prev.filter((v: Trip) => v.id !== id));
+          setEditing(false);
+          editingRef.current = false;
+          setEditingId("");
+        }
+      } else if (continueReq.err) {
+        navigate("/login", {
+          state: { message: "Please log in again, redirecting..." },
+        });
+        if (logout) {
+          await logout();
+        }
+        return;
+      }
     } else {
       console.log("~~~~ error deleting item");
     }

@@ -15,6 +15,7 @@ import { AuthContext } from "../context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditScheduleContext } from "../context/EditScheduleContext";
 import { BannerContext } from "../context/BannerContext";
+import refreshFn from "../utils/refreshFn";
 
 const EditableRow = ({
   value,
@@ -87,6 +88,9 @@ const EditableRow = ({
   const renderCount = useRef<number>(0);
   const apiURL = import.meta.env.VITE_API_URL;
   const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -230,9 +234,53 @@ const EditableRow = ({
           [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
         }));
       } else if (response.status === 401) {
-        navigate("/redirect", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await response.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/schedule/${itemID}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+            body: JSON.stringify({
+              tripId,
+              lastModified: schedule[dateAdded][index].lastModified,
+            }),
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            setEditLineId(null);
+            setAddingItem(false);
+            setSchedule((prev) => ({
+              ...prev,
+              [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
+            }));
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (response.status === 403) {
         setEditLineId(null);
         setAddingItem(false);
@@ -418,9 +466,101 @@ const EditableRow = ({
           );
         }
       } else if (response.status === 401) {
-        navigate("/redirect", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await response.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/schedule/${itemID}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+            body: JSON.stringify({
+              ...sItem,
+              chunk,
+              tripId,
+              start: startDateAssembler,
+              end: endDateAssembler,
+            }),
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            const data = await retryReq.json();
+            setEditLineId(null);
+            setAddingItem(false);
+            if (data.newlyIndexedSchedule != null) {
+              for (const i of data.newlyIndexedSchedule) {
+                i.startTime = new Date(i.startTime);
+                i.endTime = new Date(i.endTime);
+                i.id = String(i.id);
+              }
+              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+              const dayContainers: DayContainer[] = makeContainers(
+                length,
+                new Date(utcStart)
+              );
+              const bucketizeItems: DaySchedule = bucketizeSchedule(
+                dayContainers,
+                data.newlyIndexedSchedule
+              );
+              setSchedule(bucketizeItems);
+            } else if (data.updatedData != null) {
+              setSchedule((prev) =>
+                newTable
+                  ? {
+                      ...prev,
+                      [dateAdded]: prev[dateAdded].filter(
+                        (v) => v.id !== itemID
+                      ),
+                      [postEditDate]: tempArr.map((v) =>
+                        v.id === itemID
+                          ? {
+                              ...data.updatedData,
+                              startTime: new Date(data.updatedData.startTime),
+                              endTime: new Date(data.updatedData.endTime),
+                            }
+                          : v
+                      ),
+                    }
+                  : {
+                      ...prev,
+                      [postEditDate]: tempArr.map((v) =>
+                        v.id === itemID
+                          ? {
+                              ...data.updatedData,
+                              startTime: new Date(data.updatedData.startTime),
+                              endTime: new Date(data.updatedData.endTime),
+                            }
+                          : v
+                      ),
+                    }
+              );
+            }
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (response.status === 403) {
         setEditLineId(null);
         setAddingItem(false);

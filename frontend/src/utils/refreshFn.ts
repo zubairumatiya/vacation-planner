@@ -1,19 +1,31 @@
-export default async function refreshFn(apiURL: string, priorResult: Response) {
-  console.log("refreshFn entereed");
+export default function refreshFn(
+  apiURL: string,
+  refreshInFlight: React.RefObject<Promise<{
+    token: string | null;
+    err: boolean;
+  }> | null>
+): Promise<{ token: string | null; err: boolean }> {
+  if (!refreshInFlight.current) {
+    refreshInFlight.current = (async () => {
+      try {
+        const res = await fetch(`${apiURL}/auth/refresh`, {
+          method: "POST",
+          credentials: "include",
+        });
 
-  const priorData = await priorResult.json();
-  if (priorData.error === "JwtError") {
-    return { status: 500, error: "JwtError" };
+        if (!res.ok) {
+          return { token: null, err: true };
+        } else {
+          const data = await res.json();
+          return { token: data.token, err: false };
+        }
+      } catch {
+        return { token: null, err: true };
+      } finally {
+        refreshInFlight.current = null;
+      }
+    })();
   }
-  const result = await fetch(`${apiURL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-  });
-  if (!result.ok) {
-    return { status: 500, error: "could not refresh" };
-  } else if (result.ok) {
-    console.log("new token received on frontend");
-    const data = await result.json();
-    return { status: 200, token: data.token };
-  }
+
+  return refreshInFlight.current;
 }

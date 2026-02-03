@@ -19,6 +19,7 @@ import {
 import NormalRow from "../components/NormalRow";
 import addToSchedule from "../assets/add-to-schedule.svg";
 import { BannerContext } from "../context/BannerContext";
+import refreshFn from "../utils/refreshFn";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -69,6 +70,9 @@ const EditVacationSchedule = ({
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
   const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState<DayContainer[]>([]);
@@ -96,9 +100,75 @@ const EditVacationSchedule = ({
         },
       });
       if (response.status === 401) {
-        navigate("/login", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await response.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            const data = await retryReq.json();
+            props.getMapValues(data.gVp, data.location, data.gId);
+            const convertStart = new Date(data.startDate);
+            const convertEnd = new Date(data.endDate);
+            for (const i of data.schedule) {
+              // times come from DB as strings, converting to Date obj's
+              i.startTime = new Date(i.startTime);
+              i.endTime = new Date(i.endTime);
+              i.id = String(i.id);
+            }
+
+            const UtcStart = convertStart.getTime();
+            const UtcEnd = convertEnd.getTime();
+
+            setUtcEnd(UtcEnd);
+            setUtcStart(UtcStart);
+
+            const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
+
+            const dayContainers: DayContainer[] = makeContainers(
+              length,
+              convertStart
+            );
+
+            const bucketizeItems: DaySchedule = bucketizeSchedule(
+              dayContainers,
+              data.schedule
+            );
+
+            setDays(dayContainers);
+            setSchedule(bucketizeItems);
+            setLoading(false);
+            props.loadFirst();
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (response.status === 403) {
         setBannerMsg("You do not have permission to access this resource");
       } else if (response.status === 404) {
@@ -292,9 +362,85 @@ const EditVacationSchedule = ({
             });
           }
         } else if (addingReq.status === 401) {
-          navigate("/redirect", {
-            state: { message: "Session expired, redirecting to log in..." },
-          });
+          const resData = await addingReq.json();
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiURL, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
+            const retryReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${continueReq.token}`,
+              },
+              body: JSON.stringify({
+                start: startDateAssembler,
+                end: endDateAssembler,
+                location,
+                details: formData.get("details"),
+                cost: formData.get("cost"),
+                multiDay: formData.get("multiday"),
+                chunk,
+              }),
+            });
+            if (!retryReq.ok) {
+              alert("Trouble completing request, please try again");
+            } else if (retryReq.ok) {
+              const data = await retryReq.json();
+              if (data.newlyIndexedSchedule != null) {
+                for (const i of data.newlyIndexedSchedule) {
+                  i.startTime = new Date(i.startTime);
+                  i.endTime = new Date(i.endTime);
+                  i.id = String(i.id);
+                }
+                const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+                const dayContainers: DayContainer[] = makeContainers(
+                  length,
+                  new Date(utcStart)
+                );
+                const bucketizeItems: DaySchedule = bucketizeSchedule(
+                  dayContainers,
+                  data.newlyIndexedSchedule
+                );
+                setSchedule(bucketizeItems);
+              } else if (data.addedItem != null) {
+                setSchedule((prev) => {
+                  return {
+                    ...prev,
+                    [dateAdded]: tempArr.map((v) =>
+                      v.id === "temp"
+                        ? {
+                            ...data.addedItem,
+                            startTime: new Date(data.addedItem.startTime),
+                            endTime: new Date(data.addedItem.endTime),
+                          }
+                        : v
+                    ),
+                  };
+                });
+              }
+            }
+          } else if (continueReq.err) {
+            navigate("/login", {
+              state: { message: "Please log in again, redirecting..." },
+            });
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
         } else if (addingReq.status === 403) {
           setBannerMsg("You do not have permission to access this resource");
         } else if (addingReq.status === 404) {

@@ -4,6 +4,7 @@ import styles from "../styles/AddVacationForm.module.css";
 import { AuthContext } from "../context/AuthContext.tsx";
 import clsx from "clsx";
 import { AutocompleteWebComponent } from "../components/map-components/autocomplete-webcomponent.tsx";
+import refreshFn from "../utils/refreshFn.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 type Props = {
@@ -28,13 +29,15 @@ type GValues = {
 const VacationForm = (props?: Props) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
-
-  const today = new Date().toISOString().slice(0, 10);
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
 
   const date = new Date();
   date.setFullYear(date.getFullYear() + 1);
   const oneYear = date.toISOString().slice(0, 10);
 
+  const today = new Date().toISOString().slice(0, 10);
   const date1 = new Date();
   date1.setFullYear(date1.getFullYear() + 10);
   const tenYearsFromNow = date1.toISOString().slice(0, 10);
@@ -74,6 +77,7 @@ const VacationForm = (props?: Props) => {
   useEffect(() => {
     const getGValues = async () => {
       try {
+        console.log("getting add vacation");
         const result = await fetch(
           `${apiUrl}/add-vacation/${props?.preFill?.id}`,
           {
@@ -90,6 +94,53 @@ const VacationForm = (props?: Props) => {
             location: props?.preFill?.location ?? data.gLocation,
             vp: data.gVp,
           });
+        } else if (result.status === 401) {
+          const resData = await result.json();
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiUrl, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
+            const retryReq = await fetch(
+              `${apiUrl}/add-vacation/${props?.preFill?.id}`,
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${continueReq.token}`,
+                },
+              }
+            );
+            if (!retryReq.ok) {
+              alert("Trouble completing request, please try again");
+            } else if (retryReq.ok) {
+              const retryData = await retryReq.json();
+              setGValues({
+                // change
+                id: retryData.gId,
+                location: props?.preFill?.location ?? retryData.gLocation,
+                vp: retryData.gVp,
+              });
+            }
+          } else if (continueReq.err) {
+            navigate("/login", {
+              state: { message: "Please log in again, redirecting..." },
+            });
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
         } else if (result.status === 403) {
           alert("You do not have permission to access this resource");
         } else if (result.status === 404) {
@@ -163,8 +214,14 @@ const VacationForm = (props?: Props) => {
 
   useEffect(() => {
     const start = new Date(startDate);
+    const startToModify = new Date(startDate);
     const end = new Date(endDate);
-
+    if (startToModify instanceof Date && !isNaN(startToModify.getTime())) {
+      const date = startToModify;
+      date.setFullYear(date.getFullYear() + 1);
+      const oneYearAway = date.toISOString().slice(0, 10);
+      setOneYearRange(oneYearAway);
+    }
     if (
       !tripName ||
       !location ||
@@ -198,6 +255,7 @@ const VacationForm = (props?: Props) => {
     if (props?.submit === true) {
       if (!gValues) {
         alert("ERR: Please select valid location");
+
         return;
       }
       const formSubmit = async () => {
@@ -235,14 +293,55 @@ const VacationForm = (props?: Props) => {
             },
             body: JSON.stringify(bodyObject),
           });
+          console.log("bodyObject", bodyObject);
           if (res.status === 400) {
             setFieldError(true);
             setErrMessage("Invalid input");
           } else if (res.status === 401) {
-            auth?.logout();
-            navigate("/redirecting", {
-              state: { message: "Token error, redirecting to login" },
-            });
+            const resData = await res.json();
+            if (resData.error === "JwtError") {
+              if (logout) {
+                await logout();
+              }
+              return;
+            }
+            if (refreshInFlightRef == null) {
+              console.error("Auth flight ref not set");
+              return;
+            }
+            const continueReq: { token: string | null; err: boolean } =
+              await refreshFn(apiUrl, refreshInFlightRef);
+            if (!continueReq.err) {
+              if (login && continueReq.token) {
+                login(String(continueReq.token));
+              }
+              const retryReq = await fetch(url, {
+                method: method,
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${continueReq.token}`,
+                },
+                body: JSON.stringify(bodyObject),
+              });
+              if (!retryReq.ok) {
+                alert("Trouble completing request, please try again");
+              } else if (retryReq.ok) {
+                if (retryReq.ok) {
+                  navigate("/");
+                  if (props.sendSubmissionResult) {
+                    props.sendSubmissionResult(true);
+                  }
+                }
+              }
+            } else if (continueReq.err) {
+              navigate("/login", {
+                state: { message: "Please log in again, redirecting..." },
+              });
+              if (logout) {
+                await logout();
+              }
+              return;
+            }
           } else if (res.status === 403) {
             alert("You do not have permission to access this resource");
             navigate("/home");
@@ -290,6 +389,7 @@ const VacationForm = (props?: Props) => {
   const endDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEndDate(e.target.value);
     setEHtmlDateErr(e.target.validity.valid);
+    console.log(e.target.validity.valid);
   };
 
   const divs = "flex justify-center my-4 w-full";

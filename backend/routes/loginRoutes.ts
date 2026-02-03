@@ -180,7 +180,7 @@ router.post("/auth/login", async (req, res, next) => {
             //email: foundUser.rows[0].email,      NOT SURE IF I SHOULD OR NEED TO SEND
           },
           SECRET,
-          { expiresIn: "10s" }
+          { expiresIn: "1h" }
         );
         const refToken = await createNewRefreshToken(
           String(foundUser.rows[0].id)
@@ -205,11 +205,9 @@ router.post("/auth/login", async (req, res, next) => {
 });
 
 router.post("/auth/logout", async (req, res, next) => {
-  console.log("LOGOUT ROUTE HIT");
   try {
     const cookieHeader = req.headers.cookie;
     if (!cookieHeader) {
-      console.log("NO COOKIE!!");
       res.sendStatus(401);
       return;
     }
@@ -225,7 +223,6 @@ router.post("/auth/logout", async (req, res, next) => {
         "UPDATE refresh_tokens SET revoked=$1 WHERE jti=$2 RETURNING *",
         [true, decodedRefToken.jti]
       );
-      console.log("logging out - backend");
       res
         .clearCookie("refreshToken", {
           httpOnly: true,
@@ -236,10 +233,8 @@ router.post("/auth/logout", async (req, res, next) => {
         })
         .sendStatus(200);
 
-      console.log("DONEZO");
       return;
     } else {
-      console.log("could not deconde token!");
       res
         .clearCookie("refreshToken", {
           httpOnly: true,
@@ -260,13 +255,11 @@ router.post("/auth/refresh", async (req, res, next) => {
   try {
     const cookieHeader = req.headers.cookie;
     if (!cookieHeader) {
-      console.log("NO COOKIE!!");
       res.sendStatus(401);
       return;
     }
     const cookies = cookie.parse(cookieHeader);
     const refToken = cookies.refreshToken;
-    console.log("~~~ refToken:", refToken);
     if (!refToken) {
       res.sendStatus(401);
       return;
@@ -277,11 +270,6 @@ router.post("/auth/refresh", async (req, res, next) => {
       typeof decodedRefToken === "object" &&
       !Array.isArray(decodedRefToken)
     ) {
-      console.log("time now:", new Date().toISOString().split("T")[1]);
-      console.log(
-        "token expiration:",
-        new Date(decodedRefToken.exp * 1000).toISOString().split("T")[1]
-      );
       const result = await db.query(
         "UPDATE refresh_tokens SET revoked=$1 WHERE jti=$2 AND revoked=FALSE RETURNING *",
         [true, decodedRefToken.jti]
@@ -296,7 +284,6 @@ router.post("/auth/refresh", async (req, res, next) => {
         exp
       );
       if (newRefToken == null) {
-        console.log("newRefreshCould not be created");
         res.sendStatus(500);
         return;
       }
@@ -305,9 +292,8 @@ router.post("/auth/refresh", async (req, res, next) => {
           id: String(decodedRefToken.sub),
         },
         SECRET,
-        { expiresIn: "10s" }
+        { expiresIn: "1h" }
       );
-      console.log("success refreshing token");
       res
         .status(200)
         .cookie("refreshToken", newRefToken, {
@@ -320,7 +306,6 @@ router.post("/auth/refresh", async (req, res, next) => {
         .json({ token });
       return;
     } else {
-      console.log("something else!!");
       res.sendStatus(500);
       return;
     }
@@ -475,7 +460,6 @@ router.post("/reset-password", async (req, res, next) => {
       return;
     }
 
-    console.log(pass);
     const hash = await bcrypt.hash(pass, 12);
     console.log(hash);
 

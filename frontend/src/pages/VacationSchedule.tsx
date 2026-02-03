@@ -2,6 +2,7 @@ import { useParams, useNavigate, NavLink, Outlet } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
+import refreshFn from "../utils/refreshFn";
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -13,6 +14,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
   const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [tripLength, setTripLength] = useState(0);
@@ -27,9 +31,63 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       });
 
       if (response.status === 401) {
-        navigate("/login", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await response.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            const data = await retryReq.json();
+            const convertStart = new Date(data.startDate);
+            const convertEnd = new Date(data.endDate);
+            let costTotal = 0;
+            for (const i of data.schedule) {
+              i.startTime = new Date(i.startTime);
+              i.endTime = new Date(i.endTime);
+              costTotal += Number(i.cost);
+            }
+            setCostTotal(costTotal);
+            // data.schedule.sort(  don't need this i don't think
+            //   (a: Schedule, b: Schedule) =>
+            //     a.start_time.getTime() - b.start_time.getTime()
+            // );
+            setTitle(data.tripName);
+            const UtcStart = convertStart.getTime();
+            const UtcEnd = convertEnd.getTime();
+            const length = Math.floor(
+              (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24)
+            );
+            setTripLength(length + 1); // add a day since it is not counting
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (response.status === 403) {
         alert("You do not have permission to access this resource");
       } else if (response.status === 404) {

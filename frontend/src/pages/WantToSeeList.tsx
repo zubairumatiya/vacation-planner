@@ -7,6 +7,7 @@ import CheckBubble from "../components/CheckBubble";
 import { type UniqueIdentifier } from "@dnd-kit/core";
 import ListItem from "../components/ListItem";
 import { BannerContext } from "../context/BannerContext";
+import refreshFn from "../utils/refreshFn";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -18,6 +19,9 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   const auth = useContext(AuthContext);
   const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
   const navigate = useNavigate();
 
   const { setBannerMsg } = useContext(BannerContext);
@@ -31,9 +35,45 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         },
       });
       if (response.status === 401) {
-        navigate("/login", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await response.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/list/${tripId}`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            const data = await retryReq.json();
+            props.setList(data.data);
+            props.loadSecond();
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (response.status === 403) {
         setBannerMsg("You do not have permission to access this resource");
       } else if (response.status === 404) {
@@ -99,9 +139,56 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     });
     console.log("lastModified:", props.list[index].lastModified);
     if (response.status === 401) {
-      navigate("/login", {
-        state: { message: "Session expired, redirecting to log in..." },
-      });
+      const resData = await response.json();
+      if (resData.error === "JwtError") {
+        if (logout) {
+          await logout();
+        }
+        return;
+      }
+      if (refreshInFlightRef == null) {
+        console.error("Auth flight ref not set");
+        return;
+      }
+      const continueReq: { token: string | null; err: boolean } =
+        await refreshFn(apiURL, refreshInFlightRef);
+      if (!continueReq.err) {
+        if (login && continueReq.token) {
+          login(String(continueReq.token));
+        }
+        const retryReq = await fetch(`${apiURL}/list/${itemId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${continueReq.token}`,
+          },
+          body: JSON.stringify({
+            value: item,
+            tripId,
+            lastModified: props.list[index].lastModified,
+          }),
+        });
+        if (!retryReq.ok) {
+          alert("Trouble completing request, please try again");
+        } else if (retryReq.ok) {
+          const data = await retryReq.json();
+          props.setList((prev) => {
+            return [
+              ...prev.slice(0, index),
+              { ...data.data[0] },
+              ...prev.slice(index + 1),
+            ];
+          });
+        }
+      } else if (continueReq.err) {
+        navigate("/login", {
+          state: { message: "Please log in again, redirecting..." },
+        });
+        if (logout) {
+          await logout();
+        }
+        return;
+      }
     } else if (response.status === 403) {
       setBannerMsg("You do not have permission to access this resource");
     } else if (response.status === 404) {
@@ -198,9 +285,53 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       ]);
     } else {
       if (result.status === 401) {
-        navigate("/login", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await result.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/check-list-item/${itemId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+            body: JSON.stringify({
+              newValue,
+              tripId,
+            }),
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            const data = await retryReq.json();
+            props.setList((prev) => [
+              ...prev.slice(0, index),
+              { ...data.data[0] },
+              ...prev.slice(index + 1),
+            ]);
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (result.status === 403) {
         setBannerMsg("You do not have permission to access this resource");
       } else if (result.status === 404) {

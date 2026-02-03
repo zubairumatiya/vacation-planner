@@ -10,6 +10,7 @@ import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 import { AuthContext } from "../../context/AuthContext";
 import { useNavigate, useParams } from "react-router-dom";
+import refreshFn from "../../utils/refreshFn";
 
 interface Props {
   inputValue: string;
@@ -34,7 +35,11 @@ export const AutocompleteWebComponent = forwardRef(
     }: Props,
     ref
   ) => {
-    const token = useContext(AuthContext)?.token;
+    const auth = useContext(AuthContext);
+    const token = auth?.token;
+    const login = auth?.login;
+    const logout = auth?.logout;
+    const refreshInFlightRef = auth?.refreshInFlightRef;
     const tripId = useParams().tripId ?? tripIdProp;
     const navigate = useNavigate();
     const sEO = skipEO === true ? true : undefined;
@@ -97,18 +102,63 @@ export const AutocompleteWebComponent = forwardRef(
           });
           if (!result.ok) {
             if (result.status === 401) {
-              navigate("/redirect", {
-                state: { message: "Session expired, redirecting to log in..." },
-              });
+              const resData = await result.json();
+              if (resData.error === "JwtError") {
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
+              if (refreshInFlightRef == null) {
+                console.error("Auth flight ref not set");
+                return;
+              }
+              const continueReq: { token: string | null; err: boolean } =
+                await refreshFn(apiURL, refreshInFlightRef);
+              if (!continueReq.err) {
+                if (login && continueReq.token) {
+                  login(String(continueReq.token));
+                }
+                const retryReq = await fetch(`${apiURL}/autocomplete`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${continueReq.token}`,
+                  },
+                  body: JSON.stringify({
+                    query: `${input}`,
+                    tripId,
+                    skipEO: sEO,
+                  }),
+                });
+                if (!retryReq.ok) {
+                  alert("Trouble completing request, please try again");
+                } else if (retryReq.ok) {
+                  const data: SuggestionsResponse = await retryReq.json();
+                  if (!data.suggestions) {
+                    data.suggestions = [];
+                  }
+                  setSuggestions(data.suggestions);
+                }
+              } else if (continueReq.err) {
+                navigate("/login", {
+                  state: { message: "Please log in again, redirecting..." },
+                });
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
             } else {
               throw new Error(`Error: ${result.status}`);
             }
+          } else {
+            const data: SuggestionsResponse = await result.json();
+            if (!data.suggestions) {
+              data.suggestions = [];
+            }
+            setSuggestions(data.suggestions);
           }
-          const data: SuggestionsResponse = await result.json();
-          if (!data.suggestions) {
-            data.suggestions = [];
-          }
-          setSuggestions(data.suggestions);
         } catch {
           console.log("error making req to backend");
           return;
@@ -143,19 +193,81 @@ export const AutocompleteWebComponent = forwardRef(
           }),
         }
       );
-      if (!result.ok) throw new Error(`Error: ${result.status}`);
-      const data = await result.json();
-      if (storeValues) {
-        storeValues(
-          element.placePrediction!.placeId,
-          element.placePrediction?.text.text ?? "",
-          data.viewport
-        );
+      if (!result.ok) {
+        if (result.status === 401) {
+          const resData = await result.json();
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiURL, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
+            const retryReq = await fetch(
+              `${apiURL}/details/${element.placePrediction?.placeId}`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${continueReq.token}`,
+                },
+                body: JSON.stringify({
+                  tripId,
+                  skipEO: sEO,
+                }),
+              }
+            );
+            if (!retryReq.ok) {
+              alert("Trouble completing request, please try again");
+            } else if (retryReq.ok) {
+              const data = await retryReq.json();
+              if (storeValues) {
+                storeValues(
+                  element.placePrediction!.placeId,
+                  element.placePrediction?.text.text ?? "",
+                  data.viewport
+                );
+              }
+              setInputVal(element.placePrediction?.text.text ?? "");
+              setHideSuggestions(true);
+              setSuggestions([]);
+              setFocusedSelection(-1);
+            }
+          } else if (continueReq.err) {
+            navigate("/login", {
+              state: { message: "Please log in again, redirecting..." },
+            });
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+        } else {
+          throw new Error(`Error: ${result.status}`);
+        }
+      } else {
+        const data = await result.json();
+        if (storeValues) {
+          storeValues(
+            element.placePrediction!.placeId,
+            element.placePrediction?.text.text ?? "",
+            data.viewport
+          );
+        }
+        setInputVal(element.placePrediction?.text.text ?? "");
+        setHideSuggestions(true);
+        setSuggestions([]);
+        setFocusedSelection(-1);
       }
-      setInputVal(element.placePrediction?.text.text ?? "");
-      setHideSuggestions(true);
-      setSuggestions([]);
-      setFocusedSelection(-1);
     };
 
     return (

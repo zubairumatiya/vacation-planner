@@ -60,6 +60,7 @@ const EditCanvas = ({
   const recentlyMovedToNewContainer = useRef<boolean>(false);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const auth = useContext(AuthContext);
+  const refreshInFlightRef = auth?.refreshInFlightRef;
   const tempScheduleItem = useRef<Schedule | null>(null);
   const navigate = useNavigate();
   const initialListDrag = useRef<boolean>(true);
@@ -341,6 +342,8 @@ const EditCanvas = ({
     const sendScheduleToDb = async () => {
       try {
         if (refIdSnapshot) {
+          let a: boolean = false;
+          let b: boolean = false;
           const reqObj0 = {
             method: "POST",
             headers: {
@@ -373,61 +376,39 @@ const EditCanvas = ({
             fetch(`${apiURL}/schedule/${tripId}`, reqObj0),
             fetch(`${apiURL}/check-list-item/${refIdSnapshot}`, reqObj1),
           ]);
-          if (!responses[0].ok) {
+          let hold: Response | null = null;
+          if (!responses[0].ok || !responses[1].ok) {
             if (responses[0].status === 401) {
-              navigate("/login", {
-                state: { message: "Session expired, redirecting to log in..." },
-              });
-              console.log("401 hit!");
-              const continueReq = await refreshFn(apiURL, responses[0]);
-              if (continueReq?.status === 200) {
-                console.log("continueReq");
-                if (login) {
+              const resData = await responses[0].json();
+              if (resData.error === "JwtError") {
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
+              if (refreshInFlightRef == null) {
+                console.error("Auth flight ref not set");
+                return;
+              }
+              const continueReq = await refreshFn(apiURL, refreshInFlightRef);
+              if (!continueReq.err) {
+                if (login && continueReq.token) {
                   login(continueReq.token);
                 }
-                const retryReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+                hold = await fetch(`${apiURL}/schedule/${tripId}`, {
                   ...reqObj0,
                   headers: {
                     ...reqObj0.headers,
                     Authorization: `Bearer ${continueReq.token}`,
                   },
                 });
-                if (!retryReq.ok) {
+                if (!hold.ok) {
                   setBannerMsg("Trouble completing req, please try again");
-                } else if (retryReq.ok) {
-                  console.log("retry complete");
-                  const data = await retryReq.json();
-                  if (data.newlyIndexedSchedule != null) {
-                    for (const i of data.newlyIndexedSchedule) {
-                      i.startTime = new Date(i.startTime);
-                      i.endTime = new Date(i.endTime);
-                      i.id = String(i.id);
-                    }
-                    const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
-                    const dayContainers: DayContainer[] = makeContainers(
-                      length,
-                      new Date(utcStart)
-                    );
-                    const bucketizeItems: DaySchedule = bucketizeSchedule(
-                      dayContainers,
-                      data.newlyIndexedSchedule
-                    );
-                    setSchedule(bucketizeItems);
-                  } else if (data.addedItem != null) {
-                    data.addedItem.startTime = new Date(
-                      data.addedItem.startTime
-                    );
-                    data.addedItem.endTime = new Date(data.addedItem.endTime);
-                    setSchedule((prev) => ({
-                      ...prev,
-                      [overContainer]: prev[overContainer].map((v) =>
-                        refIdSnapshot === v.id ? data.addedItem : v
-                      ),
-                    }));
-                  }
-                  setActiveListId(null);
+                  a = true;
+                } else if (hold.ok) {
+                  // no need
                 }
-              } else if (continueReq?.status === 500) {
+              } else if (continueReq.err) {
                 navigate("/login", {
                   state: { message: "Please log in again, redirecting..." },
                 });
@@ -436,22 +417,89 @@ const EditCanvas = ({
                 }
                 return;
               }
+            } else {
+              handleDragCancel(); // does this need to be here? No i don't think so, we can just make one
+              a = true;
+              setBannerMsg("error processing drag change");
             }
-            handleDragCancel();
-            setBannerMsg("error processing drag change");
-            return;
-          }
-          if (!responses[1].ok) {
             if (responses[1].status === 401) {
-              navigate("/login", {
-                state: { message: "Session expired, redirecting to log in..." },
-              });
+              const resData1 = await responses[1].json();
+              if (resData1.error === "JwtError") {
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
+              if (refreshInFlightRef == null) {
+                console.error("Auth flight ref not set");
+                return;
+              }
+              const continueReq = await refreshFn(apiURL, refreshInFlightRef);
+              if (!continueReq.err) {
+                if (login && continueReq.token) {
+                  login(continueReq.token);
+                }
+                const retryReq1 = await fetch(
+                  `${apiURL}/check-list-item/${refIdSnapshot}`,
+                  {
+                    ...reqObj1,
+                    headers: {
+                      ...reqObj1.headers,
+                      Authorization: `Bearer ${continueReq.token}`,
+                    },
+                  }
+                );
+                if (!retryReq1.ok) {
+                  setBannerMsg("Trouble completing req, please try again");
+                }
+              } else if (continueReq.err) {
+                navigate("/login", {
+                  state: { message: "Please log in again, redirecting..." },
+                });
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
+            } else {
+              handleDragCancel();
+              b = true;
+              setBannerMsg("Error: List not found");
             }
-            handleDragCancel();
-            setBannerMsg("Error: List not found");
+            if (!a && !b && hold != null) {
+              const data = await hold.json();
+              if (data.newlyIndexedSchedule != null) {
+                for (const i of data.newlyIndexedSchedule) {
+                  i.startTime = new Date(i.startTime);
+                  i.endTime = new Date(i.endTime);
+                  i.id = String(i.id);
+                }
+                const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+                const dayContainers: DayContainer[] = makeContainers(
+                  length,
+                  new Date(utcStart)
+                );
+                const bucketizeItems: DaySchedule = bucketizeSchedule(
+                  dayContainers,
+                  data.newlyIndexedSchedule
+                );
+                setSchedule(bucketizeItems);
+              } else if (data.addedItem != null) {
+                data.addedItem.startTime = new Date(data.addedItem.startTime);
+                data.addedItem.endTime = new Date(data.addedItem.endTime);
+                setSchedule((prev) => ({
+                  ...prev,
+                  [overContainer]: prev[overContainer].map((v) =>
+                    refIdSnapshot === v.id ? data.addedItem : v
+                  ),
+                }));
+              }
+              setActiveListId(null);
+            } else {
+              handleDragCancel();
+            }
             return;
           }
-
           const data = await responses[0].json();
           if (data.newlyIndexedSchedule != null) {
             for (const i of data.newlyIndexedSchedule) {
@@ -508,7 +556,6 @@ const EditCanvas = ({
               updatedData?: Schedule;
               newlyIndexedSchedule?: Schedule[];
             } = await okRes.json();
-            console.log("entering ok res fn");
             if (data.newlyIndexedSchedule != null) {
               for (const i of data.newlyIndexedSchedule) {
                 i.startTime = new Date(i.startTime);
@@ -539,9 +586,20 @@ const EditCanvas = ({
           if (!result.ok) {
             let b: boolean = false;
             if (result.status === 401) {
-              const continueReq = await refreshFn(apiURL, result);
-              if (continueReq?.status === 200) {
-                if (login) {
+              const resData = await result.json();
+              if (resData.error === "JwtError") {
+                if (logout) {
+                  await logout();
+                }
+                return;
+              }
+              if (refreshInFlightRef == null) {
+                console.error("Auth flight ref not set");
+                return;
+              }
+              const continueReq = await refreshFn(apiURL, refreshInFlightRef);
+              if (!continueReq.err) {
+                if (login && continueReq.token) {
                   login(continueReq.token);
                 }
                 const retryReq = await fetch(
@@ -561,7 +619,7 @@ const EditCanvas = ({
                   await okResFn(retryReq);
                   // insert continuing original request
                 }
-              } else if (continueReq?.status === 500) {
+              } else if (continueReq.err) {
                 navigate("/login", {
                   state: { message: "Please log in again, redirecting..." },
                 });
@@ -914,9 +972,47 @@ const EditCanvas = ({
         body: JSON.stringify({ value: val, fromGoogle: id ?? null }),
       });
       if (response.status === 401) {
-        navigate("/login", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await response.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/list/${tripId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+            body: JSON.stringify({ value: val, fromGoogle: id ?? null }),
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            const apiData: { data: Item } = await retryReq.json();
+            setWishList((prev) => [...prev, apiData.data]);
+            return 200;
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (response.status === 403) {
         setBannerMsg("You do not have permission to access this resource");
         return 400;
@@ -949,9 +1045,49 @@ const EditCanvas = ({
       });
 
       if (response.status === 401) {
-        navigate("/login", {
-          state: { message: "Session expired, redirecting to log in..." },
-        });
+        const resData = await response.json();
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/list/${itemId}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+            body: JSON.stringify({ isGoogleId, tripId }),
+          });
+          if (!retryReq.ok) {
+            alert("Trouble completing request, please try again");
+          } else if (retryReq.ok) {
+            const data = await retryReq.json();
+            setWishList((prev) =>
+              prev.filter((v) => v.id !== data.deletedData[0].id)
+            );
+            return 200;
+          }
+        } else if (continueReq.err) {
+          navigate("/login", {
+            state: { message: "Please log in again, redirecting..." },
+          });
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
       } else if (response.status === 403) {
         setBannerMsg("You do not have permission to access this resource");
         return 400;
@@ -1069,9 +1205,70 @@ const EditCanvas = ({
           });
           clearOverwriteBanner();
         } else if (addingReq.status === 401) {
-          navigate("/redirect", {
-            state: { message: "Session expired, redirecting to log in..." },
-          });
+          const resData = await addingReq.json();
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiURL, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
+            const retryReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${continueReq.token}`,
+              },
+              body: JSON.stringify({
+                id: holdOverwrite.id,
+                start: holdOverwrite.startTime,
+                end: holdOverwrite.endTime,
+                location: holdOverwrite.location,
+                details: holdOverwrite.details,
+                cost: holdOverwrite.cost,
+                multiDay: holdOverwrite.multiDay,
+                chunk: chunk,
+              }),
+            });
+            if (!retryReq.ok) {
+              alert("Trouble completing request, please try again");
+            } else if (retryReq.ok) {
+              const data = await retryReq.json();
+              const startTime = new Date(data.addedItem.startTime);
+              const day = startTime.toISOString().split("T")[0];
+              setSchedule((prev) => {
+                const addedItem = {
+                  ...data.addedItem,
+                  startTime: new Date(data.addedItem.startTime),
+                  endTime: new Date(data.addedItem.endTime),
+                };
+                return {
+                  ...prev,
+                  [day]: newArrOldItem.map((v) =>
+                    v.id === addedItem.id ? addedItem : v
+                  ),
+                };
+              });
+              clearOverwriteBanner();
+            }
+          } else if (continueReq.err) {
+            navigate("/login", {
+              state: { message: "Please log in again, redirecting..." },
+            });
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
         } else if (addingReq.status === 403) {
           clearOverwriteBanner();
           setBannerMsg("You do not have permission to access this resource");
@@ -1137,9 +1334,91 @@ const EditCanvas = ({
                 };
           });
         } else if (patchRes.status === 401) {
-          navigate("/redirect", {
-            state: { message: "Session expired, redirecting to log in..." },
-          });
+          const resData = await patchRes.json();
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiURL, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
+            const retryReq = await fetch(
+              `${apiURL}/schedule/${holdOverwrite.id}`,
+              {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${continueReq.token}`,
+                },
+                body: JSON.stringify({
+                  start: holdOverwrite.startTime,
+                  end: holdOverwrite.endTime,
+                  location: holdOverwrite.location,
+                  details: holdOverwrite.details,
+                  cost: holdOverwrite.cost,
+                  multiDay: holdOverwrite.multiDay,
+                  chunk,
+                  tripId,
+                  lastModified:
+                    schedule[newItemContainer][newItemIndex].lastModified,
+                }),
+              }
+            );
+            if (!retryReq.ok) {
+              alert("Trouble completing request, please try again");
+            } else if (retryReq.ok) {
+              const data = await retryReq.json();
+              clearOverwriteBanner();
+              setSchedule((prev) => {
+                return newItemContainer !== previousItemContainer
+                  ? {
+                      ...prev,
+                      [newItemContainer]: prev[newItemContainer].filter(
+                        (v) => v.id !== holdOverwrite.id
+                      ),
+                      [previousItemContainer]: newArrOldItem.map(
+                        (v: Schedule) =>
+                          v.id === holdOverwrite.id
+                            ? {
+                                ...data.updatedData,
+                                startTime: new Date(data.updatedData.startTime),
+                                endTime: new Date(data.updatedData.endTime),
+                              }
+                            : v
+                      ),
+                    }
+                  : {
+                      ...prev,
+                      [previousItemContainer]: newArrOldItem.map((v) =>
+                        v.id === holdOverwrite.id
+                          ? {
+                              ...data.updatedData,
+                              startTime: new Date(data.updatedData.startTime),
+                              endTime: new Date(data.updatedData.endTime),
+                            }
+                          : v
+                      ),
+                    };
+              });
+            }
+          } else if (continueReq.err) {
+            navigate("/login", {
+              state: { message: "Please log in again, redirecting..." },
+            });
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
         } else if (patchRes.status === 403) {
           clearOverwriteBanner();
           setBannerMsg("You do not have permission to access this resource");

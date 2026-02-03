@@ -14,7 +14,7 @@ export default async function createNewRefreshToken(
     {
       sub: userId,
       jti,
-      exp: exp ?? Math.floor(Date.now() / 1000) + 10800, // time stamp instead of time duration using expires in.
+      exp: exp ?? Math.floor(Date.now() / 1000) + 86400 * 3, // time stamp instead of time duration using expires in. Should be seconds in a day * days we want
     },
     SECRET2
   );

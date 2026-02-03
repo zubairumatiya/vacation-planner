@@ -5,7 +5,8 @@ import addToList from "../../assets/add-to-list.svg";
 import added from "../../assets/check-mark.svg";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../../context/AuthContext";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import refreshFn from "../../utils/refreshFn";
 
 const apiURL = import.meta.env.VITE_API_URL;
 const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
@@ -22,7 +23,12 @@ const PlaceSearchWebComponent = ({
   handleSubmitItem,
   handleDeleteItem,
 }: PlaceSearchProps) => {
-  const token = useContext(AuthContext)?.token;
+  const auth = useContext(AuthContext);
+  const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
+  const navigate = useNavigate();
   const { tripId } = useParams();
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
@@ -51,9 +57,6 @@ const PlaceSearchWebComponent = ({
   };
 
   useEffect(() => {
-    console.log("PLACETYPE", placeType);
-    console.log("LOCATIONNAME", locationName);
-    console.log(envValue);
     if (firstLoad.current < envValue) {
       firstLoad.current++;
       return;
@@ -84,47 +87,145 @@ const PlaceSearchWebComponent = ({
             tripId,
           }),
         });
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        const data = await res.json();
-        console.log(data.places);
-        setRememberFilter({
-          rating: ratingRef?.current?.value,
-          reviews: reviewCountRef?.current?.value,
-        });
-        setSearchDisabled(true);
-        const pagesObj = makePages(data.places);
-        if (pagesObj.leftover) {
-          setHoldRemainder(data.places.slice(-pagesObj.leftover));
-        }
-        if (newPageRequest) {
-          const arr = [
-            ...holdRemainder,
-            ...data.places.slice(0, pagesObj.pages * 10),
-          ];
+        if (!res.ok) {
+          if (res.status === 401) {
+            const resData = await res.json();
+            if (resData.error === "JwtError") {
+              if (logout) {
+                await logout();
+              }
+              return;
+            }
+            if (refreshInFlightRef == null) {
+              console.error("Auth flight ref not set");
+              return;
+            }
+            const continueReq: { token: string | null; err: boolean } =
+              await refreshFn(apiURL, refreshInFlightRef);
+            if (!continueReq.err) {
+              if (login && continueReq.token) {
+                login(String(continueReq.token));
+              }
+              const retryReq = await fetch(`${apiURL}/map`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${continueReq.token}`,
+                },
+                body: JSON.stringify({
+                  ratingFilter:
+                    ratingRef.current.value === "none"
+                      ? null
+                      : Number(ratingRef.current.value),
+                  reviewFilter:
+                    reviewCountRef.current.value === "none"
+                      ? null
+                      : Number(reviewCountRef.current.value),
+                  nextPageToken: newPageRequest ? holdNPT : "",
+                  placeType,
+                  locationName,
+                  viewport,
+                  tripId,
+                }),
+              });
+              if (!retryReq.ok) {
+                alert("Trouble completing request, please try again");
+              } else if (retryReq.ok) {
+                const data = await retryReq.json();
+                console.log(data.places);
+                setRememberFilter({
+                  rating: ratingRef?.current?.value,
+                  reviews: reviewCountRef?.current?.value,
+                });
+                setSearchDisabled(true);
+                const pagesObj = makePages(data.places);
+                if (pagesObj.leftover) {
+                  setHoldRemainder(data.places.slice(-pagesObj.leftover));
+                }
+                if (newPageRequest) {
+                  const arr = [
+                    ...holdRemainder,
+                    ...data.places.slice(0, pagesObj.pages * 10),
+                  ];
 
-          if (!data.nextPageToken) {
-            if (pagesObj.leftover) {
-              pagesObj.pages += 1;
-              setResults((prev) => [...prev, ...data.places]);
+                  if (!data.nextPageToken) {
+                    if (pagesObj.leftover) {
+                      pagesObj.pages += 1;
+                      setResults((prev) => [...prev, ...data.places]);
+                    }
+                  } else {
+                    setResults((prev) => [...prev, ...arr]);
+                  }
+                  setCurrentPageMax((prev) => prev + pagesObj.pages);
+                  setNewPageRequest(false);
+                } else {
+                  if (!data.nextPageToken) {
+                    if (pagesObj.leftover) {
+                      pagesObj.pages += 1;
+                    }
+                  }
+                  setResults(data.places);
+                  setCurrentPageMax(pagesObj.pages);
+                  setPageCount(1);
+                }
+                setPlaces(data.places.slice(0, 10));
+                setHoldNPT(data.nextPageToken);
+                setLoadingNext(false);
+              }
+            } else if (continueReq.err) {
+              navigate("/login", {
+                state: { message: "Please log in again, redirecting..." },
+              });
+              if (logout) {
+                await logout();
+              }
+              return;
             }
           } else {
-            setResults((prev) => [...prev, ...arr]);
+            throw new Error(`HTTP error! status: ${res.status}`);
           }
-          setCurrentPageMax((prev) => prev + pagesObj.pages);
-          setNewPageRequest(false);
         } else {
-          if (!data.nextPageToken) {
-            if (pagesObj.leftover) {
-              pagesObj.pages += 1;
-            }
+          const data = await res.json();
+          console.log(data.places);
+          setRememberFilter({
+            rating: ratingRef?.current?.value,
+            reviews: reviewCountRef?.current?.value,
+          });
+          setSearchDisabled(true);
+          const pagesObj = makePages(data.places);
+          if (pagesObj.leftover) {
+            setHoldRemainder(data.places.slice(-pagesObj.leftover));
           }
-          setResults(data.places);
-          setCurrentPageMax(pagesObj.pages);
-          setPageCount(1);
+          if (newPageRequest) {
+            const arr = [
+              ...holdRemainder,
+              ...data.places.slice(0, pagesObj.pages * 10),
+            ];
+
+            if (!data.nextPageToken) {
+              if (pagesObj.leftover) {
+                pagesObj.pages += 1;
+                setResults((prev) => [...prev, ...data.places]);
+              }
+            } else {
+              setResults((prev) => [...prev, ...arr]);
+            }
+            setCurrentPageMax((prev) => prev + pagesObj.pages);
+            setNewPageRequest(false);
+          } else {
+            if (!data.nextPageToken) {
+              if (pagesObj.leftover) {
+                pagesObj.pages += 1;
+              }
+            }
+            setResults(data.places);
+            setCurrentPageMax(pagesObj.pages);
+            setPageCount(1);
+          }
+          setPlaces(data.places.slice(0, 10));
+          setHoldNPT(data.nextPageToken);
+          setLoadingNext(false);
         }
-        setPlaces(data.places.slice(0, 10));
-        setHoldNPT(data.nextPageToken);
-        setLoadingNext(false);
       } catch (err) {
         console.error("Error fetching places:", err);
       }
