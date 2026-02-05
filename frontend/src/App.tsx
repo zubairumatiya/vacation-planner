@@ -17,11 +17,14 @@ import VacationSchedule from "./pages/VacationSchedule.tsx";
 import EditCanvas from "./pages/EditCanvas.tsx";
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
+import { ErrorBoundary } from "react-error-boundary";
+import ErrorFallback from "./components/ErrorFallback.tsx";
 
 function App() {
   const [costTotal, setCostTotal] = useState(0);
   const auth = useContext(AuthContext);
   if (auth?.loggingOut) return null;
+  const [editRetries, setEditRetries] = useState(0);
   return (
     <BrowserRouter>
       <Routes>
@@ -40,7 +43,22 @@ function App() {
             <Route index element={<ViewVacationSchedule />} />
             <Route
               path="edit"
-              element={<EditCanvas setCostTotal={setCostTotal} />}
+              element={
+                <ErrorBoundary
+                  fallbackRender={(fallbackProps) => (
+                    <ErrorFallback
+                      {...fallbackProps}
+                      retryCount={editRetries}
+                    />
+                  )}
+                  onReset={() => {
+                    setEditRetries((prev) => prev + 1);
+                    console.log("Resetting state...");
+                  }}
+                >
+                  <EditCanvas setCostTotal={setCostTotal} />
+                </ErrorBoundary>
+              }
             />
           </Route>
           <Route path="/test" element={<Test />} />

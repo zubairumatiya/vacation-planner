@@ -37,6 +37,8 @@ import { BannerContextProvider } from "../context/BannerContext";
 
 import Banner from "../components/Banner";
 import refreshFn from "../utils/refreshFn";
+import { ErrorBoundary } from "react-error-boundary";
+import ErrorFallback from "../components/ErrorFallback";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -80,6 +82,8 @@ const EditCanvas = ({
   const [editLineId, setEditLineId] = useState<UniqueIdentifier | null>(null);
   const [addingItem, setAddingItem] = useState<boolean>(false);
   const [remountKey, setRemountKey] = useState<number>(0);
+  const [mapRetries, setMapRetries] = useState<number>(0);
+  const [scheduleRetries, setScheduleRetries] = useState<number>(0);
 
   useEffect(() => {
     lastEditWasDrag.current = false;
@@ -1504,16 +1508,29 @@ const EditCanvas = ({
               setAddingItem={setAddingItem}
               setHoldOverwrite={setHoldOverwrite}
             >
-              <EditVacationSchedule
-                loadFirst={() => setLoading(false)}
-                getMapValues={gValuesFn}
-                schedule={schedule}
-                setSchedule={setSchedule}
-                activeItem={activeId}
-                dragRow={dragRow}
-                overlayWidthRef={overlayWidthRef.current}
-                dragFrom={dragFrom}
-              />
+              <ErrorBoundary
+                fallbackRender={(fallbackProps) => (
+                  <ErrorFallback
+                    {...fallbackProps}
+                    retryCount={scheduleRetries}
+                  />
+                )}
+                onReset={() => {
+                  setScheduleRetries((prev) => prev + 1);
+                  console.log("Resetting state...");
+                }}
+              >
+                <EditVacationSchedule
+                  loadFirst={() => setLoading(false)}
+                  getMapValues={gValuesFn}
+                  schedule={schedule}
+                  setSchedule={setSchedule}
+                  activeItem={activeId}
+                  dragRow={dragRow}
+                  overlayWidthRef={overlayWidthRef.current}
+                  dragFrom={dragFrom}
+                />
+              </ErrorBoundary>
             </EditScheduleProvider>
             {!loading && (
               <WantToSeeList
@@ -1526,15 +1543,25 @@ const EditCanvas = ({
               />
             )}
           </div>
-          {!loading2 && (
-            <MyMapComponent
-              bounds={vp}
-              startLocation={location}
-              list={wishList}
-              handleSubmitItem={handleSubmitItem}
-              handleDeleteItem={handleDeleteItem}
-            />
-          )}
+          <ErrorBoundary
+            fallbackRender={(fallbackProps) => (
+              <ErrorFallback {...fallbackProps} retryCount={mapRetries} />
+            )}
+            onReset={() => {
+              setMapRetries((prev) => prev + 1);
+              console.log("Resetting state...");
+            }}
+          >
+            {!loading2 && (
+              <MyMapComponent
+                bounds={vp}
+                startLocation={location}
+                list={wishList}
+                handleSubmitItem={handleSubmitItem}
+                handleDeleteItem={handleDeleteItem}
+              />
+            )}
+          </ErrorBoundary>
         </div>
         {bannerMsg && (
           <Banner
