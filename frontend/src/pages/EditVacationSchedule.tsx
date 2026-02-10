@@ -593,6 +593,7 @@ const EditVacationSchedule = ({
                 schedule={schedule}
                 setSchedule={setSchedule}
                 activeId={props.activeItem}
+                viewItem={false}
               />
             </div>
             {individualAddition.addingContainer !== dayObj.day ? (

@@ -288,7 +288,9 @@
   border-spacing: 0 0.5rem;
   min-width: 800px;
 }
-
+div .viewTable {
+  width: auto;
+}
 .dragWrapper {
   background-color: var(--app-bg);
 }

@@ -107,7 +107,6 @@ Ob6tQrcYtzRKF8VkQaXC0w==`.split("").length
 );
 
 console.log(new Date(date));
-
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];
@@ -205,13 +204,14 @@ repeaterCall();
 // clean up comments
 // buy domain
 // host db
-// host front and back end
+// host front and back end - do i need docker?
 // launch
 // when in production, change cookie arguments back to safer standards. Change same site to none, since we have https now. Add apiURL back to fetch requests for logout and refresh token
 
 // nice to have - mobile pointerdown events on timePicker so we can trigger dropdown. ??maybe, not sure if it functions fine on mobile yet
 // nice to have - pressing enter while focused on customTimePicker does not submit the edit item
 // nice to have -  anki deck for react
+// nice to have - different tiers with billing
 // nice to have - can add a bunch of things to the todo from google maps
 // nice to have - can show pins from the items in the todo into google maps (will prob need some sort of ai interprettur on locations that can't be found)
 // nice to have - can automate all the planning given the items in the want to see list and add it to the schedule

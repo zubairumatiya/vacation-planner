@@ -12,9 +12,15 @@ type NormalRowProps = {
   dayContainer: string;
   listeners?: SyntheticListenerMap;
   attributes?: DraggableAttributes | undefined;
+  viewMode: boolean;
 };
 
-const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
+const NormalRow = ({
+  value,
+  dayContainer,
+  viewMode,
+  ...restOfProps
+}: NormalRowProps) => {
   const { handleEdit } = useContext(EditScheduleContext);
   let sTime;
   if (value.startTime) {
@@ -41,11 +47,13 @@ const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
 
   return (
     <>
-      <td className={styles.dragCells} {...restOfProps}>
-        <div className={styles.dragWrapper}>
-          <img className={styles.dragButton} src={dragIcon} alt="drag" />
-        </div>
-      </td>
+      {!viewMode && (
+        <td className={styles.dragCells} {...restOfProps}>
+          <div className={styles.dragWrapper}>
+            <img className={styles.dragButton} src={dragIcon} alt="drag" />
+          </div>
+        </td>
+      )}
       <td>{sTime}</td>
       {startDate !== endDate ? (
         <td>
@@ -62,26 +70,28 @@ const NormalRow = ({ value, dayContainer, ...restOfProps }: NormalRowProps) => {
         <div>{value.details}</div>
       </td>
       <td>{value.multiDay ? "yes" : "no"}</td>
-      <td>
-        <img
-          className={styles.editIcon}
-          src={editIcon}
-          alt="edit-icon"
-          onClick={(e) =>
-            handleEdit(
-              e,
-              value.id,
-              value.location,
-              value.cost,
-              value.details,
-              value.multiDay,
-              startDate,
-              endDate,
-              dayContainer
-            )
-          }
-        />
-      </td>
+      {!viewMode && (
+        <td>
+          <img
+            className={styles.editIcon}
+            src={editIcon}
+            alt="edit-icon"
+            onClick={(e) =>
+              handleEdit(
+                e,
+                value.id,
+                value.location,
+                value.cost,
+                value.details,
+                value.multiDay,
+                startDate,
+                endDate,
+                dayContainer
+              )
+            }
+          />
+        </td>
+      )}
     </>
   );
 };

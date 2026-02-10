@@ -18,6 +18,10 @@ declare global {
     activeListId: UniqueIdentifier | null;
   }
 
+  type HideDay = {
+    [date: string]: boolean;
+  };
+
   type Prefill = {
     location: string;
     cost: number;
@@ -54,7 +58,8 @@ declare global {
     dayObj: DayContainer;
     schedule: DaySchedule;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
-    activeId: UniqueIdentifier | null;
+    activeId: UniqueIdentifier | null | undefined;
+    viewMode: boolean;
   };
 
   type TableRowProps = {
@@ -65,7 +70,8 @@ declare global {
     endDate: string;
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     schedule: DaySchedule;
-    activeId: UniqueIdentifier | null;
+    activeId: UniqueIdentifier | null | undefined;
+    viewMode: boolean;
   };
 
   type EditRowProps = {

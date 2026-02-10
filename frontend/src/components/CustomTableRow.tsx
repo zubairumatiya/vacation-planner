@@ -15,6 +15,7 @@ const CustomTableRow = ({
   setSchedule,
   schedule,
   activeId,
+  viewMode,
 }: TableRowProps) => {
   const [height, setHeight] = useState<number | null>(null);
   const { handleEdit, editLineId } = useContext(EditScheduleContext);
@@ -47,25 +48,28 @@ const CustomTableRow = ({
   return (
     <tr
       key={scheduleItem.id}
-      style={style}
-      ref={combinedRef}
+      style={viewMode ? undefined : style}
+      ref={viewMode ? undefined : combinedRef}
       data-index={index}
       className={`${styles.tableRow}`}
-      onDoubleClick={(e) =>
-        handleEdit(
-          e,
-          scheduleItem.id,
-          scheduleItem.location,
-          scheduleItem.cost,
-          scheduleItem.details,
-          scheduleItem.multiDay,
-          startDate,
-          endDate,
-          dayContainer
-        )
+      onDoubleClick={
+        viewMode
+          ? undefined
+          : (e) =>
+              handleEdit(
+                e,
+                scheduleItem.id,
+                scheduleItem.location,
+                scheduleItem.cost,
+                scheduleItem.details,
+                scheduleItem.multiDay,
+                startDate,
+                endDate,
+                dayContainer
+              )
       }
     >
-      {scheduleItem.id === editLineId ? (
+      {scheduleItem.id === editLineId && !viewMode ? (
         <EditableRow
           value={scheduleItem}
           index={index}
@@ -77,8 +81,9 @@ const CustomTableRow = ({
         <NormalRow
           value={scheduleItem}
           dayContainer={dayContainer}
-          {...attributes}
-          {...listeners}
+          viewMode={viewMode}
+          attributes={viewMode ? undefined : { ...attributes }}
+          listeners={viewMode ? undefined : { ...listeners }}
         ></NormalRow>
       )}
     </tr>

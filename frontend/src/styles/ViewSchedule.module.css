@@ -4,3 +4,40 @@
   height: 50vw;
   width: 100%;
 }
+.pageWrapper {
+  scroll-behavior: auto;
+  overflow: auto;
+  background-color: #242424;
+  position: relative;
+  z-index: 2;
+  border: 2px solid white;
+  border-radius: 10px;
+  padding: 1rem;
+  height: 85vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+  gap: 1.75rem 0px;
+}
+
+.tableContainer {
+  display: flex;
+  justify-content: center;
+}
+.tableCaption {
+  text-align: center;
+  font-weight: bold;
+  margin: 0.5rem;
+  justify-content: center;
+  display: flex;
+  font-size: large;
+}
+.tableNCaption {
+  border: 1px white solid;
+  border-radius: 5px;
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+}
