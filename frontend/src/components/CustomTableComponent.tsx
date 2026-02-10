@@ -35,9 +35,8 @@ const CustomTableComponent = ({
         <col className={styles.detailsCol} />
         {!viewMode && (
           <>
-            {" "}
             <col className={styles.multiDayCol} />
-            <col className={editLineId ? "w-20" : styles.editCol} />{" "}
+            <col className={editLineId ? "w-20" : styles.editCol} />
           </>
         )}
       </colgroup>

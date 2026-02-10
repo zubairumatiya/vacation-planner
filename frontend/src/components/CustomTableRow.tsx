@@ -22,6 +22,9 @@ const CustomTableRow = ({
   const itemRef = useRef<HTMLTableRowElement | null>(null);
 
   useEffect(() => {
+    console.log("viewMode:", viewMode);
+  }, []);
+  useEffect(() => {
     if (itemRef.current) {
       setHeight(itemRef.current.getBoundingClientRect().height);
     }
@@ -31,6 +34,7 @@ const CustomTableRow = ({
     useSortable({
       id: scheduleItem.id,
       data: { type: "schedule" } as DragData,
+      //disabled: viewMode,
     });
 
   const style = {
@@ -48,8 +52,8 @@ const CustomTableRow = ({
   return (
     <tr
       key={scheduleItem.id}
-      style={viewMode ? undefined : style}
-      ref={viewMode ? undefined : combinedRef}
+      style={style}
+      ref={combinedRef}
       data-index={index}
       className={`${styles.tableRow}`}
       onDoubleClick={
@@ -82,8 +86,8 @@ const CustomTableRow = ({
           value={scheduleItem}
           dayContainer={dayContainer}
           viewMode={viewMode}
-          attributes={viewMode ? undefined : { ...attributes }}
-          listeners={viewMode ? undefined : { ...listeners }}
+          attributes={{ ...attributes }}
+          listeners={{ ...listeners }}
         ></NormalRow>
       )}
     </tr>

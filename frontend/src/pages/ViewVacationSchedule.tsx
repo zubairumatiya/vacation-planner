@@ -5,7 +5,7 @@ import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import { bucketizeSchedule, makeContainers } from "../utils/timeHelpers";
 import CustomTableComponent from "../components/CustomTableComponent";
-
+import hideArrow from "../assets/arrow-drop.svg";
 const apiURL = import.meta.env.VITE_API_URL;
 
 const ViewVacationSchedule = () => {
@@ -148,22 +148,73 @@ const ViewVacationSchedule = () => {
     <div className={styles.pageWrapper} tabIndex={-1}>
       {days.map((dayObj: DayContainer) => {
         return (
-          <div key={dayObj.day} className={styles.tableNCaption}>
-            <div className={styles.tableCaption}>{dayObj.label}</div>
-            <hr style={{ borderTopWidth: "2px" }} />
+          <div
+            key={dayObj.day}
+            className={styles.buttonContainerAndTableContainer}
+          >
+            <div className={styles.hideButtonWrapper}>
+              <button
+                className={`${styles.hideButton} ${
+                  hideDay[dayObj.day] && styles.buttonClosed
+                }`}
+                onClick={() =>
+                  setHideDay((prev) => ({
+                    ...prev,
+                    [dayObj.day]: !prev[dayObj.day],
+                  }))
+                }
+              >
+                <img
+                  src={hideArrow}
+                  alt="hideArrow"
+                  className={`${styles.hideArrow} ${
+                    hideDay[dayObj.day]
+                      ? styles.hiddenArrow
+                      : styles.unhiddenArrow
+                  }`}
+                />
+              </button>
+            </div>
             <div
-              id={"tablesContainer"}
-              className={`${styles.tableContainer} `}
-              tabIndex={-1}
+              className={`${styles.tableNCaption} ${
+                hideDay[dayObj.day] && styles.hidden
+              }`}
             >
-              <CustomTableComponent
-                key={dayObj.day}
-                dayObj={dayObj}
-                schedule={schedule}
-                setSchedule={setSchedule}
-                viewMode={true}
-                activeId={undefined}
+              <div
+                className={`${styles.tableCaption} ${
+                  hideDay[dayObj.day] && styles.closedTableCaption
+                }`}
+                onClick={() =>
+                  setHideDay((prev) => ({
+                    ...prev,
+                    [dayObj.day]: !prev[dayObj.day],
+                  }))
+                }
+              >
+                {dayObj.label}
+              </div>
+              <hr
+                style={{
+                  borderTopWidth: "2px",
+                  color: hideDay[dayObj.day] ? "gray" : "white",
+                }}
               />
+              <div
+                id={"tablesContainer"}
+                className={`${styles.tableContainer} `}
+                tabIndex={-1}
+              >
+                {!hideDay[dayObj.day] && (
+                  <CustomTableComponent
+                    key={dayObj.day}
+                    dayObj={dayObj}
+                    schedule={schedule}
+                    setSchedule={setSchedule}
+                    viewMode={true}
+                    activeId={undefined}
+                  />
+                )}
+              </div>
             </div>
           </div>
         );

@@ -13,6 +13,7 @@ const ErrorFallback: FC<FallbackProps & { retryCount: number }> = ({
       role="alert"
       style={{
         padding: "1rem",
+        position: "relative",
         zIndex: "2",
         border: "1px solid red",
         borderRadius: "4px",
@@ -24,7 +25,7 @@ const ErrorFallback: FC<FallbackProps & { retryCount: number }> = ({
         <div>
           {" "}
           <p>Something went wrong:</p>
-          <pre style={{ color: "red" }}>{errorMessage}</pre>
+          <pre style={{ color: "red", textWrap: "wrap" }}>{errorMessage}</pre>
           <button onClick={resetErrorBoundary} style={{ marginTop: "0.5rem" }}>
             Try again
           </button>
