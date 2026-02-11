@@ -22,7 +22,7 @@ const CustomTableComponent = ({
   const { setNodeRef } = useDroppable({ id: dayObj.day });
   return (
     <table
-      className={`${styles.table}${viewMode && styles.viewTable}`}
+      className={`${styles.table} ${viewMode && styles.viewTable}`}
       id={dayObj.day}
       ref={setNodeRef}
     >
@@ -33,6 +33,7 @@ const CustomTableComponent = ({
         <col className={styles.placeCol} />
         <col className={styles.costCol} />
         <col className={styles.detailsCol} />
+
         {!viewMode && (
           <>
             <col className={styles.multiDayCol} />
@@ -45,13 +46,13 @@ const CustomTableComponent = ({
           {!viewMode && (
             <th className={editLineId ? undefined : styles.dragHeader}></th>
           )}
+
           <th className={styles.startTimeHeader}>Start Time</th>
           <th className={styles.endTimeHeader}>End Time</th>
           <th className={styles.locationHeader}>Place</th>
           <th className={styles.costHeader}>Cost</th>
           <th className={styles.detailsHeader}>Details</th>
           <th className={styles.multiDayHeader}>Multi-day</th>
-
           {!viewMode && <th className={styles.editFieldHeader}></th>}
         </tr>
       </thead>

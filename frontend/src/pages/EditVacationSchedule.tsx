@@ -593,7 +593,7 @@ const EditVacationSchedule = ({
                 schedule={schedule}
                 setSchedule={setSchedule}
                 activeId={props.activeItem}
-                viewItem={false}
+                viewMode={false}
               />
             </div>
             {individualAddition.addingContainer !== dayObj.day ? (
@@ -775,6 +775,7 @@ const EditVacationSchedule = ({
                       <NormalRow
                         value={props.dragRow}
                         dayContainer={"won't need this"}
+                        viewMode={false}
                       />
                     </tr>
                   </tbody>
