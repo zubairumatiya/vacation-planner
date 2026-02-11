@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LayoutWithHeader from "./layouts/LayoutWithHeader.tsx";
 import LayoutWithoutHeader from "./layouts/LayoutWithoutHeader.tsx";
 import { AuthContext } from "./context/AuthContext.tsx";
@@ -23,8 +23,11 @@ import ErrorFallback from "./components/ErrorFallback.tsx";
 function App() {
   const [costTotal, setCostTotal] = useState(0);
   const auth = useContext(AuthContext);
-  if (auth?.loggingOut) return null;
+
   const [editRetries, setEditRetries] = useState(0);
+  if (auth?.loggingOut) {
+    return <Navigate to="/login" replace />;
+  }
   return (
     <BrowserRouter>
       <Routes>
