@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import styles from "../styles/ViewSchedule.module.css";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import { bucketizeSchedule, makeContainers } from "../utils/timeHelpers";
@@ -15,14 +15,16 @@ const ViewVacationSchedule = () => {
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
-  const navigate = useNavigate();
   const [days, setDays] = useState<DayContainer[]>([]);
   const [hideDay, setHideDay] = useState<HideDay>({});
 
   const [schedule, setSchedule] = useState<DaySchedule>({});
 
   const [error, setError] = useState<string | null>("");
+
+  const loggingOutRef = auth?.loggingOutRef;
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     const getTrip = async () => {
       const response = await fetch(`${apiURL}/schedule/${tripId}`, {
         headers: {
@@ -42,6 +44,7 @@ const ViewVacationSchedule = () => {
           console.error("Auth flight ref not set");
           return;
         }
+        if (loggingOutRef?.current) return;
         const continueReq: { token: string | null; err: boolean } =
           await refreshFn(apiURL, refreshInFlightRef);
         if (!continueReq.err) {
@@ -92,9 +95,6 @@ const ViewVacationSchedule = () => {
             setError(null);
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }

@@ -1,4 +1,4 @@
-import { useParams, useNavigate, NavLink, Outlet } from "react-router-dom";
+import { useParams, NavLink, Outlet } from "react-router-dom";
 import { useState, useEffect, useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
@@ -17,11 +17,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
-  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [tripLength, setTripLength] = useState(0);
-
+  const loggingOutRef = auth?.loggingOutRef;
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     const getTrip = async () => {
       const response = await fetch(`${apiURL}/schedule/${tripId}`, {
         headers: {
@@ -42,6 +42,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           console.error("Auth flight ref not set");
           return;
         }
+
+        if (loggingOutRef?.current) return;
         const continueReq: { token: string | null; err: boolean } =
           await refreshFn(apiURL, refreshInFlightRef);
         if (!continueReq.err) {
@@ -80,9 +82,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             setTripLength(length + 1); // add a day since it is not counting
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }

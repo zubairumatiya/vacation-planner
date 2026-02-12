@@ -9,7 +9,7 @@ import {
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
 import styles from "../../styles/Map.module.css";
 import { AuthContext } from "../../context/AuthContext";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import refreshFn from "../../utils/refreshFn";
 
 interface Props {
@@ -41,7 +41,6 @@ export const AutocompleteWebComponent = forwardRef(
     const logout = auth?.logout;
     const refreshInFlightRef = auth?.refreshInFlightRef;
     const tripId = useParams().tripId ?? tripIdProp;
-    const navigate = useNavigate();
     const sEO = skipEO === true ? true : undefined;
     const handleKeyDown = (e: string) => {
       if (!e) return;
@@ -141,9 +140,6 @@ export const AutocompleteWebComponent = forwardRef(
                   setSuggestions(data.suggestions);
                 }
               } else if (continueReq.err) {
-                navigate("/login", {
-                  state: { message: "Please log in again, redirecting..." },
-                });
                 if (logout) {
                   await logout();
                 }
@@ -243,9 +239,6 @@ export const AutocompleteWebComponent = forwardRef(
               setFocusedSelection(-1);
             }
           } else if (continueReq.err) {
-            navigate("/login", {
-              state: { message: "Please log in again, redirecting..." },
-            });
             if (logout) {
               await logout();
             }

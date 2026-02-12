@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Home.module.css";
 import editIcon from "../assets/edit-icon.svg";
@@ -13,8 +13,8 @@ const Home = () => {
   const token = auth?.token;
   const login = auth?.login;
   const logout = auth?.logout;
+  const loggingOutRef = auth?.loggingOutRef;
   const refreshInFlightRef = auth?.refreshInFlightRef;
-  const navigate = useNavigate();
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   type Trip = {
@@ -48,6 +48,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     const getTrips = async () => {
       try {
         const res = await fetch(`${apiUrl}/home`, {
@@ -83,13 +84,9 @@ const Home = () => {
               setLoading(false);
             }
           } else if (continueReq.err) {
-            navigate("/login", {
-              state: { message: "Please log in again, redirecting..." },
-            });
             if (logout) {
-              await logout();
+              logout();
             }
-            return;
           }
         } else if (res.ok) {
           const data = await res.json();
@@ -184,9 +181,6 @@ const Home = () => {
           setEditingId("");
         }
       } else if (continueReq.err) {
-        navigate("/login", {
-          state: { message: "Please log in again, redirecting..." },
-        });
         if (logout) {
           await logout();
         }

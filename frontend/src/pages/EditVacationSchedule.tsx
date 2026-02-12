@@ -90,8 +90,9 @@ const EditVacationSchedule = ({
   const [multiDay, setMultiDay] = useState<boolean>(false);
   const moniterInputRef = useRef<boolean>(false);
   const tabStartRef = useRef<HTMLInputElement>(null);
-
+  const loggingOutRef = auth?.loggingOutRef;
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     const getTrip = async () => {
       const response = await fetch(`${apiURL}/schedule/${tripId}`, {
         headers: {
@@ -111,6 +112,8 @@ const EditVacationSchedule = ({
           console.error("Auth flight ref not set");
           return;
         }
+
+        if (loggingOutRef?.current) return;
         const continueReq: { token: string | null; err: boolean } =
           await refreshFn(apiURL, refreshInFlightRef);
         if (!continueReq.err) {
@@ -161,9 +164,6 @@ const EditVacationSchedule = ({
             props.loadFirst();
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }
@@ -433,9 +433,6 @@ const EditVacationSchedule = ({
               }
             }
           } else if (continueReq.err) {
-            navigate("/login", {
-              state: { message: "Please log in again, redirecting..." },
-            });
             if (logout) {
               await logout();
             }

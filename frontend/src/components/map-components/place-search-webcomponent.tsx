@@ -5,7 +5,7 @@ import addToList from "../../assets/add-to-list.svg";
 import added from "../../assets/check-mark.svg";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../../context/AuthContext";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import refreshFn from "../../utils/refreshFn";
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -28,7 +28,6 @@ const PlaceSearchWebComponent = ({
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
-  const navigate = useNavigate();
   const { tripId } = useParams();
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
@@ -46,6 +45,7 @@ const PlaceSearchWebComponent = ({
   const [newPageRequest, setNewPageRequest] = useState<boolean>(false);
   const [holdRemainder, setHoldRemainder] = useState<[]>([]);
   const firstLoad = useRef<number>(0);
+  const loggingOutRef = auth?.loggingOutRef;
 
   const makePages = (arr: Array<object>) => {
     const total = newPageRequest
@@ -57,6 +57,7 @@ const PlaceSearchWebComponent = ({
   };
 
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     if (firstLoad.current < envValue) {
       firstLoad.current++;
       return;
@@ -100,6 +101,8 @@ const PlaceSearchWebComponent = ({
               console.error("Auth flight ref not set");
               return;
             }
+
+            if (loggingOutRef?.current) return;
             const continueReq: { token: string | null; err: boolean } =
               await refreshFn(apiURL, refreshInFlightRef);
             if (!continueReq.err) {
@@ -173,9 +176,6 @@ const PlaceSearchWebComponent = ({
                 setLoadingNext(false);
               }
             } else if (continueReq.err) {
-              navigate("/login", {
-                state: { message: "Please log in again, redirecting..." },
-              });
               if (logout) {
                 await logout();
               }

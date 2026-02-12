@@ -12,7 +12,7 @@ import {
 import CustomTimePicker from "./CustomTimePicker";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../context/AuthContext";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { EditScheduleContext } from "../context/EditScheduleContext";
 import { BannerContext } from "../context/BannerContext";
 import refreshFn from "../utils/refreshFn";
@@ -91,7 +91,6 @@ const EditableRow = ({
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
-  const navigate = useNavigate();
 
   useEffect(() => {
     deleteButtonRef?.current?.focus();
@@ -273,9 +272,6 @@ const EditableRow = ({
             }));
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }
@@ -553,9 +549,6 @@ const EditableRow = ({
             }
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }

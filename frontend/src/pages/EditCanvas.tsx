@@ -3,7 +3,7 @@ import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
 import { useState, useCallback, useContext, useRef, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { EditScheduleProvider } from "../context/EditScheduleContext";
 import {
@@ -64,7 +64,6 @@ const EditCanvas = ({
   const auth = useContext(AuthContext);
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const tempScheduleItem = useRef<Schedule | null>(null);
-  const navigate = useNavigate();
   const initialListDrag = useRef<boolean>(true);
   const overlayWidthRef = useRef<OverlayWidths | null>(null);
   const [activeListId, setActiveListId] = useState<UniqueIdentifier | null>(
@@ -413,9 +412,6 @@ const EditCanvas = ({
                   // no need
                 }
               } else if (continueReq.err) {
-                navigate("/login", {
-                  state: { message: "Please log in again, redirecting..." },
-                });
                 if (logout) {
                   await logout();
                 }
@@ -457,9 +453,6 @@ const EditCanvas = ({
                   setBannerMsg("Trouble completing req, please try again");
                 }
               } else if (continueReq.err) {
-                navigate("/login", {
-                  state: { message: "Please log in again, redirecting..." },
-                });
                 if (logout) {
                   await logout();
                 }
@@ -624,9 +617,6 @@ const EditCanvas = ({
                   // insert continuing original request
                 }
               } else if (continueReq.err) {
-                navigate("/login", {
-                  state: { message: "Please log in again, redirecting..." },
-                });
                 if (logout) {
                   await logout();
                 }
@@ -1009,9 +999,6 @@ const EditCanvas = ({
             return 200;
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }
@@ -1084,9 +1071,6 @@ const EditCanvas = ({
             return 200;
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }
@@ -1265,9 +1249,6 @@ const EditCanvas = ({
               clearOverwriteBanner();
             }
           } else if (continueReq.err) {
-            navigate("/login", {
-              state: { message: "Please log in again, redirecting..." },
-            });
             if (logout) {
               await logout();
             }
@@ -1415,9 +1396,6 @@ const EditCanvas = ({
               });
             }
           } else if (continueReq.err) {
-            navigate("/login", {
-              state: { message: "Please log in again, redirecting..." },
-            });
             if (logout) {
               await logout();
             }

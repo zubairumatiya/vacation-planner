@@ -1,6 +1,6 @@
 import styles from "../styles/WantToSee.module.css";
 import { useState, useRef, useEffect, useContext } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import trashIcon from "../assets/trash-icon.svg";
 import { AuthContext } from "../context/AuthContext";
 import CheckBubble from "../components/CheckBubble";
@@ -22,11 +22,12 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
-  const navigate = useNavigate();
 
   const { setBannerMsg } = useContext(BannerContext);
+  const loggingOutRef = auth?.loggingOutRef;
 
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     const getTripList = async () => {
       const response = await fetch(`${apiURL}/list/${tripId}`, {
         headers: {
@@ -46,6 +47,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           console.error("Auth flight ref not set");
           return;
         }
+        if (loggingOutRef?.current) return;
         const continueReq: { token: string | null; err: boolean } =
           await refreshFn(apiURL, refreshInFlightRef);
         if (!continueReq.err) {
@@ -66,9 +68,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
             props.loadSecond();
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }
@@ -181,9 +180,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           });
         }
       } else if (continueReq.err) {
-        navigate("/login", {
-          state: { message: "Please log in again, redirecting..." },
-        });
         if (logout) {
           await logout();
         }
@@ -324,9 +320,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
             ]);
           }
         } else if (continueReq.err) {
-          navigate("/login", {
-            state: { message: "Please log in again, redirecting..." },
-          });
           if (logout) {
             await logout();
           }

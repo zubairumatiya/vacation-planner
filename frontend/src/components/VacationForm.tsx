@@ -33,6 +33,8 @@ const VacationForm = (props?: Props) => {
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
 
+  const loggingOutRef = auth?.loggingOutRef;
+
   const date = new Date();
   date.setFullYear(date.getFullYear() + 1);
   const oneYear = date.toISOString().slice(0, 10);
@@ -75,6 +77,7 @@ const VacationForm = (props?: Props) => {
   }, []);
 
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     const getGValues = async () => {
       try {
         console.log("getting add vacation");
@@ -133,9 +136,6 @@ const VacationForm = (props?: Props) => {
               });
             }
           } else if (continueReq.err) {
-            navigate("/login", {
-              state: { message: "Please log in again, redirecting..." },
-            });
             if (logout) {
               await logout();
             }
@@ -334,9 +334,6 @@ const VacationForm = (props?: Props) => {
                 }
               }
             } else if (continueReq.err) {
-              navigate("/login", {
-                state: { message: "Please log in again, redirecting..." },
-              });
               if (logout) {
                 await logout();
               }
