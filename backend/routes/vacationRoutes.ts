@@ -10,6 +10,7 @@ import ensureOwnership from "../middleware/ensureOwnership.js";
 import renumberIndexDb from "../helpers/renumberIndexDb.js";
 import { Schedule } from "../types/express.js";
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
+import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
 
 dotenv.config();
 const API_KEY = process.env.MAPS_API_KEY;
@@ -622,7 +623,17 @@ router.post("/map", ensureLoggedIn, ensureOwnership, async (req, res, next) => {
       res.sendStatus(406);
       return;
     }
-    const query = `${req.body.placeType}s near ${req.body.locationName}`;
+    if (!req.body.placeType) {
+      res.sendStatus(400);
+      return;
+    }
+    const normalPlaceType = camelToSpacedLower(req.body.placeType);
+    const snakePlaceType = req.body.placeType
+      .replace(/([A-Z])/g, "_$1")
+      .replace(/^_/, "")
+      .toLowerCase()
+      .trim();
+    const query = `${normalPlaceType}s near ${req.body.locationName}`;
     while (countOfPlaces < 20 && holdToken !== undefined) {
       //why not just to length of gather places instead of tracking count?
       const result = await fetch(
@@ -632,16 +643,28 @@ router.post("/map", ensureLoggedIn, ensureOwnership, async (req, res, next) => {
           headers: {
             "Content-Type": "application/json",
             "X-Goog-Api-Key": `${API_KEY}`,
-            "X-Goog-FieldMask": "places.id,nextPageToken",
-            //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
-            //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount"
+            // "places.id,nextPageToken",
+            "X-Goog-FieldMask":
+              //"places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType"
+              "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount,places.types",
           },
+          // GOOGLE MAPS API PLACES (NEW) SKU AND PRICING TIER FOR EACH FIELD REQUEST
+          // id - Places API Text Search Essentials
+          // nextPageToken - Places API Text Search Essentials
+          // display name - Places API Text Search Pro
+          // location - Places API Text Search Pro
+          // short formatted address - Places API Text Search Pro
+          // primary type - Places API Text Search Pro
+          // types -  Places API Text Search Pro
+          // rating - Places API Place Text Enterprise
+          // userRatingCount - Places API Place Text Enterprise
+
           body: JSON.stringify({
             textQuery: `${query}`,
             pageToken: holdToken,
             minRating: req.body.ratingFilter,
             pageSize: 20,
-            includedType: `${req.body.placeType}`,
+            includedType: `${snakePlaceType}`,
             strictTypeFiltering: true,
             locationRestriction: { rectangle: req.body.viewport },
           }),
@@ -649,11 +672,15 @@ router.post("/map", ensureLoggedIn, ensureOwnership, async (req, res, next) => {
       );
       if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
       const data: TextSearchResponse = await result.json();
-      // if(req.body.placeType){ //should always have this but lets check just in case
-      // data.places = data.places.filter((v:Place)=>v.primaryType === req.body.placeType) // will have to make sure i am typing the types in as they have them on places, museum vs museums
-      // }else{
-      //   throw new Error(`REQUEST ERROR: INVALID PLACETYPE`)
-      // }
+      if (req.body.placeType) {
+        data.places = data.places.filter((v: Place) => {
+          if (v.types.findIndex((type) => snakePlaceType === type) !== -1) {
+            return true;
+          }
+        });
+      } else {
+        throw new Error(`REQUEST ERROR: INVALID PLACETYPE`);
+      }
       if (req.body.reviewFilter) {
         data.places.forEach((v: Place) => {
           if (v.userRatingCount >= req.body.reviewFilter) {

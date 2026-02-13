@@ -66,7 +66,20 @@ declare global {
     high: { latitude: number; longitude: number };
   };
 
-  type PlaceType = "restaurant" | "cafe" | "museum";
+  type PlaceType =
+    | "restaurant"
+    | "cafe"
+    | "museum"
+    | "lodging"
+    | "spa"
+    | "beach"
+    | "scenicSpot"
+    | "clothingStore"
+    | "transportationService"
+    | "park"
+    | "hikingArea"
+    | "amusementPark"
+    | "touristAttraction";
 
   interface GmpSelectEvent {
     place: google.maps.places.Place;

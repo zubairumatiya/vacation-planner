@@ -107,6 +107,7 @@ Ob6tQrcYtzRKF8VkQaXC0w==`.split("").length
 );
 
 console.log(new Date(date));
+console.log([].length);
 /*
 let countOfPlaces = 0;
 const gatherPlaces = [];

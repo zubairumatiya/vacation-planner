@@ -80,17 +80,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           const result: { token: string | null; err: boolean } =
             await refreshFn(apiURL, refreshInFlightRef);
-          console.log("auto refresh result:", result);
           if (result.err || result.token == null) {
             await logout();
           } else {
-            console.log("timer auto refresh!");
             login(result.token);
           }
         } catch (err) {
           console.error(err);
         }
-      }, 10000);
+      }, 3600000);
     }
   }, [token]);
   return (

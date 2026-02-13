@@ -154,8 +154,13 @@ const PlaceSearchWebComponent = ({
                   if (!data.nextPageToken) {
                     if (pagesObj.leftover) {
                       pagesObj.pages += 1;
-                      setResults((prev) => [...prev, ...data.places]);
                     }
+                    setResults((prev) => [
+                      ...prev,
+                      ...holdRemainder,
+                      ...data.places,
+                    ]);
+                    setHoldRemainder([]);
                   } else {
                     setResults((prev) => [...prev, ...arr]);
                   }
@@ -166,6 +171,7 @@ const PlaceSearchWebComponent = ({
                     if (pagesObj.leftover) {
                       pagesObj.pages += 1;
                     }
+                    setHoldRemainder([]);
                   }
                   setResults(data.places);
                   setCurrentPageMax(pagesObj.pages);
@@ -205,8 +211,9 @@ const PlaceSearchWebComponent = ({
             if (!data.nextPageToken) {
               if (pagesObj.leftover) {
                 pagesObj.pages += 1;
-                setResults((prev) => [...prev, ...data.places]);
               }
+              setResults((prev) => [...prev, ...holdRemainder, ...data.places]);
+              setHoldRemainder([]);
             } else {
               setResults((prev) => [...prev, ...arr]);
             }
@@ -217,6 +224,7 @@ const PlaceSearchWebComponent = ({
               if (pagesObj.leftover) {
                 pagesObj.pages += 1;
               }
+              setHoldRemainder([]);
             }
             setResults(data.places);
             setCurrentPageMax(pagesObj.pages);

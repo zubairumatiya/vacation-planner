@@ -26,6 +26,16 @@ export const SearchBar = memo(function SearchBar({
       { value: "restaurant", label: "Restaurants" },
       { value: "cafe", label: "Cafes" },
       { value: "museum", label: "Museums" },
+      { value: "lodging", label: "Lodging" },
+      { value: "spa", label: "Spas" },
+      { value: "beach", label: "Beaches" },
+      { value: "scenicSpot", label: "Scenic areas" },
+      { value: "clothingStore", label: "Clothing stores" },
+      { value: "transportationService", label: "Transportation" },
+      { value: "hikingArea", label: "Hiking" },
+      { value: "park", label: "Parks" },
+      { value: "amusementPark", label: "Amusement parks" },
+      { value: "touristAttraction", label: "Popular tourism" },
     ],
     []
   );
@@ -50,7 +60,7 @@ export const SearchBar = memo(function SearchBar({
 
   const [localSearchDisabled, setLocalSearchDisabled] = useState<boolean>(true);
 
-  const [holdName, setHoldName] = useState<string>("-1-2A-ad-54");
+  const [holdName, setHoldName] = useState<string>("");
 
   const autocompleteRef = useRef<{
     handleKeyDown: (key: string) => void;
