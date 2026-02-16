@@ -1,26 +1,13 @@
 import { PoolClient } from "pg";
 import renumberIndexDb from "./renumberIndexDb.js";
-import { UUID } from "crypto";
-import { Schedule } from "../types/express.js";
-
-type Chunk = {
-  above?: { id: string; sortIndex: number };
-  below?: { id: string; sortIndex: number };
-};
-
-type Body = {
-  chunk: Chunk;
-  start: string;
-  tripId?: string;
-  [key: string]: string | number | UUID | boolean | Chunk;
-};
+import { Schedule, ScheduleBody } from "../types/express.js";
 
 export default async function checkIndexSpacing(
-  body: Body,
+  body: ScheduleBody,
   client: PoolClient,
   paramTripId?: string | undefined,
   add?: boolean | undefined,
-  itemId?: string
+  itemId?: string,
 ): Promise<number | Schedule[] | undefined> {
   const above = body.chunk.above?.sortIndex;
   const below = body.chunk.below?.sortIndex;
@@ -40,9 +27,9 @@ export default async function checkIndexSpacing(
         // UPDATE THE INDEX before sending! But we have problem, our renumbering is time and index dependent, we insert the new index, but not time, so it won't be accurate.
         const result = await client.query(
           "UPDATE trip_schedule SET start_time=$1, sort_index=$2 WHERE id=$3",
-          [body.start, Math.floor((above + below) / 2), itemId]
+          [body.start, Math.floor((above + below) / 2), itemId],
         );
-        if (result.rowCount < 1) {
+        if (result.rowCount === null || result.rowCount < 1) {
           return undefined;
         }
         const renumRows = await renumberIndexDb(tripId, client);

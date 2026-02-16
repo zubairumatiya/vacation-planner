@@ -1,15 +1,17 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction } from "express";
 import db from "../db/db.js";
 import { snakeToCamel } from "../helpers/snakeToCamel.js";
+import { TypedRequest, TypedResponse, Schedule, TripList, ScheduleResponse, StateAwareBody, CamelCaseRow } from "../types/express.js";
+import { QueryResult } from "pg";
 
 export default async function stateAwareConfirmation(
-  req: Request,
-  res: Response,
+  req: TypedRequest<StateAwareBody>,
+  res: TypedResponse<ScheduleResponse>,
   next: NextFunction
-) {
+): Promise<void> {
   const path: string = req.path;
   try {
-    let queryText: string;
+    let queryText = "";
     if (
       /^\/schedule\/[^/]+$/.test(path) ||
       /^\/update-time\/[^/]+$/.test(path)
@@ -18,21 +20,28 @@ export default async function stateAwareConfirmation(
     } else if (/^\/list\/[^/]+$/.test(path)) {
       queryText = "SELECT * FROM trip_list WHERE id=$1";
     }
-    const result = await db.query(queryText, [req.params.id]);
+    
+    if (!queryText) {
+      next();
+      return;
+    }
+
+    const result: QueryResult<Schedule | TripList> = await db.query(queryText, [req.params.id]);
     if (!result) {
       res.status(500).json({ message: "Server Error" });
       return;
     }
-    if (result.rowCount < 1 && req.method === "DELETE") {
-      // item has most likely been deleted already which is a conflict and should be in the statement below as well, only in DELETE does is it ok it's missing
-
+    if (result.rowCount !== null && result.rowCount < 1 && req.method === "DELETE") {
       res.status(404).json({ deletedId: req.params.id, queryComplete: "true" });
       return;
     }
+    
     snakeToCamel(result.rows);
+    const row = result.rows[0] as unknown as CamelCaseRow | undefined;
+
     if (
-      req.body.lastModified !== result.rows?.[0]?.lastModified.toISOString() ||
-      result.rowCount < 1
+      (result.rowCount !== null && result.rowCount < 1) ||
+      (row && req.body.lastModified !== new Date(row.lastModified as string | Date).toISOString())
     ) {
       if (
         /^\/schedule\/[^/]+$/.test(path) ||
@@ -44,17 +53,14 @@ export default async function stateAwareConfirmation(
         queryText =
           "SELECT id, value, from_google, item_added FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC";
       }
-      const refreshData = await db.query(queryText, [
-        result.rows[0]?.tripId ?? req.body.tripId,
-      ]);
+      const tripId = row?.tripId ?? req.body.tripId;
+      const refreshData: QueryResult<Schedule | TripList> = await db.query(queryText, [tripId]);
       snakeToCamel(refreshData.rows);
       res
         .status(409)
-        .json({ message: "Conflict detected", newData: refreshData.rows });
+        .json({ message: "Conflict detected", newData: refreshData.rows as Schedule[] | TripList[] });
       return;
-    } else if (
-      req.body.lastModified === result.rows[0].lastModified.toISOString()
-    ) {
+    } else {
       next();
     }
   } catch (err) {

@@ -1,14 +1,15 @@
-import { QueryResult } from "pg";
-import { Schedule } from "../types/express";
+export function snakeToCamel<T>(rows: T[]): void {
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      if (key.includes("_")) {
+        const camelKey = key.replace(/_(\w)/g, (_, p1) => p1.toUpperCase());
 
-export const snakeToCamel = (dbRows: object[] | QueryResult<Schedule>[]) => {
-  //will change array in place
-  dbRows.map((row: object, index: number) => {
-    const newObj = {};
-    for (const key in row) {
-      const camelKey = key.replace(/_(\w)/g, (match, p1) => p1.toUpperCase()); // if no matches found (no _) then it will just return the string
-      newObj[camelKey] = row[key];
+        (row as Record<string, unknown>)[camelKey] = (
+          row as Record<string, unknown>
+        )[key];
+
+        delete (row as Record<string, unknown>)[key];
+      }
     }
-    dbRows[index] = newObj;
-  });
-};
+  }
+}

@@ -1,13 +1,13 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { Request, Response, NextFunction } from "express";
-import { MyPayload } from "../types/express";
+import { NextFunction } from "express";
+import { MyPayload, AuthResponse, TypedRequest, TypedResponse } from "../types/express.js";
 
 dotenv.config();
 
 const SECRET = process.env.SIGNATURE;
 
-function extractBearerToken(authHeader: string) {
+function extractBearerToken(authHeader: string | undefined): string | null {
   if (!authHeader) return null;
 
   const [scheme, token] = authHeader.split(" ");
@@ -22,10 +22,10 @@ function extractBearerToken(authHeader: string) {
 }
 
 export default function ensureLoggedIn(
-  req: Request,
-  res: Response,
+  req: TypedRequest,
+  res: TypedResponse<AuthResponse>,
   next: NextFunction
-) {
+): void {
   try {
     const token = extractBearerToken(req.headers.authorization);
     if (!token) {
@@ -39,16 +39,16 @@ export default function ensureLoggedIn(
         .json({ message: "Unable to Authenticate Token, check secret" });
       return;
     }
-    const decodedToken = jwt.verify(token, SECRET); // throws err if wrong, no need to error check
+    const decodedToken = jwt.verify(token, SECRET);
     req.user = decodedToken as MyPayload;
     next();
   } catch (err) {
-    if (err.name === "TokenExpiredError") {
+    if (err instanceof Error && err.name === "TokenExpiredError") {
       console.log("token expired --- console logging");
       res.status(401).json({ error: "TokenExpired" });
       return;
     }
-    if (err.name === "JsonWebTokenError") {
+    if (err instanceof Error && err.name === "JsonWebTokenError") {
       res.status(401).json({ error: "JwtError" });
       return;
     }
