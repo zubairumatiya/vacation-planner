@@ -37,7 +37,10 @@ import {
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
 import path from "path";
+import { fileURLToPath } from "url";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const API_KEY = process.env.MAPS_API_KEY;

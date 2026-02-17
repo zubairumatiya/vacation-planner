@@ -9,6 +9,10 @@ import cors from "cors";
 import https from "https";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
@@ -48,8 +52,10 @@ if (app.get("env") === "development") {
 }
 
 const options = {
-  key: fs.readFileSync("./certs/localhost-key.pem"),
-  cert: fs.readFileSync("./certs/localhost.pem"),
+  key: fs.readFileSync(
+    path.resolve(__dirname, "../../certs/localhost-key.pem"),
+  ),
+  cert: fs.readFileSync(path.resolve(__dirname, "../../certs/localhost.pem")),
 };
 
 https.createServer(options, app).listen(port, () => {
