@@ -15,10 +15,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
-
+const FRONTEND_URL = process.env.FRONTEND_URL;
 app.use(
   cors({
-    origin: "https://localhost:5173",
+    origin: FRONTEND_URL,
     credentials: true,
   }),
 );
