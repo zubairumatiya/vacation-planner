@@ -160,15 +160,7 @@ router.patch(
     try {
       const result: QueryResult<Trip> = await db.query(
         "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, g_id=$5, g_vp=$6, last_modified=NOW() WHERE id=$7 RETURNING *",
-        [
-          tripname,
-          startDate,
-          endDate,
-          location,
-          gId,
-          gVp,
-          req.params.tripId,
-        ],
+        [tripname, startDate, endDate, location, gId, gVp, req.params.tripId],
       );
       if (result.rowCount !== null && result.rowCount > 0) {
         res.status(200).json({ message: "success" });
@@ -487,7 +479,12 @@ router.patch(
       } else {
         query =
           "UPDATE trip_schedule SET start_time=$1, end_time=$2, sort_index=$3, last_modified=NOW() WHERE id=$4 RETURNING *";
-        values = [req.body.start, req.body.end, newSortIndex as number, req.params.id];
+        values = [
+          req.body.start,
+          req.body.end,
+          newSortIndex as number,
+          req.params.id,
+        ];
       }
 
       const result = await client.query<Schedule>(query, values);
@@ -594,7 +591,10 @@ router.post(
           "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google, last_modified, item_added";
         queryParams = [req.params.tripId, req.body.value];
       }
-      const result: QueryResult<TripList> = await db.query(queryText, queryParams);
+      const result: QueryResult<TripList> = await db.query(
+        queryText,
+        queryParams,
+      );
       snakeToCamel<TripList>(result.rows);
       res.status(200).json({ data: result.rows[0] });
       return;
@@ -733,7 +733,7 @@ router.post(
         );
         if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
         const data = (await result.json()) as TextSearchResponse;
-        
+
         let filteredPlaces = data.places ?? [];
         filteredPlaces = filteredPlaces.filter((v: Place) => {
           return v.types.includes(snakePlaceType);

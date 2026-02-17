@@ -51,7 +51,7 @@ const autoC = async () => {
           //includeQueryPredictions: true, // optional, want to test what this will do. If this is off, we will have place queries only, which is prob what we want so let's test this for now
           includedPrimaryTypes: ["locality", "country", "political"],
         }),
-      }
+      },
     );
     if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
     const data = await result.json();
@@ -60,7 +60,7 @@ const autoC = async () => {
     //  JSON.stringify(data, null, 2)
     //);
     data.suggestions.forEach((v) =>
-      console.log(v.placePrediction.text.text, v.placePrediction.types)
+      console.log(v.placePrediction.text.text, v.placePrediction.types),
     );
   } catch (err) {
     return err;
@@ -103,7 +103,7 @@ console.log(isNaN(d.getTime()));
 
 console.log(
   `UbBX+tLWyqAsKjRq+Kbu6P827W+YMNgUeTNNqyEVR6nYrDLFCCBlhN+/FHFau9gU
-Ob6tQrcYtzRKF8VkQaXC0w==`.split("").length
+Ob6tQrcYtzRKF8VkQaXC0w==`.split("").length,
 );
 
 console.log(new Date(date));
@@ -147,12 +147,6 @@ const repeaterCall = async () => {
 };
 repeaterCall();
 */
-// make dragging responsive to all platforms // NEEDS TESTING
-// should i just make end time an hour later upon drag and drop?  -- i think i should - DONE
-
-// Thinking more about how users will use drag and drop, i wonder if i should just keep the same time and let them change it when they want.
-//Maybe it's more annoying to have the time you want forcefully changed than to do more work to purposefully change it.
-//Because the way planning works is, it's more scrambled than beginning to finish right? Let's think more about this. -- HOLD OFF
 
 // ADD date when start day and end day are diff -- DONE
 
