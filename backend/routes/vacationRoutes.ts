@@ -36,8 +36,10 @@ import {
 } from "../types/express.js";
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+
 const API_KEY = process.env.MAPS_API_KEY;
 
 router.get(

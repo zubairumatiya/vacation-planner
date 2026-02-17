@@ -11,6 +11,7 @@ import { emailSender } from "../helpers/emailSender.js";
 import createNewRefreshToken from "../helpers/createNewRefreshToken.js";
 import * as cookie from "cookie";
 import { QueryResult } from "pg";
+import path from "path";
 import {
   SignUpBody,
   LoginBody,
@@ -30,7 +31,7 @@ import {
   ResetPasswordQuery,
 } from "../types/express.js";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const BASE_URL: string =
   process.env.NODE_ENV === "production"

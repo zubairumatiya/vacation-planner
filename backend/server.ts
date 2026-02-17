@@ -8,14 +8,15 @@ import morgan from "morgan";
 import cors from "cors";
 import https from "https";
 import fs from "fs";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 app.use(
   cors({
     origin: "https://localhost:5173",
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());
@@ -39,7 +40,7 @@ if (app.get("env") === "development") {
     req: Request,
     res: Response,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    next: NextFunction
+    next: NextFunction,
   ) {
     res.status(err.status || 500).json({ message: err.message, error: err });
     return;

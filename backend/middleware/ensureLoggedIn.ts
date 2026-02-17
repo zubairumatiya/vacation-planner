@@ -1,9 +1,15 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { NextFunction } from "express";
-import { MyPayload, AuthResponse, TypedRequest, TypedResponse } from "../types/express.js";
+import {
+  MyPayload,
+  AuthResponse,
+  TypedRequest,
+  TypedResponse,
+} from "../types/express.js";
+import path from "path";
 
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const SECRET = process.env.SIGNATURE;
 
@@ -24,7 +30,7 @@ function extractBearerToken(authHeader: string | undefined): string | null {
 export default function ensureLoggedIn(
   req: TypedRequest,
   res: TypedResponse<AuthResponse>,
-  next: NextFunction
+  next: NextFunction,
 ): void {
   try {
     const token = extractBearerToken(req.headers.authorization);
