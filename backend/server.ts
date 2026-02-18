@@ -50,6 +50,7 @@ if (app.get("env") === "development") {
     return;
   });
 }
+console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
 
 const options = {
   key: fs.readFileSync(
