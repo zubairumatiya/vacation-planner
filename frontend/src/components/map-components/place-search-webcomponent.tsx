@@ -90,7 +90,7 @@ const PlaceSearchWebComponent = ({
         });
         if (!res.ok) {
           if (res.status === 401) {
-            const resData = await res.json();
+            const resData = (await res.json()) as ApiErrorResponse;
             if (resData.error === "JwtError") {
               if (logout) {
                 await logout();
@@ -134,7 +134,7 @@ const PlaceSearchWebComponent = ({
               if (!retryReq.ok) {
                 alert("Trouble completing request, please try again");
               } else if (retryReq.ok) {
-                const data = await retryReq.json();
+                const data = (await retryReq.json()) as MapSearchResponse;
                 console.log(data.places);
                 setRememberFilter({
                   rating: ratingRef?.current?.value,
@@ -191,7 +191,7 @@ const PlaceSearchWebComponent = ({
             throw new Error(`HTTP error! status: ${res.status}`);
           }
         } else {
-          const data = await res.json();
+          const data = (await res.json()) as MapSearchResponse;
           console.log(data.places);
           setRememberFilter({
             rating: ratingRef?.current?.value,

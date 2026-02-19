@@ -15,15 +15,8 @@ const Home = () => {
   const logout = auth?.logout;
   const loggingOutRef = auth?.loggingOutRef;
   const refreshInFlightRef = auth?.refreshInFlightRef;
-  const [trips, setTrips] = useState([]);
+  const [trips, setTrips] = useState<HomeTrip[]>([]);
   const [loading, setLoading] = useState(true);
-  type Trip = {
-    id: string;
-    trip_name: string;
-    location: string;
-    start_date: string;
-    end_date: string;
-  };
   const [editing, setEditing] = useState(false);
   const editingRef = useRef<boolean>(false);
   const [editingId, setEditingId] = useState<string>("");
@@ -55,7 +48,7 @@ const Home = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.status === 401) {
-          const resData = await res.json();
+          const resData = (await res.json()) as ApiErrorResponse;
           if (resData.error === "JwtError") {
             if (logout) {
               await logout();
@@ -79,7 +72,7 @@ const Home = () => {
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const retryData = await retryReq.json();
+              const retryData = (await retryReq.json()) as HomeTrip[];
               setTrips(retryData);
               setLoading(false);
             }
@@ -89,7 +82,7 @@ const Home = () => {
             }
           }
         } else if (res.ok) {
-          const data = await res.json();
+          const data = (await res.json()) as HomeTrip[];
           setTrips(data);
           setLoading(false);
         } else {
@@ -142,12 +135,12 @@ const Home = () => {
       },
     });
     if (result.ok) {
-      setTrips((prev) => prev.filter((v: Trip) => v.id !== id));
+      setTrips((prev) => prev.filter((v: HomeTrip) => v.id !== id));
       setEditing(false);
       editingRef.current = false;
       setEditingId("");
     } else if (result.status === 401) {
-      const resData = await result.json();
+      const resData = (await result.json()) as ApiErrorResponse;
       if (resData.error === "JwtError") {
         if (logout) {
           await logout();
@@ -175,7 +168,7 @@ const Home = () => {
           alert("Trouble completing request, please try again");
         } else if (retryReq.ok) {
           //const retryData = await retryReq.json();
-          setTrips((prev) => prev.filter((v: Trip) => v.id !== id));
+          setTrips((prev) => prev.filter((v: HomeTrip) => v.id !== id));
           setEditing(false);
           editingRef.current = false;
           setEditingId("");
@@ -203,7 +196,7 @@ const Home = () => {
             {trips.length === 0 ? (
               <p>no trips to display...</p>
             ) : (
-              trips.map((v: Trip) => {
+              trips.map((v: HomeTrip) => {
                 const start = new Date(v.start_date);
                 const startFormat = start.toLocaleDateString("en-us", {
                   year: "numeric",

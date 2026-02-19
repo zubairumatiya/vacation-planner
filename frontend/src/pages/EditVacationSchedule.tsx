@@ -101,7 +101,7 @@ const EditVacationSchedule = ({
         },
       });
       if (response.status === 401) {
-        const resData = await response.json();
+        const resData = (await response.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -129,7 +129,7 @@ const EditVacationSchedule = ({
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");
           } else if (retryReq.ok) {
-            const data = await retryReq.json();
+            const data = (await retryReq.json()) as TripScheduleResponse;
             props.getMapValues(data.gVp, data.location, data.gId);
             const convertStart = new Date(data.startDate);
             const convertEnd = new Date(data.endDate);
@@ -178,7 +178,7 @@ const EditVacationSchedule = ({
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as TripScheduleResponse;
         props.getMapValues(data.gVp, data.location, data.gId);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
@@ -328,7 +328,7 @@ const EditVacationSchedule = ({
           }),
         });
         if (addingReq.ok) {
-          const data = await addingReq.json();
+          const data = (await addingReq.json()) as ScheduleAddResponse;
           if (data.newlyIndexedSchedule != null) {
             for (const i of data.newlyIndexedSchedule) {
               i.startTime = new Date(i.startTime);
@@ -362,7 +362,7 @@ const EditVacationSchedule = ({
             });
           }
         } else if (addingReq.status === 401) {
-          const resData = await addingReq.json();
+          const resData = (await addingReq.json()) as ApiErrorResponse;
           if (resData.error === "JwtError") {
             if (logout) {
               await logout();
@@ -398,7 +398,7 @@ const EditVacationSchedule = ({
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const data = await retryReq.json();
+              const data = (await retryReq.json()) as ScheduleAddResponse;
               if (data.newlyIndexedSchedule != null) {
                 for (const i of data.newlyIndexedSchedule) {
                   i.startTime = new Date(i.startTime);

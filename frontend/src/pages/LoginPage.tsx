@@ -36,7 +36,7 @@ const LoginPage = () => {
       setDisableChanges(false);
       setInvalidLogin(true);
     } else if (res.ok) {
-      const data = await res.json();
+      const data = (await res.json()) as LoginResponse;
       if (data.token) {
         auth?.login(data.token);
         navigate("/");

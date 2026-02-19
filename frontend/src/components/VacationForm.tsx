@@ -91,14 +91,14 @@ const VacationForm = (props?: Props) => {
           }
         );
         if (result.ok) {
-          const data = await result.json();
+          const data = (await result.json()) as AddVacationGetResponse;
           setGValues({
             id: data.gId,
             location: props?.preFill?.location ?? data.gLocation,
             vp: data.gVp,
           });
         } else if (result.status === 401) {
-          const resData = await result.json();
+          const resData = (await result.json()) as ApiErrorResponse;
           if (resData.error === "JwtError") {
             if (logout) {
               await logout();
@@ -127,7 +127,7 @@ const VacationForm = (props?: Props) => {
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const retryData = await retryReq.json();
+              const retryData = (await retryReq.json()) as AddVacationGetResponse;
               setGValues({
                 // change
                 id: retryData.gId,
@@ -298,7 +298,7 @@ const VacationForm = (props?: Props) => {
             setFieldError(true);
             setErrMessage("Invalid input");
           } else if (res.status === 401) {
-            const resData = await res.json();
+            const resData = (await res.json()) as ApiErrorResponse;
             if (resData.error === "JwtError") {
               if (logout) {
                 await logout();

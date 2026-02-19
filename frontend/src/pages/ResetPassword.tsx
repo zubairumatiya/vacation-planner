@@ -41,7 +41,7 @@ const ResetPassword = () => {
         setSubmissionErr("Invalid password criteria, try again");
       } else if (res.status === 401) {
         //this is for expired tokens / tampered tokens / incorrect tokens
-        const data = await res.json();
+        const data = (await res.json()) as ResetPasswordErrorResponse;
         const email = data?.email || "";
         navigate(`/send-reset-link-to-email/?err=failed-reset&email=${email}`);
       } else if (res.status === 422) {
