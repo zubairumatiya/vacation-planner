@@ -16,7 +16,7 @@ export default function refreshFn(
         if (!res.ok) {
           return { token: null, err: true };
         } else {
-          const data = await res.json();
+          const data = (await res.json()) as RefreshResponse;
           return { token: data.token, err: false };
         }
       } catch {

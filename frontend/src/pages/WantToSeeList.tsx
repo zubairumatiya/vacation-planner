@@ -36,7 +36,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         },
       });
       if (response.status === 401) {
-        const resData = await response.json();
+        const resData = (await response.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -63,7 +63,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");
           } else if (retryReq.ok) {
-            const data = await retryReq.json();
+            const data = (await retryReq.json()) as ListGetResponse;
             props.setList(data.data);
             props.loadSecond();
           }
@@ -82,7 +82,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as ListGetResponse;
         props.setList(data.data);
         props.loadSecond();
       }
@@ -138,7 +138,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     });
     console.log("lastModified:", props.list[index].lastModified);
     if (response.status === 401) {
-      const resData = await response.json();
+      const resData = (await response.json()) as ApiErrorResponse;
       if (resData.error === "JwtError") {
         if (logout) {
           await logout();
@@ -170,7 +170,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         if (!retryReq.ok) {
           alert("Trouble completing request, please try again");
         } else if (retryReq.ok) {
-          const data = await retryReq.json();
+          const data = (await retryReq.json()) as ListUpdateResponse;
           props.setList((prev) => {
             return [
               ...prev.slice(0, index),
@@ -190,7 +190,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     } else if (response.status === 404) {
       setBannerMsg("Error: Trip not found");
     } else if (response.status === 409) {
-      const data = await response.json();
+      const data = (await response.json()) as ListConflictResponse;
       props.setList(data.newData);
       setBannerMsg(
         "Another user has updated this resource, your change was not applied"
@@ -200,7 +200,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
       );
     } else if (response.ok) {
-      const data = await response.json();
+      const data = (await response.json()) as ListUpdateResponse;
       props.setList((prev) => {
         return [
           ...prev.slice(0, index),
@@ -273,7 +273,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       }),
     });
     if (result.ok) {
-      const data = await result.json();
+      const data = (await result.json()) as ListUpdateResponse;
       props.setList((prev) => [
         ...prev.slice(0, index),
         { ...data.data[0] },
@@ -281,7 +281,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       ]);
     } else {
       if (result.status === 401) {
-        const resData = await result.json();
+        const resData = (await result.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -312,7 +312,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");
           } else if (retryReq.ok) {
-            const data = await retryReq.json();
+            const data = (await retryReq.json()) as ListUpdateResponse;
             props.setList((prev) => [
               ...prev.slice(0, index),
               { ...data.data[0] },

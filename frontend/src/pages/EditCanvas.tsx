@@ -382,7 +382,7 @@ const EditCanvas = ({
           let hold: Response | null = null;
           if (!responses[0].ok || !responses[1].ok) {
             if (responses[0].status === 401) {
-              const resData = await responses[0].json();
+              const resData = (await responses[0].json()) as ApiErrorResponse;
               if (resData.error === "JwtError") {
                 if (logout) {
                   await logout();
@@ -423,7 +423,7 @@ const EditCanvas = ({
               setBannerMsg("error processing drag change");
             }
             if (responses[1].status === 401) {
-              const resData1 = await responses[1].json();
+              const resData1 = (await responses[1].json()) as ApiErrorResponse;
               if (resData1.error === "JwtError") {
                 if (logout) {
                   await logout();
@@ -464,7 +464,7 @@ const EditCanvas = ({
               setBannerMsg("Error: List not found");
             }
             if (!a && !b && hold != null) {
-              const data = await hold.json();
+              const data = (await hold.json()) as ScheduleAddResponse;
               if (data.newlyIndexedSchedule != null) {
                 for (const i of data.newlyIndexedSchedule) {
                   i.startTime = new Date(i.startTime);
@@ -497,7 +497,7 @@ const EditCanvas = ({
             }
             return;
           }
-          const data = await responses[0].json();
+          const data = (await responses[0].json()) as ScheduleAddResponse;
           if (data.newlyIndexedSchedule != null) {
             for (const i of data.newlyIndexedSchedule) {
               i.startTime = new Date(i.startTime);
@@ -549,10 +549,7 @@ const EditCanvas = ({
           );
 
           const okResFn = async (okRes: Response) => {
-            const data: {
-              updatedData?: Schedule;
-              newlyIndexedSchedule?: Schedule[];
-            } = await okRes.json();
+            const data = (await okRes.json()) as ScheduleUpdateResponse;
             if (data.newlyIndexedSchedule != null) {
               for (const i of data.newlyIndexedSchedule) {
                 i.startTime = new Date(i.startTime);
@@ -583,7 +580,7 @@ const EditCanvas = ({
           if (!result.ok) {
             let b: boolean = false;
             if (result.status === 401) {
-              const resData = await result.json();
+              const resData = (await result.json()) as ApiErrorResponse;
               if (resData.error === "JwtError") {
                 if (logout) {
                   await logout();
@@ -629,7 +626,7 @@ const EditCanvas = ({
             } else if (result.status === 404) {
               setBannerMsg("Error: Trip not found");
             } else if (result.status === 409) {
-              const data = await result.json();
+              const data = (await result.json()) as ScheduleConflictResponse;
               b = true;
               for (const i of data.newData) {
                 i.startTime = new Date(i.startTime);
@@ -966,7 +963,7 @@ const EditCanvas = ({
         body: JSON.stringify({ value: val, fromGoogle: id ?? null }),
       });
       if (response.status === 401) {
-        const resData = await response.json();
+        const resData = (await response.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -994,7 +991,7 @@ const EditCanvas = ({
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");
           } else if (retryReq.ok) {
-            const apiData: { data: Item } = await retryReq.json();
+            const apiData = (await retryReq.json()) as ListAddResponse;
             setWishList((prev) => [...prev, apiData.data]);
             return 200;
           }
@@ -1016,7 +1013,7 @@ const EditCanvas = ({
         );
         return 500;
       } else if (response.ok) {
-        const apiData: { data: Item } = await response.json();
+        const apiData = (await response.json()) as ListAddResponse;
         setWishList((prev) => [...prev, apiData.data]);
         return 200;
       }
@@ -1036,7 +1033,7 @@ const EditCanvas = ({
       });
 
       if (response.status === 401) {
-        const resData = await response.json();
+        const resData = (await response.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -1064,7 +1061,7 @@ const EditCanvas = ({
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");
           } else if (retryReq.ok) {
-            const data = await retryReq.json();
+            const data = (await retryReq.json()) as ListDeleteResponse;
             setWishList((prev) =>
               prev.filter((v) => v.id !== data.deletedData[0].id)
             );
@@ -1088,7 +1085,7 @@ const EditCanvas = ({
         );
         return 500;
       } else if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as ListDeleteResponse;
         setWishList((prev) =>
           prev.filter((v) => v.id !== data.deletedData[0].id)
         );
@@ -1175,7 +1172,7 @@ const EditCanvas = ({
           }),
         });
         if (addingReq.ok) {
-          const data = await addingReq.json();
+          const data = (await addingReq.json()) as ScheduleAddResponse;
           const startTime = new Date(data.addedItem.startTime);
           const day = startTime.toISOString().split("T")[0];
           setSchedule((prev) => {
@@ -1193,7 +1190,7 @@ const EditCanvas = ({
           });
           clearOverwriteBanner();
         } else if (addingReq.status === 401) {
-          const resData = await addingReq.json();
+          const resData = (await addingReq.json()) as ApiErrorResponse;
           if (resData.error === "JwtError") {
             if (logout) {
               await logout();
@@ -1230,7 +1227,7 @@ const EditCanvas = ({
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const data = await retryReq.json();
+              const data = (await retryReq.json()) as ScheduleAddResponse;
               const startTime = new Date(data.addedItem.startTime);
               const day = startTime.toISOString().split("T")[0];
               setSchedule((prev) => {
@@ -1286,7 +1283,7 @@ const EditCanvas = ({
           }),
         });
         if (patchRes.ok) {
-          const data = await patchRes.json();
+          const data = (await patchRes.json()) as ScheduleUpdateResponse;
           clearOverwriteBanner();
           setSchedule((prev) => {
             return newItemContainer !== previousItemContainer
@@ -1319,7 +1316,7 @@ const EditCanvas = ({
                 };
           });
         } else if (patchRes.status === 401) {
-          const resData = await patchRes.json();
+          const resData = (await patchRes.json()) as ApiErrorResponse;
           if (resData.error === "JwtError") {
             if (logout) {
               await logout();
@@ -1361,7 +1358,7 @@ const EditCanvas = ({
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const data = await retryReq.json();
+              const data = (await retryReq.json()) as ScheduleUpdateResponse;
               clearOverwriteBanner();
               setSchedule((prev) => {
                 return newItemContainer !== previousItemContainer
@@ -1408,7 +1405,7 @@ const EditCanvas = ({
           clearOverwriteBanner();
           setBannerMsg("Error: Trip not found");
         } else if (patchRes.status === 409) {
-          const data = await patchRes.json();
+          const data = (await patchRes.json()) as ScheduleConflictResponse;
           for (const i of data.newData) {
             i.startTime = new Date(i.startTime);
             i.endTime = new Date(i.endTime);

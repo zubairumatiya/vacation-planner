@@ -101,7 +101,7 @@ export const AutocompleteWebComponent = forwardRef(
           });
           if (!result.ok) {
             if (result.status === 401) {
-              const resData = await result.json();
+              const resData = (await result.json()) as ApiErrorResponse;
               if (resData.error === "JwtError") {
                 if (logout) {
                   await logout();
@@ -191,7 +191,7 @@ export const AutocompleteWebComponent = forwardRef(
       );
       if (!result.ok) {
         if (result.status === 401) {
-          const resData = await result.json();
+          const resData = (await result.json()) as ApiErrorResponse;
           if (resData.error === "JwtError") {
             if (logout) {
               await logout();
@@ -225,7 +225,7 @@ export const AutocompleteWebComponent = forwardRef(
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const data = await retryReq.json();
+              const data = (await retryReq.json()) as PlaceDetailsResponse;
               if (storeValues) {
                 storeValues(
                   element.placePrediction!.placeId,
@@ -248,7 +248,7 @@ export const AutocompleteWebComponent = forwardRef(
           throw new Error(`Error: ${result.status}`);
         }
       } else {
-        const data = await result.json();
+        const data = (await result.json()) as PlaceDetailsResponse;
         if (storeValues) {
           storeValues(
             element.placePrediction!.placeId,

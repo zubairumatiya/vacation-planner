@@ -233,7 +233,7 @@ const EditableRow = ({
           [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
         }));
       } else if (response.status === 401) {
-        const resData = await response.json();
+        const resData = (await response.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -284,7 +284,7 @@ const EditableRow = ({
       } else if (response.status === 404) {
         setEditLineId(null);
         setAddingItem(false);
-        const data = await response.json();
+        const data = (await response.json()) as ScheduleDeleteResponse;
         if (data.queryComplete != null) {
           setSchedule((prev) => ({
             ...prev,
@@ -294,7 +294,7 @@ const EditableRow = ({
           setBannerMsg("Error: Trip not found");
         }
       } else if (response.status === 409) {
-        const data = await response.json();
+        const data = (await response.json()) as ScheduleConflictResponse;
         setEditLineId(null);
         setAddingItem(false);
         for (const i of data.newData) {
@@ -412,7 +412,7 @@ const EditableRow = ({
         }),
       });
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as ScheduleUpdateResponse;
         setEditLineId(null);
         setAddingItem(false);
         if (data.newlyIndexedSchedule != null) {
@@ -462,7 +462,7 @@ const EditableRow = ({
           );
         }
       } else if (response.status === 401) {
-        const resData = await response.json();
+        const resData = (await response.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -496,7 +496,7 @@ const EditableRow = ({
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");
           } else if (retryReq.ok) {
-            const data = await retryReq.json();
+            const data = (await retryReq.json()) as ScheduleUpdateResponse;
             setEditLineId(null);
             setAddingItem(false);
             if (data.newlyIndexedSchedule != null) {
@@ -563,7 +563,7 @@ const EditableRow = ({
         setAddingItem(false);
         setBannerMsg("Error: Trip not found");
       } else if (response.status === 409) {
-        const data = await response.json();
+        const data = (await response.json()) as ScheduleConflictResponse;
         setEditLineId(null);
         setAddingItem(false);
         for (const i of data.newData) {

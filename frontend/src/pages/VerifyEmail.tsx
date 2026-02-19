@@ -66,7 +66,7 @@ const VerifyEmail = () => {
         setNonRefreshTimeRestart((prev) => !prev);
       } else {
         if (res.status === 429) {
-          const data = await res.json();
+          const data = (await res.json()) as ApiErrorResponse;
           alert(data.message);
         } else {
           alert(uhOh);

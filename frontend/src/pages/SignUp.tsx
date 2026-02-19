@@ -66,10 +66,10 @@ const SignUp = () => {
     });
     if (res.status !== 200) {
       if (res.status === 409) {
-        const data = await res.json();
+        const data = (await res.json()) as SignupResponse;
         setExistingUserError(`${data.message}`);
       } else if (res.status === 302) {
-        const data = await res.json();
+        const data = (await res.json()) as SignupResponse;
         alert(data.message);
         localStorage.setItem("pendingEmail", dataObj.email);
         navigate("/verify-email");

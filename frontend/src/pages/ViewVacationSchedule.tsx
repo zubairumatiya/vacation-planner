@@ -33,7 +33,7 @@ const ViewVacationSchedule = () => {
         },
       });
       if (response.status === 401) {
-        const resData = await response.json();
+        const resData = (await response.json()) as ApiErrorResponse;
         if (resData.error === "JwtError") {
           if (logout) {
             await logout();
@@ -60,7 +60,7 @@ const ViewVacationSchedule = () => {
           if (!retryReq.ok) {
             setError("Trouble completing request, please try again");
           } else if (retryReq.ok) {
-            const data = await retryReq.json();
+            const data = (await retryReq.json()) as TripScheduleResponse;
             const convertStart = new Date(data.startDate);
             const convertEnd = new Date(data.endDate);
             for (const i of data.schedule) {
@@ -109,7 +109,7 @@ const ViewVacationSchedule = () => {
           "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
         );
       } else if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as TripScheduleResponse;
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
         for (const i of data.schedule) {
