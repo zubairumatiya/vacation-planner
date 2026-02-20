@@ -138,3 +138,76 @@
 
 .trashIcon {
 }
+
+.itemValueWrapper {
+  width: 100%;
+}
+
+.itemValueMobile {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobileDropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 20;
+  background-color: #1a1a1a;
+  border: 2px solid #444;
+  border-radius: 8px;
+  padding: 0.75rem;
+  min-width: 220px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dropdownField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dropdownField label {
+  color: #ccc;
+  font-size: small;
+  font-weight: 600;
+}
+
+.dropdownSelect {
+  background-color: #2a2a2a;
+  color: white;
+  border: 1px solid #555;
+  border-radius: 4px;
+  padding: 0.35rem 0.4rem;
+  font-size: 0.9rem;
+}
+
+.dropdownActions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.dropdownConfirm {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.5rem;
+}
+
+.dropdownCancel {
+  background-color: transparent;
+  border: 1px solid #666;
+  color: #ccc;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dropdownCancel:hover {
+  background-color: #333;
+}

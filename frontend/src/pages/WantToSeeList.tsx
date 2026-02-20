@@ -398,6 +398,9 @@ const WantToSeeList = (props: WantToSeeListProps) => {
               editItem={editItem}
               handleCheckItem={handleCheckItem}
               activeListId={props.activeListId}
+              isMobile={props.isMobile}
+              days={props.days}
+              onMobileAddToSchedule={props.onMobileAddToSchedule}
             />
           );
         })}{" "}

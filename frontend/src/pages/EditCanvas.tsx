@@ -2,7 +2,7 @@ import EditVacationSchedule from "./EditVacationSchedule";
 import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
-import { useState, useCallback, useContext, useRef, useEffect } from "react";
+import { useState, useCallback, useContext, useRef, useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { EditScheduleProvider } from "../context/EditScheduleContext";
@@ -83,6 +83,22 @@ const EditCanvas = ({
   const [remountKey, setRemountKey] = useState<number>(0);
   const [mapRetries, setMapRetries] = useState<number>(0);
   const [scheduleRetries, setScheduleRetries] = useState<number>(0);
+  const [isMobile, setIsMobile] = useState<boolean>(
+    () => window.matchMedia("(max-width: 700px)").matches
+  );
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 700px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
+
+  const days = useMemo<DayContainer[]>(() => {
+    if (utcStart === 0 || utcEnd === 0) return [];
+    const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+    return makeContainers(length, new Date(utcStart));
+  }, [utcStart, utcEnd]);
 
   useEffect(() => {
     lastEditWasDrag.current = false;
@@ -1095,6 +1111,145 @@ const EditCanvas = ({
     []
   );
 
+  const onMobileAddToSchedule = useCallback(
+    async (
+      itemId: UniqueIdentifier,
+      dayKey: string,
+      timeString: string
+    ) => {
+      if (!token) return;
+      const listItem = wishList.find((item) => item.id == itemId);
+      if (!listItem) return;
+
+      const startTime = new Date(`${dayKey}T${timeString}:00Z`);
+      const endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+
+      const tempItem: Schedule = {
+        id: itemId,
+        tripId: String(tripId),
+        location: listItem.value,
+        details: "",
+        startTime,
+        endTime,
+        cost: 0,
+        multiDay: false,
+        sortIndex: 0,
+        lastModified: "",
+      };
+
+      const currentDayItems = schedule[dayKey] ?? [];
+      const newArr = [...currentDayItems, tempItem].sort(
+        (a, b) => a.startTime.getTime() - b.startTime.getTime()
+      );
+      const chunk = indexChunk(itemId, newArr);
+
+      setSchedule((prev) => ({
+        ...prev,
+        [dayKey]: newArr,
+      }));
+      setWishList((prev) =>
+        prev.map((v) => (v.id === itemId ? { ...v, itemAdded: true } : v))
+      );
+
+      try {
+        const [scheduleRes, checkRes] = await Promise.all([
+          fetch(`${apiURL}/schedule/${tripId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              start: startTime,
+              end: endTime,
+              location: listItem.value,
+              cost: 0,
+              details: "",
+              multiDay: false,
+              sortIndex: 0,
+              chunk,
+            }),
+          }),
+          fetch(`${apiURL}/check-list-item/${itemId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              newValue: true,
+              tripId,
+            }),
+          }),
+        ]);
+
+        if (!scheduleRes.ok || !checkRes.ok) {
+          if (scheduleRes.status === 401 || checkRes.status === 401) {
+            const resData = (await (
+              scheduleRes.status === 401 ? scheduleRes : checkRes
+            ).json()) as ApiErrorResponse;
+            if (resData.error === "JwtError") {
+              if (logout) await logout();
+              return;
+            }
+            if (refreshInFlightRef == null) return;
+            const continueReq = await refreshFn(apiURL, refreshInFlightRef);
+            if (!continueReq.err) {
+              if (login && continueReq.token) login(continueReq.token);
+            } else {
+              if (logout) await logout();
+              return;
+            }
+          } else {
+            setBannerMsg("Error adding item to schedule");
+            setSchedule((prev) => ({
+              ...prev,
+              [dayKey]: currentDayItems,
+            }));
+            setWishList((prev) =>
+              prev.map((v) =>
+                v.id === itemId ? { ...v, itemAdded: false } : v
+              )
+            );
+          }
+          return;
+        }
+
+        const data = (await scheduleRes.json()) as ScheduleAddResponse;
+        if (data.newlyIndexedSchedule != null) {
+          for (const i of data.newlyIndexedSchedule) {
+            i.startTime = new Date(i.startTime);
+            i.endTime = new Date(i.endTime);
+            i.id = String(i.id);
+          }
+          const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+          const dayContainers = makeContainers(length, new Date(utcStart));
+          setSchedule(bucketizeSchedule(dayContainers, data.newlyIndexedSchedule));
+        } else if (data.addedItem != null) {
+          data.addedItem.startTime = new Date(data.addedItem.startTime);
+          data.addedItem.endTime = new Date(data.addedItem.endTime);
+          setSchedule((prev) => ({
+            ...prev,
+            [dayKey]: prev[dayKey].map((v) =>
+              v.id === itemId ? data.addedItem : v
+            ),
+          }));
+        }
+      } catch {
+        setSchedule((prev) => ({
+          ...prev,
+          [dayKey]: currentDayItems,
+        }));
+        setWishList((prev) =>
+          prev.map((v) =>
+            v.id === itemId ? { ...v, itemAdded: false } : v
+          )
+        );
+      }
+    },
+    [token, wishList, schedule, tripId, utcStart, utcEnd]
+  );
+
   const placeItemInSchedule = (
     oldArr: Schedule[],
     item: Schedule
@@ -1515,6 +1670,9 @@ const EditCanvas = ({
                 handleSubmitItem={handleSubmitItem}
                 handleDeleteItem={handleDeleteItem}
                 activeListId={activeListId}
+                isMobile={isMobile}
+                days={days}
+                onMobileAddToSchedule={onMobileAddToSchedule}
               />
             )}
           </div>
