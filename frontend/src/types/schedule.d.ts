@@ -172,6 +172,13 @@ declare global {
       id?: UniqueIdentifier
     ) => Promise<UniqueIdentifier | undefined>;
     activeListId: UniqueIdentifier | null;
+    isMobile?: boolean;
+    days?: DayContainer[];
+    onMobileAddToSchedule?: (
+      itemId: UniqueIdentifier,
+      dayKey: string,
+      timeString: string
+    ) => Promise<void>;
   }
 
   type HideDay = {
@@ -285,6 +292,13 @@ declare global {
       index: number
     ) => void;
     activeListId: UniqueIdentifier | null;
+    isMobile?: boolean;
+    days?: DayContainer[];
+    onMobileAddToSchedule?: (
+      itemId: UniqueIdentifier,
+      dayKey: string,
+      timeString: string
+    ) => Promise<void>;
   };
 
   type OverlayWidths = {
