@@ -16,6 +16,7 @@ import VacationSchedule from "./pages/VacationSchedule.tsx";
 import EditCanvas from "./pages/EditCanvas.tsx";
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
+import ProfilePage from "./pages/ProfilePage.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "./components/ErrorFallback.tsx";
 import RequireAuth from "./pages/RequireAuth.tsx";
@@ -60,6 +61,7 @@ function App() {
                 }
               />
             </Route>
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/test" element={<Test />} />
           </Route>
         </Route>

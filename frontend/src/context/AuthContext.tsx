@@ -12,6 +12,8 @@ type AuthContextType = {
     err: boolean;
   }> | null>;
   loggingOutRef: React.RefObject<boolean>;
+  userEmail: string | null;
+  userId: string | null;
 };
 
 type AuthProviderProps = {
@@ -40,12 +42,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [token, setToken] = useState<AuthContextType["token"]>(
     localStorage.getItem("token")
   );
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const fetchProfile = async (t: string) => {
+    try {
+      const res = await fetch(`${apiURL}/profile`, {
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserEmail(data.email);
+        setUserId(data.id);
+      }
+    } catch {
+      // silent fail
+    }
+  };
+
+  // Fetch profile on mount if token exists
+  useEffect(() => {
+    if (token) {
+      fetchProfile(token);
+    }
+  }, []);
 
   const login = (newToken: string): void => {
     localStorage.setItem("token", newToken);
     setToken(newToken);
     logoutOnceRef.current = false;
     loggingOutRef.current = false;
+    fetchProfile(newToken);
   };
 
   const logoutOnceRef = useRef<boolean>(false);
@@ -69,6 +96,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoggingOut(true);
       localStorage.removeItem("token");
       setToken(null);
+      setUserEmail(null);
+      setUserId(null);
     }
   };
   useEffect(() => {
@@ -100,6 +129,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         loggingOut,
         refreshInFlightRef,
         loggingOutRef,
+        userEmail,
+        userId,
       }}
     >
       {children}

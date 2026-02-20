@@ -7,6 +7,7 @@
 .rightItems {
   display: flex;
   align-items: end;
+  position: relative;
 }
 
 .signIn {
@@ -28,16 +29,34 @@
 }
 
 .sidebar {
-  display: flex;
-  position: fixed;
+  position: absolute;
+  top: 100%;
+  right: 0;
   width: 15vw;
-  transition: transform 0.3s ease;
-  transform: translate(-57%, 100%); /* hidden */
+  min-width: 180px;
+  max-width: calc(100vw - 2rem);
   z-index: 1;
 }
 
-.sidebar.open {
-  transform: translateX(0); /* visible */
+.sidebarExpanded {
+  width: 30vw;
+  min-width: 320px;
+}
+
+@media (max-width: 700px) {
+  .sidebar {
+    position: fixed;
+    right: 1rem;
+    top: auto;
+    transform: translateY(100%);
+    width: calc(100vw - 2rem);
+    min-width: unset;
+  }
+
+  .sidebarExpanded {
+    width: calc(100vw - 2rem);
+    min-width: unset;
+  }
 }
 
 .profileButton {
@@ -47,6 +66,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.profileBtnWrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.notificationDot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 10px;
+  background-color: #e53e3e;
+  border-radius: 50%;
+  border: 2px solid #242424;
+  pointer-events: none;
 }
 
 .addTrip {

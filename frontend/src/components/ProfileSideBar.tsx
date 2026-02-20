@@ -3,20 +3,42 @@ import { AuthContext } from "../context/AuthContext";
 import { useContext } from "react";
 import styles from "../styles/ProfileSideBar.module.css";
 
-const ProfileSideBar = () => {
+interface ProfileSideBarProps {
+  onClose: () => void;
+  onInboxClick: () => void;
+  unreadCount: number;
+}
+
+const ProfileSideBar = ({
+  onClose,
+  onInboxClick,
+  unreadCount,
+}: ProfileSideBarProps) => {
   const auth = useContext(AuthContext);
 
   const handleSignOut = () => {
     auth?.logout();
   };
-  //  <Link to="/login" onClick={() => handleSignOut()}>
-  //  Sign out
-  //</Link>
+
   return (
     <div className={styles.sidebarContainer}>
       <ul className={styles.ul}>
         <li>
-          <Link to="/">Profile</Link>
+          <Link to="/profile" onClick={onClose}>
+            Profile
+          </Link>
+        </li>
+        <li>
+          <button
+            type="button"
+            onClick={onInboxClick}
+            className={styles.inboxBtn}
+          >
+            Inbox
+            {unreadCount > 0 && (
+              <span className={styles.badge}>{unreadCount}</span>
+            )}
+          </button>
         </li>
         <li>
           <button

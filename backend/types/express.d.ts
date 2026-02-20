@@ -313,6 +313,62 @@ export interface ItemIdParam extends ParamsDictionary {
   itemId: string;
 }
 
+export interface UserIdParam extends ParamsDictionary {
+  userId: string;
+}
+
+export interface NotificationIdParam extends ParamsDictionary {
+  id: string;
+}
+
+export interface ProfileResponse {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  follower_count: number;
+  following_count: number;
+}
+
+export interface UserSearchResult {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+}
+
+export interface FollowUser {
+  id: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  follow_id: string;
+  created_at: Date;
+}
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  from_user_id: string;
+  from_email: string;
+  from_first_name: string;
+  from_last_name: string;
+  type: string;
+  reference_id: string;
+  is_read: boolean;
+  status: string;
+  created_at: Date;
+  trip_name?: string;
+}
+
+export interface NotificationActionBody {
+  action: "accepted" | "declined";
+}
+
+export interface SearchQuery extends Query {
+  email?: string;
+}
+
 declare global {
   namespace Express {
     interface Request {
