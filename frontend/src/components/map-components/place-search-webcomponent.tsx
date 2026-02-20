@@ -46,6 +46,7 @@ const PlaceSearchWebComponent = ({
   const [holdRemainder, setHoldRemainder] = useState<[]>([]);
   const firstLoad = useRef<number>(0);
   const loggingOutRef = auth?.loggingOutRef;
+  const placesContainerRef = useRef<HTMLDivElement>(null);
 
   const makePages = (arr: Array<object>) => {
     const total = newPageRequest
@@ -180,6 +181,7 @@ const PlaceSearchWebComponent = ({
                 setPlaces(data.places.slice(0, 10));
                 setHoldNPT(data.nextPageToken);
                 setLoadingNext(false);
+                placesContainerRef.current?.scrollTo(0, 0);
               }
             } else if (continueReq.err) {
               if (logout) {
@@ -233,6 +235,7 @@ const PlaceSearchWebComponent = ({
           setPlaces(data.places.slice(0, 10));
           setHoldNPT(data.nextPageToken);
           setLoadingNext(false);
+          placesContainerRef.current?.scrollTo(0, 0);
         }
       } catch (err) {
         console.error("Error fetching places:", err);
@@ -250,6 +253,7 @@ const PlaceSearchWebComponent = ({
 
   useEffect(() => {
     setPlaces(results.slice(10 * (pageCount - 1), 10 * pageCount));
+    placesContainerRef.current?.scrollTo(0, 0);
   }, [pageCountSwitch]);
 
   const checkDifferentSelection = () => {
@@ -337,7 +341,7 @@ const PlaceSearchWebComponent = ({
           <div></div>
         </div>
 
-        <div className={styles.placesContainer}>
+        <div className={styles.placesContainer} ref={placesContainerRef}>
           {results.slice(10 * (pageCount - 1), 10 * pageCount).map((place) => {
             return (
               <div
