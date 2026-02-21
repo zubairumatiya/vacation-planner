@@ -2,4 +2,4 @@
 *.pem
 *.sql
 node_modules/
-/backend/certs/
+backend/certs/
