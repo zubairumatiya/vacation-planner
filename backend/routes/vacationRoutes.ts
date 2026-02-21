@@ -50,16 +50,18 @@ router.get(
   ensureLoggedIn,
   async (req: TypedRequest, res: TypedResponse<Trip[]>, next: NextFunction) => {
     try {
-      const results: QueryResult<{ trip_id: string }> = await db.query(
-        "SELECT trip_id FROM user_trips WHERE user_id=$1",
+      const results = await db.query(
+        `SELECT t.*, ut.role,
+          owner_user.first_name AS owner_first_name,
+          owner_user.last_name AS owner_last_name
+        FROM user_trips ut
+        JOIN trips t ON t.id = ut.trip_id
+        LEFT JOIN user_trips owner_ut ON owner_ut.trip_id = t.id AND owner_ut.role = 'owner'
+        LEFT JOIN users owner_user ON owner_user.id = owner_ut.user_id
+        WHERE ut.user_id = $1`,
         [req.user.id],
       );
-      const ids: Array<string> = results.rows.map((row) => row.trip_id);
-      const results2: QueryResult<Trip> = await db.query(
-        "SELECT * FROM trips WHERE id = ANY($1::uuid[])",
-        [ids],
-      );
-      res.status(200).json(results2.rows);
+      res.status(200).json(results.rows);
       return;
     } catch (err) {
       next(err);

@@ -41,3 +41,8 @@
   pointer-events: none;
   color: gray;
 }
+
+.pastTripsHeader {
+  cursor: pointer;
+  user-select: none;
+}

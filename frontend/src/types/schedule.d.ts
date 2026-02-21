@@ -14,6 +14,9 @@ declare global {
     location: string;
     start_date: string;
     end_date: string;
+    role: "owner" | "editor" | "reader";
+    owner_first_name: string;
+    owner_last_name: string;
   }
 
   /** Raw schedule item from the API (dates are ISO strings, not yet Date objects) */
