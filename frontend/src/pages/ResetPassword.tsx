@@ -109,9 +109,9 @@ const ResetPassword = () => {
                 id="newpassword"
                 value={newPassword}
                 onChange={passwordChange}
-                className={
+                className={`${styles.inputField}  ${
                   errorMessage === "" ? styles.greenBorder : styles.errorBorder
-                }
+                }`}
                 onBlur={() => setPasswordBlur(true)}
               />
             </div>

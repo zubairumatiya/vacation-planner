@@ -47,10 +47,13 @@ const SendResetLinkToEmail = () => {
           </p>
         )}
         <div>
-          <label htmlFor="email">Email: </label>
+          <label htmlFor="email" className={styles.label}>
+            Email:{" "}
+          </label>
         </div>
         <div>
           <input
+            className={styles.inputField}
             type="text"
             name="email"
             id="email"
