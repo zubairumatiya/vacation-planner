@@ -326,8 +326,7 @@ export interface ProfileResponse {
   email: string;
   first_name: string;
   last_name: string;
-  follower_count: number;
-  following_count: number;
+  friends_count: number;
 }
 
 export interface UserSearchResult {

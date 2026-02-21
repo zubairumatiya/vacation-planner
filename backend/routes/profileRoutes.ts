@@ -40,12 +40,8 @@ router.get(
       }
       const user = userResult.rows[0];
 
-      const followerCount = await db.query(
-        "SELECT COUNT(*) FROM follows WHERE following_id = $1 AND status = 'accepted'",
-        [userId],
-      );
-      const followingCount = await db.query(
-        "SELECT COUNT(*) FROM follows WHERE follower_id = $1 AND status = 'accepted'",
+      const friendsCount = await db.query(
+        "SELECT COUNT(*) FROM follows WHERE (requester_id = $1 OR receiver_id = $1) AND status = 'accepted'",
         [userId],
       );
 
@@ -54,8 +50,7 @@ router.get(
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
-        follower_count: parseInt(followerCount.rows[0].count),
-        following_count: parseInt(followingCount.rows[0].count),
+        friends_count: parseInt(friendsCount.rows[0].count),
       });
     } catch (err) {
       next(err);
@@ -109,7 +104,7 @@ router.get(
   },
 );
 
-// POST /follow/:userId - send follow request
+// POST /follow/:userId - send friend request
 router.post(
   "/follow/:userId",
   ensureLoggedIn,
@@ -119,27 +114,27 @@ router.post(
     next: NextFunction,
   ) => {
     try {
-      const followerId = req.user.id;
-      const followingId = req.params.userId;
+      const requesterId = req.user.id;
+      const receiverId = req.params.userId;
 
-      if (followerId === followingId) {
-        res.status(400).json({ message: "Cannot follow yourself" });
+      if (requesterId === receiverId) {
+        res.status(400).json({ message: "Cannot send friend request to yourself" });
         return;
       }
 
-      // Check if already following or pending
+      // Check if friendship already exists in either direction
       const existing = await db.query(
-        "SELECT * FROM follows WHERE follower_id = $1 AND following_id = $2",
-        [followerId, followingId],
+        "SELECT * FROM follows WHERE (requester_id = $1 AND receiver_id = $2) OR (requester_id = $2 AND receiver_id = $1)",
+        [requesterId, receiverId],
       );
       if (existing.rows.length > 0) {
         const status = existing.rows[0].status;
         if (status === "pending") {
-          res.status(409).json({ message: "Follow request already pending" });
+          res.status(409).json({ message: "Friend request already pending" });
           return;
         }
         if (status === "accepted") {
-          res.status(409).json({ message: "Already following this user" });
+          res.status(409).json({ message: "Already friends with this user" });
           return;
         }
         // If declined, allow re-requesting
@@ -148,12 +143,12 @@ router.post(
           try {
             await client.query("BEGIN");
             await client.query(
-              "UPDATE follows SET status = 'pending', created_at = now() WHERE follower_id = $1 AND following_id = $2",
-              [followerId, followingId],
+              "UPDATE follows SET requester_id = $1, receiver_id = $2, status = 'pending', created_at = now() WHERE id = $3",
+              [requesterId, receiverId, existing.rows[0].id],
             );
             await client.query(
-              "INSERT INTO notifications (user_id, from_user_id, type, reference_id) VALUES ($1, $2, 'follow_request', (SELECT id FROM follows WHERE follower_id = $2 AND following_id = $1))",
-              [followingId, followerId],
+              "INSERT INTO notifications (user_id, from_user_id, type, reference_id) VALUES ($1, $2, 'follow_request', $3)",
+              [receiverId, requesterId, existing.rows[0].id],
             );
             await client.query("COMMIT");
           } catch (err) {
@@ -162,7 +157,7 @@ router.post(
           } finally {
             client.release();
           }
-          res.status(200).json({ message: "Follow request sent" });
+          res.status(200).json({ message: "Friend request sent" });
           return;
         }
       }
@@ -171,12 +166,12 @@ router.post(
       try {
         await client.query("BEGIN");
         const followResult = await client.query(
-          "INSERT INTO follows (follower_id, following_id) VALUES ($1, $2) RETURNING id",
-          [followerId, followingId],
+          "INSERT INTO follows (requester_id, receiver_id) VALUES ($1, $2) RETURNING id",
+          [requesterId, receiverId],
         );
         await client.query(
           "INSERT INTO notifications (user_id, from_user_id, type, reference_id) VALUES ($1, $2, 'follow_request', $3)",
-          [followingId, followerId, followResult.rows[0].id],
+          [receiverId, requesterId, followResult.rows[0].id],
         );
         await client.query("COMMIT");
       } catch (err) {
@@ -185,14 +180,14 @@ router.post(
       } finally {
         client.release();
       }
-      res.status(201).json({ message: "Follow request sent" });
+      res.status(201).json({ message: "Friend request sent" });
     } catch (err) {
       next(err);
     }
   },
 );
 
-// DELETE /follow/:userId - unfollow
+// DELETE /follow/:userId - remove friend
 router.delete(
   "/follow/:userId",
   ensureLoggedIn,
@@ -202,63 +197,39 @@ router.delete(
     next: NextFunction,
   ) => {
     try {
-      const followerId = req.user.id;
-      const followingId = req.params.userId;
+      const userId = req.user.id;
+      const friendId = req.params.userId;
       await db.query(
-        "DELETE FROM follows WHERE follower_id = $1 AND following_id = $2",
-        [followerId, followingId],
+        "DELETE FROM follows WHERE (requester_id = $1 AND receiver_id = $2) OR (requester_id = $2 AND receiver_id = $1)",
+        [userId, friendId],
       );
-      res.status(200).json({ message: "Unfollowed" });
+      res.status(200).json({ message: "Friend removed" });
     } catch (err) {
       next(err);
     }
   },
 );
 
-// GET /followers - get my followers (accepted)
+// GET /friends - get all friends (accepted)
 router.get(
-  "/followers",
+  "/friends",
   ensureLoggedIn,
   async (
     req: TypedRequest,
-    res: TypedResponse<{ followers: FollowUser[] }>,
+    res: TypedResponse<{ friends: FollowUser[] }>,
     next: NextFunction,
   ) => {
     try {
       const userId = req.user.id;
       const result: QueryResult<FollowUser> = await db.query(
         `SELECT u.id, u.email, u.first_name, u.last_name, f.id as follow_id, f.created_at
-         FROM follows f JOIN users u ON f.follower_id = u.id
-         WHERE f.following_id = $1 AND f.status = 'accepted'
+         FROM follows f
+         JOIN users u ON (CASE WHEN f.requester_id = $1 THEN f.receiver_id ELSE f.requester_id END) = u.id
+         WHERE (f.requester_id = $1 OR f.receiver_id = $1) AND f.status = 'accepted'
          ORDER BY f.created_at DESC`,
         [userId],
       );
-      res.status(200).json({ followers: result.rows });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
-
-// GET /following - get who I follow (accepted)
-router.get(
-  "/following",
-  ensureLoggedIn,
-  async (
-    req: TypedRequest,
-    res: TypedResponse<{ following: FollowUser[] }>,
-    next: NextFunction,
-  ) => {
-    try {
-      const userId = req.user.id;
-      const result: QueryResult<FollowUser> = await db.query(
-        `SELECT u.id, u.email, u.first_name, u.last_name, f.id as follow_id, f.created_at
-         FROM follows f JOIN users u ON f.following_id = u.id
-         WHERE f.follower_id = $1 AND f.status = 'accepted'
-         ORDER BY f.created_at DESC`,
-        [userId],
-      );
-      res.status(200).json({ following: result.rows });
+      res.status(200).json({ friends: result.rows });
     } catch (err) {
       next(err);
     }

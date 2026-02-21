@@ -21,10 +21,6 @@ interface UserSearchResult {
   last_name: string;
 }
 
-interface PendingFollow {
-  following_id: string;
-}
-
 const ProfilePage = () => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -36,8 +32,7 @@ const ProfilePage = () => {
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [followers, setFollowers] = useState<FollowUser[]>([]);
-  const [following, setFollowing] = useState<FollowUser[]>([]);
+  const [friends, setFriends] = useState<FollowUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<UserSearchResult[]>([]);
   const [pendingFollows, setPendingFollows] = useState<Set<string>>(new Set());
@@ -83,24 +78,12 @@ const ProfilePage = () => {
     }
   };
 
-  const loadFollowers = async () => {
+  const loadFriends = async () => {
     try {
-      const res = await authFetch(`${apiUrl}/followers`);
+      const res = await authFetch(`${apiUrl}/friends`);
       if (res.ok) {
         const data = await res.json();
-        setFollowers(data.followers);
-      }
-    } catch {
-      // handled
-    }
-  };
-
-  const loadFollowing = async () => {
-    try {
-      const res = await authFetch(`${apiUrl}/following`);
-      if (res.ok) {
-        const data = await res.json();
-        setFollowing(data.following);
+        setFriends(data.friends);
       }
     } catch {
       // handled
@@ -110,8 +93,7 @@ const ProfilePage = () => {
   useEffect(() => {
     if (loggingOutRef?.current) return;
     loadProfile();
-    loadFollowers();
-    loadFollowing();
+    loadFriends();
   }, [token]);
 
   const handleSearch = (value: string) => {
@@ -149,13 +131,13 @@ const ProfilePage = () => {
     }
   };
 
-  const handleUnfollow = async (userId: string) => {
+  const handleRemoveFriend = async (userId: string) => {
     try {
       const res = await authFetch(`${apiUrl}/follow/${userId}`, {
         method: "DELETE",
       });
       if (res.ok) {
-        setFollowing((prev) => prev.filter((f) => f.id !== userId));
+        setFriends((prev) => prev.filter((f) => f.id !== userId));
       }
     } catch {
       // handled
@@ -176,8 +158,8 @@ const ProfilePage = () => {
     }
   };
 
-  const isFollowing = (userId: string) =>
-    following.some((f) => f.id === userId);
+  const isFriend = (userId: string) =>
+    friends.some((f) => f.id === userId);
 
   const isPending = (userId: string) => pendingFollows.has(userId);
 
@@ -221,8 +203,8 @@ const ProfilePage = () => {
                   </span>
                   <span className={styles.userEmail}> {user.email}</span>
                 </div>
-                {isFollowing(user.id) ? (
-                  <span className={styles.pendingText}>Following</span>
+                {isFriend(user.id) ? (
+                  <span className={styles.pendingText}>Friends</span>
                 ) : isPending(user.id) ? (
                   <span className={styles.pendingText}>Pending</span>
                 ) : (
@@ -231,7 +213,7 @@ const ProfilePage = () => {
                     className={styles.followBtn}
                     onClick={() => handleFollow(user.id)}
                   >
-                    Follow
+                    Add Friend
                   </button>
                 )}
               </li>
@@ -242,13 +224,13 @@ const ProfilePage = () => {
 
       <div className={styles.section}>
         <div className={styles.sectionTitle}>
-          Fellow Travelers ({following.length})
+          Fellow Travelers ({friends.length})
         </div>
-        {following.length === 0 ? (
-          <p className={styles.emptyText}>Not following anyone yet</p>
+        {friends.length === 0 ? (
+          <p className={styles.emptyText}>No fellow travelers yet</p>
         ) : (
           <ul className={styles.userList}>
-            {following.map((user) => (
+            {friends.map((user) => (
               <li key={user.id} className={styles.userItem}>
                 <div className={styles.userInfo}>
                   <span className={styles.userName}>
@@ -259,32 +241,10 @@ const ProfilePage = () => {
                 <button
                   type="button"
                   className={styles.unfollowBtn}
-                  onClick={() => handleUnfollow(user.id)}
+                  onClick={() => handleRemoveFriend(user.id)}
                 >
-                  Unfollow
+                  Remove
                 </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>
-          Followers ({followers.length})
-        </div>
-        {followers.length === 0 ? (
-          <p className={styles.emptyText}>No followers yet</p>
-        ) : (
-          <ul className={styles.userList}>
-            {followers.map((user) => (
-              <li key={user.id} className={styles.userItem}>
-                <div className={styles.userInfo}>
-                  <span className={styles.userName}>
-                    {user.first_name} {user.last_name}
-                  </span>
-                  <span className={styles.userEmail}>{user.email}</span>
-                </div>
               </li>
             ))}
           </ul>

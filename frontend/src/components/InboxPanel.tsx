@@ -109,7 +109,7 @@ const InboxPanel = ({ onBack, onUnreadCountChange }: InboxPanelProps) => {
     if (n.type === "follow_request") {
       return (
         <>
-          <span className={styles.itemEmail}>{name}</span> wants to follow you
+          <span className={styles.itemEmail}>{name}</span> sent you a friend request
         </>
       );
     }
