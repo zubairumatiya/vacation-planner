@@ -6,7 +6,7 @@
 
 .rightItems {
   display: flex;
-  align-items: end;
+  align-items: center;
   position: relative;
 }
 
@@ -60,12 +60,14 @@
 }
 
 .profileButton {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid #8187f0;
+  background: #242424;
 }
 
 .profileBtnWrapper {

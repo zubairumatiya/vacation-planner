@@ -39,7 +39,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 const BASE_URL: string =
   process.env.NODE_ENV === "production"
     ? process.env.PROD_URL!
-    : process.env.DEV_URL!;
+    : process.env.FRONTEND_URL!;
 
 const appName = process.env.APP_NAME;
 
@@ -442,7 +442,15 @@ router.post(
         "INSERT INTO password_reset (token, email) VALUES ($1,$2)",
         [token, email],
       );
-
+      console.log(
+        "email:",
+        email,
+        `${appName}: Reset Password`,
+        "Password reset link",
+        BACKEND_BASE_URL,
+        "reset-password",
+        token,
+      );
       await emailSender(
         email,
         `${appName}: Reset Password`,

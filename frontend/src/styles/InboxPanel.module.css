@@ -35,6 +35,9 @@
 .backBtn:hover {
   color: #fcf7ea;
 }
+.backBtn:active {
+  background-color: #222;
+}
 
 .list {
   list-style: none;

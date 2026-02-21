@@ -124,7 +124,7 @@ const ResetPassword = () => {
                 id="confirmpassword"
                 value={confirmPassword}
                 onChange={handleConfirmationCheck}
-                className={match ? styles.greenBorder : styles.errorBorder}
+                className={`${match ? styles.greenBorder : styles.errorBorder} ${styles.confirmPasswordInput}`}
               />
             </div>
             <div className={styles.errorMessage}>

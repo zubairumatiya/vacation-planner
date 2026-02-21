@@ -23,7 +23,8 @@ app.use(
     credentials: true,
   }),
 );
-
+console.log("FRONTEND_URL:", FRONTEND_URL);
+console.log(process.env.BACKEND_BASE_URL);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("tiny"));

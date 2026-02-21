@@ -23,6 +23,7 @@
 
 .ul li a {
   color: rgb(252, 247, 234);
+  font-weight: 600;
 }
 
 .inboxBtn {
@@ -41,6 +42,9 @@
 
 .inboxBtn:hover {
   color: #2fe782;
+}
+.inboxBtn:active {
+  background-color: rgb(51, 51, 51);
 }
 
 .badge {
