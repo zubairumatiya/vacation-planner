@@ -9,17 +9,17 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 interface FollowUser {
   id: string;
-  email: string;
   first_name: string;
   last_name: string;
+  username: string;
   follow_id: string;
 }
 
 interface UserSearchResult {
   id: string;
-  email: string;
   first_name: string;
   last_name: string;
+  username: string;
 }
 
 const ProfilePage = () => {
@@ -30,9 +30,9 @@ const ProfilePage = () => {
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const loggingOutRef = auth?.loggingOutRef;
 
-  const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [profileUsername, setProfileUsername] = useState("");
   const [friends, setFriends] = useState<FollowUser[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<UserSearchResult[]>([]);
@@ -41,7 +41,7 @@ const ProfilePage = () => {
 
   const authFetch = async (url: string, options: RequestInit = {}) => {
     const headers = {
-      ...options.headers as Record<string, string>,
+      ...(options.headers as Record<string, string>),
       Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     };
@@ -70,9 +70,9 @@ const ProfilePage = () => {
       const res = await authFetch(`${apiUrl}/profile`);
       if (res.ok) {
         const data = await res.json();
-        setEmail(data.email);
         setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
+        setProfileUsername(data.username || "");
       }
     } catch {
       // handled by authFetch
@@ -107,7 +107,7 @@ const ProfilePage = () => {
     debounceRef.current = setTimeout(async () => {
       try {
         const res = await authFetch(
-          `${apiUrl}/users/search?email=${encodeURIComponent(value)}`
+          `${apiUrl}/users/search?q=${encodeURIComponent(value)}`,
         );
         if (res.ok) {
           const data = await res.json();
@@ -146,7 +146,11 @@ const ProfilePage = () => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Are you sure you want to delete your account? This cannot be undone.")) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete your account? This cannot be undone.",
+      )
+    ) {
       return;
     }
     try {
@@ -159,8 +163,7 @@ const ProfilePage = () => {
     }
   };
 
-  const isFriend = (userId: string) =>
-    friends.some((f) => f.id === userId);
+  const isFriend = (userId: string) => friends.some((f) => f.id === userId);
 
   const isPending = (userId: string) => pendingFollows.has(userId);
 
@@ -175,7 +178,7 @@ const ProfilePage = () => {
             {firstName} {lastName}
           </div>
         )}
-        <div className={styles.email}>{email}</div>
+        <div className={styles.username}>@{profileUsername}</div>
         <button
           type="button"
           className={styles.deleteBtn}
@@ -190,7 +193,7 @@ const ProfilePage = () => {
         <input
           type="text"
           className={styles.searchInput}
-          placeholder="Search by email..."
+          placeholder="Search by name or username..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
         />
@@ -202,7 +205,7 @@ const ProfilePage = () => {
                   <Link to={`/user/${user.id}`} className={styles.userName}>
                     {user.first_name} {user.last_name}
                   </Link>
-                  <span className={styles.userEmail}> {user.email}</span>
+                  <span className={styles.userUsername}> @{user.username}</span>
                 </div>
                 {isFriend(user.id) ? (
                   <span className={styles.pendingText}>Friends</span>
@@ -237,7 +240,7 @@ const ProfilePage = () => {
                   <span className={styles.userName}>
                     {user.first_name} {user.last_name}
                   </span>
-                  <span className={styles.userEmail}>{user.email}</span>
+                  <span className={styles.userUsername}>@{user.username}</span>
                 </Link>
                 <button
                   type="button"

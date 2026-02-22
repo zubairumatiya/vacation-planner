@@ -7,9 +7,16 @@ import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
+const isValidUsername = (username: string) => /^[a-zA-Z0-9_]{3,30}$/.test(username);
+
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
+  const [usernameChecking, setUsernameChecking] = useState(false);
+  const [usernameError, setUsernameError] = useState(false);
+  const [usernameMicroing, setUsernameMicroing] = useState(false);
   const [disableSubmission, setDisableSubmission] = useState(true);
   const [emailMicroing, setEmailMicroing] = useState(false);
   const [passwordMicroing, setPasswordMicroing] = useState(false);
@@ -21,8 +28,10 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isValidPassword(password) && isValidEmail(email)) {
+    if (isValidPassword(password) && isValidEmail(email) && isValidUsername(username) && usernameAvailable === true) {
       setDisableSubmission(false);
+    } else {
+      setDisableSubmission(true);
     }
 
     if (emailMicroing) {
@@ -31,6 +40,14 @@ const SignUp = () => {
         setEmailError(true);
       } else {
         setEmailError(false);
+      }
+    }
+
+    if (usernameMicroing) {
+      if (!isValidUsername(username)) {
+        setUsernameError(true);
+      } else {
+        setUsernameError(false);
       }
     }
 
@@ -47,7 +64,26 @@ const SignUp = () => {
         setPasswordError(false);
       }
     }
-  }, [password, email, emailMicroing, passwordMicroing]);
+  }, [password, email, emailMicroing, passwordMicroing, username, usernameMicroing, usernameAvailable]);
+
+  const checkUsernameAvailability = async () => {
+    if (!isValidUsername(username)) {
+      setUsernameError(true);
+      return;
+    }
+    setUsernameChecking(true);
+    try {
+      const res = await fetch(`${apiUrl}/check-username?username=${encodeURIComponent(username)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUsernameAvailable(data.available);
+      }
+    } catch {
+      // silent fail
+    } finally {
+      setUsernameChecking(false);
+    }
+  };
 
   const handleFormSubmission = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -151,6 +187,49 @@ const SignUp = () => {
             </div>
           </div>
           <div className={styles.peContainer}>
+            <div className={styles.fieldsContainer}>
+              <div>
+                <label htmlFor="username">Username</label>
+              </div>
+              <div className={styles.peDiv}>
+                <div className={styles.usernameDiv}>
+                  <input
+                    onChange={(e) => {
+                      setUsername(e.target.value);
+                      setUsernameAvailable(null);
+                    }}
+                    onBlur={() => setUsernameMicroing(true)}
+                    className={`${styles.field} ${usernameError || usernameAvailable === false ? styles.error : ""}`}
+                    type="text"
+                    name="username"
+                    id="username"
+                    value={username}
+                    placeholder="letters, numbers, underscores"
+                  />
+                  <button
+                    type="button"
+                    className={styles.checkBtn}
+                    onClick={checkUsernameAvailability}
+                    disabled={!isValidUsername(username) || usernameChecking}
+                  >
+                    {usernameChecking ? "..." : "Check"}
+                  </button>
+                </div>
+                <div>
+                  {usernameError && (
+                    <p className={styles.errorMessage}>
+                      3-30 characters: letters, numbers, underscores only
+                    </p>
+                  )}
+                  {usernameAvailable === true && (
+                    <p className={styles.successMessage}>Username is available!</p>
+                  )}
+                  {usernameAvailable === false && (
+                    <p className={styles.errorMessage}>Username is taken</p>
+                  )}
+                </div>
+              </div>
+            </div>
             <div className={styles.fieldsContainer}>
               <div>
                 <label htmlFor="email">Email</label>

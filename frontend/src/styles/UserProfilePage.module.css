@@ -38,6 +38,11 @@
   font-weight: 600;
 }
 
+.profileUsername {
+  color: #aaa;
+  font-size: 0.95rem;
+}
+
 /* Friends button — green border + green text, toggles to red on hover */
 .friendBtn {
   background: transparent;

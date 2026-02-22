@@ -85,6 +85,33 @@
   justify-content: center;
 }
 
+.usernameDiv {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.usernameDiv .field {
+  flex: 1;
+}
+
+.checkBtn {
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.checkBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.successMessage {
+  color: green;
+}
+
 .container {
   flex-flow: column;
 }

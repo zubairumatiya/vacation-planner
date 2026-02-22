@@ -14,6 +14,7 @@ type AuthContextType = {
   loggingOutRef: React.RefObject<boolean>;
   userEmail: string | null;
   userId: string | null;
+  userUsername: string | null;
 };
 
 type AuthProviderProps = {
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userUsername, setUserUsername] = useState<string | null>(null);
 
   const fetchProfile = async (t: string) => {
     try {
@@ -54,6 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const data = await res.json();
         setUserEmail(data.email);
         setUserId(data.id);
+        setUserUsername(data.username);
       }
     } catch {
       // silent fail
@@ -98,6 +101,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setToken(null);
       setUserEmail(null);
       setUserId(null);
+      setUserUsername(null);
     }
   };
   useEffect(() => {
@@ -131,6 +135,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         loggingOutRef,
         userEmail,
         userId,
+        userUsername,
       }}
     >
       {children}

@@ -68,6 +68,7 @@ export interface SignUpBody {
   password?: string;
   firstName?: string;
   lastName?: string;
+  username?: string;
 }
 
 export interface LoginBody {
@@ -109,6 +110,7 @@ export interface User {
   password?: string;
   first_name: string;
   last_name: string;
+  username: string;
   created_at?: Date;
 }
 
@@ -118,6 +120,7 @@ export interface UnverifiedUser {
   password?: string;
   first_name: string;
   last_name: string;
+  username: string;
   token: string;
   created_at?: Date;
   expires_at: Date;
@@ -165,6 +168,7 @@ export interface UserProfileResponse {
   id: string;
   first_name: string;
   last_name: string;
+  username: string;
   is_friend: boolean;
   is_pending: boolean;
   friends_count?: number;
@@ -344,21 +348,22 @@ export interface ProfileResponse {
   email: string;
   first_name: string;
   last_name: string;
+  username: string;
   friends_count: number;
 }
 
 export interface UserSearchResult {
   id: string;
-  email: string;
   first_name: string;
   last_name: string;
+  username: string;
 }
 
 export interface FollowUser {
   id: string;
-  email: string;
   first_name: string;
   last_name: string;
+  username: string;
   follow_id: string;
   created_at: Date;
 }
@@ -367,9 +372,9 @@ export interface Notification {
   id: string;
   user_id: string;
   from_user_id: string;
-  from_email: string;
   from_first_name: string;
   from_last_name: string;
+  from_username: string;
   type: string;
   reference_id: string;
   is_read: boolean;
@@ -383,7 +388,11 @@ export interface NotificationActionBody {
 }
 
 export interface SearchQuery extends Query {
-  email?: string;
+  q?: string;
+}
+
+export interface UsernameQuery extends Query {
+  username?: string;
 }
 
 declare global {

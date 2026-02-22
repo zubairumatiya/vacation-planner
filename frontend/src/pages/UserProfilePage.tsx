@@ -18,6 +18,7 @@ interface UserProfile {
   id: string;
   first_name: string;
   last_name: string;
+  username: string;
   is_friend: boolean;
   is_pending: boolean;
   friends_count?: number;
@@ -132,6 +133,7 @@ const UserProfilePage = () => {
             <img src={profileIcon} alt="Profile" />
           </div>
           <div className={styles.name}>{fullName}</div>
+          <div className={styles.profileUsername}>@{profile.username}</div>
           {isPending ? (
             <button type="button" className={styles.pendingBtn} disabled>
               Pending...
@@ -158,6 +160,7 @@ const UserProfilePage = () => {
           <img src={profileIcon} alt="Profile" />
         </div>
         <div className={styles.name}>{fullName}</div>
+        <div className={styles.profileUsername}>@{profile.username}</div>
         <button
           type="button"
           className={friendBtnHovered ? styles.friendBtnHover : styles.friendBtn}

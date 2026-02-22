@@ -29,6 +29,7 @@ import {
   CustomJwtPayload,
   VerifyQuery,
   ResetPasswordQuery,
+  UsernameQuery,
 } from "../types/express.js";
 import { fileURLToPath } from "url";
 
@@ -72,7 +73,7 @@ router.post(
     res: TypedResponse<AuthResponse>,
     next: NextFunction,
   ) => {
-    const { email, password, firstName, lastName } = req.body;
+    const { email, password, firstName, lastName, username } = req.body;
 
     if (!password || !isValidPassword(password)) {
       res.status(400).json({ message: "invalid password criteria" });
@@ -81,6 +82,11 @@ router.post(
 
     if (!email || !isValidEmail(email)) {
       res.status(400).json({ message: "invalid email input" });
+      return;
+    }
+
+    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+      res.status(400).json({ message: "Username must be 3-30 characters (letters, numbers, underscores)" });
       return;
     }
 
@@ -98,6 +104,16 @@ router.post(
         "SELECT * FROM users WHERE email=$1",
         [email],
       );
+
+      // Check username taken in verified users
+      const existingUsername: QueryResult<User> = await db.query(
+        "SELECT id FROM users WHERE username=$1",
+        [username],
+      );
+      if (existingUsername.rows.length > 0) {
+        res.status(409).json({ message: "Username is already taken" });
+        return;
+      }
 
       if (existingUnverifiedEmail.rows.length > 0) {
         token = existingUnverifiedEmail.rows[0].token;
@@ -118,8 +134,8 @@ router.post(
         return;
       } else {
         await db.query(
-          "INSERT INTO unverified_users (email, password, first_name, last_name, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, NOW()+ interval '1 hour', NOW())",
-          [email, hash, firstName, lastName, token],
+          "INSERT INTO unverified_users (email, password, first_name, last_name, username, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()+ interval '1 hour', NOW())",
+          [email, hash, firstName, lastName, username, token],
         );
         await sendRegistrationEmail(email, token);
         res.status(200).json({ message: "success" });
@@ -157,7 +173,7 @@ router.get(
           try {
             await client.query("BEGIN");
             await client.query(
-              "INSERT INTO users (email, password, first_name, last_name) SELECT email, password, first_name, last_name FROM unverified_users WHERE token=$1",
+              "INSERT INTO users (email, password, first_name, last_name, username) SELECT email, password, first_name, last_name, username FROM unverified_users WHERE token=$1",
               [token],
             );
             await client.query("DELETE FROM unverified_users WHERE token=$1", [
@@ -583,6 +599,36 @@ router.post(
       }
       res.sendStatus(200);
       return;
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /check-username?username=... - check if username is available
+router.get(
+  "/check-username",
+  async (
+    req: TypedRequest<unknown, UsernameQuery>,
+    res: TypedResponse<{ available: boolean }>,
+    next: NextFunction,
+  ) => {
+    const username = req.query.username;
+    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+      res.status(400).json({ available: false });
+      return;
+    }
+    try {
+      const result: QueryResult<User> = await db.query(
+        "SELECT id FROM users WHERE username = $1",
+        [username],
+      );
+      const unverifiedResult: QueryResult<UnverifiedUser> = await db.query(
+        "SELECT id FROM unverified_users WHERE username = $1 AND expires_at > NOW()",
+        [username],
+      );
+      const available = result.rows.length === 0 && unverifiedResult.rows.length === 0;
+      res.status(200).json({ available });
     } catch (err) {
       next(err);
     }

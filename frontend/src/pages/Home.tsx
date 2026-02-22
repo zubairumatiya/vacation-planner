@@ -203,17 +203,14 @@ const Home = () => {
 
   const isPast = (trip: HomeTrip) => new Date(trip.end_date) < today;
 
-  const myTrips = trips
-    .filter((t) => t.role === "owner" && !isPast(t));
+  const myTrips = trips.filter((t) => t.role === "owner" && !isPast(t));
 
-  const sharedTrips = trips
-    .filter((t) => t.role !== "owner" && !isPast(t));
+  const sharedTrips = trips.filter((t) => t.role !== "owner" && !isPast(t));
 
   const pastTrips = trips
     .filter((t) => isPast(t))
     .sort(
-      (a, b) =>
-        new Date(b.end_date).getTime() - new Date(a.end_date).getTime(),
+      (a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime(),
     );
 
   const renderTripCard = (v: HomeTrip) => {
@@ -275,10 +272,7 @@ const Home = () => {
               )}
             </h2>
           </Link>
-          <div
-            className={styles.editIcon}
-            onClick={() => editTrip(v.id)}
-          >
+          <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
             {editing ? undefined : <img src={editIcon} alt="editIcon" />}
           </div>
         </div>
@@ -294,7 +288,12 @@ const Home = () => {
     const ownerName = `${v.owner_first_name} ${v.owner_last_name}`;
 
     return (
-      <div id={v.id} key={v.id} className={styles.wrapper} style={{ opacity: 0.5 }}>
+      <div
+        id={v.id}
+        key={v.id}
+        className={styles.wrapper}
+        style={{ opacity: 0.5 }}
+      >
         <div className={styles.titleNEdit}>
           <Link to={`/vacation/${v.id}`} className={styles.title}>
             <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
@@ -354,8 +353,11 @@ const Home = () => {
                 className={styles.pastTripsHeader}
                 onClick={() => setPastTripsOpen((prev) => !prev)}
               >
-                <h2 className="text-xl font-bold cursor-pointer select-none">
-                  Past Trips {pastTripsOpen ? "▾" : "▸"}
+                <h2 className="text-xl font-bold cursor-pointer select-none text-indigo-400">
+                  Past Trips{" "}
+                  <span className="text-green-400">
+                    {pastTripsOpen ? "▾" : "▸"}
+                  </span>
                 </h2>
               </div>
               {pastTripsOpen && (

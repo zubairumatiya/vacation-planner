@@ -9,9 +9,9 @@ const apiUrl = import.meta.env.VITE_API_URL;
 interface Notification {
   id: string;
   from_user_id: string;
-  from_email: string;
   from_first_name: string;
   from_last_name: string;
+  from_username: string;
   type: string;
   status: string;
   is_read: boolean;
@@ -107,7 +107,7 @@ const InboxPanel = ({ onBack, onUnreadCountChange }: InboxPanelProps) => {
   const getNotificationText = (n: Notification) => {
     const displayName = n.from_first_name
       ? `${n.from_first_name} ${n.from_last_name}`
-      : n.from_email;
+      : n.from_username ? `@${n.from_username}` : "Someone";
     const nameLink = (
       <Link to={`/user/${n.from_user_id}`} className={styles.itemEmail}>
         {displayName}

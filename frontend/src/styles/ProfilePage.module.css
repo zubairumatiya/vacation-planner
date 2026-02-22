@@ -32,7 +32,7 @@
   opacity: 0.7;
 }
 
-.email {
+.username {
   color: #aaa;
   font-size: 0.95rem;
 }
@@ -61,6 +61,7 @@
 
 .section {
   width: 100%;
+  position: relative;
 }
 
 .sectionTitle {
@@ -79,7 +80,6 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
 }
 
 .userItem {
@@ -114,7 +114,7 @@
   color: #a78bfa;
 }
 
-.userLink:hover .userEmail {
+.userLink:hover .userUsername {
   color: #a78bfa;
 }
 
@@ -124,7 +124,7 @@
   text-decoration: none;
 }
 
-.userEmail {
+.userUsername {
   font-size: 0.8rem;
   color: #888;
 }
@@ -137,6 +137,8 @@
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
+  position: absolute;
+  right: 0;
 }
 
 .unfollowBtn:hover {

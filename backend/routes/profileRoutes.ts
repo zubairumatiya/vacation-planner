@@ -33,7 +33,7 @@ router.get(
     try {
       const userId = req.user.id;
       const userResult: QueryResult<User> = await db.query(
-        "SELECT id, email, first_name, last_name FROM users WHERE id = $1",
+        "SELECT id, email, first_name, last_name, username FROM users WHERE id = $1",
         [userId],
       );
       if (userResult.rows.length === 0) {
@@ -52,6 +52,7 @@ router.get(
         email: user.email,
         first_name: user.first_name,
         last_name: user.last_name,
+        username: user.username,
         friends_count: parseInt(friendsCount.rows[0].count),
       });
     } catch (err) {
@@ -79,7 +80,7 @@ router.delete(
   },
 );
 
-// GET /users/search?email=... - search users by email prefix
+// GET /users/search?q=... - search users by name or username
 router.get(
   "/users/search",
   ensureLoggedIn,
@@ -90,14 +91,18 @@ router.get(
   ) => {
     try {
       const userId = req.user.id;
-      const email = req.query.email;
-      if (!email || email.length < 2) {
+      const q = req.query.q;
+      if (!q || q.length < 2) {
         res.status(200).json({ users: [] });
         return;
       }
       const result: QueryResult<UserSearchResult> = await db.query(
-        "SELECT id, email, first_name, last_name FROM users WHERE email ILIKE $1 AND id != $2 LIMIT 5",
-        [`${email}%`, userId],
+        `SELECT id, first_name, last_name, username FROM users
+         WHERE (username ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1
+                OR (first_name || ' ' || last_name) ILIKE $1)
+           AND id != $2
+         LIMIT 5`,
+        [`${q}%`, userId],
       );
       res.status(200).json({ users: result.rows });
     } catch (err) {
@@ -224,7 +229,7 @@ router.get(
     try {
       const userId = req.user.id;
       const result: QueryResult<FollowUser> = await db.query(
-        `SELECT u.id, u.email, u.first_name, u.last_name, f.id as follow_id, f.created_at
+        `SELECT u.id, u.first_name, u.last_name, u.username, f.id as follow_id, f.created_at
          FROM follows f
          JOIN users u ON (CASE WHEN f.requester_id = $1 THEN f.receiver_id ELSE f.requester_id END) = u.id
          WHERE (f.requester_id = $1 OR f.receiver_id = $1) AND f.status = 'accepted'
@@ -250,7 +255,7 @@ router.get(
     try {
       const userId = req.user.id;
       const result: QueryResult<Notification> = await db.query(
-        `SELECT n.*, u.email as from_email, u.first_name as from_first_name, u.last_name as from_last_name,
+        `SELECT n.*, u.first_name as from_first_name, u.last_name as from_last_name, u.username as from_username,
                 t.trip_name
          FROM notifications n
          JOIN users u ON n.from_user_id = u.id
@@ -397,7 +402,7 @@ router.get(
 
       // Get basic user info
       const userResult = await db.query(
-        "SELECT id, first_name, last_name FROM users WHERE id = $1",
+        "SELECT id, first_name, last_name, username FROM users WHERE id = $1",
         [targetId],
       );
       if (userResult.rows.length === 0) {
@@ -422,6 +427,7 @@ router.get(
           id: user.id,
           first_name: user.first_name,
           last_name: user.last_name,
+          username: user.username,
           is_friend: false,
           is_pending: isPending,
         });
@@ -450,6 +456,7 @@ router.get(
         id: user.id,
         first_name: user.first_name,
         last_name: user.last_name,
+        username: user.username,
         is_friend: true,
         is_pending: false,
         friends_count: parseInt(friendsCountResult.rows[0].count),
