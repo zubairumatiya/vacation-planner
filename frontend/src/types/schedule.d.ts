@@ -17,6 +17,7 @@ declare global {
     role: "owner" | "editor" | "reader";
     owner_first_name: string;
     owner_last_name: string;
+    is_public: boolean;
   }
 
   /** Raw schedule item from the API (dates are ISO strings, not yet Date objects) */

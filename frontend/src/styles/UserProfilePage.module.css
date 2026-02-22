@@ -1,0 +1,204 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  gap: 2rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.profileHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background-color: rgb(51, 51, 51);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #2fe782;
+}
+
+.avatar img {
+  width: 60px;
+  height: 60px;
+  opacity: 0.7;
+}
+
+.name {
+  color: #fcf7ea;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* Friends button — green border + green text, toggles to red on hover */
+.friendBtn {
+  background: transparent;
+  border: 1px solid #2fe782;
+  color: #2fe782;
+  padding: 6px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.25rem;
+  min-width: 120px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.friendBtnHover {
+  background: transparent;
+  border: 1px solid #e53e3e;
+  color: #e53e3e;
+  padding: 6px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.25rem;
+  min-width: 120px;
+}
+
+.checkMark {
+  margin-right: 4px;
+}
+
+.xMark {
+  margin-right: 4px;
+}
+
+/* Befriend button — neutral gray for non-friends */
+.befriendBtn {
+  background: transparent;
+  border: 1px solid #aaa;
+  color: #aaa;
+  padding: 6px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.25rem;
+  min-width: 120px;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.befriendBtn:hover {
+  border-color: #fcf7ea;
+  color: #fcf7ea;
+}
+
+/* Pending button */
+.pendingBtn {
+  background: transparent;
+  border: 1px solid #f6ad55;
+  color: #f6ad55;
+  padding: 6px 20px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: default;
+  margin-top: 0.25rem;
+  min-width: 120px;
+  opacity: 0.8;
+}
+
+/* Two-column layout for friends view */
+.body {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+}
+
+.leftColumn {
+  width: 280px;
+  flex-shrink: 0;
+}
+
+.rightColumn {
+  flex: 1;
+}
+
+.sectionTitle {
+  color: #2fe782;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.5rem;
+}
+
+.tripCard {
+  background-color: #333;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.tripName {
+  color: #fcf7ea;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.tripDetail {
+  color: #aaa;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.emptyText {
+  color: #666;
+  font-size: 0.85rem;
+  padding: 0.5rem 0;
+}
+
+.statValue {
+  color: #fcf7ea;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.statLabel {
+  color: #aaa;
+  font-size: 0.85rem;
+}
+
+.statCard {
+  background-color: #333;
+  border-radius: 8px;
+  padding: 1.25rem;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .body {
+    flex-direction: column;
+  }
+
+  .leftColumn {
+    width: 100%;
+  }
+
+  .container {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
+
+  .avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .avatar img {
+    width: 48px;
+    height: 48px;
+  }
+}

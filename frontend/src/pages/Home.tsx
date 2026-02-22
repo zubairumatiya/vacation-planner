@@ -231,6 +231,7 @@ const Home = () => {
               start_date: v.start_date,
               end_date: v.end_date,
               id: v.id,
+              is_public: v.is_public,
             }}
             sendSubmissionResult={checkSubmission}
             disableOrNah={checkError}

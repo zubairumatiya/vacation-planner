@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext, useRef } from "react";
+import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import profileIcon from "../assets/profile.svg";
@@ -198,9 +199,9 @@ const ProfilePage = () => {
             {suggestions.map((user) => (
               <li key={user.id} className={styles.suggestionItem}>
                 <div>
-                  <span className={styles.userName}>
+                  <Link to={`/user/${user.id}`} className={styles.userName}>
                     {user.first_name} {user.last_name}
-                  </span>
+                  </Link>
                   <span className={styles.userEmail}> {user.email}</span>
                 </div>
                 {isFriend(user.id) ? (
@@ -232,12 +233,12 @@ const ProfilePage = () => {
           <ul className={styles.userList}>
             {friends.map((user) => (
               <li key={user.id} className={styles.userItem}>
-                <div className={styles.userInfo}>
+                <Link to={`/user/${user.id}`} className={styles.userLink}>
                   <span className={styles.userName}>
                     {user.first_name} {user.last_name}
                   </span>
                   <span className={styles.userEmail}>{user.email}</span>
-                </div>
+                </Link>
                 <button
                   type="button"
                   className={styles.unfollowBtn}

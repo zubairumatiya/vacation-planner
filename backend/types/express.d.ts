@@ -151,6 +151,24 @@ export interface AddVacationBody {
   gVp: Viewport;
   id?: string;
   skipEO?: boolean;
+  isPublic?: boolean;
+}
+
+export interface UserPublicTrip {
+  trip_name: string;
+  location: string;
+  start_date: string;
+  num_days: number;
+}
+
+export interface UserProfileResponse {
+  id: string;
+  first_name: string;
+  last_name: string;
+  is_friend: boolean;
+  is_pending: boolean;
+  friends_count?: number;
+  upcoming_trips?: UserPublicTrip[];
 }
 
 export interface AddVacationResponse {

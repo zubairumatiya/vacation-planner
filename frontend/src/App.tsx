@@ -17,6 +17,7 @@ import EditCanvas from "./pages/EditCanvas.tsx";
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
+import UserProfilePage from "./pages/UserProfilePage.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "./components/ErrorFallback.tsx";
 import RequireAuth from "./pages/RequireAuth.tsx";
@@ -62,6 +63,7 @@ function App() {
               />
             </Route>
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/user/:userId" element={<UserProfilePage />} />
             <Route path="/test" element={<Test />} />
           </Route>
         </Route>

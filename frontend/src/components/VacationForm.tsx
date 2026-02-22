@@ -14,6 +14,7 @@ type Props = {
     start_date: string;
     end_date: string;
     id: string;
+    is_public?: boolean;
   };
   disableOrNah: (fieldError: boolean) => void;
   submit: boolean;
@@ -206,6 +207,7 @@ const VacationForm = (props?: Props) => {
   const [tripName, setTripName] = useState(props?.preFill?.trip_name ?? "");
   const [location, setLocation] = useState(props?.preFill?.location ?? "");
   const [hideSuggestions, setHideSuggestions] = useState(true);
+  const [isPublic, setIsPublic] = useState(props?.preFill?.is_public ?? false);
   const skipEORef = useRef<boolean | undefined>(undefined);
 
   useEffect(() => {
@@ -269,6 +271,7 @@ const VacationForm = (props?: Props) => {
           gId: string;
           gVp: GValues["vp"];
           skipEO: boolean | undefined;
+          isPublic: boolean;
           id?: string;
         } = {
           tripname: tripName,
@@ -278,6 +281,7 @@ const VacationForm = (props?: Props) => {
           gId: gValues.id,
           gVp: gValues.vp,
           skipEO: skipEORef.current,
+          isPublic: isPublic,
         };
         if (props?.method === "PATCH") {
           method = "PATCH";
@@ -507,6 +511,21 @@ const VacationForm = (props?: Props) => {
                 max={oneYearRange}
                 onChange={endDateChange}
               />
+            </div>
+            <div className={divs}>
+              <label className={labels} htmlFor="isPublic">
+                Public:{" "}
+              </label>
+              <div className="flex items-center w-4/10">
+                <input
+                  type="checkbox"
+                  name="isPublic"
+                  id="isPublic"
+                  checked={isPublic}
+                  onChange={(e) => setIsPublic(e.target.checked)}
+                  className="w-5 h-5 cursor-pointer accent-green-500"
+                />
+              </div>
             </div>
           </div>
           <div></div>

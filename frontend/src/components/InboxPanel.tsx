@@ -1,4 +1,5 @@
 import { useEffect, useState, useContext } from "react";
+import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import styles from "../styles/InboxPanel.module.css";
@@ -7,6 +8,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 interface Notification {
   id: string;
+  from_user_id: string;
   from_email: string;
   from_first_name: string;
   from_last_name: string;
@@ -103,25 +105,30 @@ const InboxPanel = ({ onBack, onUnreadCountChange }: InboxPanelProps) => {
   };
 
   const getNotificationText = (n: Notification) => {
-    const name = n.from_first_name
+    const displayName = n.from_first_name
       ? `${n.from_first_name} ${n.from_last_name}`
       : n.from_email;
+    const nameLink = (
+      <Link to={`/user/${n.from_user_id}`} className={styles.itemEmail}>
+        {displayName}
+      </Link>
+    );
     if (n.type === "follow_request") {
       return (
         <>
-          <span className={styles.itemEmail}>{name}</span> sent you a friend request
+          {nameLink} sent you a friend request
         </>
       );
     }
     if (n.type === "trip_invitation") {
       return (
         <>
-          <span className={styles.itemEmail}>{name}</span> invited you to{" "}
+          {nameLink} invited you to{" "}
           {n.trip_name || "a trip"}
         </>
       );
     }
-    return <>{name} sent you a notification</>;
+    return <>{nameLink} sent you a notification</>;
   };
 
   return (

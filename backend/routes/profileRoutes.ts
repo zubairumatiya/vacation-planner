@@ -17,6 +17,8 @@ import {
   SearchQuery,
   User,
   AuthResponse,
+  UserProfileResponse,
+  UserPublicTrip,
 } from "../types/express.js";
 
 // GET /profile - get current user's profile
@@ -374,6 +376,85 @@ router.patch(
       }
 
       res.status(200).json({ message: `Notification ${action}` });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /users/:userId/profile - view another user's profile (privacy-aware)
+router.get(
+  "/users/:userId/profile",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, UserIdParam>,
+    res: TypedResponse<UserProfileResponse | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const viewerId = req.user.id;
+      const targetId = req.params.userId;
+
+      // Get basic user info
+      const userResult = await db.query(
+        "SELECT id, first_name, last_name FROM users WHERE id = $1",
+        [targetId],
+      );
+      if (userResult.rows.length === 0) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+      const user = userResult.rows[0];
+
+      // Check friendship status
+      const friendResult = await db.query(
+        "SELECT status FROM follows WHERE (requester_id = $1 AND receiver_id = $2) OR (requester_id = $2 AND receiver_id = $1)",
+        [viewerId, targetId],
+      );
+
+      const followRow = friendResult.rows[0];
+      const isFriend = followRow?.status === "accepted";
+      const isPending = followRow?.status === "pending";
+
+      // Non-friend: limited response
+      if (!isFriend) {
+        res.status(200).json({
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          is_friend: false,
+          is_pending: isPending,
+        });
+        return;
+      }
+
+      // Friend: full response with public trips and friend count
+      const [tripsResult, friendsCountResult] = await Promise.all([
+        db.query<UserPublicTrip>(
+          `SELECT t.trip_name, t.location, t.start_date,
+                  (t.end_date - t.start_date) AS num_days
+           FROM user_trips ut
+           JOIN trips t ON t.id = ut.trip_id
+           WHERE ut.user_id = $1 AND ut.role = 'owner'
+             AND t.is_public = true AND t.end_date >= CURRENT_DATE
+           ORDER BY t.start_date ASC`,
+          [targetId],
+        ),
+        db.query(
+          "SELECT COUNT(*) FROM follows WHERE (requester_id = $1 OR receiver_id = $1) AND status = 'accepted'",
+          [targetId],
+        ),
+      ]);
+
+      res.status(200).json({
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        is_friend: true,
+        is_pending: false,
+        friends_count: parseInt(friendsCountResult.rows[0].count),
+        upcoming_trips: tripsResult.rows,
+      });
     } catch (err) {
       next(err);
     }
