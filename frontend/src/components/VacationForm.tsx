@@ -7,6 +7,63 @@ import { AutocompleteWebComponent } from "../components/map-components/autocompl
 import refreshFn from "../utils/refreshFn.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
+const QuestionMarkIcon = () => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    timerRef.current = setTimeout(() => setShowTooltip(true), 1000);
+  };
+
+  const handleMouseLeave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setShowTooltip(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative inline-flex ml-1"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        style={{
+          padding: 0,
+          backgroundColor: "transparent",
+          border: "none",
+          fontSize: "1.25rem",
+          lineHeight: "1",
+          color: "#6b7280",
+          cursor: "help",
+          width: "1.25rem",
+          height: "1.25rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+        aria-label="What does public mean?"
+      >
+        ?
+      </button>
+      {showTooltip && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-gray-900 text-white text-xs rounded px-2 py-1 shadow-md whitespace-normal pointer-events-none w-48">
+          <p className="font-medium">Public Trip</p>
+          <p className="text-gray-300 text-xs mt-1">
+            Friends can see: Trip name, location, start date and length of trip (days)
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 type Props = {
   preFill?: {
     trip_name: string;
@@ -514,7 +571,7 @@ const VacationForm = (props?: Props) => {
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="isPublic">
-                Public:{" "}
+                Public: <QuestionMarkIcon />
               </label>
               <div className="flex items-center w-4/10">
                 <input
