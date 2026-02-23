@@ -28,7 +28,7 @@ const QuestionMarkIcon = () => {
 
   return (
     <div
-      className="relative inline-flex ml-1"
+      className="relative inline-flex mr-1"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -37,8 +37,9 @@ const QuestionMarkIcon = () => {
         style={{
           padding: 0,
           backgroundColor: "transparent",
-          border: "none",
-          fontSize: "1.25rem",
+          border: "2px solid #6b7280",
+          borderRadius: "50%",
+          fontSize: "0.875rem",
           lineHeight: "1",
           color: "#6b7280",
           cursor: "help",
@@ -47,6 +48,7 @@ const QuestionMarkIcon = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          fontWeight: "600",
         }}
         aria-label="What does public mean?"
       >
@@ -571,7 +573,7 @@ const VacationForm = (props?: Props) => {
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="isPublic">
-                Public: <QuestionMarkIcon />
+                <QuestionMarkIcon /> Public:{" "}
               </label>
               <div className="flex items-center w-4/10">
                 <input
