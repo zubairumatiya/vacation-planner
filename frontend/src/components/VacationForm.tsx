@@ -28,7 +28,7 @@ const QuestionMarkIcon = () => {
 
   return (
     <div
-      className="relative inline-flex mr-1"
+      className="relative inline-flex mr-2"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -58,7 +58,8 @@ const QuestionMarkIcon = () => {
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-gray-900 text-white text-xs rounded px-2 py-1 shadow-md whitespace-normal pointer-events-none w-48">
           <p className="font-medium">Public Trip</p>
           <p className="text-gray-300 text-xs mt-1">
-            Friends can see: Trip name, location, start date and length of trip (days)
+            Friends can see: Trip name, location, start date and length of trip
+            (days)
           </p>
         </div>
       )}
@@ -148,7 +149,7 @@ const VacationForm = (props?: Props) => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         if (result.ok) {
           const data = (await result.json()) as AddVacationGetResponse;
@@ -182,12 +183,13 @@ const VacationForm = (props?: Props) => {
                 headers: {
                   Authorization: `Bearer ${continueReq.token}`,
                 },
-              }
+              },
             );
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const retryData = (await retryReq.json()) as AddVacationGetResponse;
+              const retryData =
+                (await retryReq.json()) as AddVacationGetResponse;
               setGValues({
                 // change
                 id: retryData.gId,
@@ -299,7 +301,7 @@ const VacationForm = (props?: Props) => {
     }
     if (!sHtmlDateErr || !eHtmlDateErr) {
       setErrMessage(
-        "Make sure trip start is not past 10 years from today AND start of trip and end of trip does not exceed 365 days"
+        "Make sure trip start is not past 10 years from today AND start of trip and end of trip does not exceed 365 days",
       );
     }
   }, [
@@ -453,7 +455,7 @@ const VacationForm = (props?: Props) => {
   };
 
   const divs = "flex justify-center my-4 w-full";
-  const labels = "flex justify-end ml-4 mr-2 w-1/6";
+  const labels = "flex justify-end ml-4 mr-2 w-1/6 items-center";
   const inputs = "flex justify-start w-4/10 border-2 border-green-500";
 
   return (
@@ -492,7 +494,7 @@ const VacationForm = (props?: Props) => {
                   className={clsx(
                     fieldError && styles.dateError,
                     inputs,
-                    "w-full"
+                    "w-full",
                   )}
                   type="text"
                   name="location"
