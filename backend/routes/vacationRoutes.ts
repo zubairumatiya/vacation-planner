@@ -179,6 +179,31 @@ router.patch(
   },
 );
 
+router.patch(
+  "/toggle-visibility/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<AddVacationResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const result = await db.query(
+        "UPDATE trips SET is_public = NOT is_public, last_modified = NOW() WHERE id = $1 RETURNING is_public",
+        [req.params.tripId],
+      );
+      if (result.rowCount !== null && result.rowCount > 0) {
+        res.status(200).json({ is_public: result.rows[0].is_public });
+        return;
+      }
+      res.sendStatus(404);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 router.delete(
   "/delete-vacation/:tripId",
   ensureLoggedIn,

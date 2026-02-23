@@ -17,6 +17,7 @@
   position: relative;
   justify-content: center;
   align-items: center;
+  padding: 0 2rem;
 }
 
 .signInWarning {
@@ -28,6 +29,20 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  gap: 1.5rem;
+}
+
+.section {
+  padding: 1.25rem 0;
+}
+
+.section + .section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 0.75rem;
 }
 
 .wrapper {
@@ -35,14 +50,51 @@
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  padding: 0.6rem 0;
+}
+
+.wrapper + .wrapper {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.emptyText {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.875rem;
+  padding: 0.5rem 0;
 }
 
 .editing {
   pointer-events: none;
   color: gray;
 }
-
-.pastTripsHeader {
+.pastTripsContainer {
   cursor: pointer;
   user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.pastTripsHeader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: fit-content;
+  padding: 0 1.75rem;
+}
+.dropDown {
+  opacity: 40%;
+}
+.arrowOpen {
+  transform: rotate(360deg);
+  transition: transform 0.2s ease;
+}
+.arrowClosed {
+  transform: rotate(270deg);
+  transition: transform 0.2s ease;
+}
+.dropDownContainer {
+  position: absolute;
+  right: 0;
 }

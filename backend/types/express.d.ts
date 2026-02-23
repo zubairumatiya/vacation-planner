@@ -180,6 +180,7 @@ export interface AddVacationResponse {
   gId?: string;
   gLocation?: string;
   gVp?: Viewport;
+  is_public?: boolean;
 }
 
 export interface Chunk {
