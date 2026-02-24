@@ -114,3 +114,30 @@
   position: absolute;
   right: 0;
 }
+
+.toast {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2fe782;
+  color: #222;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  z-index: 9999;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: toastFadeIn 0.2s ease-out;
+}
+
+@keyframes toastFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

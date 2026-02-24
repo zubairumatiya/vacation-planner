@@ -51,14 +51,15 @@ router.get(
   async (req: TypedRequest, res: TypedResponse<Trip[]>, next: NextFunction) => {
     try {
       const results = await db.query(
-        `SELECT t.*, ut.role,
+        `SELECT DISTINCT ON (t.id) t.*, ut.role,
           owner_user.first_name AS owner_first_name,
           owner_user.last_name AS owner_last_name
         FROM user_trips ut
         JOIN trips t ON t.id = ut.trip_id
         LEFT JOIN user_trips owner_ut ON owner_ut.trip_id = t.id AND owner_ut.role = 'owner'
         LEFT JOIN users owner_user ON owner_user.id = owner_ut.user_id
-        WHERE ut.user_id = $1`,
+        WHERE ut.user_id = $1
+        ORDER BY t.id, ut.role = 'owner' DESC`,
         [req.user.id],
       );
       res.status(200).json(results.rows);

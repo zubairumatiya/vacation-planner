@@ -171,6 +171,8 @@ const Home = () => {
   const [pastTripsOpen, setPastTripsOpen] = useState(false);
   const [sharePanelTripId, setSharePanelTripId] = useState<string | null>(null);
   const sharePanelRef = useRef<HTMLDivElement>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!sharePanelTripId) return;
@@ -533,6 +535,7 @@ const Home = () => {
                   <SharePanel
                     tripId={v.id}
                     onClose={() => setSharePanelTripId(null)}
+                    onToast={showToast}
                   />
                 </div>
               )}
@@ -579,14 +582,35 @@ const Home = () => {
 
   const noActiveTrips = myTrips.length === 0 && sharedTrips.length === 0;
 
+  const { registerRefresh, unregisterRefresh } = useContext(TripRefreshContext);
+
   const refreshTrips = useCallback(() => {
     setUpdateList((prev) => !prev);
   }, []);
 
+  useEffect(() => {
+    registerRefresh(refreshTrips);
+    return () => unregisterRefresh();
+  }, [refreshTrips, registerRefresh, unregisterRefresh]);
+
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastMessage(null), 2500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
+
   return (
-    <TripRefreshContext.Provider value={{ refreshTrips }}>
-      <>
-        {!loading && (
+    <>
+      {toastMessage && (
+        <div className={styles.toast}>{toastMessage}</div>
+      )}
+      {!loading && (
           <div className={styles.content}>
           {/* My Trips Section */}
           <div className={styles.section}>
@@ -645,8 +669,7 @@ const Home = () => {
           )}
         </div>
       )}
-      </>
-    </TripRefreshContext.Provider>
+    </>
   );
 };
 

@@ -23,9 +23,10 @@ interface TripShare {
 interface SharePanelProps {
   tripId: string;
   onClose: () => void;
+  onToast?: (message: string) => void;
 }
 
-const SharePanel = ({ tripId, onClose }: SharePanelProps) => {
+const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const login = auth?.login;
@@ -149,6 +150,14 @@ const SharePanel = ({ tripId, onClose }: SharePanelProps) => {
           return next;
         });
       }
+      return;
+    }
+
+    // Unselected users: select
+    const isExisting = existingShares.some((s) => s.user_id === friendId);
+    setSelectedUsers((prev) => new Map(prev).set(friendId, "reader"));
+    if (!isExisting) {
+      setPendingInvites((prev) => new Set(prev).add(friendId));
     }
   };
 
@@ -215,6 +224,7 @@ const SharePanel = ({ tripId, onClose }: SharePanelProps) => {
         }
       }
 
+      onToast?.("Sharing updated");
       onClose();
     } catch {
       // handled
@@ -282,7 +292,9 @@ const SharePanel = ({ tripId, onClose }: SharePanelProps) => {
                         ? styles.initialsCirclePending
                         : isSelected
                           ? styles.initialsCircleSelected
-                          : ""
+                          : isCircleHovered
+                            ? styles.initialsCircleHoverSelect
+                            : ""
                   }`}
                   onClick={(e) => handleCircleClick(e, friend.id)}
                   onMouseEnter={() => setHoveredCircleId(friend.id)}
@@ -296,7 +308,9 @@ const SharePanel = ({ tripId, onClose }: SharePanelProps) => {
                         ? "✕"
                         : isSelected
                           ? "✓"
-                          : getInitials(friend.first_name, friend.last_name)}
+                          : isCircleHovered
+                            ? "✓"
+                            : getInitials(friend.first_name, friend.last_name)}
                 </div>
                 <div className={styles.nameBlock}>
                   <div

@@ -1,5 +1,5 @@
 import { useParams, NavLink, Outlet } from "react-router-dom";
-import { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
@@ -24,6 +24,20 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const sharePanelRef = useRef<HTMLDivElement>(null);
   const loggingOutRef = auth?.loggingOutRef;
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showToast = useCallback((message: string) => {
+    setToastMessage(message);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setToastMessage(null), 2500);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!sharePanelOpen) return;
@@ -141,6 +155,23 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   }, []);
   return (
     <div className={styles.entirePage}>
+      {toastMessage && (
+        <div style={{
+          position: "fixed",
+          top: "1rem",
+          left: "50%",
+          transform: "translateX(-50%)",
+          backgroundColor: "#2fe782",
+          color: "#222",
+          padding: "0.5rem 1.25rem",
+          borderRadius: "8px",
+          fontWeight: 600,
+          fontSize: "0.9rem",
+          zIndex: 9999,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+          animation: "fadeIn 0.2s ease-out",
+        }}>{toastMessage}</div>
+      )}
       <div className={styles.costAndHeader}>
         <div className={styles.backAndTotal}>
           <div className={styles.backWrapper}>
@@ -198,6 +229,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                   <SharePanel
                     tripId={tripId!}
                     onClose={() => setSharePanelOpen(false)}
+                    onToast={showToast}
                   />
                 </div>
               )}

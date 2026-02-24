@@ -56,6 +56,7 @@
   border-bottom: 1px solid #3a3a3a;
   cursor: pointer;
   gap: 0.6rem;
+  position: relative;
 }
 
 .friendRow:last-child {
@@ -92,6 +93,12 @@
   color: #b0a030;
 }
 
+.initialsCircleHoverSelect {
+  background-color: rgba(47, 231, 130, 0.4);
+  color: #222;
+  cursor: pointer;
+}
+
 .initialsCircleRemove {
   background-color: #e53e3e;
   color: white;
@@ -107,7 +114,7 @@
 }
 
 .nameBlock {
-  flex: 1;
+  flex: 0.5;
   min-width: 0;
 }
 
@@ -126,6 +133,8 @@
   display: flex;
   gap: 2px;
   flex-shrink: 0;
+  position: absolute;
+  right: 0.75rem;
 }
 
 .roleBtn {

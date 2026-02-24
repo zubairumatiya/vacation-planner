@@ -79,19 +79,7 @@
 .actions {
   display: flex;
   gap: 0.4rem;
-  opacity: 0;
-  transition: opacity 0.15s;
   flex-shrink: 0;
-}
-
-.item:hover .actions {
-  opacity: 1;
-}
-
-@media (max-width: 700px) {
-  .actions {
-    opacity: 1;
-  }
 }
 
 .acceptBtn {
