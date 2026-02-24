@@ -1,11 +1,13 @@
 import { useEffect, useState, useContext, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { TripRefreshContext } from "../context/TripRefreshContext";
 import styles from "../styles/Home.module.css";
 import editIcon from "../assets/edit-icon.svg";
 import VacationForm from "../components/VacationForm";
 import refreshFn from "../utils/refreshFn";
 import dropDownIcon from "../assets/arrow-drop-big.svg";
+import SharePanel from "../components/SharePanel";
 const EyeIcon = ({
   isPublic,
   onToggle,
@@ -167,6 +169,22 @@ const Home = () => {
   const [submitClicked, setSubmitClicked] = useState<boolean>(false);
   const [updateList, setUpdateList] = useState<boolean>(false);
   const [pastTripsOpen, setPastTripsOpen] = useState(false);
+  const [sharePanelTripId, setSharePanelTripId] = useState<string | null>(null);
+  const sharePanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!sharePanelTripId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        sharePanelRef.current &&
+        !sharePanelRef.current.contains(e.target as Node)
+      ) {
+        setSharePanelTripId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [sharePanelTripId]);
 
   useEffect(() => {
     const cancel = (e: KeyboardEvent) => {
@@ -451,26 +469,75 @@ const Home = () => {
               editing={editing}
             />
           )}
-          <Link
-            to={`/vacation/${v.id}`}
-            className={`${styles.title} ${editing && styles.editing}`}
-          >
-            <h2
-              className={`text-xl font-semibold hover:text-indigo-600 ${
-                editing ? "text-gray-500" : "text-indigo-500"
-              }`}
+          <div className="flex items-start gap-2 flex-1">
+            <Link
+              to={`/vacation/${v.id}`}
+              className={`${styles.title} ${editing && styles.editing}`}
+              style={{ flex: 1 }}
             >
-              {v.trip_name}
-              {v.role !== "owner" && (
-                <span className="text-sm font-normal text-gray-500 ml-2">
-                  Owner: {ownerName} ({permissionLabel(v.role)})
-                </span>
-              )}
-            </h2>
-          </Link>
-          <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
-            {editing ? undefined : <img src={editIcon} alt="editIcon" />}
+              <div>
+                <h2
+                  className={`text-xl font-semibold hover:text-indigo-600 ${
+                    editing ? "text-gray-500" : "text-indigo-500"
+                  }`}
+                >
+                  {v.trip_name}
+                </h2>
+                {v.role !== "owner" && (
+                  <p className="text-sm font-normal text-gray-500">
+                    Owner: {ownerName} ({permissionLabel(v.role)})
+                  </p>
+                )}
+              </div>
+            </Link>
+            <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
+              {editing ? undefined : <img src={editIcon} alt="editIcon" />}
+            </div>
           </div>
+          {v.role === "owner" && !editing && (
+            <div
+              className={`${styles.shareIcon} ${sharePanelTripId === v.id ? styles.shareIconOpen : ""}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setSharePanelTripId((prev) =>
+                  prev === v.id ? null : v.id,
+                );
+              }}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="1.2rem"
+                height="1.2rem"
+                fill="none"
+                stroke="#4a38ee"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
+              </svg>
+              {sharePanelTripId === v.id && (
+                <div
+                  ref={sharePanelRef}
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    top: "100%",
+                    marginTop: "0.5rem",
+                    zIndex: 100,
+                  }}
+                >
+                  <SharePanel
+                    tripId={v.id}
+                    onClose={() => setSharePanelTripId(null)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <p>{`Start date: ${startFormat}`}</p>
         <p>{`End date: ${endFormat}`}</p>
@@ -492,14 +559,16 @@ const Home = () => {
       >
         <div className={styles.titleNEdit}>
           <Link to={`/vacation/${v.id}`} className={styles.title}>
-            <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
-              {v.trip_name}
+            <div>
+              <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
+                {v.trip_name}
+              </h2>
               {v.role !== "owner" && (
-                <span className="text-sm font-normal text-gray-400 ml-2">
+                <p className="text-sm font-normal text-gray-400">
                   Owner: {ownerName} ({permissionLabel(v.role)})
-                </span>
+                </p>
               )}
-            </h2>
+            </div>
           </Link>
         </div>
         <p>{`Start date: ${startFormat}`}</p>
@@ -510,10 +579,15 @@ const Home = () => {
 
   const noActiveTrips = myTrips.length === 0 && sharedTrips.length === 0;
 
+  const refreshTrips = useCallback(() => {
+    setUpdateList((prev) => !prev);
+  }, []);
+
   return (
-    <>
-      {!loading && (
-        <div className={styles.content}>
+    <TripRefreshContext.Provider value={{ refreshTrips }}>
+      <>
+        {!loading && (
+          <div className={styles.content}>
           {/* My Trips Section */}
           <div className={styles.section}>
             <div className={styles.sectionHeader}>
@@ -571,7 +645,8 @@ const Home = () => {
           )}
         </div>
       )}
-    </>
+      </>
+    </TripRefreshContext.Provider>
   );
 };
 

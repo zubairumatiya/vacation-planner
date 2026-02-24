@@ -19,6 +19,10 @@ import {
   AuthResponse,
   UserProfileResponse,
   UserPublicTrip,
+  TripIdParam,
+  ShareTripBody,
+  UpdateShareBody,
+  TripShare,
 } from "../types/express.js";
 
 // GET /profile - get current user's profile
@@ -462,6 +466,205 @@ router.get(
         friends_count: parseInt(friendsCountResult.rows[0].count),
         upcoming_trips: tripsResult.rows,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /trip-shares/:tripId - get existing shares and pending invitations (owner only)
+router.get(
+  "/trip-shares/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<{ shares: TripShare[]; pendingInvitations: TripShare[] } | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const ownerCheck = await db.query(
+        "SELECT role FROM user_trips WHERE trip_id = $1 AND user_id = $2 AND role = 'owner'",
+        [req.params.tripId, req.user.id],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.sendStatus(403);
+        return;
+      }
+      const [sharesResult, pendingResult] = await Promise.all([
+        db.query<TripShare>(
+          `SELECT u.id as user_id, u.first_name, u.last_name, u.username, ut.role
+           FROM user_trips ut
+           JOIN users u ON u.id = ut.user_id
+           WHERE ut.trip_id = $1 AND ut.role != 'owner'`,
+          [req.params.tripId],
+        ),
+        db.query<TripShare>(
+          `SELECT u.id as user_id, u.first_name, u.last_name, u.username, 'pending' as role
+           FROM notifications n
+           JOIN users u ON u.id = n.user_id
+           WHERE n.from_user_id = $1 AND n.type = 'trip_invitation'
+             AND n.reference_id = $2 AND n.status = 'pending'`,
+          [req.user.id, req.params.tripId],
+        ),
+      ]);
+      res.status(200).json({
+        shares: sharesResult.rows,
+        pendingInvitations: pendingResult.rows,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// DELETE /cancel-invitation/:tripId/:userId - cancel a pending trip invitation (owner only)
+router.delete(
+  "/cancel-invitation/:tripId/:userId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam & UserIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const ownerCheck = await db.query(
+        "SELECT role FROM user_trips WHERE trip_id = $1 AND user_id = $2 AND role = 'owner'",
+        [req.params.tripId, req.user.id],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.sendStatus(403);
+        return;
+      }
+
+      await db.query(
+        `DELETE FROM notifications
+         WHERE user_id = $1 AND from_user_id = $2
+           AND type = 'trip_invitation' AND reference_id = $3
+           AND status = 'pending'`,
+        [req.params.userId, req.user.id, req.params.tripId],
+      );
+      res.status(200).json({ message: "Invitation cancelled" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /share-trip/:tripId - send share invitations (owner only)
+router.post(
+  "/share-trip/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<ShareTripBody, unknown, TripIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const ownerCheck = await db.query(
+        "SELECT role FROM user_trips WHERE trip_id = $1 AND user_id = $2 AND role = 'owner'",
+        [req.params.tripId, req.user.id],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.sendStatus(403);
+        return;
+      }
+
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        for (const share of req.body.shares) {
+          const existing = await client.query(
+            "SELECT role FROM user_trips WHERE trip_id = $1 AND user_id = $2",
+            [req.params.tripId, share.userId],
+          );
+          if (existing.rows.length > 0) continue;
+
+          const pendingNotif = await client.query(
+            `SELECT id FROM notifications
+             WHERE user_id = $1 AND from_user_id = $2
+               AND type = 'trip_invitation' AND reference_id = $3
+               AND status = 'pending'`,
+            [share.userId, req.user.id, req.params.tripId],
+          );
+          if (pendingNotif.rows.length > 0) continue;
+
+          await client.query(
+            "INSERT INTO notifications (user_id, from_user_id, type, reference_id) VALUES ($1, $2, 'trip_invitation', $3)",
+            [share.userId, req.user.id, req.params.tripId],
+          );
+        }
+        await client.query("COMMIT");
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+      res.status(200).json({ message: "Invitations sent" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /share-trip/:tripId/:userId - update share permission (owner only)
+router.patch(
+  "/share-trip/:tripId/:userId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<UpdateShareBody, unknown, TripIdParam & UserIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const ownerCheck = await db.query(
+        "SELECT role FROM user_trips WHERE trip_id = $1 AND user_id = $2 AND role = 'owner'",
+        [req.params.tripId, req.user.id],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.sendStatus(403);
+        return;
+      }
+
+      const result = await db.query(
+        "UPDATE user_trips SET role = $1 WHERE trip_id = $2 AND user_id = $3 AND role != 'owner' RETURNING *",
+        [req.body.role, req.params.tripId, req.params.userId],
+      );
+      if (result.rowCount === 0) {
+        res.sendStatus(404);
+        return;
+      }
+      res.status(200).json({ message: "Permission updated" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// DELETE /share-trip/:tripId/:userId - remove user's access (owner only)
+router.delete(
+  "/share-trip/:tripId/:userId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam & UserIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const ownerCheck = await db.query(
+        "SELECT role FROM user_trips WHERE trip_id = $1 AND user_id = $2 AND role = 'owner'",
+        [req.params.tripId, req.user.id],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.sendStatus(403);
+        return;
+      }
+
+      await db.query(
+        "DELETE FROM user_trips WHERE trip_id = $1 AND user_id = $2 AND role != 'owner'",
+        [req.params.tripId, req.params.userId],
+      );
+      res.status(200).json({ message: "Access removed" });
     } catch (err) {
       next(err);
     }

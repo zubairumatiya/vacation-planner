@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import placeholderLogo from "../assets/react.svg";
 import addIcon from "../assets/add-icon.svg";
 import { AuthContext } from "../context/AuthContext";
+import { TripRefreshContext } from "../context/TripRefreshContext";
 import { useContext, useState, useRef, useEffect, useCallback } from "react";
 import profileIcon from "../assets/profile.svg";
 import ProfileSideBar from "../components/ProfileSideBar";
@@ -12,6 +13,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 const Header = () => {
   const auth = useContext(AuthContext);
+  const tripRefreshContext = useContext(TripRefreshContext);
   const [isSideBarOpen, setSideBarOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -133,6 +135,7 @@ const Header = () => {
               <InboxPanel
                 onBack={handleInboxBack}
                 onUnreadCountChange={setUnreadCount}
+                onTripAccepted={tripRefreshContext.refreshTrips}
               />
             ) : (
               <ProfileSideBar

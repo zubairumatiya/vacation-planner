@@ -25,6 +25,9 @@
   color: rgb(252, 247, 234);
   font-weight: 600;
 }
+.ul li a:hover {
+  color: #2fe782;
+}
 
 .inboxBtn {
   background: transparent;
@@ -32,12 +35,10 @@
   color: rgb(252, 247, 234);
   cursor: pointer;
   font-size: 1rem;
-  padding: 0;
+  padding: 0 1.75rem;
   width: 100%;
   text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  position: relative;
 }
 
 .inboxBtn:hover {
@@ -59,4 +60,11 @@
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0 5px;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.signoutButton:hover {
+  background-color: slateblue;
 }

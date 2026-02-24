@@ -7,6 +7,66 @@ import { AutocompleteWebComponent } from "../components/map-components/autocompl
 import refreshFn from "../utils/refreshFn.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
+const QuestionMarkIcon = () => {
+  const [showTooltip, setShowTooltip] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    timerRef.current = setTimeout(() => setShowTooltip(true), 1000);
+  };
+
+  const handleMouseLeave = () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setShowTooltip(false);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return (
+    <div
+      className="relative inline-flex mr-2"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        style={{
+          padding: 0,
+          backgroundColor: "transparent",
+          border: "2px solid #6b7280",
+          borderRadius: "50%",
+          fontSize: "0.875rem",
+          lineHeight: "1",
+          color: "#6b7280",
+          cursor: "help",
+          width: "1.25rem",
+          height: "1.25rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: "600",
+        }}
+        aria-label="What does public mean?"
+      >
+        ?
+      </button>
+      {showTooltip && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-gray-900 text-white text-xs rounded px-2 py-1 shadow-md whitespace-normal pointer-events-none w-48">
+          <p className="font-medium">Public Trip</p>
+          <p className="text-gray-300 text-xs mt-1">
+            Friends can see: Trip name, location, start date and length of trip
+            (days)
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+
 type Props = {
   preFill?: {
     trip_name: string;
@@ -89,7 +149,7 @@ const VacationForm = (props?: Props) => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         if (result.ok) {
           const data = (await result.json()) as AddVacationGetResponse;
@@ -123,12 +183,13 @@ const VacationForm = (props?: Props) => {
                 headers: {
                   Authorization: `Bearer ${continueReq.token}`,
                 },
-              }
+              },
             );
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const retryData = (await retryReq.json()) as AddVacationGetResponse;
+              const retryData =
+                (await retryReq.json()) as AddVacationGetResponse;
               setGValues({
                 // change
                 id: retryData.gId,
@@ -240,7 +301,7 @@ const VacationForm = (props?: Props) => {
     }
     if (!sHtmlDateErr || !eHtmlDateErr) {
       setErrMessage(
-        "Make sure trip start is not past 10 years from today AND start of trip and end of trip does not exceed 365 days"
+        "Make sure trip start is not past 10 years from today AND start of trip and end of trip does not exceed 365 days",
       );
     }
   }, [
@@ -394,7 +455,7 @@ const VacationForm = (props?: Props) => {
   };
 
   const divs = "flex justify-center my-4 w-full";
-  const labels = "flex justify-end ml-4 mr-2 w-1/6";
+  const labels = "flex justify-end ml-4 mr-2 w-1/6 items-center";
   const inputs = "flex justify-start w-4/10 border-2 border-green-500";
 
   return (
@@ -433,7 +494,7 @@ const VacationForm = (props?: Props) => {
                   className={clsx(
                     fieldError && styles.dateError,
                     inputs,
-                    "w-full"
+                    "w-full",
                   )}
                   type="text"
                   name="location"
@@ -514,7 +575,7 @@ const VacationForm = (props?: Props) => {
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="isPublic">
-                Public:{" "}
+                <QuestionMarkIcon /> Public:{" "}
               </label>
               <div className="flex items-center w-4/10">
                 <input
