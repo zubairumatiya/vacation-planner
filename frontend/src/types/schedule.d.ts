@@ -18,6 +18,7 @@ declare global {
     owner_first_name: string;
     owner_last_name: string;
     is_public: boolean;
+    is_open_invite: boolean;
   }
 
   /** Raw schedule item from the API (dates are ISO strings, not yet Date objects) */

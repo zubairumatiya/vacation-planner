@@ -12,6 +12,7 @@ interface UserPublicTrip {
   location: string;
   start_date: string;
   num_days: number;
+  is_open_invite: boolean;
 }
 
 interface UserProfile {
@@ -184,7 +185,25 @@ const UserProfilePage = () => {
           ) : (
             profile.upcoming_trips.map((trip, i) => (
               <div key={i} className={styles.tripCard}>
-                <div className={styles.tripName}>{trip.trip_name}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <div className={styles.tripName}>{trip.trip_name}</div>
+                  {trip.is_open_invite && (
+                    <span
+                      style={{
+                        backgroundColor: "#16a34a",
+                        color: "#fff",
+                        fontSize: "0.65rem",
+                        fontWeight: 600,
+                        padding: "1px 8px",
+                        borderRadius: "9999px",
+                        whiteSpace: "nowrap",
+                        lineHeight: "1.4",
+                      }}
+                    >
+                      Open Invite
+                    </span>
+                  )}
+                </div>
                 <div className={styles.tripDetail}>{trip.location}</div>
                 <div className={styles.tripDetail}>
                   {formatDate(trip.start_date)} &middot; {trip.num_days} day

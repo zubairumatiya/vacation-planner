@@ -7,7 +7,15 @@ import { AutocompleteWebComponent } from "../components/map-components/autocompl
 import refreshFn from "../utils/refreshFn.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
-const QuestionMarkIcon = () => {
+const QuestionMarkIcon = ({
+  ariaLabel,
+  title,
+  description,
+}: {
+  ariaLabel?: string;
+  title: string;
+  description: string;
+}) => {
   const [showTooltip, setShowTooltip] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -50,17 +58,14 @@ const QuestionMarkIcon = () => {
           justifyContent: "center",
           fontWeight: "600",
         }}
-        aria-label="What does public mean?"
+        aria-label={ariaLabel ?? title}
       >
         ?
       </button>
       {showTooltip && (
         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 bg-gray-900 text-white text-xs rounded px-2 py-1 shadow-md whitespace-normal pointer-events-none w-48">
-          <p className="font-medium">Public Trip</p>
-          <p className="text-gray-300 text-xs mt-1">
-            Friends can see: Trip name, location, start date and length of trip
-            (days)
-          </p>
+          <p className="font-medium">{title}</p>
+          <p className="text-gray-300 text-xs mt-1">{description}</p>
         </div>
       )}
     </div>
@@ -75,6 +80,7 @@ type Props = {
     end_date: string;
     id: string;
     is_public?: boolean;
+    is_open_invite?: boolean;
   };
   disableOrNah: (fieldError: boolean) => void;
   submit: boolean;
@@ -269,6 +275,7 @@ const VacationForm = (props?: Props) => {
   const [location, setLocation] = useState(props?.preFill?.location ?? "");
   const [hideSuggestions, setHideSuggestions] = useState(true);
   const [isPublic, setIsPublic] = useState(props?.preFill?.is_public ?? false);
+  const [isOpenInvite, setIsOpenInvite] = useState(props?.preFill?.is_open_invite ?? false);
   const skipEORef = useRef<boolean | undefined>(undefined);
 
   useEffect(() => {
@@ -333,6 +340,7 @@ const VacationForm = (props?: Props) => {
           gVp: GValues["vp"];
           skipEO: boolean | undefined;
           isPublic: boolean;
+          isOpenInvite: boolean;
           id?: string;
         } = {
           tripname: tripName,
@@ -343,6 +351,7 @@ const VacationForm = (props?: Props) => {
           gVp: gValues.vp,
           skipEO: skipEORef.current,
           isPublic: isPublic,
+          isOpenInvite: isOpenInvite,
         };
         if (props?.method === "PATCH") {
           method = "PATCH";
@@ -575,7 +584,11 @@ const VacationForm = (props?: Props) => {
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="isPublic">
-                <QuestionMarkIcon /> Public:{" "}
+                <QuestionMarkIcon
+                  title="Public Trip"
+                  description="Friends can see: Trip name, location, start date and length of trip (days)"
+                />{" "}
+                Public:{" "}
               </label>
               <div className="flex items-center w-4/10">
                 <input
@@ -584,6 +597,25 @@ const VacationForm = (props?: Props) => {
                   id="isPublic"
                   checked={isPublic}
                   onChange={(e) => setIsPublic(e.target.checked)}
+                  className="w-5 h-5 cursor-pointer accent-green-500"
+                />
+              </div>
+            </div>
+            <div className={divs}>
+              <label className={labels} htmlFor="isOpenInvite">
+                <QuestionMarkIcon
+                  title="Open Invite"
+                  description="This indicates to your fellow travelers they are free to contact you to tag along on the trip"
+                />{" "}
+                Open Invite:{" "}
+              </label>
+              <div className="flex items-center w-4/10">
+                <input
+                  type="checkbox"
+                  name="isOpenInvite"
+                  id="isOpenInvite"
+                  checked={isOpenInvite}
+                  onChange={(e) => setIsOpenInvite(e.target.checked)}
                   className="w-5 h-5 cursor-pointer accent-green-500"
                 />
               </div>

@@ -101,7 +101,7 @@ const EyeIcon = ({
           </svg>
         ) : (
           <svg
-            viewBox="0 0 24 24"
+            viewBox="0 0 24 20"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             width="1.5rem"
@@ -438,6 +438,7 @@ const Home = () => {
               end_date: v.end_date,
               id: v.id,
               is_public: v.is_public,
+              is_open_invite: v.is_open_invite,
             }}
             sendSubmissionResult={checkSubmission}
             disableOrNah={checkError}
@@ -464,84 +465,104 @@ const Home = () => {
     return (
       <div id={v.id} key={v.id} className={styles.wrapper}>
         <div className={styles.titleNEdit}>
-          {v.role === "owner" && (
-            <EyeIcon
-              isPublic={v.is_public}
-              onToggle={() => toggleVisibility(v.id)}
-              editing={editing}
-            />
-          )}
           <div className="flex items-start gap-2 flex-1">
-            <Link
-              to={`/vacation/${v.id}`}
-              className={`${styles.title} ${editing && styles.editing}`}
-              style={{ flex: 1 }}
-            >
-              <div>
-                <h2
-                  className={`text-xl font-semibold hover:text-indigo-600 ${
-                    editing ? "text-gray-500" : "text-indigo-500"
-                  }`}
-                >
-                  {v.trip_name}
-                </h2>
-                {v.role !== "owner" && (
-                  <p className="text-sm font-normal text-gray-500">
-                    Owner: {ownerName} ({permissionLabel(v.role)})
-                  </p>
-                )}
-              </div>
-            </Link>
-            <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
-              {editing ? undefined : <img src={editIcon} alt="editIcon" />}
-            </div>
-          </div>
-          {v.role === "owner" && !editing && (
-            <div
-              className={`${styles.shareIcon} ${sharePanelTripId === v.id ? styles.shareIconOpen : ""}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                setSharePanelTripId((prev) =>
-                  prev === v.id ? null : v.id,
-                );
-              }}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="1.2rem"
-                height="1.2rem"
-                fill="none"
-                stroke="#4a38ee"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                <polyline points="16 6 12 2 8 6" />
-                <line x1="12" y1="2" x2="12" y2="15" />
-              </svg>
-              {sharePanelTripId === v.id && (
-                <div
-                  ref={sharePanelRef}
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    top: "100%",
-                    marginTop: "0.5rem",
-                    zIndex: 100,
-                  }}
-                >
-                  <SharePanel
-                    tripId={v.id}
-                    onClose={() => setSharePanelTripId(null)}
-                    onToast={showToast}
+            <div className="flex flex-col items-center">
+              <div className="flex items-center justify-center w-fit relative px-8">
+                {v.role === "owner" && (
+                  <EyeIcon
+                    isPublic={v.is_public}
+                    onToggle={() => toggleVisibility(v.id)}
+                    editing={editing}
                   />
+                )}
+                <Link
+                  to={`/vacation/${v.id}`}
+                  className={`${styles.title} ${editing && styles.editing}`}
+                  style={{ flex: 1 }}
+                >
+                  <h2
+                    className={`text-xl font-semibold hover:text-indigo-600 ${
+                      editing ? "text-gray-500" : "text-indigo-500"
+                    }`}
+                  >
+                    {v.trip_name}
+                  </h2>
+                </Link>
+                <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
+                  {editing ? undefined : <img src={editIcon} alt="editIcon" />}
                 </div>
+                <div className={"flex items-center"}>
+                  {v.role === "owner" && !editing && (
+                    <div
+                      className={`${styles.shareIcon} ${sharePanelTripId === v.id ? styles.shareIconOpen : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        setSharePanelTripId((prev) =>
+                          prev === v.id ? null : v.id,
+                        );
+                      }}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="1.5rem"
+                        height="1.5rem"
+                        fill="none"
+                        stroke="#4a38ee"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                        <polyline points="16 6 12 2 8 6" />
+                        <line x1="12" y1="2" x2="12" y2="15" />
+                      </svg>
+                      {sharePanelTripId === v.id && (
+                        <div
+                          ref={sharePanelRef}
+                          style={{
+                            position: "absolute",
+                            right: 0,
+                            top: "100%",
+                            marginTop: "0.5rem",
+                            zIndex: 100,
+                          }}
+                        >
+                          <SharePanel
+                            tripId={v.id}
+                            onClose={() => setSharePanelTripId(null)}
+                            onToast={showToast}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {v.role !== "owner" && (
+                <p className="text-sm font-normal text-gray-500">
+                  Owner: {ownerName} ({permissionLabel(v.role)})
+                </p>
               )}
             </div>
-          )}
+          </div>
         </div>
+        {v.is_open_invite && (v.role === "owner" ? v.is_public : true) && (
+          <span
+            style={{
+              backgroundColor: "#16a34a",
+              color: "#fff",
+              fontSize: "0.65rem",
+              fontWeight: 600,
+              padding: "1px 8px",
+              borderRadius: "9999px",
+              whiteSpace: "nowrap",
+              lineHeight: "1.4",
+            }}
+          >
+            Open Invite
+          </span>
+        )}
         <p>{`Start date: ${startFormat}`}</p>
         <p>{`End date: ${endFormat}`}</p>
       </div>
@@ -563,9 +584,28 @@ const Home = () => {
         <div className={styles.titleNEdit}>
           <Link to={`/vacation/${v.id}`} className={styles.title}>
             <div>
-              <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
-                {v.trip_name}
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
+                  {v.trip_name}
+                </h2>
+                {v.is_open_invite &&
+                  (v.role === "owner" ? v.is_public : true) && (
+                    <span
+                      style={{
+                        backgroundColor: "#16a34a",
+                        color: "#fff",
+                        fontSize: "0.65rem",
+                        fontWeight: 600,
+                        padding: "1px 8px",
+                        borderRadius: "9999px",
+                        whiteSpace: "nowrap",
+                        lineHeight: "1.4",
+                      }}
+                    >
+                      Open Invite
+                    </span>
+                  )}
+              </div>
               {v.role !== "owner" && (
                 <p className="text-sm font-normal text-gray-400">
                   Owner: {ownerName} ({permissionLabel(v.role)})
@@ -607,11 +647,9 @@ const Home = () => {
 
   return (
     <>
-      {toastMessage && (
-        <div className={styles.toast}>{toastMessage}</div>
-      )}
+      {toastMessage && <div className={styles.toast}>{toastMessage}</div>}
       {!loading && (
-          <div className={styles.content}>
+        <div className={styles.content}>
           {/* My Trips Section */}
           <div className={styles.section}>
             <div className={styles.sectionHeader}>

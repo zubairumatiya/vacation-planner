@@ -443,7 +443,8 @@ router.get(
       const [tripsResult, friendsCountResult] = await Promise.all([
         db.query<UserPublicTrip>(
           `SELECT t.trip_name, t.location, t.start_date,
-                  (t.end_date - t.start_date) AS num_days
+                  (t.end_date - t.start_date) AS num_days,
+                  t.is_open_invite
            FROM user_trips ut
            JOIN trips t ON t.id = ut.trip_id
            WHERE ut.user_id = $1 AND ut.role = 'owner'

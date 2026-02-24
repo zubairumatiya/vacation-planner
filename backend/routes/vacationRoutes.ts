@@ -111,7 +111,7 @@ router.post(
     res: TypedResponse<AddVacationResponse>,
     next: NextFunction,
   ) => {
-    const { tripname, location, startDate, endDate, gId, gVp, isPublic } = req.body;
+    const { tripname, location, startDate, endDate, gId, gVp, isPublic, isOpenInvite } = req.body;
     if (!tripname || !location || !startDate || !endDate || !gId || !gVp) {
       res.status(400).json({
         message: "Invalid input - make sure all the fields are filled",
@@ -130,8 +130,8 @@ router.post(
 
     try {
       const results: QueryResult<{ id: string }> = await db.query(
-        "INSERT INTO trips (trip_name, location, start_date, end_date, g_id, g_vp, is_public) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id",
-        [tripname, location, startDate, endDate, gId, gVp, isPublic ?? false],
+        "INSERT INTO trips (trip_name, location, start_date, end_date, g_id, g_vp, is_public, is_open_invite) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+        [tripname, location, startDate, endDate, gId, gVp, isPublic ?? false, isOpenInvite ?? false],
       );
       await db.query(
         "INSERT INTO user_trips (user_id, trip_id, role) VALUES ($1, $2, 'owner')",
@@ -154,7 +154,7 @@ router.patch(
     res: TypedResponse<AddVacationResponse>,
     next: NextFunction,
   ) => {
-    const { tripname, location, startDate, endDate, gId, gVp, isPublic } = req.body;
+    const { tripname, location, startDate, endDate, gId, gVp, isPublic, isOpenInvite } = req.body;
     if (!tripname || !location || !startDate || !endDate || !gId || !gVp) {
       res.sendStatus(400);
       return;
@@ -169,8 +169,8 @@ router.patch(
 
     try {
       const result: QueryResult<Trip> = await db.query(
-        "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, g_id=$5, g_vp=$6, is_public=$7, last_modified=NOW() WHERE id=$8 RETURNING *",
-        [tripname, startDate, endDate, location, gId, gVp, isPublic ?? false, req.params.tripId],
+        "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, g_id=$5, g_vp=$6, is_public=$7, is_open_invite=$8, last_modified=NOW() WHERE id=$9 RETURNING *",
+        [tripname, startDate, endDate, location, gId, gVp, isPublic ?? false, isOpenInvite ?? false, req.params.tripId],
       );
       if (result.rowCount !== null && result.rowCount > 0) {
         res.status(200).json({ message: "success" });

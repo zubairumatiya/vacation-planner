@@ -155,6 +155,7 @@ export interface AddVacationBody {
   id?: string;
   skipEO?: boolean;
   isPublic?: boolean;
+  isOpenInvite?: boolean;
 }
 
 export interface UserPublicTrip {
@@ -162,6 +163,7 @@ export interface UserPublicTrip {
   location: string;
   start_date: string;
   num_days: number;
+  is_open_invite: boolean;
 }
 
 export interface UserProfileResponse {
