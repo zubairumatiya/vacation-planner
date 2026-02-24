@@ -253,23 +253,25 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               View
             </NavLink>
           </li>
-          <li className={styles.navItem}>
-            <NavLink
-              to={`/vacation/${tripId}/edit`}
-              className={({ isActive }) =>
-                isActive
-                  ? `${styles.navLink} ${styles.navLinkActive}`
-                  : `${styles.navLink}`
-              }
-              data-toggle="pill"
-            >
-              Edit
-            </NavLink>
-          </li>
+          {role !== "reader" && (
+            <li className={styles.navItem}>
+              <NavLink
+                to={`/vacation/${tripId}/edit`}
+                className={({ isActive }) =>
+                  isActive
+                    ? `${styles.navLink} ${styles.navLinkActive}`
+                    : `${styles.navLink}`
+                }
+                data-toggle="pill"
+              >
+                Edit
+              </NavLink>
+            </li>
+          )}
         </ul>
       </nav>
       <div className={styles.hiddenCard}></div>
-      <Outlet />
+      <Outlet context={{ role }} />
     </div>
   );
 };

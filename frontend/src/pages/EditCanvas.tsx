@@ -3,7 +3,7 @@ import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
 import { useState, useCallback, useContext, useRef, useEffect, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useOutletContext, Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { EditScheduleProvider } from "../context/EditScheduleContext";
 import {
@@ -48,6 +48,7 @@ const EditCanvas = ({
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
 }) => {
   const { tripId } = useParams();
+  const { role } = useOutletContext<{ role: string }>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loading2, setLoading2] = useState<boolean>(true);
   const [vp, setVp] = useState<null | Vp>(null);
@@ -1607,6 +1608,10 @@ const EditCanvas = ({
     setHoldOverwrite(null);
     setRemountKey((prev) => prev + 1);
   };
+
+  if (role === "reader") {
+    return <Navigate to={`/vacation/${tripId}`} replace />;
+  }
 
   return (
     <DndContext

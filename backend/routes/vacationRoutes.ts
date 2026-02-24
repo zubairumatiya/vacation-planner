@@ -7,6 +7,8 @@ import { snakeToCamel } from "../helpers/snakeToCamel.js";
 import { QueryResult } from "pg";
 import checkIndexSpacing from "../helpers/checkIndexSpacing.js";
 import ensureOwnership from "../middleware/ensureOwnership.js";
+import ensureOwnerOnly from "../middleware/ensureOwnerOnly.js";
+import ensureTripAccess from "../middleware/ensureTripAccess.js";
 import renumberIndexDb from "../helpers/renumberIndexDb.js";
 import {
   Schedule,
@@ -73,7 +75,7 @@ router.get(
 router.get(
   "/add-vacation/:tripId",
   ensureLoggedIn,
-  ensureOwnership,
+  ensureOwnerOnly,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
     res: TypedResponse<AddVacationResponse>,
@@ -146,7 +148,7 @@ router.post(
 router.patch(
   "/add-vacation/:tripId",
   ensureLoggedIn,
-  ensureOwnership,
+  ensureOwnerOnly,
   async (
     req: TypedRequest<AddVacationBody, unknown, TripIdParam>,
     res: TypedResponse<AddVacationResponse>,
@@ -183,7 +185,7 @@ router.patch(
 router.patch(
   "/toggle-visibility/:tripId",
   ensureLoggedIn,
-  ensureOwnership,
+  ensureOwnerOnly,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
     res: TypedResponse<AddVacationResponse>,
@@ -208,7 +210,7 @@ router.patch(
 router.delete(
   "/delete-vacation/:tripId",
   ensureLoggedIn,
-  ensureOwnership,
+  ensureOwnerOnly,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
     res: TypedResponse<AddVacationResponse>,
@@ -233,7 +235,7 @@ router.delete(
 router.get(
   "/schedule/:tripId",
   ensureLoggedIn,
-  ensureOwnership,
+  ensureTripAccess,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
     res: TypedResponse<TripWithSchedule>,
@@ -583,7 +585,7 @@ router.delete(
 router.get(
   "/list/:tripId",
   ensureLoggedIn,
-  ensureOwnership,
+  ensureTripAccess,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
     res: TypedResponse<ListResponse>,

@@ -368,11 +368,12 @@ router.patch(
           );
         }
 
-        // If trip invitation and accepted, add user to trip
+        // If trip invitation and accepted, add user to trip with the role stored in metadata
         if (notification.type === "trip_invitation" && action === "accepted" && notification.reference_id) {
+          const invitedRole = notification.metadata?.role === "editor" ? "editor" : "reader";
           await client.query(
-            "INSERT INTO user_trips (user_id, trip_id, role) VALUES ($1, $2, 'reader') ON CONFLICT DO NOTHING",
-            [userId, notification.reference_id],
+            "INSERT INTO user_trips (user_id, trip_id, role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
+            [userId, notification.reference_id, invitedRole],
           );
         }
 
@@ -588,9 +589,10 @@ router.post(
           );
           if (pendingNotif.rows.length > 0) continue;
 
+          const intendedRole = share.role === "editor" ? "editor" : "reader";
           await client.query(
-            "INSERT INTO notifications (user_id, from_user_id, type, reference_id) VALUES ($1, $2, 'trip_invitation', $3)",
-            [share.userId, req.user.id, req.params.tripId],
+            "INSERT INTO notifications (user_id, from_user_id, type, reference_id, metadata) VALUES ($1, $2, 'trip_invitation', $3, $4)",
+            [share.userId, req.user.id, req.params.tripId, JSON.stringify({ role: intendedRole })],
           );
         }
         await client.query("COMMIT");
