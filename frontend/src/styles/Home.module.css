@@ -12,6 +12,23 @@
   opacity: 1;
 }
 
+.shareIcon {
+  position: absolute;
+  right: -2rem;
+  cursor: pointer;
+}
+
+.wrapper .shareIcon {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.wrapper:hover .shareIcon {
+  opacity: 1;
+}
+.shareIcon.shareIconOpen {
+  opacity: 1;
+}
+
 .titleNEdit {
   display: flex;
   position: relative;
@@ -42,7 +59,6 @@
 
 .sectionHeader {
   text-align: center;
-  margin-bottom: 0.75rem;
 }
 
 .wrapper {

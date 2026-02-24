@@ -1,8 +1,9 @@
 import { useParams, NavLink, Outlet } from "react-router-dom";
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
+import SharePanel from "../components/SharePanel";
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -19,7 +20,24 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const [title, setTitle] = useState("");
   const [tripLength, setTripLength] = useState(0);
+  const [role, setRole] = useState("");
+  const [sharePanelOpen, setSharePanelOpen] = useState(false);
+  const sharePanelRef = useRef<HTMLDivElement>(null);
   const loggingOutRef = auth?.loggingOutRef;
+
+  useEffect(() => {
+    if (!sharePanelOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        sharePanelRef.current &&
+        !sharePanelRef.current.contains(e.target as Node)
+      ) {
+        setSharePanelOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [sharePanelOpen]);
   useEffect(() => {
     if (loggingOutRef?.current) return;
     const getTrip = async () => {
@@ -74,6 +92,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             //     a.start_time.getTime() - b.start_time.getTime()
             // );
             setTitle(data.tripName);
+            setRole(data.role ?? "");
             const UtcStart = convertStart.getTime();
             const UtcEnd = convertEnd.getTime();
             const length = Math.floor(
@@ -111,6 +130,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         //     a.start_time.getTime() - b.start_time.getTime()
         // );
         setTitle(data.tripName);
+        setRole(data.role ?? "");
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
         const length = Math.floor((UtcEnd - UtcStart) / (1000 * 60 * 60 * 24));
@@ -135,6 +155,54 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         <header className={styles.header}>
           <h2 className={styles.title}>{title}&nbsp;</h2>
           <h3 className={styles.length}>- {tripLength} days</h3>
+          {role === "owner" && (
+            <div style={{ position: "relative", marginLeft: "1rem" }}>
+              <button
+                type="button"
+                onClick={() => setSharePanelOpen((prev) => !prev)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="1.2rem"
+                  height="1.2rem"
+                  fill="none"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
+              </button>
+              {sharePanelOpen && (
+                <div
+                  ref={sharePanelRef}
+                  style={{
+                    position: "absolute",
+                    right: 0,
+                    top: "100%",
+                    marginTop: "0.5rem",
+                    zIndex: 100,
+                  }}
+                >
+                  <SharePanel
+                    tripId={tripId!}
+                    onClose={() => setSharePanelOpen(false)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </header>
       </div>
       <nav className={styles.navWrapper}>

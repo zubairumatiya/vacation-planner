@@ -22,9 +22,10 @@ interface Notification {
 interface InboxPanelProps {
   onBack: () => void;
   onUnreadCountChange: (count: number) => void;
+  onTripAccepted?: () => void;
 }
 
-const InboxPanel = ({ onBack, onUnreadCountChange }: InboxPanelProps) => {
+const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelProps) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const login = auth?.login;
@@ -90,6 +91,7 @@ const InboxPanel = ({ onBack, onUnreadCountChange }: InboxPanelProps) => {
 
   const handleAction = async (id: string, action: "accepted" | "declined") => {
     try {
+      const notification = notifications.find((n) => n.id === id);
       const res = await authFetch(`${apiUrl}/notifications/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ action }),
@@ -98,6 +100,9 @@ const InboxPanel = ({ onBack, onUnreadCountChange }: InboxPanelProps) => {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, status: action } : n))
         );
+        if (action === "accepted" && notification?.type === "trip_invitation") {
+          onTripAccepted?.();
+        }
       }
     } catch {
       // handled

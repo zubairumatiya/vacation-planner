@@ -388,6 +388,22 @@ export interface NotificationActionBody {
   action: "accepted" | "declined";
 }
 
+export interface ShareTripBody {
+  shares: { userId: string; role: "editor" | "reader" }[];
+}
+
+export interface UpdateShareBody {
+  role: "editor" | "reader";
+}
+
+export interface TripShare {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  username: string;
+  role: string;
+}
+
 export interface SearchQuery extends Query {
   q?: string;
 }

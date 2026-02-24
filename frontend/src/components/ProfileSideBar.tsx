@@ -44,7 +44,7 @@ const ProfileSideBar = ({
           <button
             type="button"
             onClick={handleSignOut}
-            className={styles.button}
+            className={styles.signoutButton}
           >
             Sign out
           </button>

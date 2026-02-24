@@ -1,0 +1,168 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 280px;
+  max-height: 50vh;
+  overflow-y: auto;
+  background-color: rgb(51, 51, 51);
+  border-radius: 15px;
+  box-shadow: 1px 1px 1px #2fe782;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #444;
+}
+
+.title {
+  color: #2fe782;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.sendBtn {
+  background: transparent;
+  border: 1px solid #2fe782;
+  color: #2fe782;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.sendBtn:hover:not(.sendBtnDisabled) {
+  background-color: #2fe782;
+  color: #222;
+}
+
+.sendBtnDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.friendRow {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid #3a3a3a;
+  cursor: pointer;
+  gap: 0.6rem;
+}
+
+.friendRow:last-child {
+  border-bottom: none;
+}
+
+.friendRow:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.initialsCircle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #555;
+  color: #fcf7ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.initialsCircleSelected {
+  background-color: #2fe782;
+  color: #222;
+}
+
+.initialsCirclePending {
+  background-color: transparent;
+  border: 2px dashed #b0a030;
+  color: #b0a030;
+}
+
+.initialsCircleRemove {
+  background-color: #e53e3e;
+  color: white;
+  border-color: #e53e3e;
+}
+
+.friendRowPending {
+  opacity: 0.6;
+}
+
+.namePending {
+  color: #b0a030;
+}
+
+.nameBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  color: #fcf7ea;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.username {
+  color: #888;
+  font-size: 0.75rem;
+}
+
+.roleToggle {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.roleBtn {
+  background: transparent;
+  border: 1px solid #555;
+  color: #aaa;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  -webkit-appearance: none;
+}
+
+.roleBtn:active,
+.roleBtn:focus {
+  background: transparent;
+  outline: none;
+}
+
+.roleBtn:not(.roleBtnActive):hover {
+  border-color: #888;
+  color: #fcf7ea;
+}
+
+.roleBtnActive {
+  border-color: #2fe782;
+  color: #2fe782;
+}
+
+.roleBtnActive:hover {
+  border-color: #2fe782;
+  color: #2fe782;
+}
+
+.emptyText {
+  color: #666;
+  font-size: 0.85rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+}
