@@ -53,7 +53,7 @@ router.get(
   async (req: TypedRequest, res: TypedResponse<Trip[]>, next: NextFunction) => {
     try {
       const results = await db.query(
-        `SELECT DISTINCT ON (t.id) t.*, ut.role,
+        `SELECT DISTINCT ON (t.id) t.id, t.trip_name, t.location, t.start_date, t.end_date, t.g_id, t.g_vp, t.is_public, t.is_open_invite, t.created_at, t.last_modified, ut.role,
           owner_user.first_name AS owner_first_name,
           owner_user.last_name AS owner_last_name
         FROM user_trips ut

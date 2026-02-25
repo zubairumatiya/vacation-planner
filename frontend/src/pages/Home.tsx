@@ -146,8 +146,8 @@ const mapHomeTrip = (raw: Record<string, unknown>): HomeTrip => ({
   startDate: raw.start_date as string,
   endDate: raw.end_date as string,
   role: raw.role as HomeTrip["role"],
-  ownerFirstName: raw.owner_first_name as string,
-  ownerLastName: raw.owner_last_name as string,
+  ownerFirstName: (raw.owner_first_name as string) || "Unknown",
+  ownerLastName: (raw.owner_last_name as string) || "",
   isPublic: raw.is_public as boolean,
   isOpenInvite: raw.is_open_invite as boolean,
 });
