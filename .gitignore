@@ -1,4 +1,4 @@
-*.env
+*.env*
 *.pem
 *.sql
 node_modules/
