@@ -248,7 +248,10 @@ const Home = () => {
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const retryData = (await retryReq.json()) as Record<string, unknown>[];
+              const retryData = (await retryReq.json()) as Record<
+                string,
+                unknown
+              >[];
               setTrips(retryData.map(mapHomeTrip));
               setLoading(false);
             }
@@ -345,9 +348,7 @@ const Home = () => {
               };
               setTrips((prev) =>
                 prev.map((t) =>
-                  t.id === tripId
-                    ? { ...t, isPublic: retryData.is_public }
-                    : t,
+                  t.id === tripId ? { ...t, isPublic: retryData.is_public } : t,
                 ),
               );
             }
@@ -502,8 +503,13 @@ const Home = () => {
                   </h2>
                 </Link>
                 {v.role === "owner" && (
-                  <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
-                    {editing ? undefined : <img src={editIcon} alt="editIcon" />}
+                  <div
+                    className={styles.editIcon}
+                    onClick={() => editTrip(v.id)}
+                  >
+                    {editing ? undefined : (
+                      <img src={editIcon} alt="editIcon" />
+                    )}
                   </div>
                 )}
                 <div className={"flex items-center"}>
@@ -588,7 +594,7 @@ const Home = () => {
     const startFormat = formatDate(v.startDate);
     const endFormat = formatDate(v.endDate);
     const ownerName = `${v.ownerFirstName} ${v.ownerLastName}`;
-
+    console.log(v);
     return (
       <div
         id={v.id}
@@ -599,26 +605,26 @@ const Home = () => {
         <div className={styles.titleNEdit}>
           <Link to={`/vacation/${v.id}`} className={styles.title}>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 justify-center">
                 <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
                   {v.tripName}
                 </h2>
                 {v.isOpenInvite && (
-                    <span
-                      style={{
-                        backgroundColor: "#16a34a",
-                        color: "#fff",
-                        fontSize: "0.65rem",
-                        fontWeight: 600,
-                        padding: "1px 8px",
-                        borderRadius: "9999px",
-                        whiteSpace: "nowrap",
-                        lineHeight: "1.4",
-                      }}
-                    >
-                      Open Invite
-                    </span>
-                  )}
+                  <span
+                    style={{
+                      backgroundColor: "#16a34a",
+                      color: "#fff",
+                      fontSize: "0.65rem",
+                      fontWeight: 600,
+                      padding: "1px 8px",
+                      borderRadius: "9999px",
+                      whiteSpace: "nowrap",
+                      lineHeight: "1.4",
+                    }}
+                  >
+                    Open Invite
+                  </span>
+                )}
               </div>
               {v.role !== "owner" && (
                 <p className="text-sm font-normal text-gray-400">
