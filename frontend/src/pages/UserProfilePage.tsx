@@ -8,23 +8,44 @@ import styles from "../styles/UserProfilePage.module.css";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 interface UserPublicTrip {
-  trip_name: string;
+  tripName: string;
   location: string;
-  start_date: string;
-  num_days: number;
-  is_open_invite: boolean;
+  startDate: string;
+  numDays: number;
+  isOpenInvite: boolean;
 }
 
 interface UserProfile {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   username: string;
-  is_friend: boolean;
-  is_pending: boolean;
-  friends_count?: number;
-  upcoming_trips?: UserPublicTrip[];
+  isFriend: boolean;
+  isPending: boolean;
+  friendsCount?: number;
+  upcomingTrips?: UserPublicTrip[];
 }
+
+const mapUserPublicTrip = (raw: Record<string, unknown>): UserPublicTrip => ({
+  tripName: raw.trip_name as string,
+  location: raw.location as string,
+  startDate: raw.start_date as string,
+  numDays: raw.num_days as number,
+  isOpenInvite: raw.is_open_invite as boolean,
+});
+
+const mapUserProfile = (raw: Record<string, unknown>): UserProfile => ({
+  id: raw.id as string,
+  firstName: raw.first_name as string,
+  lastName: raw.last_name as string,
+  username: raw.username as string,
+  isFriend: raw.is_friend as boolean,
+  isPending: raw.is_pending as boolean,
+  friendsCount: raw.friends_count as number | undefined,
+  upcomingTrips: raw.upcoming_trips
+    ? (raw.upcoming_trips as Record<string, unknown>[]).map(mapUserPublicTrip)
+    : undefined,
+});
 
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-us", {
@@ -81,7 +102,7 @@ const UserProfilePage = () => {
         const res = await authFetch(`${apiUrl}/users/${userId}/profile`);
         if (res.ok) {
           const data = await res.json();
-          setProfile(data);
+          setProfile(mapUserProfile(data));
         }
       } catch {
         // handled by authFetch
@@ -122,11 +143,11 @@ const UserProfilePage = () => {
     return null;
   }
 
-  const fullName = `${profile.first_name} ${profile.last_name}`;
-  const isPending = profile.is_pending || requestSent;
+  const fullName = `${profile.firstName} ${profile.lastName}`;
+  const isPending = profile.isPending || requestSent;
 
   // Non-friend view (or just unfriended): centered pic, name, add friend button
-  if (!profile.is_friend || unfriended) {
+  if (!profile.isFriend || unfriended) {
     return (
       <div className={styles.container}>
         <div className={styles.profileHeader}>
@@ -180,14 +201,14 @@ const UserProfilePage = () => {
       <div className={styles.body}>
         <div className={styles.leftColumn}>
           <div className={styles.sectionTitle}>Upcoming Trips</div>
-          {!profile.upcoming_trips || profile.upcoming_trips.length === 0 ? (
+          {!profile.upcomingTrips || profile.upcomingTrips.length === 0 ? (
             <p className={styles.emptyText}>No public trips</p>
           ) : (
-            profile.upcoming_trips.map((trip, i) => (
+            profile.upcomingTrips.map((trip, i) => (
               <div key={i} className={styles.tripCard}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <div className={styles.tripName}>{trip.trip_name}</div>
-                  {trip.is_open_invite && (
+                  <div className={styles.tripName}>{trip.tripName}</div>
+                  {trip.isOpenInvite && (
                     <span
                       style={{
                         backgroundColor: "#16a34a",
@@ -206,8 +227,8 @@ const UserProfilePage = () => {
                 </div>
                 <div className={styles.tripDetail}>{trip.location}</div>
                 <div className={styles.tripDetail}>
-                  {formatDate(trip.start_date)} &middot; {trip.num_days} day
-                  {trip.num_days !== 1 ? "s" : ""}
+                  {formatDate(trip.startDate)} &middot; {trip.numDays} day
+                  {trip.numDays !== 1 ? "s" : ""}
                 </div>
               </div>
             ))
@@ -218,7 +239,7 @@ const UserProfilePage = () => {
           <div className={styles.sectionTitle}>Stats</div>
           <div className={styles.statCard}>
             <div className={styles.statValue}>
-              {profile.friends_count ?? 0}
+              {profile.friendsCount ?? 0}
             </div>
             <div className={styles.statLabel}>Fellow Travelers</div>
           </div>

@@ -9,18 +9,33 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 interface FollowUser {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   username: string;
-  follow_id: string;
+  followId: string;
 }
 
 interface UserSearchResult {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   username: string;
 }
+
+const mapFollowUser = (raw: Record<string, unknown>): FollowUser => ({
+  id: raw.id as string,
+  firstName: raw.first_name as string,
+  lastName: raw.last_name as string,
+  username: raw.username as string,
+  followId: raw.follow_id as string,
+});
+
+const mapUserSearchResult = (raw: Record<string, unknown>): UserSearchResult => ({
+  id: raw.id as string,
+  firstName: raw.first_name as string,
+  lastName: raw.last_name as string,
+  username: raw.username as string,
+});
 
 const ProfilePage = () => {
   const auth = useContext(AuthContext);
@@ -70,8 +85,8 @@ const ProfilePage = () => {
       const res = await authFetch(`${apiUrl}/profile`);
       if (res.ok) {
         const data = await res.json();
-        setFirstName(data.first_name || "");
-        setLastName(data.last_name || "");
+        setFirstName(data.first_name as string || "");
+        setLastName(data.last_name as string || "");
         setProfileUsername(data.username || "");
       }
     } catch {
@@ -84,7 +99,7 @@ const ProfilePage = () => {
       const res = await authFetch(`${apiUrl}/friends`);
       if (res.ok) {
         const data = await res.json();
-        setFriends(data.friends);
+        setFriends((data.friends as Record<string, unknown>[]).map(mapFollowUser));
       }
     } catch {
       // handled
@@ -111,7 +126,7 @@ const ProfilePage = () => {
         );
         if (res.ok) {
           const data = await res.json();
-          setSuggestions(data.users);
+          setSuggestions((data.users as Record<string, unknown>[]).map(mapUserSearchResult));
         }
       } catch {
         // handled
@@ -203,7 +218,7 @@ const ProfilePage = () => {
               <li key={user.id} className={styles.suggestionItem}>
                 <div>
                   <Link to={`/user/${user.id}`} className={styles.userName}>
-                    {user.first_name} {user.last_name}
+                    {user.firstName} {user.lastName}
                   </Link>
                   <span className={styles.userUsername}> @{user.username}</span>
                 </div>
@@ -238,7 +253,7 @@ const ProfilePage = () => {
               <li key={user.id} className={styles.userItem}>
                 <Link to={`/user/${user.id}`} className={styles.userLink}>
                   <span className={styles.userName}>
-                    {user.first_name} {user.last_name}
+                    {user.firstName} {user.lastName}
                   </span>
                   <span className={styles.userUsername}>@{user.username}</span>
                 </Link>

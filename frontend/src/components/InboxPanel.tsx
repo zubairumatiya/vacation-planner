@@ -8,16 +8,29 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 interface Notification {
   id: string;
-  from_user_id: string;
-  from_first_name: string;
-  from_last_name: string;
-  from_username: string;
+  fromUserId: string;
+  fromFirstName: string;
+  fromLastName: string;
+  fromUsername: string;
   type: string;
   status: string;
-  is_read: boolean;
-  created_at: string;
-  trip_name?: string;
+  isRead: boolean;
+  createdAt: string;
+  tripName?: string;
 }
+
+const mapNotification = (raw: Record<string, unknown>): Notification => ({
+  id: raw.id as string,
+  fromUserId: raw.from_user_id as string,
+  fromFirstName: raw.from_first_name as string,
+  fromLastName: raw.from_last_name as string,
+  fromUsername: raw.from_username as string,
+  type: raw.type as string,
+  status: raw.status as string,
+  isRead: raw.is_read as boolean,
+  createdAt: raw.created_at as string,
+  tripName: raw.trip_name as string | undefined,
+});
 
 interface InboxPanelProps {
   onBack: () => void;
@@ -66,7 +79,7 @@ const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelP
       const res = await authFetch(`${apiUrl}/notifications`);
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications);
+        setNotifications((data.notifications as Record<string, unknown>[]).map(mapNotification));
       }
     } catch {
       // handled
@@ -110,11 +123,11 @@ const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelP
   };
 
   const getNotificationText = (n: Notification) => {
-    const displayName = n.from_first_name
-      ? `${n.from_first_name} ${n.from_last_name}`
-      : n.from_username ? `@${n.from_username}` : "Someone";
+    const displayName = n.fromFirstName
+      ? `${n.fromFirstName} ${n.fromLastName}`
+      : n.fromUsername ? `@${n.fromUsername}` : "Someone";
     const nameLink = (
-      <Link to={`/user/${n.from_user_id}`} className={styles.itemEmail}>
+      <Link to={`/user/${n.fromUserId}`} className={styles.itemEmail}>
         {displayName}
       </Link>
     );
@@ -129,7 +142,7 @@ const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelP
       return (
         <>
           {nameLink} invited you to{" "}
-          {n.trip_name || "a trip"}
+          {n.tripName || "a trip"}
         </>
       );
     }

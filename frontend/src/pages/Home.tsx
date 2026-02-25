@@ -139,6 +139,19 @@ const EyeIcon = ({
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
+const mapHomeTrip = (raw: Record<string, unknown>): HomeTrip => ({
+  id: raw.id as string,
+  tripName: raw.trip_name as string,
+  location: raw.location as string,
+  startDate: raw.start_date as string,
+  endDate: raw.end_date as string,
+  role: raw.role as HomeTrip["role"],
+  ownerFirstName: raw.owner_first_name as string,
+  ownerLastName: raw.owner_last_name as string,
+  isPublic: raw.is_public as boolean,
+  isOpenInvite: raw.is_open_invite as boolean,
+});
+
 const formatDate = (dateStr: string) =>
   new Date(dateStr).toLocaleDateString("en-us", {
     year: "numeric",
@@ -235,8 +248,8 @@ const Home = () => {
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
-              const retryData = (await retryReq.json()) as HomeTrip[];
-              setTrips(retryData);
+              const retryData = (await retryReq.json()) as Record<string, unknown>[];
+              setTrips(retryData.map(mapHomeTrip));
               setLoading(false);
             }
           } else if (continueReq.err) {
@@ -245,8 +258,8 @@ const Home = () => {
             }
           }
         } else if (res.ok) {
-          const data = (await res.json()) as HomeTrip[];
-          setTrips(data);
+          const data = (await res.json()) as Record<string, unknown>[];
+          setTrips(data.map(mapHomeTrip));
           setLoading(false);
         } else {
           alert("Trouble completing req, please try again");
@@ -303,7 +316,7 @@ const Home = () => {
           const data = (await res.json()) as { is_public: boolean };
           setTrips((prev) =>
             prev.map((t) =>
-              t.id === tripId ? { ...t, is_public: data.is_public } : t,
+              t.id === tripId ? { ...t, isPublic: data.is_public } : t,
             ),
           );
         } else if (res.status === 401) {
@@ -333,7 +346,7 @@ const Home = () => {
               setTrips((prev) =>
                 prev.map((t) =>
                   t.id === tripId
-                    ? { ...t, is_public: retryData.is_public }
+                    ? { ...t, isPublic: retryData.is_public }
                     : t,
                 ),
               );
@@ -410,7 +423,7 @@ const Home = () => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const isPast = (trip: HomeTrip) => new Date(trip.end_date) < today;
+  const isPast = (trip: HomeTrip) => new Date(trip.endDate) < today;
 
   const myTrips = trips.filter((t) => t.role === "owner" && !isPast(t));
 
@@ -419,26 +432,26 @@ const Home = () => {
   const pastTrips = trips
     .filter((t) => isPast(t))
     .sort(
-      (a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime(),
+      (a, b) => new Date(b.endDate).getTime() - new Date(a.endDate).getTime(),
     );
 
   const renderTripCard = (v: HomeTrip) => {
-    const startFormat = formatDate(v.start_date);
-    const endFormat = formatDate(v.end_date);
-    const ownerName = `${v.owner_first_name} ${v.owner_last_name}`;
+    const startFormat = formatDate(v.startDate);
+    const endFormat = formatDate(v.endDate);
+    const ownerName = `${v.ownerFirstName} ${v.ownerLastName}`;
 
     if (editingId === v.id) {
       return (
         <form onSubmit={formSubmit} key={v.id}>
           <VacationForm
             preFill={{
-              trip_name: v.trip_name,
+              tripName: v.tripName,
               location: v.location,
-              start_date: v.start_date,
-              end_date: v.end_date,
+              startDate: v.startDate,
+              endDate: v.endDate,
               id: v.id,
-              is_public: v.is_public,
-              is_open_invite: v.is_open_invite,
+              isPublic: v.isPublic,
+              isOpenInvite: v.isOpenInvite,
             }}
             sendSubmissionResult={checkSubmission}
             disableOrNah={checkError}
@@ -470,7 +483,7 @@ const Home = () => {
               <div className="flex items-center justify-center w-fit relative px-8">
                 {v.role === "owner" && (
                   <EyeIcon
-                    isPublic={v.is_public}
+                    isPublic={v.isPublic}
                     onToggle={() => toggleVisibility(v.id)}
                     editing={editing}
                   />
@@ -485,12 +498,14 @@ const Home = () => {
                       editing ? "text-gray-500" : "text-indigo-500"
                     }`}
                   >
-                    {v.trip_name}
+                    {v.tripName}
                   </h2>
                 </Link>
-                <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
-                  {editing ? undefined : <img src={editIcon} alt="editIcon" />}
-                </div>
+                {v.role === "owner" && (
+                  <div className={styles.editIcon} onClick={() => editTrip(v.id)}>
+                    {editing ? undefined : <img src={editIcon} alt="editIcon" />}
+                  </div>
+                )}
                 <div className={"flex items-center"}>
                   {v.role === "owner" && !editing && (
                     <div
@@ -547,7 +562,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-        {v.is_open_invite && (v.role === "owner" ? v.is_public : true) && (
+        {v.isOpenInvite && (
           <span
             style={{
               backgroundColor: "#16a34a",
@@ -570,9 +585,9 @@ const Home = () => {
   };
 
   const renderPastTripCard = (v: HomeTrip) => {
-    const startFormat = formatDate(v.start_date);
-    const endFormat = formatDate(v.end_date);
-    const ownerName = `${v.owner_first_name} ${v.owner_last_name}`;
+    const startFormat = formatDate(v.startDate);
+    const endFormat = formatDate(v.endDate);
+    const ownerName = `${v.ownerFirstName} ${v.ownerLastName}`;
 
     return (
       <div
@@ -586,10 +601,9 @@ const Home = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
-                  {v.trip_name}
+                  {v.tripName}
                 </h2>
-                {v.is_open_invite &&
-                  (v.role === "owner" ? v.is_public : true) && (
+                {v.isOpenInvite && (
                     <span
                       style={{
                         backgroundColor: "#16a34a",

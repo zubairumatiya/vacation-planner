@@ -74,13 +74,13 @@ const QuestionMarkIcon = ({
 
 type Props = {
   preFill?: {
-    trip_name: string;
+    tripName: string;
     location: string;
-    start_date: string;
-    end_date: string;
+    startDate: string;
+    endDate: string;
     id: string;
-    is_public?: boolean;
-    is_open_invite?: boolean;
+    isPublic?: boolean;
+    isOpenInvite?: boolean;
   };
   disableOrNah: (fieldError: boolean) => void;
   submit: boolean;
@@ -253,17 +253,17 @@ const VacationForm = (props?: Props) => {
   };
 
   let startPreFill;
-  if (!props?.preFill?.start_date) {
+  if (!props?.preFill?.startDate) {
     startPreFill = undefined;
   } else {
-    startPreFill = getLocalDate(new Date(props?.preFill?.start_date));
+    startPreFill = getLocalDate(new Date(props?.preFill?.startDate));
   }
 
   let endPreFill;
-  if (!props?.preFill?.end_date) {
+  if (!props?.preFill?.endDate) {
     endPreFill = undefined;
   } else {
-    endPreFill = getLocalDate(new Date(props?.preFill?.end_date));
+    endPreFill = getLocalDate(new Date(props?.preFill?.endDate));
   }
 
   const [startDate, setStartDate] = useState(startPreFill ?? "");
@@ -271,11 +271,11 @@ const VacationForm = (props?: Props) => {
   const [fieldError, setFieldError] = useState(true);
   const [errMessage, setErrMessage] = useState("");
   const [oneYearRange, setOneYearRange] = useState(oneYear);
-  const [tripName, setTripName] = useState(props?.preFill?.trip_name ?? "");
+  const [tripName, setTripName] = useState(props?.preFill?.tripName ?? "");
   const [location, setLocation] = useState(props?.preFill?.location ?? "");
   const [hideSuggestions, setHideSuggestions] = useState(true);
-  const [isPublic, setIsPublic] = useState(props?.preFill?.is_public ?? false);
-  const [isOpenInvite, setIsOpenInvite] = useState(props?.preFill?.is_open_invite ?? false);
+  const [isPublic, setIsPublic] = useState(props?.preFill?.isPublic ?? false);
+  const [isOpenInvite, setIsOpenInvite] = useState(props?.preFill?.isOpenInvite ?? false);
   const skipEORef = useRef<boolean | undefined>(undefined);
 
   useEffect(() => {

@@ -7,18 +7,18 @@ declare global {
   // Typed contracts between frontend and backend.
   // Field names reflect camelCase (post-snakeToCamel) unless noted.
 
-  /** GET /home — trips come back in snake_case (no snakeToCamel on this route) */
+  /** GET /home — raw response is snake_case; mapped to camelCase at fetch boundary */
   interface HomeTrip {
     id: string;
-    trip_name: string;
+    tripName: string;
     location: string;
-    start_date: string;
-    end_date: string;
+    startDate: string;
+    endDate: string;
     role: "owner" | "editor" | "reader";
-    owner_first_name: string;
-    owner_last_name: string;
-    is_public: boolean;
-    is_open_invite: boolean;
+    ownerFirstName: string;
+    ownerLastName: string;
+    isPublic: boolean;
+    isOpenInvite: boolean;
   }
 
   /** Raw schedule item from the API (dates are ISO strings, not yet Date objects) */

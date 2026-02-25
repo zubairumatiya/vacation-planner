@@ -7,18 +7,33 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 interface Friend {
   id: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   username: string;
 }
 
 interface TripShare {
-  user_id: string;
-  first_name: string;
-  last_name: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
   username: string;
   role: string;
 }
+
+const mapFriend = (raw: Record<string, unknown>): Friend => ({
+  id: raw.id as string,
+  firstName: raw.first_name as string,
+  lastName: raw.last_name as string,
+  username: raw.username as string,
+});
+
+const mapTripShare = (raw: Record<string, unknown>): TripShare => ({
+  userId: raw.user_id as string,
+  firstName: raw.first_name as string,
+  lastName: raw.last_name as string,
+  username: raw.username as string,
+  role: raw.role as string,
+});
 
 interface SharePanelProps {
   tripId: string;
@@ -87,22 +102,22 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
 
         if (friendsRes.ok) {
           const data = await friendsRes.json();
-          friendsList = data.friends;
+          friendsList = (data.friends as Record<string, unknown>[]).map(mapFriend);
           setFriends(friendsList);
         }
         if (sharesRes.ok) {
           const data = await sharesRes.json();
-          sharesList = data.shares;
-          pendingList = data.pendingInvitations ?? [];
+          sharesList = (data.shares as Record<string, unknown>[]).map(mapTripShare);
+          pendingList = (data.pendingInvitations ?? []).map(mapTripShare);
           setExistingShares(sharesList);
-          setPendingUsers(new Set(pendingList.map((p) => p.user_id)));
+          setPendingUsers(new Set(pendingList.map((p) => p.userId)));
         }
 
         // Pre-populate selections from existing shares
         const initial = new Map<string, "reader" | "editor">();
         for (const share of sharesList) {
           initial.set(
-            share.user_id,
+            share.userId,
             share.role === "editor" ? "editor" : "reader",
           );
         }
@@ -119,7 +134,7 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
     if (pendingUsers.has(friendId) || selectedUsers.has(friendId)) return;
 
     // Select
-    const isExisting = existingShares.some((s) => s.user_id === friendId);
+    const isExisting = existingShares.some((s) => s.userId === friendId);
     setSelectedUsers((prev) => new Map(prev).set(friendId, "reader"));
     if (!isExisting) {
       setPendingInvites((prev) => new Set(prev).add(friendId));
@@ -137,7 +152,7 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
 
     // Selected users: deselect (uninvite)
     if (selectedUsers.has(friendId)) {
-      const isExisting = existingShares.some((s) => s.user_id === friendId);
+      const isExisting = existingShares.some((s) => s.userId === friendId);
       setSelectedUsers((prev) => {
         const next = new Map(prev);
         next.delete(friendId);
@@ -154,7 +169,7 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
     }
 
     // Unselected users: select
-    const isExisting = existingShares.some((s) => s.user_id === friendId);
+    const isExisting = existingShares.some((s) => s.userId === friendId);
     setSelectedUsers((prev) => new Map(prev).set(friendId, "reader"));
     if (!isExisting) {
       setPendingInvites((prev) => new Set(prev).add(friendId));
@@ -187,7 +202,7 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
     e.stopPropagation();
     setSelectedUsers((prev) => new Map(prev).set(friendId, role));
 
-    const isExisting = existingShares.some((s) => s.user_id === friendId);
+    const isExisting = existingShares.some((s) => s.userId === friendId);
     if (isExisting) {
       try {
         await authFetch(`${apiUrl}/share-trip/${tripId}/${friendId}`, {
@@ -217,8 +232,8 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
 
       // Remove access for deselected existing shares
       for (const share of existingShares) {
-        if (!selectedUsers.has(share.user_id)) {
-          await authFetch(`${apiUrl}/share-trip/${tripId}/${share.user_id}`, {
+        if (!selectedUsers.has(share.userId)) {
+          await authFetch(`${apiUrl}/share-trip/${tripId}/${share.userId}`, {
             method: "DELETE",
           });
         }
@@ -239,11 +254,11 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
     if (pendingInvites.size > 0) return true;
     // Existing shares removed
     for (const share of existingShares) {
-      if (!selectedUsers.has(share.user_id)) return true;
+      if (!selectedUsers.has(share.userId)) return true;
     }
     // Existing shares with changed roles
     for (const share of existingShares) {
-      const currentRole = selectedUsers.get(share.user_id);
+      const currentRole = selectedUsers.get(share.userId);
       const originalRole = share.role === "editor" ? "editor" : "reader";
       if (currentRole && currentRole !== originalRole) return true;
     }
@@ -310,13 +325,13 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
                           ? "✓"
                           : isCircleHovered
                             ? "✓"
-                            : getInitials(friend.first_name, friend.last_name)}
+                            : getInitials(friend.firstName, friend.lastName)}
                 </div>
                 <div className={styles.nameBlock}>
                   <div
                     className={`${styles.name} ${isPending ? styles.namePending : ""}`}
                   >
-                    {friend.first_name} {friend.last_name}
+                    {friend.firstName} {friend.lastName}
                   </div>
                   <div className={styles.username}>
                     {isPending ? "Pending" : `@${friend.username}`}
