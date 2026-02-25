@@ -23,6 +23,12 @@ import {
   ShareTripBody,
   UpdateShareBody,
   TripShare,
+  Country,
+  UserCountry,
+  TravelLogResponse,
+  AddCountryBody,
+  UpdateVisibilityBody,
+  CountryIdParam,
 } from "../types/express.js";
 
 // GET /profile - get current user's profile
@@ -439,8 +445,8 @@ router.get(
         return;
       }
 
-      // Friend: full response with public trips and friend count
-      const [tripsResult, friendsCountResult] = await Promise.all([
+      // Friend: full response with public trips and travel log
+      const [tripsResult, travelLogResult] = await Promise.all([
         db.query<UserPublicTrip>(
           `SELECT t.trip_name, t.location, t.start_date,
                   (t.end_date - t.start_date) AS num_days,
@@ -452,8 +458,12 @@ router.get(
            ORDER BY t.start_date ASC`,
           [targetId],
         ),
-        db.query(
-          "SELECT COUNT(*) FROM follows WHERE (requester_id = $1 OR receiver_id = $1) AND status = 'accepted'",
+        db.query<UserCountry>(
+          `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days
+           FROM user_countries uc
+           JOIN countries c ON c.id = uc.country_id
+           WHERE uc.user_id = $1 AND uc.visibility IN ('public', 'friends')
+           ORDER BY c.continent, c.name`,
           [targetId],
         ),
       ]);
@@ -465,8 +475,8 @@ router.get(
         username: user.username,
         is_friend: true,
         is_pending: false,
-        friends_count: parseInt(friendsCountResult.rows[0].count),
         upcoming_trips: tripsResult.rows,
+        travel_log: travelLogResult.rows,
       });
     } catch (err) {
       next(err);
@@ -668,6 +678,214 @@ router.delete(
         [req.params.tripId, req.params.userId],
       );
       res.status(200).json({ message: "Access removed" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /countries/search?q=... - search countries for autocomplete
+router.get(
+  "/countries/search",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, SearchQuery>,
+    res: TypedResponse<{ countries: Country[] }>,
+    next: NextFunction,
+  ) => {
+    try {
+      const q = req.query.q;
+      if (!q || q.length < 1) {
+        res.status(200).json({ countries: [] });
+        return;
+      }
+      const result: QueryResult<Country> = await db.query(
+        "SELECT id, name, continent FROM countries WHERE name ILIKE $1 ORDER BY name LIMIT 10",
+        [`${q}%`],
+      );
+      res.status(200).json({ countries: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /travel-log - get current user's travel log
+router.get(
+  "/travel-log",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest,
+    res: TypedResponse<TravelLogResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const result: QueryResult<UserCountry> = await db.query(
+        `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days
+         FROM user_countries uc
+         JOIN countries c ON c.id = uc.country_id
+         WHERE uc.user_id = $1
+         ORDER BY c.continent, c.name`,
+        [userId],
+      );
+      res.status(200).json({ countries: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /travel-log/:userId - get another user's travel log (filtered by visibility)
+router.get(
+  "/travel-log/:userId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, UserIdParam>,
+    res: TypedResponse<TravelLogResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const viewerId = req.user.id;
+      const targetId = req.params.userId;
+
+      // Check if friends
+      const friendResult = await db.query(
+        "SELECT status FROM follows WHERE (requester_id = $1 AND receiver_id = $2) OR (requester_id = $2 AND receiver_id = $1)",
+        [viewerId, targetId],
+      );
+      const isFriend = friendResult.rows[0]?.status === "accepted";
+
+      let result: QueryResult<UserCountry>;
+      if (isFriend) {
+        // Friends can see public and friends-only countries
+        result = await db.query(
+          `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days
+           FROM user_countries uc
+           JOIN countries c ON c.id = uc.country_id
+           WHERE uc.user_id = $1 AND uc.visibility IN ('public', 'friends')
+           ORDER BY c.continent, c.name`,
+          [targetId],
+        );
+      } else {
+        // Non-friends see nothing
+        result = { rows: [] } as unknown as QueryResult<UserCountry>;
+      }
+      res.status(200).json({ countries: result.rows });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /travel-log - add a country to travel log
+router.post(
+  "/travel-log",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<AddCountryBody>,
+    res: TypedResponse<{ country: UserCountry } | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const { countryId, visitDate, numDays } = req.body;
+
+      // Normalize month-only date (YYYY-MM) to first of month
+      const normalizedDate = visitDate
+        ? visitDate.length === 7 ? `${visitDate}-01` : visitDate
+        : null;
+
+      // Verify country exists
+      const countryCheck = await db.query(
+        "SELECT id, name, continent FROM countries WHERE id = $1",
+        [countryId],
+      );
+      if (countryCheck.rows.length === 0) {
+        res.status(400).json({ message: "Invalid country" });
+        return;
+      }
+
+      const result = await db.query(
+        `INSERT INTO user_countries (user_id, country_id, visit_date, num_days)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (user_id, country_id) DO NOTHING
+         RETURNING id, country_id, visibility, visit_date, num_days`,
+        [userId, countryId, normalizedDate, numDays || null],
+      );
+
+      if (result.rows.length === 0) {
+        res.status(409).json({ message: "Country already in travel log" });
+        return;
+      }
+
+      const country = countryCheck.rows[0];
+      res.status(201).json({
+        country: {
+          id: result.rows[0].id,
+          country_id: country.id,
+          country_name: country.name,
+          continent: country.continent,
+          visibility: result.rows[0].visibility,
+          visit_date: result.rows[0].visit_date,
+          num_days: result.rows[0].num_days,
+        },
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /travel-log/:countryId - update visibility
+router.patch(
+  "/travel-log/:countryId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<UpdateVisibilityBody, unknown, CountryIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const { visibility } = req.body;
+
+      if (!["public", "friends", "private"].includes(visibility)) {
+        res.status(400).json({ message: "Invalid visibility" });
+        return;
+      }
+
+      const result = await db.query(
+        "UPDATE user_countries SET visibility = $1 WHERE id = $2 AND user_id = $3 RETURNING *",
+        [visibility, req.params.countryId, userId],
+      );
+      if (result.rowCount === 0) {
+        res.sendStatus(404);
+        return;
+      }
+      res.status(200).json({ message: "Visibility updated" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// DELETE /travel-log/:countryId - remove country from travel log
+router.delete(
+  "/travel-log/:countryId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, CountryIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      await db.query(
+        "DELETE FROM user_countries WHERE id = $1 AND user_id = $2",
+        [req.params.countryId, userId],
+      );
+      res.status(200).json({ message: "Country removed" });
     } catch (err) {
       next(err);
     }

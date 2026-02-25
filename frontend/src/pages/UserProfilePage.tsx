@@ -1,11 +1,22 @@
-import { useEffect, useState, useContext, useRef } from "react";
+import { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import profileIcon from "../assets/profile.svg";
 import styles from "../styles/UserProfilePage.module.css";
+import TravelLog from "../components/TravelLog";
 
 const apiUrl = import.meta.env.VITE_API_URL;
+
+interface UserCountry {
+  id: string;
+  countryId: number;
+  countryName: string;
+  continent: string;
+  visibility: "public" | "friends" | "private";
+  visitDate: string | null;
+  numDays: number | null;
+}
 
 interface UserPublicTrip {
   tripName: string;
@@ -22,8 +33,8 @@ interface UserProfile {
   username: string;
   isFriend: boolean;
   isPending: boolean;
-  friendsCount?: number;
   upcomingTrips?: UserPublicTrip[];
+  travelLog?: UserCountry[];
 }
 
 const mapUserPublicTrip = (raw: Record<string, unknown>): UserPublicTrip => ({
@@ -34,6 +45,16 @@ const mapUserPublicTrip = (raw: Record<string, unknown>): UserPublicTrip => ({
   isOpenInvite: raw.is_open_invite as boolean,
 });
 
+const mapUserCountry = (raw: Record<string, unknown>): UserCountry => ({
+  id: raw.id as string,
+  countryId: raw.country_id as number,
+  countryName: raw.country_name as string,
+  continent: raw.continent as string,
+  visibility: raw.visibility as "public" | "friends" | "private",
+  visitDate: (raw.visit_date as string) || null,
+  numDays: (raw.num_days as number) ?? null,
+});
+
 const mapUserProfile = (raw: Record<string, unknown>): UserProfile => ({
   id: raw.id as string,
   firstName: raw.first_name as string,
@@ -41,9 +62,11 @@ const mapUserProfile = (raw: Record<string, unknown>): UserProfile => ({
   username: raw.username as string,
   isFriend: raw.is_friend as boolean,
   isPending: raw.is_pending as boolean,
-  friendsCount: raw.friends_count as number | undefined,
   upcomingTrips: raw.upcoming_trips
     ? (raw.upcoming_trips as Record<string, unknown>[]).map(mapUserPublicTrip)
+    : undefined,
+  travelLog: raw.travel_log
+    ? (raw.travel_log as Record<string, unknown>[]).map(mapUserCountry)
     : undefined,
 });
 
@@ -174,7 +197,7 @@ const UserProfilePage = () => {
     );
   }
 
-  // Friend view: pic + name top center, trips left, stats right
+  // Friend view: pic + name top center, trips left, travel log right
   return (
     <div className={styles.container}>
       <div className={styles.profileHeader}>
@@ -236,13 +259,11 @@ const UserProfilePage = () => {
         </div>
 
         <div className={styles.rightColumn}>
-          <div className={styles.sectionTitle}>Stats</div>
-          <div className={styles.statCard}>
-            <div className={styles.statValue}>
-              {profile.friendsCount ?? 0}
-            </div>
-            <div className={styles.statLabel}>Fellow Travelers</div>
-          </div>
+          <TravelLog
+            authFetch={authFetch}
+            readOnly
+            countries={profile.travelLog}
+          />
         </div>
       </div>
     </div>

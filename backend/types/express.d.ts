@@ -173,8 +173,8 @@ export interface UserProfileResponse {
   username: string;
   is_friend: boolean;
   is_pending: boolean;
-  friends_count?: number;
   upcoming_trips?: UserPublicTrip[];
+  travel_log?: UserCountry[];
 }
 
 export interface AddVacationResponse {
@@ -408,6 +408,40 @@ export interface TripShare {
 
 export interface SearchQuery extends Query {
   q?: string;
+}
+
+export interface Country {
+  id: number;
+  name: string;
+  continent: string;
+}
+
+export interface UserCountry {
+  id: string;
+  country_id: number;
+  country_name: string;
+  continent: string;
+  visibility: "public" | "friends" | "private";
+  visit_date: string | null;
+  num_days: number | null;
+}
+
+export interface TravelLogResponse {
+  countries: UserCountry[];
+}
+
+export interface AddCountryBody {
+  countryId: number;
+  visitDate?: string;
+  numDays?: number;
+}
+
+export interface UpdateVisibilityBody {
+  visibility: "public" | "friends" | "private";
+}
+
+export interface CountryIdParam extends ParamsDictionary {
+  countryId: string;
 }
 
 export interface UsernameQuery extends Query {

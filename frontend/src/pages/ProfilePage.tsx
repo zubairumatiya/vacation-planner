@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import profileIcon from "../assets/profile.svg";
 import styles from "../styles/ProfilePage.module.css";
+import TravelLog from "../components/TravelLog";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -52,7 +53,9 @@ const ProfilePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<UserSearchResult[]>([]);
   const [pendingFollows, setPendingFollows] = useState<Set<string>>(new Set());
+  const [showFriendSuggestions, setShowFriendSuggestions] = useState(true);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const friendSearchRef = useRef<HTMLDivElement>(null);
 
   const authFetch = async (url: string, options: RequestInit = {}) => {
     const headers = {
@@ -111,6 +114,17 @@ const ProfilePage = () => {
     loadProfile();
     loadFriends();
   }, [token]);
+
+  // Click outside to hide friend suggestions
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (friendSearchRef.current && !friendSearchRef.current.contains(e.target as Node)) {
+        setShowFriendSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const handleSearch = (value: string) => {
     setSearchQuery(value);
@@ -203,71 +217,80 @@ const ProfilePage = () => {
         </button>
       </div>
 
-      <div className={styles.addFriendSection}>
-        <div className={styles.sectionTitle}>Add Friend</div>
-        <input
-          type="text"
-          className={styles.searchInput}
-          placeholder="Search by name or username..."
-          value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-        />
-        {suggestions.length > 0 && (
-          <ul className={styles.suggestions}>
-            {suggestions.map((user) => (
-              <li key={user.id} className={styles.suggestionItem}>
-                <div>
-                  <Link to={`/user/${user.id}`} className={styles.userName}>
-                    {user.firstName} {user.lastName}
-                  </Link>
-                  <span className={styles.userUsername}> @{user.username}</span>
-                </div>
-                {isFriend(user.id) ? (
-                  <span className={styles.pendingText}>Friends</span>
-                ) : isPending(user.id) ? (
-                  <span className={styles.pendingText}>Pending</span>
-                ) : (
-                  <button
-                    type="button"
-                    className={styles.followBtn}
-                    onClick={() => handleFollow(user.id)}
-                  >
-                    Add Friend
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>
-          Fellow Travelers ({friends.length})
+      <div className={styles.body}>
+        <div className={styles.leftColumn}>
+          <TravelLog authFetch={authFetch} />
         </div>
-        {friends.length === 0 ? (
-          <p className={styles.emptyText}>No fellow travelers yet</p>
-        ) : (
-          <ul className={styles.userList}>
-            {friends.map((user) => (
-              <li key={user.id} className={styles.userItem}>
-                <Link to={`/user/${user.id}`} className={styles.userLink}>
-                  <span className={styles.userName}>
-                    {user.firstName} {user.lastName}
-                  </span>
-                  <span className={styles.userUsername}>@{user.username}</span>
-                </Link>
-                <button
-                  type="button"
-                  className={styles.unfollowBtn}
-                  onClick={() => handleRemoveFriend(user.id)}
-                >
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+
+        <div className={styles.rightColumn}>
+          <div className={styles.addFriendSection} ref={friendSearchRef}>
+            <div className={styles.sectionTitle}>Add Friend</div>
+            <input
+              type="text"
+              className={styles.searchInput}
+              placeholder="Search by name or username..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              onFocus={() => setShowFriendSuggestions(true)}
+            />
+            {showFriendSuggestions && suggestions.length > 0 && (
+              <ul className={styles.suggestions}>
+                {suggestions.map((user) => (
+                  <li key={user.id} className={styles.suggestionItem}>
+                    <div>
+                      <Link to={`/user/${user.id}`} className={styles.userName}>
+                        {user.firstName} {user.lastName}
+                      </Link>
+                      <span className={styles.userUsername}> @{user.username}</span>
+                    </div>
+                    {isFriend(user.id) ? (
+                      <span className={styles.pendingText}>Friends</span>
+                    ) : isPending(user.id) ? (
+                      <span className={styles.pendingText}>Pending</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.followBtn}
+                        onClick={() => handleFollow(user.id)}
+                      >
+                        Add Friend
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className={styles.section}>
+            <div className={styles.sectionTitle}>
+              Fellow Travelers ({friends.length})
+            </div>
+            {friends.length === 0 ? (
+              <p className={styles.emptyText}>No fellow travelers yet</p>
+            ) : (
+              <ul className={styles.userList}>
+                {friends.map((user) => (
+                  <li key={user.id} className={styles.userItem}>
+                    <Link to={`/user/${user.id}`} className={styles.userLink}>
+                      <span className={styles.userName}>
+                        {user.firstName} {user.lastName}
+                      </span>
+                      <span className={styles.userUsername}>@{user.username}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      className={styles.unfollowBtn}
+                      onClick={() => handleRemoveFriend(user.id)}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
