@@ -448,33 +448,23 @@ router.post(
         [email],
       );
 
-      if (result.rows.length < 1) {
-        res.sendStatus(400);
-        return;
-      }
-      const token: string = crypto.randomBytes(32).toString("hex");
+      if (result.rows.length > 0) {
+        const token: string = crypto.randomBytes(32).toString("hex");
 
-      await db.query(
-        "INSERT INTO password_reset (token, email) VALUES ($1,$2)",
-        [token, email],
-      );
-      console.log(
-        "email:",
-        email,
-        `${appName}: Reset Password`,
-        "Password reset link",
-        BACKEND_BASE_URL,
-        "reset-password",
-        token,
-      );
-      await emailSender(
-        email,
-        `${appName}: Reset Password`,
-        "Password reset link",
-        BACKEND_BASE_URL,
-        "reset-password",
-        token,
-      );
+        await db.query(
+          "INSERT INTO password_reset (token, email) VALUES ($1,$2)",
+          [token, email],
+        );
+        await emailSender(
+          email,
+          `${appName}: Reset Password`,
+          "Password reset link",
+          BACKEND_BASE_URL,
+          "reset-password",
+          token,
+        );
+      }
+      // Always return 200 to prevent user enumeration
       res.sendStatus(200);
       return;
     } catch (err) {
