@@ -1,0 +1,465 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.75rem;
+}
+
+.breadcrumb {
+  color: #aaa;
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.breadcrumb:hover {
+  color: #fcf7ea;
+}
+
+.separator {
+  color: #666;
+  font-size: 1rem;
+  margin: 0 0.25rem;
+}
+
+.countryTitle {
+  color: #2fe782;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+}
+
+.layoutBtn {
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  transition: all 0.15s;
+}
+
+.layoutBtn:hover {
+  border-color: #aaa;
+  color: #aaa;
+}
+
+.layoutBtnActive {
+  border-color: #2fe782;
+  color: #2fe782;
+}
+
+.deleteBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  margin-left: 0.25rem;
+  display: flex;
+  align-items: center;
+  color: #888;
+  transition: color 0.15s;
+}
+
+.deleteBtn:hover {
+  color: #e53e3e;
+}
+
+/* Delete confirmation modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 360px;
+  width: 90%;
+}
+
+.modalTitle {
+  color: #fcf7ea;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.modalText {
+  color: #aaa;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.modalDeleteBtn {
+  background-color: #e53e3e;
+  border: none;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.modalDeleteBtn:hover {
+  background-color: #c53030;
+}
+
+.modalCancelBtn {
+  background: transparent;
+  border: 1px solid #888;
+  color: #888;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.modalCancelBtn:hover {
+  border-color: #fcf7ea;
+  color: #fcf7ea;
+}
+
+/* Sections */
+.section {
+  margin-bottom: 1.5rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #333;
+  padding-bottom: 0.35rem;
+}
+
+.sectionTitle {
+  color: #2fe782;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.addItemBtn {
+  background: transparent;
+  border: 1.5px solid #2fe782;
+  color: #2fe782;
+  width: 1.2rem;
+  height: 1.2rem;
+  min-width: 1.2rem;
+  min-height: 1.2rem;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 0.1rem 0;
+  transition: all 0.15s;
+  aspect-ratio: 1;
+}
+
+.addItemBtn:hover {
+  background-color: #2fe782;
+  color: #222;
+}
+
+/* Add item form */
+.addForm {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.addInput {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.addInput:focus {
+  border-color: #2fe782;
+}
+
+.addConfirmBtn {
+  background-color: #2fe782;
+  border: none;
+  color: #222;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addConfirmBtn:hover {
+  background-color: #00bf55;
+}
+
+.addCancelBtn {
+  background: transparent;
+  border: 1px solid #888;
+  color: #888;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.addCancelBtn:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+/* Place items */
+.placeList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.placeItem {
+  display: flex;
+
+  border-bottom: 1px solid #2a2a2a;
+  padding: 0.35rem 0;
+}
+
+.placeItem:last-child {
+  border-bottom: none;
+}
+
+.placeRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-direction: column;
+  flex: 0.8;
+}
+
+.placeName {
+  color: #fcf7ea;
+  font-size: 0.85rem;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.placeActions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  flex: 0.2;
+}
+
+.iconBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  transition: opacity 0.15s;
+}
+
+.starBtn {
+  composes: iconBtn;
+  color: #888;
+}
+
+.starBtnActive {
+  composes: iconBtn;
+  color: #f6ad55;
+}
+
+.pukeBtn {
+  composes: iconBtn;
+  opacity: 0.4;
+}
+
+.pukeBtnActive {
+  composes: iconBtn;
+  opacity: 1;
+}
+
+.addNoteBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #888;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.placeItem:hover .addNoteBtn {
+  opacity: 1;
+}
+
+.addNoteBtn:hover {
+  color: #2fe782;
+}
+
+.placeDeleteBtn {
+  composes: iconBtn;
+  color: #888;
+  font-size: 0.8rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.placeItem:hover .placeDeleteBtn {
+  opacity: 1;
+}
+
+.placeDeleteBtn:hover {
+  color: #e53e3e;
+}
+
+/* Note area */
+.noteArea {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.25rem 1rem;
+}
+
+.noteInput {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.75rem;
+  outline: none;
+  resize: none;
+  min-height: 2rem;
+}
+
+.noteInput:focus {
+  border-color: #2fe782;
+}
+
+.noteSaveBtn {
+  background-color: #2fe782;
+  border: none;
+  color: #222;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.noteSaveBtn:hover {
+  background-color: #00bf55;
+}
+
+.noteCancelBtn {
+  background: transparent;
+  border: 1px solid #888;
+  color: #888;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.noteCancelBtn:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.noteDisplay {
+  color: #aaa;
+  font-size: 0.75rem;
+  padding: 0.15rem 0 0 1rem;
+  font-style: italic;
+}
+
+.emptyText {
+  color: #666;
+  font-size: 0.8rem;
+  padding: 0.25rem 0;
+}
+
+/* Layout modes */
+.rowsLayout {
+  display: flex;
+  flex-direction: column;
+}
+
+.columnsLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .columnsLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .addNoteBtn {
+    opacity: 1;
+  }
+
+  .placeDeleteBtn {
+    opacity: 1;
+  }
+}

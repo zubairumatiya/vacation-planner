@@ -29,6 +29,12 @@ import {
   AddCountryBody,
   UpdateVisibilityBody,
   CountryIdParam,
+  UserCountryIdParam,
+  PlaceIdParam,
+  CountryPlace,
+  AddPlaceBody,
+  UpdatePlaceBody,
+  CountryDetailResponse,
 } from "../types/express.js";
 
 // GET /profile - get current user's profile
@@ -886,6 +892,204 @@ router.delete(
         [req.params.countryId, userId],
       );
       res.status(200).json({ message: "Country removed" });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /travel-log/:userCountryId/detail - get country detail with places (privacy-aware)
+router.get(
+  "/travel-log/:userCountryId/detail",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, UserCountryIdParam>,
+    res: TypedResponse<CountryDetailResponse | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const viewerId = req.user.id;
+      const userCountryId = req.params.userCountryId;
+
+      // Get the user_country with user info and country name
+      const ucResult = await db.query(
+        `SELECT uc.id, uc.user_id, uc.country_id, c.name AS country_name, c.continent,
+                uc.visibility, uc.visit_date, uc.num_days,
+                u.first_name, u.last_name
+         FROM user_countries uc
+         JOIN countries c ON c.id = uc.country_id
+         JOIN users u ON u.id = uc.user_id
+         WHERE uc.id = $1`,
+        [userCountryId],
+      );
+
+      if (ucResult.rows.length === 0) {
+        res.status(404).json({ message: "Country not found" });
+        return;
+      }
+
+      const uc = ucResult.rows[0];
+      const isOwner = uc.user_id === viewerId;
+
+      // If not owner, check friendship and visibility
+      if (!isOwner) {
+        if (uc.visibility !== "public") {
+          res.status(403).json({ message: "Access denied" });
+          return;
+        }
+        const friendCheck = await db.query(
+          "SELECT status FROM follows WHERE (requester_id = $1 AND receiver_id = $2) OR (requester_id = $2 AND receiver_id = $1)",
+          [viewerId, uc.user_id],
+        );
+        if (friendCheck.rows[0]?.status !== "accepted") {
+          res.status(403).json({ message: "Access denied" });
+          return;
+        }
+      }
+
+      // Get places
+      const placesResult: QueryResult<CountryPlace> = await db.query(
+        `SELECT * FROM country_places WHERE user_country_id = $1 ORDER BY category, sort_index, created_at`,
+        [userCountryId],
+      );
+
+      res.status(200).json({
+        userCountry: uc,
+        places: placesResult.rows,
+        isOwner,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /travel-log/:userCountryId/places - add a place (owner only)
+router.post(
+  "/travel-log/:userCountryId/places",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<AddPlaceBody, unknown, UserCountryIdParam>,
+    res: TypedResponse<{ place: CountryPlace } | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const { category, name } = req.body;
+
+      if (!category || !name || !["city", "eat", "stay", "excursion"].includes(category)) {
+        res.status(400).json({ message: "Invalid category or name" });
+        return;
+      }
+
+      // Verify ownership
+      const ucCheck = await db.query(
+        "SELECT id FROM user_countries WHERE id = $1 AND user_id = $2",
+        [req.params.userCountryId, userId],
+      );
+      if (ucCheck.rows.length === 0) {
+        res.status(403).json({ message: "Not authorized" });
+        return;
+      }
+
+      const result: QueryResult<CountryPlace> = await db.query(
+        `INSERT INTO country_places (user_country_id, category, name)
+         VALUES ($1, $2, $3) RETURNING *`,
+        [req.params.userCountryId, category, name.trim()],
+      );
+
+      res.status(201).json({ place: result.rows[0] });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /travel-log/places/:placeId - update a place (owner only)
+router.patch(
+  "/travel-log/places/:placeId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<UpdatePlaceBody, unknown, PlaceIdParam>,
+    res: TypedResponse<{ place: CountryPlace } | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+
+      // Verify ownership through join
+      const ownerCheck = await db.query(
+        `SELECT cp.id FROM country_places cp
+         JOIN user_countries uc ON uc.id = cp.user_country_id
+         WHERE cp.id = $1 AND uc.user_id = $2`,
+        [req.params.placeId, userId],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.status(403).json({ message: "Not authorized" });
+        return;
+      }
+
+      const updates: string[] = [];
+      const values: unknown[] = [];
+      let paramIndex = 1;
+
+      if (req.body.isFavorite !== undefined) {
+        updates.push(`is_favorite = $${paramIndex++}`);
+        values.push(req.body.isFavorite);
+      }
+      if (req.body.isPuke !== undefined) {
+        updates.push(`is_puke = $${paramIndex++}`);
+        values.push(req.body.isPuke);
+      }
+      if (req.body.note !== undefined) {
+        updates.push(`note = $${paramIndex++}`);
+        values.push(req.body.note);
+      }
+
+      if (updates.length === 0) {
+        res.status(400).json({ message: "No fields to update" });
+        return;
+      }
+
+      values.push(req.params.placeId);
+      const result: QueryResult<CountryPlace> = await db.query(
+        `UPDATE country_places SET ${updates.join(", ")} WHERE id = $${paramIndex} RETURNING *`,
+        values,
+      );
+
+      res.status(200).json({ place: result.rows[0] });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// DELETE /travel-log/places/:placeId - delete a place (owner only)
+router.delete(
+  "/travel-log/places/:placeId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, PlaceIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+
+      // Verify ownership through join
+      const ownerCheck = await db.query(
+        `SELECT cp.id FROM country_places cp
+         JOIN user_countries uc ON uc.id = cp.user_country_id
+         WHERE cp.id = $1 AND uc.user_id = $2`,
+        [req.params.placeId, userId],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.status(403).json({ message: "Not authorized" });
+        return;
+      }
+
+      await db.query("DELETE FROM country_places WHERE id = $1", [req.params.placeId]);
+      res.status(200).json({ message: "Place removed" });
     } catch (err) {
       next(err);
     }

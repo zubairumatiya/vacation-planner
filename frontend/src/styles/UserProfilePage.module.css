@@ -55,7 +55,9 @@
   cursor: pointer;
   margin-top: 0.25rem;
   min-width: 120px;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .friendBtnHover {
@@ -91,7 +93,9 @@
   cursor: pointer;
   margin-top: 0.25rem;
   min-width: 120px;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .befriendBtn:hover {
@@ -145,7 +149,15 @@
   padding: 0.75rem 1rem;
   margin-bottom: 0.5rem;
 }
-
+.tripCardContent {
+  display: flex;
+  justify-content: space-around;
+}
+.tripCardSecondary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 .tripName {
   color: #fcf7ea;
   font-size: 0.95rem;
@@ -164,7 +176,6 @@
   font-size: 0.85rem;
   padding: 0.5rem 0;
 }
-
 
 @media (max-width: 700px) {
   .body {

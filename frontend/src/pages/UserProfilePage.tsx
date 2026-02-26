@@ -208,15 +208,21 @@ const UserProfilePage = () => {
         <div className={styles.profileUsername}>@{profile.username}</div>
         <button
           type="button"
-          className={friendBtnHovered ? styles.friendBtnHover : styles.friendBtn}
+          className={
+            friendBtnHovered ? styles.friendBtnHover : styles.friendBtn
+          }
           onMouseEnter={() => setFriendBtnHovered(true)}
           onMouseLeave={() => setFriendBtnHovered(false)}
           onClick={handleUnfriend}
         >
           {friendBtnHovered ? (
-            <><span className={styles.xMark}>&#x2715;</span> Unfriend</>
+            <>
+              <span className={styles.xMark}>&#x2715;</span> Unfriend
+            </>
           ) : (
-            <><span className={styles.checkMark}>&#x2713;</span> Friends</>
+            <>
+              <span className={styles.checkMark}>&#x2713;</span> Friends
+            </>
           )}
         </button>
       </div>
@@ -229,29 +235,39 @@ const UserProfilePage = () => {
           ) : (
             profile.upcomingTrips.map((trip, i) => (
               <div key={i} className={styles.tripCard}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <div className={styles.tripName}>{trip.tripName}</div>
-                  {trip.isOpenInvite && (
-                    <span
-                      style={{
-                        backgroundColor: "#16a34a",
-                        color: "#fff",
-                        fontSize: "0.65rem",
-                        fontWeight: 600,
-                        padding: "1px 8px",
-                        borderRadius: "9999px",
-                        whiteSpace: "nowrap",
-                        lineHeight: "1.4",
-                      }}
-                    >
-                      Open Invite
-                    </span>
-                  )}
-                </div>
-                <div className={styles.tripDetail}>{trip.location}</div>
-                <div className={styles.tripDetail}>
-                  {formatDate(trip.startDate)} &middot; {trip.numDays} day
-                  {trip.numDays !== 1 ? "s" : ""}
+                <div className={styles.tripCardContent}>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <div className={styles.tripName}>{trip.tripName}</div>
+                    {trip.isOpenInvite && (
+                      <span
+                        style={{
+                          backgroundColor: "#16a34a",
+                          color: "#fff",
+                          fontSize: "0.65rem",
+                          fontWeight: 600,
+                          padding: "1px 8px",
+                          borderRadius: "9999px",
+                          whiteSpace: "nowrap",
+                          lineHeight: "1.4",
+                        }}
+                      >
+                        Open Invite
+                      </span>
+                    )}
+                  </div>
+                  <div className={styles.tripCardSecondary}>
+                    <div className={styles.tripDetail}>{trip.location}</div>
+                    <div className={styles.tripDetail}>
+                      {formatDate(trip.startDate)} &middot; {trip.numDays} day
+                      {trip.numDays !== 1 ? "s" : ""}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))
@@ -263,6 +279,7 @@ const UserProfilePage = () => {
             authFetch={authFetch}
             readOnly
             countries={profile.travelLog}
+            userId={userId}
           />
         </div>
       </div>

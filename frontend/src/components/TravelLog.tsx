@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Link } from "react-router-dom";
 import styles from "../styles/TravelLog.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -129,12 +130,14 @@ interface TravelLogProps {
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
   readOnly?: boolean;
   countries?: UserCountry[];
+  userId?: string;
 }
 
 const TravelLog = ({
   authFetch,
   readOnly = false,
   countries: externalCountries,
+  userId,
 }: TravelLogProps) => {
   const [countries, setCountries] = useState<UserCountry[]>([]);
   const [showSearch, setShowSearch] = useState(false);
@@ -355,59 +358,61 @@ const TravelLog = ({
     <div className={styles.container}>
       <div className={styles.header}>
         <span>Travel Log</span>
-        <div
-          className={styles.tooltipContainer}
-          onMouseEnter={() => {
-            timerRef.current = setTimeout(() => setShowTooltip(true), 500);
-          }}
-          onMouseLeave={() => {
-            if (timerRef.current) clearTimeout(timerRef.current);
-            setShowTooltip(false);
-          }}
-        >
-          <button
-            type="button"
-            style={{
-              padding: 0,
-              backgroundColor: "transparent",
-              border: "2px solid #6b7280",
-              borderRadius: "50%",
-              fontSize: "0.75rem",
-              lineHeight: "1",
-              color: "#6b7280",
-              cursor: "help",
-              width: "1.1rem",
-              height: "1.1rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: "600",
+        {!readOnly && (
+          <div
+            className={styles.tooltipContainer}
+            onMouseEnter={() => {
+              timerRef.current = setTimeout(() => setShowTooltip(true), 500);
             }}
-            aria-label="Visibility info"
+            onMouseLeave={() => {
+              if (timerRef.current) clearTimeout(timerRef.current);
+              setShowTooltip(false);
+            }}
           >
-            ?
-          </button>
-          {showTooltip && (
-            <div className={styles.tooltip}>
-              <div className={styles.tooltipRow}>
-                <EyeOpen />
-                <span className={styles.tooltipText}>
-                  Travel log visible to friends
-                </span>
+            <button
+              type="button"
+              style={{
+                padding: 0,
+                backgroundColor: "transparent",
+                border: "2px solid #6b7280",
+                borderRadius: "50%",
+                fontSize: "0.75rem",
+                lineHeight: "1",
+                color: "#6b7280",
+                cursor: "help",
+                width: "1.1rem",
+                height: "1.1rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "600",
+              }}
+              aria-label="Visibility info"
+            >
+              ?
+            </button>
+            {showTooltip && (
+              <div className={styles.tooltip}>
+                <div className={styles.tooltipRow}>
+                  <EyeOpen />
+                  <span className={styles.tooltipText}>
+                    Travel log visible to friends
+                  </span>
+                </div>
+                <div className={styles.tooltipRow}>
+                  <EyeHalf />
+                  <span className={styles.tooltipText}>
+                    Country visible, travel log private
+                  </span>
+                </div>
+                <div className={styles.tooltipRow}>
+                  <EyeClosed />
+                  <span className={styles.tooltipText}>Completely private</span>
+                </div>
               </div>
-              <div className={styles.tooltipRow}>
-                <EyeHalf />
-                <span className={styles.tooltipText}>
-                  Country visible, travel log private
-                </span>
-              </div>
-              <div className={styles.tooltipRow}>
-                <EyeClosed />
-                <span className={styles.tooltipText}>Completely private</span>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
         {!readOnly && (
           <button
             type="button"
@@ -575,26 +580,38 @@ const TravelLog = ({
             </div>
             {isOpen && (
               <ul className={styles.countryList}>
-                {items.map((c) => (
-                  <li key={c.id} className={styles.countryItem}>
-                    <span>{c.countryName}</span>
-                    {!readOnly && (
-                      <button
-                        type="button"
-                        className={styles.eyeBtn}
-                        onClick={() => cycleVisibility(c)}
-                        aria-label={`Visibility: ${c.visibility}`}
-                      >
-                        {getEyeIcon(c.visibility)}
-                      </button>
-                    )}
-                    {readOnly && (
-                      <span style={{ display: "flex", alignItems: "center" }}>
-                        {getEyeIcon(c.visibility)}
-                      </span>
-                    )}
-                  </li>
-                ))}
+                {items.map((c) => {
+                  const canClick =
+                    !readOnly || c.visibility === "public";
+                  const linkTo =
+                    userId
+                      ? `/user/${userId}/country/${c.id}`
+                      : "#";
+                  return (
+                    <li key={c.id} className={styles.countryItem}>
+                      {canClick && userId ? (
+                        <Link
+                          to={linkTo}
+                          className={styles.countryLink}
+                        >
+                          {c.countryName}
+                        </Link>
+                      ) : (
+                        <span>{c.countryName}</span>
+                      )}
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          className={styles.eyeBtn}
+                          onClick={() => cycleVisibility(c)}
+                          aria-label={`Visibility: ${c.visibility}`}
+                        >
+                          {getEyeIcon(c.visibility)}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>

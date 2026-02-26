@@ -444,6 +444,43 @@ export interface CountryIdParam extends ParamsDictionary {
   countryId: string;
 }
 
+export interface UserCountryIdParam extends ParamsDictionary {
+  userCountryId: string;
+}
+
+export interface PlaceIdParam extends ParamsDictionary {
+  placeId: string;
+}
+
+export interface CountryPlace {
+  id: string;
+  user_country_id: string;
+  category: "city" | "eat" | "stay" | "excursion";
+  name: string;
+  is_favorite: boolean;
+  is_puke: boolean;
+  note: string | null;
+  sort_index: number;
+  created_at: Date;
+}
+
+export interface AddPlaceBody {
+  category: "city" | "eat" | "stay" | "excursion";
+  name: string;
+}
+
+export interface UpdatePlaceBody {
+  isFavorite?: boolean;
+  isPuke?: boolean;
+  note?: string | null;
+}
+
+export interface CountryDetailResponse {
+  userCountry: UserCountry & { user_id: string; first_name: string; last_name: string };
+  places: CountryPlace[];
+  isOwner: boolean;
+}
+
 export interface UsernameQuery extends Query {
   username?: string;
 }

@@ -219,7 +219,7 @@ const ProfilePage = () => {
 
       <div className={styles.body}>
         <div className={styles.leftColumn}>
-          <TravelLog authFetch={authFetch} />
+          <TravelLog authFetch={authFetch} userId={auth?.userId ?? undefined} />
         </div>
 
         <div className={styles.rightColumn}>
