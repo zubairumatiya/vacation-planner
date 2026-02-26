@@ -1,0 +1,16 @@
+
+> frontend@0.0.0 dev
+> vite
+
+error when starting dev server:
+Error: error:0480006C:PEM routines::no start line
+    at node:internal/tls/secure-context:70:13
+    at Array.forEach (<anonymous>)
+    at setCerts (node:internal/tls/secure-context:68:3)
+    at configSecureContext (node:internal/tls/secure-context:191:5)
+    at Object.createSecureContext (node:_tls_common:113:3)
+    at Server.setSecureContext (node:_tls_wrap:1508:27)
+    at new Server (node:_tls_wrap:1372:8)
+    at new Http2SecureServer (node:internal/http2/core:3374:5)
+    at createSecureServer (node:internal/http2/core:3588:10)
+    at resolveHttpServer (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:24987:12)

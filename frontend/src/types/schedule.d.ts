@@ -310,4 +310,27 @@ declare global {
     container: number;
     table: number;
   };
+
+  interface Schedule {
+    id: UniqueIdentifier;
+    tripId: string;
+    location: string;
+    details: string;
+    startTime: Date;
+    endTime: Date;
+    cost: number;
+    multiDay: boolean;
+    sortIndex: number;
+    lastModified: string;
+  }
+
+  interface Viewport {
+    low: { latitude: number; longitude: number };
+    high: { latitude: number; longitude: number };
+  }
+
+  interface Vp {
+    low: { latitude: number; longitude: number };
+    high: { latitude: number; longitude: number };
+  }
 }

@@ -1,0 +1,317 @@
+
+> frontend@0.0.0 dev
+> vite
+
+
+  VITE v6.4.1  ready in 731 ms
+
+  ➜  Local:   http://localhost:5000/
+  ➜  Network: use --host to expose
+7:10:57 PM [vite] (client) Pre-transform error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+7:10:59 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:11:01 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:11:38 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:11:49 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:12:25 PM [vite] (client) page reload src/types/schedule.d.ts
+7:12:30 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:12:30 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:12:54 PM [vite] (client) hmr update /src/pages/CountryDetailPage.tsx, /src/index.css
+7:13:10 PM [vite] (client) hmr update /src/pages/CountryDetailPage.tsx, /src/index.css
+7:13:17 PM [vite] (client) Pre-transform error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+7:13:18 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:13:18 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:13:41 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:13:55 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:14:10 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:14:10 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:14:30 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:14:30 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:14:48 PM [vite] Internal server error: Failed to resolve import "../styles/ResetPassword.module.css" from "src/pages/ResetPassword.tsx". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /app/frontend/src/pages/ResetPassword.tsx:4:19
+  19 |  import { useNavigate, useLocation } from "react-router-dom";
+  20 |  import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+  21 |  import styles from "../styles/ResetPassword.module.css";
+     |                      ^
+  22 |  const apiUrl = import.meta.env.VITE_API_URL;
+  23 |  const ResetPassword = () => {
+      at TransformPluginContext._formatLog (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42528:41)
+      at TransformPluginContext.error (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42525:16)
+      at normalizeUrl (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40504:23)
+      at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+      at async file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40623:37
+      at async Promise.all (index 6)
+      at async TransformPluginContext.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:40550:7)
+      at async EnvironmentPluginContainer.transform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:42323:18)
+      at async loadAndTransform (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:35739:27)
+      at async viteTransformMiddleware (file:///app/frontend/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:37254:24)
+7:15:06 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
+7:15:06 PM [vite] (client) hmr update /src/index.css

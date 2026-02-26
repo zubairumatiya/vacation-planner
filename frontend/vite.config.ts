@@ -12,14 +12,6 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
-    https: {
-      key: fs.readFileSync(
-        path.resolve(__dirname, "../backend/certs/localhost-key.pem"),
-      ),
-      cert: fs.readFileSync(
-        path.resolve(__dirname, "../backend/certs/localhost.pem"),
-      ),
-    },
     port: Number(process.env.PORT || "5173"),
   },
 });

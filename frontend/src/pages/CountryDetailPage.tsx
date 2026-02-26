@@ -478,30 +478,66 @@ const CountryDetailPage = () => {
                         <div className={styles.noteDisplay}>{place.note}</div>
                       ) : (
                         <div className={styles.noteArea}>
-                          <textarea
-                            className={styles.noteInput}
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSaveNote(place.id);
-                              }
-                              if (e.key === "Escape") {
-                                setEditingNoteId(null);
-                                setNoteText("");
-                              }
-                            }}
-                            placeholder="Write a note..."
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            className={styles.noteSaveBtn}
-                            onClick={() => handleSaveNote(place.id)}
-                          >
-                            Save
-                          </button>
+                          <div className={styles.noteInputWrapper}>
+                            <textarea
+                              className={styles.noteInput}
+                              value={noteText}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSaveNote(place.id);
+                                }
+                                if (e.key === "Escape") {
+                                  setEditingNoteId(null);
+                                  setNoteText("");
+                                }
+                              }}
+                              placeholder="Write a note..."
+                              autoFocus
+                            />
+                            <div className={styles.inlaidButtons}>
+                              <button
+                                type="button"
+                                className={styles.noteSaveBtn}
+                                onClick={() => handleSaveNote(place.id)}
+                              >
+                                <svg
+                                  width="18"
+                                  height="18"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </button>
+                              {place.note && (
+                                <button
+                                  type="button"
+                                  className={styles.noteDeleteBtn}
+                                  onClick={() => handleDeleteNote(place.id)}
+                                >
+                                  <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
                           <button
                             type="button"
                             className={styles.noteCancelBtn}
@@ -512,15 +548,6 @@ const CountryDetailPage = () => {
                           >
                             Cancel
                           </button>
-                          {place.note && (
-                            <button
-                              type="button"
-                              className={styles.noteDeleteBtn}
-                              onClick={() => handleDeleteNote(place.id)}
-                            >
-                              X{" "}
-                            </button>
-                          )}
                         </div>
                       )}
                     </div>
