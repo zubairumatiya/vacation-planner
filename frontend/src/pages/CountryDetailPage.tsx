@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, useCallback } from "react";
+import { useEffect, useState, useContext, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
@@ -81,6 +81,13 @@ const CountryDetailPage = () => {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [layout, setLayout] = useState<"rows" | "columns">("rows");
+  const [addToTripPlaceId, setAddToTripPlaceId] = useState<string | null>(null);
+  const [viewerTrips, setViewerTrips] = useState<
+    { id: string; tripName: string }[]
+  >([]);
+  const [loadingViewerTrips, setLoadingViewerTrips] = useState(false);
+  const [addingToTrip, setAddingToTrip] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const authFetch = useCallback(
     async (url: string, options: RequestInit = {}) => {
@@ -274,6 +281,72 @@ const CountryDetailPage = () => {
       }
     } catch {
       // handled
+    }
+  };
+
+  useEffect(() => {
+    if (!addToTripPlaceId) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setAddToTripPlaceId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [addToTripPlaceId]);
+
+  const handleAddToTripClick = async (placeId: string) => {
+    if (addToTripPlaceId === placeId) {
+      setAddToTripPlaceId(null);
+      return;
+    }
+    setAddToTripPlaceId(placeId);
+    if (viewerTrips.length > 0) return;
+    setLoadingViewerTrips(true);
+    try {
+      const res = await authFetch(`${apiUrl}/home`);
+      if (res.ok) {
+        const data = (await res.json()) as Record<string, unknown>[];
+        const trips = data
+          .filter(
+            (t) => t.role === "owner" || t.role === "editor",
+          )
+          .map((t) => ({
+            id: t.id as string,
+            tripName: t.trip_name as string,
+          }));
+        setViewerTrips(trips);
+      }
+    } catch {
+      // handled
+    } finally {
+      setLoadingViewerTrips(false);
+    }
+  };
+
+  const handleAddPlaceToTrip = async (
+    tripId: string,
+    place: CountryPlace,
+  ) => {
+    setAddingToTrip(true);
+    try {
+      const res = await authFetch(`${apiUrl}/list/${tripId}`, {
+        method: "POST",
+        body: JSON.stringify({
+          value: place.name,
+          details: place.note || null,
+        }),
+      });
+      if (res.ok) {
+        setAddToTripPlaceId(null);
+      }
+    } catch {
+      // handled
+    } finally {
+      setAddingToTrip(false);
     }
   };
 
@@ -574,6 +647,52 @@ const CountryDetailPage = () => {
                       )}
                     </div>
                     <div className={styles.placeActions}>
+                      {!isOwner && (
+                        <div
+                          className={styles.addToTripWrapper}
+                          ref={
+                            addToTripPlaceId === place.id
+                              ? dropdownRef
+                              : undefined
+                          }
+                        >
+                          <button
+                            type="button"
+                            className={styles.addToTripBtn}
+                            onClick={() => handleAddToTripClick(place.id)}
+                            aria-label="Add to trip"
+                          >
+                            +
+                          </button>
+                          {addToTripPlaceId === place.id && (
+                            <div className={styles.addToTripDropdown}>
+                              {loadingViewerTrips ? (
+                                <p className={styles.dropdownLoading}>
+                                  Loading...
+                                </p>
+                              ) : viewerTrips.length === 0 ? (
+                                <p className={styles.dropdownLoading}>
+                                  No editable trips
+                                </p>
+                              ) : (
+                                viewerTrips.map((trip) => (
+                                  <button
+                                    key={trip.id}
+                                    type="button"
+                                    className={styles.tripOption}
+                                    onClick={() =>
+                                      handleAddPlaceToTrip(trip.id, place)
+                                    }
+                                    disabled={addingToTrip}
+                                  >
+                                    {trip.tripName}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <button
                         type="button"
                         className={

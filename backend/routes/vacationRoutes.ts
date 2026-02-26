@@ -593,7 +593,7 @@ router.get(
   ) => {
     try {
       const result: QueryResult<TripList> = await db.query(
-        "SELECT id, value, from_google, item_added, last_modified FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
+        "SELECT id, value, from_google, details, item_added, last_modified FROM trip_list WHERE trip_id=$1 ORDER BY created_at ASC",
         [req.params.tripId],
       );
       snakeToCamel<TripList>(result.rows);
@@ -616,15 +616,16 @@ router.post(
   ) => {
     try {
       let queryText: string;
-      let queryParams: Array<string>;
+      let queryParams: Array<string | null>;
+      const details = req.body.details ?? null;
       if (req.body.fromGoogle) {
         queryText =
-          "INSERT INTO trip_list (trip_id, value, from_google) VALUES ($1, $2, $3) RETURNING id, value, from_google, last_modified, item_added";
-        queryParams = [req.params.tripId, req.body.value, req.body.fromGoogle];
+          "INSERT INTO trip_list (trip_id, value, from_google, details) VALUES ($1, $2, $3, $4) RETURNING id, value, from_google, details, last_modified, item_added";
+        queryParams = [req.params.tripId, req.body.value, req.body.fromGoogle, details];
       } else {
         queryText =
-          "INSERT INTO trip_list (trip_id, value) VALUES ($1, $2) RETURNING id, value, from_google, last_modified, item_added";
-        queryParams = [req.params.tripId, req.body.value];
+          "INSERT INTO trip_list (trip_id, value, details) VALUES ($1, $2, $3) RETURNING id, value, from_google, details, last_modified, item_added";
+        queryParams = [req.params.tripId, req.body.value, details];
       }
       const result: QueryResult<TripList> = await db.query(
         queryText,

@@ -57,6 +57,7 @@ export interface TripList {
   id: string;
   value: string;
   from_google: string | null;
+  details: string | null;
   created_at: Date;
   item_added: boolean;
   trip_id: string;
@@ -225,6 +226,7 @@ export interface ScheduleResponse {
 export interface ListBody {
   value: string;
   fromGoogle?: string;
+  details?: string | null;
   newValue?: boolean;
   isGoogleId?: boolean;
   tripId?: string;

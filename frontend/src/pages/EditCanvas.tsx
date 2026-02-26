@@ -198,13 +198,13 @@ const EditCanvas = ({
     document.body.classList.add("freezeScroll");
     if (typeOfDrag?.type === "list") {
       setActiveListId(e.active.id);
-      const listValue =
-        wishList.find((item) => item.id == e.active.id)?.value ?? "";
+      const listItem = wishList.find((item) => item.id == e.active.id);
+      const listValue = listItem?.value ?? "";
       tempScheduleItem.current = {
         id: e.active.id,
         tripId: String(tripId),
         location: listValue,
-        details: "",
+        details: listItem?.details ?? "",
         startTime: new Date(),
         endTime: new Date(),
         cost: 0,
@@ -1129,7 +1129,7 @@ const EditCanvas = ({
         id: itemId,
         tripId: String(tripId),
         location: listItem.value,
-        details: "",
+        details: listItem.details ?? "",
         startTime,
         endTime,
         cost: 0,
@@ -1165,7 +1165,7 @@ const EditCanvas = ({
               end: endTime,
               location: listItem.value,
               cost: 0,
-              details: "",
+              details: listItem.details ?? "",
               multiDay: false,
               sortIndex: 0,
               chunk,

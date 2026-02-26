@@ -38,6 +38,7 @@ const ListItem = ({
     ? { transform: CSS.Translate.toString(draggable.transform!) }
     : {};
 
+  const [showDetails, setShowDetails] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedTime, setSelectedTime] = useState(TIME_OPTIONS[0].value);
@@ -127,6 +128,23 @@ const ListItem = ({
             {...mobileHandlers}
           >
             {v.value}
+          </div>
+        )}
+        {v.details && (
+          <div className={styles.detailsSection}>
+            <button
+              type="button"
+              className={styles.detailsToggle}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDetails(!showDetails);
+              }}
+            >
+              {showDetails ? "\u25BE" : "\u25B8"} Notes
+            </button>
+            {showDetails && (
+              <div className={styles.detailsContent}>{v.details}</div>
+            )}
           </div>
         )}
         {showDropdown && isMobile && days && (

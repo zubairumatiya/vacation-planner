@@ -205,6 +205,7 @@ declare global {
     id: UniqueIdentifier;
     value: string;
     fromGoogle: string | null;
+    details: string | null;
     itemAdded: boolean;
     lastModified: string;
   };
