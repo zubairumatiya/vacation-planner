@@ -308,22 +308,18 @@
 }
 
 .starBtn {
-  composes: iconBtn;
   color: #888;
 }
 
 .starBtnActive {
-  composes: iconBtn;
   color: #f6ad55;
 }
 
 .pukeBtn {
-  composes: iconBtn;
   opacity: 0.4;
 }
 
 .pukeBtnActive {
-  composes: iconBtn;
   opacity: 1;
 }
 
@@ -350,7 +346,6 @@
 }
 
 .placeDeleteBtn {
-  composes: iconBtn;
   color: #888;
   font-size: 0.8rem;
   opacity: 0;
