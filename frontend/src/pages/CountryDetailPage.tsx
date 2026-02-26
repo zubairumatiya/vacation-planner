@@ -227,16 +227,16 @@ const CountryDetailPage = () => {
   };
 
   const handleSaveNote = async (placeId: string) => {
+    const trimmedNote = noteText.trim();
+    const finalNote = trimmedNote === "" ? null : trimmedNote;
     try {
       const res = await authFetch(`${apiUrl}/travel-log/places/${placeId}`, {
         method: "PATCH",
-        body: JSON.stringify({ note: noteText || null }),
+        body: JSON.stringify({ note: finalNote }),
       });
       if (res.ok) {
         setPlaces((prev) =>
-          prev.map((p) =>
-            p.id === placeId ? { ...p, note: noteText || null } : p,
-          ),
+          prev.map((p) => (p.id === placeId ? { ...p, note: finalNote } : p)),
         );
         setEditingNoteId(null);
         setNoteText("");
@@ -478,30 +478,74 @@ const CountryDetailPage = () => {
                         <div className={styles.noteDisplay}>{place.note}</div>
                       ) : (
                         <div className={styles.noteArea}>
-                          <textarea
-                            className={styles.noteInput}
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                handleSaveNote(place.id);
+                          <div className={styles.noteAreaWrapper}>
+                            <textarea
+                              className={styles.noteInput}
+                              value={noteText}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              onFocus={(e) =>
+                                e.currentTarget.setSelectionRange(
+                                  e.currentTarget.value.length,
+                                  e.currentTarget.value.length,
+                                )
                               }
-                              if (e.key === "Escape") {
-                                setEditingNoteId(null);
-                                setNoteText("");
-                              }
-                            }}
-                            placeholder="Write a note..."
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            className={styles.noteSaveBtn}
-                            onClick={() => handleSaveNote(place.id)}
-                          >
-                            Save
-                          </button>
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSaveNote(place.id);
+                                }
+                                if (e.key === "Escape") {
+                                  setEditingNoteId(null);
+                                  setNoteText("");
+                                }
+                              }}
+                              placeholder="Write a note..."
+                              autoFocus
+                            />
+                            <div className={styles.noteActions}>
+                              <button
+                                type="button"
+                                className={styles.noteSaveBtn}
+                                onClick={() => handleSaveNote(place.id)}
+                                aria-label="Save note"
+                              >
+                                <svg
+                                  width="14"
+                                  height="14"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </button>
+                              {place.note && (
+                                <button
+                                  type="button"
+                                  className={styles.noteDeleteBtn}
+                                  onClick={() => handleDeleteNote(place.id)}
+                                  aria-label="Delete note"
+                                >
+                                  <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
                           <button
                             type="button"
                             className={styles.noteCancelBtn}
@@ -509,18 +553,23 @@ const CountryDetailPage = () => {
                               setEditingNoteId(null);
                               setNoteText("");
                             }}
+                            aria-label="Cancel"
+                            title={"cancel"}
                           >
-                            Cancel
-                          </button>
-                          {place.note && (
-                            <button
-                              type="button"
-                              className={styles.noteDeleteBtn}
-                              onClick={() => handleDeleteNote(place.id)}
+                            <svg
+                              width="18"
+                              height="18"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
                             >
-                              X{" "}
-                            </button>
-                          )}
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
+                            </svg>
+                          </button>
                         </div>
                       )}
                     </div>

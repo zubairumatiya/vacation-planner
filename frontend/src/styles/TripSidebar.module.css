@@ -15,21 +15,27 @@
   padding: 0;
   top: 50%;
   left: 0;
-  width: 2.5rem;
-  padding-right: 0.25rem;
-  height: 48px;
+  width: 2rem;
+  height: 56px;
   background-color: #2a2a2a;
-  border: 1px solid #444;
+  border: 1.5px solid #444;
   border-left: none;
-  border-radius: 0 24px 24px 0;
+  border-radius: 0 12px 12px 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #2fe782;
 }
-.tab:active {
-  background-color: #4a38ee;
+
+.tab:hover {
+  background-color: #333;
+  width: 1.75rem;
+}
+
+.tabActive {
+  background-color: #2fe782;
+  color: #1e1e1e;
 }
 
 .tabOpen {

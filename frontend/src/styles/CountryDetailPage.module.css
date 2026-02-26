@@ -193,6 +193,7 @@
   padding: 0 0 0.1rem 0;
   transition: all 0.15s;
   aspect-ratio: 1;
+  padding-bottom: 0.2rem;
 }
 
 .addItemBtn:hover {
@@ -261,7 +262,7 @@
 
 .placeItem {
   display: flex;
-
+  align-items: flex-start;
   border-bottom: 1px solid #2a2a2a;
   padding: 0.35rem 0;
 }
@@ -367,14 +368,17 @@
 
 /* Note area */
 .noteArea {
+  position: relative;
   display: flex;
-  gap: 0.5rem;
+  flex: 1;
   padding: 0.25rem 0 0.25rem 1rem;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .noteInput {
   flex: 1;
-  padding: 4px 8px;
+  padding: 4px 30px 4px 8px;
   border-radius: 6px;
   border: 1px solid #555;
   background-color: #333;
@@ -382,58 +386,91 @@
   font-size: 0.75rem;
   outline: none;
   resize: none;
-  min-height: 2rem;
+  min-height: 2.5rem;
+  display: block;
 }
 
 .noteInput:focus {
   border-color: #2fe782;
 }
 
+.noteActions {
+  position: absolute;
+  right: 40px; /* Adjusted to be inside the textarea, but accounting for external cancel */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Redefine noteActions to be truly inlaid in the textarea */
+.noteAreaWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+.noteActions {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .noteSaveBtn {
-  background-color: #2fe782;
-  border: 1px solid #2fe782;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  background: transparent;
+  border: none;
+  color: #2fe782;
   cursor: pointer;
-  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 4px;
 }
 
 .noteSaveBtn:hover {
-  background-color: #00bf55;
-}
-
-.noteCancelBtn {
-  background: transparent;
-  border: 1px solid #888;
-  color: #888;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  align-self: flex-start;
-}
-
-.noteCancelBtn:hover {
-  border-color: #e53e3e;
-  color: #e53e3e;
+  background-color: rgba(47, 231, 130, 0.1);
 }
 
 .noteDeleteBtn {
   background: transparent;
-  border: 1px solid #888;
+  border: none;
   color: #888;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
   cursor: pointer;
-  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 4px;
 }
 
 .noteDeleteBtn:hover {
-  border-color: #e53e3e;
   color: #e53e3e;
+  background-color: rgba(229, 62, 62, 0.1);
+}
+
+.noteCancelBtn {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.noteCancelBtn:hover {
+  color: #fcf7ea;
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .noteDisplay {

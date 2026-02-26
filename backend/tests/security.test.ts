@@ -1,4 +1,5 @@
-import { describe, it, expect, jest } from '@jest/globals';
+import { describe, it, expect } from '@jest/globals';
+import { jest } from '@jest/globals';
 import request from "supertest";
 import express from "express";
 

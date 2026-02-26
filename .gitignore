@@ -1,5 +1,6 @@
 *.env*
 *.pem
+*.jules/
 *.sql
 node_modules/
 backend/certs/
