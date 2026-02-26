@@ -308,18 +308,22 @@
 }
 
 .starBtn {
+  composes: iconBtn;
   color: #888;
 }
 
 .starBtnActive {
+  composes: iconBtn;
   color: #f6ad55;
 }
 
 .pukeBtn {
+  composes: iconBtn;
   opacity: 0.4;
 }
 
 .pukeBtnActive {
+  composes: iconBtn;
   opacity: 1;
 }
 
@@ -346,6 +350,7 @@
 }
 
 .placeDeleteBtn {
+  composes: iconBtn;
   color: #888;
   font-size: 0.8rem;
   opacity: 0;
@@ -386,8 +391,7 @@
 
 .noteSaveBtn {
   background-color: #2fe782;
-  border: none;
-  color: #222;
+  border: 1px solid #2fe782;
   padding: 4px 10px;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -412,6 +416,22 @@
 }
 
 .noteCancelBtn:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.noteDeleteBtn {
+  background: transparent;
+  border: 1px solid #888;
+  color: #888;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.noteDeleteBtn:hover {
   border-color: #e53e3e;
   color: #e53e3e;
 }

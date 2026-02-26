@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import styles from "../styles/CountryDetailPage.module.css";
+import TripSidebar from "../components/TripSidebar";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -245,6 +246,24 @@ const CountryDetailPage = () => {
     }
   };
 
+  const handleDeleteNote = async (placeId: string) => {
+    try {
+      const res = await authFetch(`${apiUrl}/travel-log/places/${placeId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ note: null }),
+      });
+      if (res.ok) {
+        setPlaces((prev) =>
+          prev.map((p) => (p.id === placeId ? { ...p, note: null } : p)),
+        );
+        setEditingNoteId(null);
+        setNoteText("");
+      }
+    } catch {
+      // handled
+    }
+  };
+
   const handleDeletePlace = async (placeId: string) => {
     try {
       const res = await authFetch(`${apiUrl}/travel-log/places/${placeId}`, {
@@ -269,6 +288,13 @@ const CountryDetailPage = () => {
 
   return (
     <div className={styles.container}>
+      {isOwner && (
+        <TripSidebar
+          authFetch={authFetch}
+          userCountryId={userCountryId!}
+          onPlaceAdded={(p) => setPlaces((prev) => [...prev, p])}
+        />
+      )}
       <div className={styles.header}>
         <Link to={`/user/${userId}`} className={styles.breadcrumb}>
           {fullName}
@@ -448,8 +474,54 @@ const CountryDetailPage = () => {
                   <li key={place.id} className={styles.placeItem}>
                     <div className={styles.placeRow}>
                       <span className={styles.placeName}>{place.name}</span>
-                      {place.note && editingNoteId !== place.id && (
+                      {editingNoteId !== place.id ? (
                         <div className={styles.noteDisplay}>{place.note}</div>
+                      ) : (
+                        <div className={styles.noteArea}>
+                          <textarea
+                            className={styles.noteInput}
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSaveNote(place.id);
+                              }
+                              if (e.key === "Escape") {
+                                setEditingNoteId(null);
+                                setNoteText("");
+                              }
+                            }}
+                            placeholder="Write a note..."
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            className={styles.noteSaveBtn}
+                            onClick={() => handleSaveNote(place.id)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.noteCancelBtn}
+                            onClick={() => {
+                              setEditingNoteId(null);
+                              setNoteText("");
+                            }}
+                          >
+                            Cancel
+                          </button>
+                          {place.note && (
+                            <button
+                              type="button"
+                              className={styles.noteDeleteBtn}
+                              onClick={() => handleDeleteNote(place.id)}
+                            >
+                              X{" "}
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                     <div className={styles.placeActions}>
@@ -527,44 +599,6 @@ const CountryDetailPage = () => {
                         </button>
                       )}
                     </div>
-                    {editingNoteId === place.id && (
-                      <div className={styles.noteArea}>
-                        <textarea
-                          className={styles.noteInput}
-                          value={noteText}
-                          onChange={(e) => setNoteText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSaveNote(place.id);
-                            }
-                            if (e.key === "Escape") {
-                              setEditingNoteId(null);
-                              setNoteText("");
-                            }
-                          }}
-                          placeholder="Write a note..."
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          className={styles.noteSaveBtn}
-                          onClick={() => handleSaveNote(place.id)}
-                        >
-                          Save
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.noteCancelBtn}
-                          onClick={() => {
-                            setEditingNoteId(null);
-                            setNoteText("");
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
                   </li>
                 ))}
               </ul>
