@@ -283,7 +283,7 @@ const ProfilePage = () => {
             style={{
               color: "#aaa",
               fontSize: "0.9rem",
-              fontWeight: "600",
+              fontWeight: "800",
               marginBottom: "0.5rem",
             }}
           >

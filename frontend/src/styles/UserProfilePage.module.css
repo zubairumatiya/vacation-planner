@@ -118,6 +118,10 @@
   opacity: 0.8;
 }
 
+.countriesFraction {
+  font-weight: 800;
+}
+
 /* Two-column layout for friends view */
 .body {
   display: flex;
@@ -126,12 +130,20 @@
 }
 
 .leftColumn {
-  flex: 1;
+  flex: 0.5;
 }
 
 .rightColumn {
   width: 280px;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex: 0.5;
+}
+
+.countryFractions {
+  padding-top: 2rem;
 }
 
 .sectionTitle {
