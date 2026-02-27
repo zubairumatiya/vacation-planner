@@ -369,7 +369,10 @@ const CountryDetailPage = () => {
         />
       )}
       <div className={styles.header}>
-        <Link to={`/user/${userId}`} className={styles.breadcrumb}>
+        <Link
+          to={isOwner ? "/profile" : `/user/${userId}`}
+          className={styles.breadcrumb}
+        >
           {fullName}
         </Link>
         <span className={styles.separator}>&gt;</span>

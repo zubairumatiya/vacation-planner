@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import profileIcon from "../assets/profile.svg";
@@ -80,6 +80,11 @@ const formatDate = (dateStr: string) =>
 const UserProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
   const auth = useContext(AuthContext);
+
+  if (auth?.userId && userId === auth.userId) {
+    return <Navigate to="/profile" replace />;
+  }
+
   const token = auth?.token;
   const login = auth?.login;
   const logout = auth?.logout;
