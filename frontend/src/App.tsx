@@ -19,6 +19,7 @@ import Test from "./components/Test.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import UserProfilePage from "./pages/UserProfilePage.tsx";
 import CountryDetailPage from "./pages/CountryDetailPage.tsx";
+import WorldMapPage from "./pages/WorldMapPage.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "./components/ErrorFallback.tsx";
 import RequireAuth from "./pages/RequireAuth.tsx";
@@ -33,6 +34,7 @@ function App() {
           <Route element={<LayoutWithHeader />}>
             <Route path="/" element={<Home />} />
             <Route path="/add-vacation" element={<AddVacation />} />
+            <Route path="/world-map/:userId" element={<WorldMapPage />} />
             <Route
               path="/vacation/:tripId"
               element={
