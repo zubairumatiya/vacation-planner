@@ -27,7 +27,8 @@
   background-color: transparent;
   color: #64748b;
   border: none;
-  padding: 6px 10px 6px 8px;
+  padding: 0;
+  margin-left: 0.5rem;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
@@ -81,6 +82,11 @@
   box-shadow:
     0 4px 24px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+}
+
+.mapFrame path {
+  pointer-events: all;
 }
 
 .hint {
@@ -100,27 +106,35 @@
 
 /* Tooltips */
 .tooltipVisited {
-  border: 1px solid rgba(52, 211, 153, 0.4) !important;
-  border-radius: 10px !important;
-  background: rgba(20, 22, 37, 0.95) !important;
-  backdrop-filter: blur(12px) !important;
-  color: #fff !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(52, 211, 153, 0.15) !important;
-  padding: 12px 16px !important;
-  z-index: 1000 !important;
-  opacity: 1 !important;
+  position: fixed;
+  transform: translate(-50%, -100%);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  border-radius: 10px;
+  background: rgba(20, 22, 37, 0.95);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(52, 211, 153, 0.15);
+  padding: 12px 16px;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .tooltipUnvisited {
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 10px !important;
-  background: rgba(20, 22, 37, 0.95) !important;
-  backdrop-filter: blur(12px) !important;
-  color: #cbd5e1 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-  padding: 10px 14px !important;
-  z-index: 1000 !important;
-  opacity: 1 !important;
+  position: fixed;
+  transform: translate(-50%, -100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  background: rgba(20, 22, 37, 0.95);
+  backdrop-filter: blur(12px);
+  color: #cbd5e1;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  padding: 10px 14px;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .tooltipContent {
@@ -157,7 +171,9 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   width: 260px;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
   animation: popupIn 0.15s ease-out;
 }
 

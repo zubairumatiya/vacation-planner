@@ -1,0 +1,25 @@
+diff --git a/node_modules/@vnedyalk0v/react19-simple-maps/dist/index.js b/node_modules/@vnedyalk0v/react19-simple-maps/dist/index.js
+index 3fae725..e7e2464 100644
+--- a/node_modules/@vnedyalk0v/react19-simple-maps/dist/index.js
++++ b/node_modules/@vnedyalk0v/react19-simple-maps/dist/index.js
+@@ -2382,6 +2382,7 @@ function useZoomBehavior({ mapRef, width, height, projection, scaleExtent, trans
+         }
+         const zoomBehavior = zoom()
+             .filter(filterFunc)
++            .clickDistance(5)
+             .scaleExtent([minZoom, maxZoom])
+             .translateExtent([
+             [a1, a2],
+@@ -2563,10 +2564,9 @@ function useZoomPan({ center, filterZoomEvent, onMoveStart, onMoveEnd, onMove, t
+                 k: transform.k,
+                 dragging: sourceEvent,
+             };
+-            // Immediate optimistic update for responsive feel
+-            setOptimisticPosition(newPosition);
+-            // Use transition for non-blocking position updates
++            // Use transition for non-blocking position updates (optimistic update moved inside)
+             startTransition(() => {
++                setOptimisticPosition(newPosition);
+                 setPosition(newPosition);
+             });
+         },

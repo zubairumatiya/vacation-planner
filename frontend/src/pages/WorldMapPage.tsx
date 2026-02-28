@@ -1,4 +1,11 @@
-import { useEffect, useState, useContext, useRef, startTransition } from "react";
+import {
+  useEffect,
+  useState,
+  useContext,
+  useRef,
+  useMemo,
+  startTransition,
+} from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
@@ -11,7 +18,6 @@ import {
   type Longitude,
   type PreparedFeature,
 } from "@vnedyalk0v/react19-simple-maps";
-import { Tooltip } from "react-tooltip";
 import styles from "../styles/WorldMapPage.module.css";
 
 const geoUrl = new URL("/features.json", window.location.origin).toString();
@@ -47,11 +53,29 @@ const formatDate = (dateStr: string) => {
   return dateStr;
 };
 
+// Map GeoJSON abbreviated/special names → full DB-friendly names (lowercase)
+const geoNameMap: Record<string, string> = {
+  "united states of america": "united states",
+  "dominican rep.": "dominican republic",
+  "dem. rep. congo": "democratic republic of the congo",
+  "central african rep.": "central african republic",
+  "bosnia and herz.": "bosnia and herzegovina",
+  "eq. guinea": "equatorial guinea",
+  "côte d'ivoire": "ivory coast",
+  "s. sudan": "south sudan",
+  "solomon is.": "solomon islands",
+  "falkland is.": "falkland islands",
+  "timor-leste": "east timor",
+  "czechia": "czech republic",
+  "eswatini": "eswatini",
+  "n. cyprus": "northern cyprus",
+  "w. sahara": "western sahara",
+  "fr. s. antarctic lands": "french southern territories",
+};
+
 const normalizeGeoName = (geoName: string): string => {
   const lower = geoName.toLowerCase();
-  if (lower === "united states of america") return "united states";
-  if (lower === "south korea") return "south korea";
-  return lower;
+  return geoNameMap[lower] ?? lower;
 };
 
 const WorldMapPage = () => {
@@ -59,6 +83,7 @@ const WorldMapPage = () => {
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapFrameRef = useRef<HTMLDivElement>(null);
 
   const [travelLog, setTravelLog] = useState<UserCountry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +91,8 @@ const WorldMapPage = () => {
   const [hoveredCountry, setHoveredCountry] = useState<UserCountry | null>(
     null,
   );
+  const tooltipPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
   const [profileName, setProfileName] = useState("");
   const [pendingCountry, setPendingCountry] = useState<{
@@ -81,6 +108,12 @@ const WorldMapPage = () => {
   const [numDays, setNumDays] = useState("");
 
   const isOwner = userId === auth?.userId;
+
+  const visitedMap = useMemo(() => {
+    const map = new Map<string, UserCountry>();
+    travelLog.forEach((c) => map.set(c.countryName.toLowerCase(), c));
+    return map;
+  }, [travelLog]);
 
   const token = auth?.token;
   const login = auth?.login;
@@ -161,18 +194,10 @@ const WorldMapPage = () => {
     if (!isOwner) return;
 
     const normalized = normalizeGeoName(geoName);
-    const visited = new Map<string, UserCountry>();
-    travelLog.forEach((c) => visited.set(c.countryName.toLowerCase(), c));
+    if (visitedMap.has(normalized)) return;
 
-    if (visited.has(normalized)) return;
+    const searchName = geoNameMap[geoName.toLowerCase()] ?? geoName;
 
-    let searchName = geoName;
-    if (geoName.toLowerCase() === "united states of america")
-      searchName = "united states";
-    else if (geoName.toLowerCase() === "south korea")
-      searchName = "south korea";
-
-    // Get click position relative to map container
     const container = mapContainerRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
@@ -202,12 +227,60 @@ const WorldMapPage = () => {
     }
   };
 
+  // Single mousemove listener for hover — avoids flicker from mouseenter/leave gaps
+  const lastGeoRef = useRef<string | null>(null);
+  useEffect(() => {
+    const frame = mapFrameRef.current;
+    if (!frame) return;
+
+    let active = false;
+    // Delay listener activation so react-tooltip can initialize position tracking;
+    // without this, tooltips flash at (0,0) on initial load.
+    const timer = setTimeout(() => {
+      active = true;
+    }, 500);
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!active) return;
+      // Move tooltip element directly via ref for zero-lag positioning
+      if (tooltipRef.current) {
+        tooltipRef.current.style.left = `${e.clientX}px`;
+        tooltipRef.current.style.top = `${e.clientY - 12}px`;
+      }
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      const path = target.closest("[data-geo]");
+      const name = path?.getAttribute("data-geo") || null;
+      if (name && name !== lastGeoRef.current) {
+        lastGeoRef.current = name;
+        const normalized = normalizeGeoName(name);
+        const matched =
+          visitedMap.get(normalized) ||
+          visitedMap.get(name.toLowerCase()) ||
+          null;
+        setTooltipContent(name);
+        setHoveredCountry(matched);
+      }
+    };
+
+    const onMouseLeave = () => {
+      lastGeoRef.current = null;
+      setTooltipContent("");
+      setHoveredCountry(null);
+    };
+
+    frame.addEventListener("mousemove", onMouseMove);
+    frame.addEventListener("mouseleave", onMouseLeave);
+    return () => {
+      clearTimeout(timer);
+      frame.removeEventListener("mousemove", onMouseMove);
+      frame.removeEventListener("mouseleave", onMouseLeave);
+    };
+  }, [visitedMap]);
+
   if (loading) {
     return <div className={styles.loading}>Loading map...</div>;
   }
-
-  const visitedMap = new Map<string, UserCountry>();
-  travelLog.forEach((c) => visitedMap.set(c.countryName.toLowerCase(), c));
 
   const visitedCount = travelLog.length;
   const isVisited = !!hoveredCountry;
@@ -223,7 +296,7 @@ const WorldMapPage = () => {
           <svg
             width="2.5rem"
             height="2.5rem"
-            viewBox="0 0 20 18"
+            viewBox="0 0 23 22"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -254,11 +327,11 @@ const WorldMapPage = () => {
       </div>
 
       <div className={styles.mapContainer} ref={mapContainerRef}>
-        <div className={styles.mapFrame}>
+        <div className={styles.mapFrame} ref={mapFrameRef}>
           <ComposableMap
             projectionConfig={{
-              scale: 147,
-              center: [10, 5] as [Longitude, Latitude],
+              scale: 200,
+              center: [10, 0] as [Longitude, Latitude],
             }}
             style={{ width: "100%", height: "100%" }}
           >
@@ -281,48 +354,33 @@ const WorldMapPage = () => {
                       <Geography
                         key={geo.rsmKey ?? `geo-${idx}`}
                         geography={geo}
-                        onMouseEnter={() => {
-                          startTransition(() => {
-                            setTooltipContent(geoName);
-                            setHoveredCountry(matchedCountry || null);
-                          });
-                        }}
-                        onMouseLeave={() => {
-                          startTransition(() => {
-                            setTooltipContent("");
-                            setHoveredCountry(null);
-                          });
-                        }}
-                        onClick={(_e, data) => {
-                          const syntheticEvent =
-                            _e as unknown as React.MouseEvent;
-                          handleCountryClick(geoName, syntheticEvent);
+                        data-geo={geoName}
+                        onClick={(e) => {
+                          handleCountryClick(
+                            geoName,
+                            e as unknown as React.MouseEvent,
+                          );
                         }}
                         style={{
                           default: {
                             fill: isCountryVisited ? "#34d399" : "#2a2d3a",
                             stroke: "#1e1e2e",
-                            strokeWidth: 0.4,
+                            strokeWidth: 0.5,
                             outline: "none",
                           },
                           hover: {
                             fill: isCountryVisited ? "#10b981" : "#3b3f52",
                             stroke: "#1e1e2e",
-                            strokeWidth: 0.4,
+                            strokeWidth: 0.5,
                             outline: "none",
-                            cursor:
-                              isOwner && !isCountryVisited
-                                ? "pointer"
-                                : "default",
                           },
                           pressed: {
                             fill: isCountryVisited ? "#059669" : "#4b5068",
                             stroke: "#1e1e2e",
-                            strokeWidth: 0.4,
+                            strokeWidth: 0.5,
                             outline: "none",
                           },
                         }}
-                        data-tooltip-id="map-tooltip"
                       />
                     );
                   })
@@ -471,12 +529,13 @@ const WorldMapPage = () => {
         )}
       </div>
 
-      <Tooltip
-        id="map-tooltip"
-        float
-        className={isVisited ? styles.tooltipVisited : styles.tooltipUnvisited}
-      >
-        {tooltipContent && (
+      {tooltipContent && (
+        <div
+          ref={tooltipRef}
+          className={
+            isVisited ? styles.tooltipVisited : styles.tooltipUnvisited
+          }
+        >
           <div className={styles.tooltipContent}>
             <div
               className={
@@ -498,8 +557,8 @@ const WorldMapPage = () => {
               </div>
             )}
           </div>
-        )}
-      </Tooltip>
+        </div>
+      )}
     </div>
   );
 };
