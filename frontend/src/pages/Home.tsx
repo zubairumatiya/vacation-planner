@@ -372,6 +372,34 @@ const Home = () => {
     feedLogs.length,
   ]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (activeTab === "friends") {
+        sessionStorage.setItem("friendsTabScrollPos", document.body.scrollTop.toString());
+      }
+    };
+    document.body.addEventListener("scroll", handleScroll, { passive: true });
+    return () => document.body.removeEventListener("scroll", handleScroll);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (
+      activeTab === "friends" &&
+      !loadingFeed &&
+      (feedTrips.length > 0 || feedLogs.length > 0)
+    ) {
+      const scrollPos = sessionStorage.getItem("friendsTabScrollPos");
+      if (scrollPos) {
+        // Wait for the DOM to paint the lists
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            document.body.scrollTop = parseInt(scrollPos, 10);
+          }, 0);
+        });
+      }
+    }
+  }, [activeTab, loadingFeed, feedTrips.length, feedLogs.length]);
+
   const editTrip = (tripId: string) => {
     setEditing(true);
     editingRef.current = true;
