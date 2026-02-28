@@ -1,0 +1,118 @@
+.navWrapper {
+  display: flex;
+  margin: 1rem auto 2rem auto;
+  justify-content: center;
+}
+
+.navPills {
+  width: 250px;
+  display: flex;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.navItem {
+  width: 50%;
+}
+
+.navButton {
+  font-weight: bold;
+  font-size: 0.9rem;
+  padding: 0.5rem 0;
+  text-align: center;
+  background: #2a2a2d;
+  color: #a0a0a0;
+  border-radius: 20px;
+  width: 100%;
+  display: inline-block;
+  border: 1px solid #404040;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.navButton:hover {
+  background: #3a3a3d;
+  color: #d0d0d0;
+}
+
+.navButtonActive {
+  background: #4a38ee;
+  color: #fff;
+  border-color: #4a38ee;
+}
+
+.navButtonActive:hover {
+  background: #4a38ee;
+  color: #fff;
+}
+
+.friendSection {
+  margin-bottom: 2rem;
+}
+
+.friendSectionHeader {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.feedItem {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.feedItem:first-of-type {
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.feedTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.feedTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #818cf8;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.feedTitle:hover {
+  color: #6366f1;
+}
+
+.openInviteTag {
+  background-color: #16a34a;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.feedSubtitle {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+.feedDateRow {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.daysAgo {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin-top: 0.25rem;
+}

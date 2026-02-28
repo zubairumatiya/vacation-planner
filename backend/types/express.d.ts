@@ -487,6 +487,35 @@ export interface UsernameQuery extends Query {
   username?: string;
 }
 
+export interface FeedTrip {
+  id: string;
+  trip_name: string;
+  location: string;
+  start_date: string;
+  end_date: string;
+  is_public: boolean;
+  is_open_invite: boolean;
+  owner_id: string;
+  owner_first_name: string;
+  owner_last_name: string;
+}
+
+export interface FeedTravelLog {
+  id: string;
+  country_name: string;
+  created_at: string;
+  visibility: string;
+  user_id: string;
+  user_first_name: string;
+  user_last_name: string;
+  days_ago: number;
+}
+
+export interface FriendsFeedResponse {
+  trips: FeedTrip[];
+  travelLogs: FeedTravelLog[];
+}
+
 declare global {
   namespace Express {
     interface Request {

@@ -3,11 +3,37 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { TripRefreshContext } from "../context/TripRefreshContext";
 import styles from "../styles/Home.module.css";
+import homeTabsStyles from "../styles/HomeTabs.module.css";
 import editIcon from "../assets/edit-icon.svg";
 import VacationForm from "../components/VacationForm";
 import refreshFn from "../utils/refreshFn";
 import dropDownIcon from "../assets/arrow-drop-big.svg";
 import SharePanel from "../components/SharePanel";
+
+interface FeedTrip {
+  id: string;
+  trip_name: string;
+  location: string;
+  start_date: string;
+  end_date: string;
+  is_public: boolean;
+  is_open_invite: boolean;
+  owner_id: string;
+  owner_first_name: string;
+  owner_last_name: string;
+}
+
+interface FeedTravelLog {
+  id: string;
+  country_name: string;
+  created_at: string;
+  visibility: string;
+  user_id: string;
+  user_first_name: string;
+  user_last_name: string;
+  days_ago: number;
+}
+
 const EyeIcon = ({
   isPublic,
   onToggle,
@@ -186,6 +212,11 @@ const Home = () => {
   const sharePanelRef = useRef<HTMLDivElement>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  const [activeTab, setActiveTab] = useState<"home" | "friends">("home");
+  const [feedTrips, setFeedTrips] = useState<FeedTrip[]>([]);
+  const [feedLogs, setFeedLogs] = useState<FeedTravelLog[]>([]);
+  const [loadingFeed, setLoadingFeed] = useState(false);
 
   useEffect(() => {
     if (!sharePanelTripId) return;
@@ -273,6 +304,51 @@ const Home = () => {
     };
     getTrips();
   }, [updateList]);
+
+  useEffect(() => {
+    if (activeTab !== "friends" || loggingOutRef?.current) return;
+    const getFeed = async () => {
+      setLoadingFeed(true);
+      try {
+        const res = await fetch(`${apiUrl}/friends/feed`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.status === 401) {
+          const resData = (await res.json()) as ApiErrorResponse;
+          if (resData.error === "JwtError") {
+            if (logout) await logout();
+            return;
+          }
+          if (refreshInFlightRef == null) return;
+          const continueReq = await refreshFn(apiUrl, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) login(String(continueReq.token));
+            const retryReq = await fetch(`${apiUrl}/friends/feed`, {
+              headers: { Authorization: `Bearer ${continueReq.token}` },
+            });
+            if (retryReq.ok) {
+              const data = await retryReq.json() as { trips: FeedTrip[]; travelLogs: FeedTravelLog[] };
+              setFeedTrips(data.trips || []);
+              setFeedLogs(data.travelLogs || []);
+            }
+          } else if (logout) {
+            logout();
+          }
+        } else if (res.ok) {
+          const data = await res.json() as { trips: FeedTrip[]; travelLogs: FeedTravelLog[] };
+          setFeedTrips(data.trips || []);
+          setFeedLogs(data.travelLogs || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingFeed(false);
+      }
+    };
+    if (feedTrips.length === 0 && feedLogs.length === 0) {
+      getFeed();
+    }
+  }, [activeTab, logout, login, refreshInFlightRef, token, apiUrl, loggingOutRef, feedTrips.length, feedLogs.length]);
 
   const editTrip = (tripId: string) => {
     setEditing(true);
@@ -640,8 +716,6 @@ const Home = () => {
     );
   };
 
-  const noActiveTrips = myTrips.length === 0 && sharedTrips.length === 0;
-
   const { registerRefresh, unregisterRefresh } = useContext(TripRefreshContext);
 
   const refreshTrips = useCallback(() => {
@@ -668,7 +742,31 @@ const Home = () => {
   return (
     <>
       {toastMessage && <div className={styles.toast}>{toastMessage}</div>}
-      {!loading && (
+      
+      <div className={homeTabsStyles.navWrapper}>
+        <ul className={homeTabsStyles.navPills} role="tablist">
+          <li className={homeTabsStyles.navItem}>
+            <button
+              type="button"
+              className={`${homeTabsStyles.navButton} ${activeTab === "home" ? homeTabsStyles.navButtonActive : ""}`}
+              onClick={() => setActiveTab("home")}
+            >
+              Home
+            </button>
+          </li>
+          <li className={homeTabsStyles.navItem}>
+            <button
+              type="button"
+              className={`${homeTabsStyles.navButton} ${activeTab === "friends" ? homeTabsStyles.navButtonActive : ""}`}
+              onClick={() => setActiveTab("friends")}
+            >
+              Friends
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      {!loading && activeTab === "home" && (
         <div className={styles.content}>
           {/* My Trips Section */}
           <div className={styles.section}>
@@ -724,6 +822,73 @@ const Home = () => {
                 <div>{pastTrips.map((v) => renderPastTripCard(v))}</div>
               )}
             </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "friends" && (
+        <div className={styles.content}>
+          {loadingFeed ? (
+            <p className={styles.emptyText}>Loading friends feed...</p>
+          ) : (
+            <>
+              <div className={homeTabsStyles.friendSection}>
+                <div className={homeTabsStyles.friendSectionHeader}>
+                  <h2 className="text-2xl font-bold">Upcoming Friends&apos; Trips</h2>
+                </div>
+                <div>
+                  {feedTrips.length === 0 ? (
+                    <p className={styles.emptyText}>No upcoming trips from friends.</p>
+                  ) : (
+                    feedTrips.map((ft) => (
+                      <div key={ft.id} className={homeTabsStyles.feedItem}>
+                        <div className={homeTabsStyles.feedTitleRow}>
+                          <Link to={`/vacation/${ft.id}`} className={homeTabsStyles.feedTitle}>
+                            {ft.trip_name}
+                          </Link>
+                          {ft.is_open_invite && (
+                            <span className={homeTabsStyles.openInviteTag}>Open Invite</span>
+                          )}
+                        </div>
+                        <div className={homeTabsStyles.feedSubtitle}>
+                          By {ft.owner_first_name} {ft.owner_last_name}
+                        </div>
+                        <div className={homeTabsStyles.feedDateRow}>
+                          {formatDate(ft.start_date)} - {formatDate(ft.end_date)}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className={homeTabsStyles.friendSection}>
+                <div className={homeTabsStyles.friendSectionHeader}>
+                  <h2 className="text-2xl font-bold">Recent Travel Logs</h2>
+                </div>
+                <div>
+                  {feedLogs.length === 0 ? (
+                    <p className={styles.emptyText}>No recent travel logs from friends.</p>
+                  ) : (
+                    feedLogs.map((fl) => (
+                      <div key={fl.id} className={homeTabsStyles.feedItem}>
+                        <div className={homeTabsStyles.feedTitleRow}>
+                          <Link to={`/user/${fl.user_id}/country/${fl.id}`} className={homeTabsStyles.feedTitle}>
+                            {fl.country_name}
+                          </Link>
+                        </div>
+                        <div className={homeTabsStyles.feedSubtitle}>
+                          Added by {fl.user_first_name} {fl.user_last_name}
+                        </div>
+                        <div className={homeTabsStyles.daysAgo}>
+                          {fl.days_ago}d ago
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
           )}
         </div>
       )}
