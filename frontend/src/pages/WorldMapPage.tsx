@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useRef, startTransition } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
@@ -7,12 +7,14 @@ import {
   Geographies,
   Geography,
   ZoomableGroup,
-} from "react-simple-maps";
+  type Latitude,
+  type Longitude,
+  type PreparedFeature,
+} from "@vnedyalk0v/react19-simple-maps";
 import { Tooltip } from "react-tooltip";
 import styles from "../styles/WorldMapPage.module.css";
-import travelLogStyles from "../styles/TravelLog.module.css";
 
-const geoUrl = "/features.json";
+const geoUrl = new URL("/features.json", window.location.origin).toString();
 const apiUrl = import.meta.env.VITE_API_URL;
 
 interface UserCountry {
@@ -45,10 +47,18 @@ const formatDate = (dateStr: string) => {
   return dateStr;
 };
 
+const normalizeGeoName = (geoName: string): string => {
+  const lower = geoName.toLowerCase();
+  if (lower === "united states of america") return "united states";
+  if (lower === "south korea") return "south korea";
+  return lower;
+};
+
 const WorldMapPage = () => {
   const { userId } = useParams<{ userId: string }>();
   const auth = useContext(AuthContext);
   const navigate = useNavigate();
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   const [travelLog, setTravelLog] = useState<UserCountry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +73,9 @@ const WorldMapPage = () => {
     name: string;
     continent: string;
   } | null>(null);
+  const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(
+    null,
+  );
   const [visitMonth, setVisitMonth] = useState("");
   const [visitYear, setVisitYear] = useState("");
   const [numDays, setNumDays] = useState("");
@@ -133,17 +146,70 @@ const WorldMapPage = () => {
     loadData();
   }, [userId, token, isOwner]);
 
+  const clearForm = () => {
+    setPendingCountry(null);
+    setPopupPos(null);
+    setVisitMonth("");
+    setVisitYear("");
+    setNumDays("");
+  };
+
+  const handleCountryClick = async (
+    geoName: string,
+    event: React.MouseEvent,
+  ) => {
+    if (!isOwner) return;
+
+    const normalized = normalizeGeoName(geoName);
+    const visited = new Map<string, UserCountry>();
+    travelLog.forEach((c) => visited.set(c.countryName.toLowerCase(), c));
+
+    if (visited.has(normalized)) return;
+
+    let searchName = geoName;
+    if (geoName.toLowerCase() === "united states of america")
+      searchName = "united states";
+    else if (geoName.toLowerCase() === "south korea")
+      searchName = "south korea";
+
+    // Get click position relative to map container
+    const container = mapContainerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    try {
+      const res = await authFetch(
+        `${apiUrl}/countries/search?q=${encodeURIComponent(searchName)}`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const match = data.countries[0];
+        if (match) {
+          setVisitMonth("");
+          setVisitYear("");
+          setNumDays("");
+          setPendingCountry(match);
+          setPopupPos({ x, y });
+          startTransition(() => {
+            setTooltipContent("");
+          });
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (loading) {
     return <div className={styles.loading}>Loading map...</div>;
   }
 
-  // Map travel log by country name to make it easy to look up (since geoUrl uses names)
-  // Better yet, many TopoJSONs use iso_a2 or iso_a3.
-  // The react-simple-maps default world topojson has `properties.name`.
   const visitedMap = new Map<string, UserCountry>();
   travelLog.forEach((c) => visitedMap.set(c.countryName.toLowerCase(), c));
 
-  // The custom tooltip container style
+  const visitedCount = travelLog.length;
   const isVisited = !!hoveredCountry;
 
   return (
@@ -179,178 +245,123 @@ const WorldMapPage = () => {
         <h1 className={styles.title}>
           {profileName ? `${profileName}'s Travels` : "World Map"}
         </h1>
+        <div className={styles.statsChip}>
+          <span className={styles.statsNumber}>{visitedCount}</span>
+          <span className={styles.statsLabel}>
+            {visitedCount === 1 ? "country" : "countries"} visited
+          </span>
+        </div>
       </div>
 
-      <div className={styles.mapContainer}>
-        <ComposableMap
-          projectionConfig={{ scale: 140, center: [0, -45] }}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "5px #464242 double",
-          }}
-        >
-          <ZoomableGroup>
-            <Geographies geography={geoUrl}>
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const geoName = geo.properties.name || "";
-
-                  // There can be slight mismatches between db country names and TopoJSON names (e.g. "United States" vs "United States of America").
-                  // Doing a simple check here:
-                  let matchedCountry = visitedMap.get(geoName.toLowerCase());
-                  if (!matchedCountry) {
-                    if (geoName.toLowerCase() === "united states of america")
-                      matchedCountry = visitedMap.get("united states");
-                    else if (geoName.toLowerCase() === "united kingdom")
-                      matchedCountry = visitedMap.get("united kingdom");
-                    else if (geoName.toLowerCase() === "south korea")
-                      matchedCountry = visitedMap.get("south korea");
-                  }
-
-                  const isCountryVisited = !!matchedCountry;
-
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      onMouseEnter={() => {
-                        setTooltipContent(geoName);
-                        setHoveredCountry(matchedCountry || null);
-                      }}
-                      onMouseLeave={() => {
-                        setTooltipContent("");
-                        setHoveredCountry(null);
-                      }}
-                      style={{
-                        default: {
-                          fill: isCountryVisited ? "#2fe782" : "#333333",
-                          stroke: "#1a1a1a",
-                          strokeWidth: 0.5,
-                          outline: "none",
-                        },
-                        hover: {
-                          fill: isCountryVisited ? "#00bf55" : "#555555",
-                          stroke: "#1a1a1a",
-                          strokeWidth: 0.5,
-                          outline: "none",
-                        },
-                        pressed: {
-                          fill: isCountryVisited ? "#009944" : "#444444",
-                          stroke: "#1a1a1a",
-                          strokeWidth: 0.5,
-                          outline: "none",
-                        },
-                      }}
-                      data-tooltip-id="map-tooltip"
-                    />
-                  );
-                })
-              }
-            </Geographies>
-          </ZoomableGroup>
-        </ComposableMap>
-      </div>
-
-      <Tooltip
-        id="map-tooltip"
-        float
-        className={isVisited ? styles.tooltipVisited : styles.tooltipUnvisited}
-        clickable={isOwner && !isVisited}
-      >
-        {tooltipContent && (
-          <div className={styles.tooltipContent}>
-            <div
-              className={
-                isVisited
-                  ? styles.tooltipTitleVisited
-                  : styles.tooltipTitleUnvisited
-              }
-            >
-              {tooltipContent}
-            </div>
-            {isVisited && hoveredCountry ? (
-              <div className={styles.tooltipDetails}>
-                {hoveredCountry.visitDate && (
-                  <div>Visited: {formatDate(hoveredCountry.visitDate)}</div>
-                )}
-                {hoveredCountry.numDays && (
-                  <div>Duration: {hoveredCountry.numDays} days</div>
-                )}
-              </div>
-            ) : (
-              isOwner && (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    let searchName = tooltipContent;
-                    if (searchName.toLowerCase() === "united states of america")
-                      searchName = "united states";
-                    else if (searchName.toLowerCase() === "south korea")
-                      searchName = "south korea";
-                    try {
-                      const res = await authFetch(
-                        `${apiUrl}/countries/search?q=${encodeURIComponent(
-                          searchName,
-                        )}`,
-                      );
-                      if (res.ok) {
-                        const data = await res.json();
-                        const match = data.countries[0];
-                        if (match) {
-                          setPendingCountry(match);
-                          setTooltipContent("");
-                        }
-                      }
-                    } catch (err) {
-                      console.error(err);
-                    }
-                  }}
-                  className={styles.tooltipAddBtn}
-                  aria-label="Add to travel log"
-                >
-                  <svg
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M20 6L9 17L4 12"
-                      stroke="#2fe782"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
-              )
-            )}
-          </div>
-        )}
-      </Tooltip>
-
-      {pendingCountry && (
-        <div className={styles.modalOverlay}>
-          <div
-            className={travelLogStyles.detailsForm}
-            style={{ position: "relative", marginTop: 0 }}
+      <div className={styles.mapContainer} ref={mapContainerRef}>
+        <div className={styles.mapFrame}>
+          <ComposableMap
+            projectionConfig={{
+              scale: 147,
+              center: [10, 5] as [Longitude, Latitude],
+            }}
+            style={{ width: "100%", height: "100%" }}
           >
-            <div className={travelLogStyles.detailsTitle}>
-              {pendingCountry.name}
+            <ZoomableGroup>
+              <Geographies geography={geoUrl}>
+                {({ geographies }) =>
+                  (geographies as PreparedFeature[]).map((geo, idx) => {
+                    const geoName =
+                      (geo.properties as Record<string, string>)?.name || "";
+                    const normalized = normalizeGeoName(geoName);
+
+                    let matchedCountry = visitedMap.get(normalized);
+                    if (!matchedCountry) {
+                      matchedCountry = visitedMap.get(geoName.toLowerCase());
+                    }
+
+                    const isCountryVisited = !!matchedCountry;
+
+                    return (
+                      <Geography
+                        key={geo.rsmKey ?? `geo-${idx}`}
+                        geography={geo}
+                        onMouseEnter={() => {
+                          startTransition(() => {
+                            setTooltipContent(geoName);
+                            setHoveredCountry(matchedCountry || null);
+                          });
+                        }}
+                        onMouseLeave={() => {
+                          startTransition(() => {
+                            setTooltipContent("");
+                            setHoveredCountry(null);
+                          });
+                        }}
+                        onClick={(_e, data) => {
+                          const syntheticEvent =
+                            _e as unknown as React.MouseEvent;
+                          handleCountryClick(geoName, syntheticEvent);
+                        }}
+                        style={{
+                          default: {
+                            fill: isCountryVisited ? "#34d399" : "#2a2d3a",
+                            stroke: "#1e1e2e",
+                            strokeWidth: 0.4,
+                            outline: "none",
+                          },
+                          hover: {
+                            fill: isCountryVisited ? "#10b981" : "#3b3f52",
+                            stroke: "#1e1e2e",
+                            strokeWidth: 0.4,
+                            outline: "none",
+                            cursor:
+                              isOwner && !isCountryVisited
+                                ? "pointer"
+                                : "default",
+                          },
+                          pressed: {
+                            fill: isCountryVisited ? "#059669" : "#4b5068",
+                            stroke: "#1e1e2e",
+                            strokeWidth: 0.4,
+                            outline: "none",
+                          },
+                        }}
+                        data-tooltip-id="map-tooltip"
+                      />
+                    );
+                  })
+                }
+              </Geographies>
+            </ZoomableGroup>
+          </ComposableMap>
+        </div>
+
+        {pendingCountry && popupPos && (
+          <div
+            className={styles.popup}
+            style={{
+              left: popupPos.x,
+              top: popupPos.y,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.popupArrow} />
+            <div className={styles.popupHeader}>
+              <span className={styles.popupTitle}>{pendingCountry.name}</span>
+              <button
+                type="button"
+                className={styles.popupClose}
+                onClick={clearForm}
+                aria-label="Close"
+              >
+                &times;
+              </button>
             </div>
-            <div className={travelLogStyles.detailsFields}>
-              <label className={travelLogStyles.detailsLabel}>
-                <span>
+            <div className={styles.popupBody}>
+              <label className={styles.popupLabel}>
+                <span className={styles.popupLabelText}>
                   Date visited{" "}
-                  <span className={travelLogStyles.optionalTag}>
-                    (optional)
-                  </span>
+                  <span className={styles.optionalTag}>(optional)</span>
                 </span>
-                <div className={travelLogStyles.dateSelects}>
+                <div className={styles.dateSelects}>
                   <select
-                    className={travelLogStyles.detailsInput}
+                    className={styles.popupSelect}
                     value={visitMonth}
                     onChange={(e) => setVisitMonth(e.target.value)}
                   >
@@ -377,13 +388,13 @@ const WorldMapPage = () => {
                       );
                     })}
                   </select>
-                  <span className={travelLogStyles.dateSeparator}>/</span>
+                  <span className={styles.dateSeparator}>/</span>
                   <select
-                    className={travelLogStyles.detailsInput}
+                    className={styles.popupSelect}
                     value={visitYear}
                     onChange={(e) => setVisitYear(e.target.value)}
                   >
-                    <option value="">YYYY</option>
+                    <option value="">Year</option>
                     {Array.from({ length: 50 }, (_, i) => {
                       const yr = String(new Date().getFullYear() - i);
                       return (
@@ -395,16 +406,14 @@ const WorldMapPage = () => {
                   </select>
                 </div>
               </label>
-              <label className={travelLogStyles.detailsLabel}>
-                <span>
+              <label className={styles.popupLabel}>
+                <span className={styles.popupLabelText}>
                   Days spent{" "}
-                  <span className={travelLogStyles.optionalTag}>
-                    (optional)
-                  </span>
+                  <span className={styles.optionalTag}>(optional)</span>
                 </span>
                 <input
                   type="number"
-                  className={travelLogStyles.detailsInput}
+                  className={styles.popupInput}
                   placeholder="e.g. 7"
                   min="1"
                   value={numDays}
@@ -412,10 +421,17 @@ const WorldMapPage = () => {
                 />
               </label>
             </div>
-            <div className={travelLogStyles.detailsActions}>
+            <div className={styles.popupActions}>
               <button
                 type="button"
-                className={travelLogStyles.detailsConfirmBtn}
+                className={styles.popupCancelBtn}
+                onClick={clearForm}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.popupAddBtn}
                 onClick={async () => {
                   try {
                     const res = await authFetch(`${apiUrl}/travel-log`, {
@@ -439,30 +455,51 @@ const WorldMapPage = () => {
                   } catch (err) {
                     console.error(err);
                   }
-                  setPendingCountry(null);
-                  setVisitMonth("");
-                  setVisitYear("");
-                  setNumDays("");
+                  clearForm();
                 }}
               >
                 Add
               </button>
-              <button
-                type="button"
-                className={travelLogStyles.detailsCancelBtn}
-                onClick={() => {
-                  setPendingCountry(null);
-                  setVisitMonth("");
-                  setVisitYear("");
-                  setNumDays("");
-                }}
-              >
-                Cancel
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {isOwner && !pendingCountry && (
+          <div className={styles.hint}>
+            Click a country to add it to your travel log
+          </div>
+        )}
+      </div>
+
+      <Tooltip
+        id="map-tooltip"
+        float
+        className={isVisited ? styles.tooltipVisited : styles.tooltipUnvisited}
+      >
+        {tooltipContent && (
+          <div className={styles.tooltipContent}>
+            <div
+              className={
+                isVisited
+                  ? styles.tooltipTitleVisited
+                  : styles.tooltipTitleUnvisited
+              }
+            >
+              {tooltipContent}
+            </div>
+            {isVisited && hoveredCountry && (
+              <div className={styles.tooltipDetails}>
+                {hoveredCountry.visitDate && (
+                  <div>Visited: {formatDate(hoveredCountry.visitDate)}</div>
+                )}
+                {hoveredCountry.numDays && (
+                  <div>Duration: {hoveredCountry.numDays} days</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </Tooltip>
     </div>
   );
 };
