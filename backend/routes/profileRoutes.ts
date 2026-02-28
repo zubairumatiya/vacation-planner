@@ -3,6 +3,7 @@ const router = express.Router();
 import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import { QueryResult } from "pg";
+import { snakeToCamel } from "../helpers/snakeToCamel.js";
 import {
   TypedRequest,
   TypedResponse,
@@ -311,9 +312,15 @@ router.get(
         [userId],
       );
 
+      const trips = tripsQuery.rows;
+      const travelLogs = travelLogsQuery.rows;
+
+      snakeToCamel(trips);
+      snakeToCamel(travelLogs);
+
       res.status(200).json({
-        trips: tripsQuery.rows,
-        travelLogs: travelLogsQuery.rows,
+        trips,
+        travelLogs,
       });
     } catch (err) {
       next(err);

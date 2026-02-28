@@ -64,6 +64,7 @@ router.get(
         ORDER BY t.id, ut.role = 'owner' DESC`,
         [req.user.id],
       );
+      snakeToCamel(results.rows);
       res.status(200).json(results.rows);
       return;
     } catch (err) {

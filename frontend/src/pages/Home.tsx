@@ -13,29 +13,29 @@ import profileIcon from "../assets/profile.svg";
 
 interface FeedTrip {
   id: string;
-  trip_name: string;
+  tripName: string;
   location: string;
-  start_date: string;
-  end_date: string;
-  is_public: boolean;
-  is_open_invite: boolean;
-  owner_id: string;
-  owner_first_name: string;
-  owner_last_name: string;
-  owner_username: string;
-  my_role: string | null;
+  startDate: string;
+  endDate: string;
+  isPublic: boolean;
+  isOpenInvite: boolean;
+  ownerId: string;
+  ownerFirstName: string;
+  ownerLastName: string;
+  ownerUsername: string;
+  myRole: string | null;
 }
 
 interface FeedTravelLog {
   id: string;
-  country_name: string;
-  created_at: string;
+  countryName: string;
+  createdAt: string;
   visibility: string;
-  user_id: string;
-  user_first_name: string;
-  user_last_name: string;
-  user_username: string;
-  days_ago: number;
+  userId: string;
+  userFirstName: string;
+  userLastName: string;
+  userUsername: string;
+  daysAgo: number;
 }
 
 const EyeIcon = ({
@@ -171,15 +171,15 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 const mapHomeTrip = (raw: Record<string, unknown>): HomeTrip => ({
   id: raw.id as string,
-  tripName: raw.trip_name as string,
+  tripName: raw.tripName as string,
   location: raw.location as string,
-  startDate: raw.start_date as string,
-  endDate: raw.end_date as string,
+  startDate: raw.startDate as string,
+  endDate: raw.endDate as string,
   role: raw.role as HomeTrip["role"],
-  ownerFirstName: (raw.owner_first_name as string) || "Unknown",
-  ownerLastName: (raw.owner_last_name as string) || "",
-  isPublic: raw.is_public as boolean,
-  isOpenInvite: raw.is_open_invite as boolean,
+  ownerFirstName: (raw.ownerFirstName as string) || "Unknown",
+  ownerLastName: (raw.ownerLastName as string) || "",
+  isPublic: raw.isPublic as boolean,
+  isOpenInvite: raw.isOpenInvite as boolean,
 });
 
 const formatDate = (dateStr: string) =>
@@ -857,7 +857,7 @@ const Home = () => {
                 const now = new Date();
                 now.setHours(0, 0, 0, 0);
                 return (
-                  new Date(ft.start_date) <= now && new Date(ft.end_date) >= now
+                  new Date(ft.startDate) <= now && new Date(ft.endDate) >= now
                 );
               }).length > 0 && (
                 <div className={homeTabsStyles.friendSection}>
@@ -869,18 +869,18 @@ const Home = () => {
                       const now = new Date();
                       now.setHours(0, 0, 0, 0);
                       return (
-                        new Date(ft.start_date) <= now &&
-                        new Date(ft.end_date) >= now
+                        new Date(ft.startDate) <= now &&
+                        new Date(ft.endDate) >= now
                       );
                     })
                     .map((ft) => {
                       const numDays = Math.ceil(
-                        (new Date(ft.end_date).getTime() -
-                          new Date(ft.start_date).getTime()) /
+                        (new Date(ft.endDate).getTime() -
+                          new Date(ft.startDate).getTime()) /
                           (1000 * 60 * 60 * 24),
                       );
                       const isShared =
-                        ft.my_role === "editor" || ft.my_role === "reader";
+                        ft.myRole === "editor" || ft.myRole === "reader";
                       return (
                         <div key={ft.id} className={homeTabsStyles.tripCard}>
                           <div className={homeTabsStyles.tripCardContent}>
@@ -890,13 +890,13 @@ const Home = () => {
                               </div>
                               <div className={homeTabsStyles.ownerInfo}>
                                 <div className={homeTabsStyles.ownerName}>
-                                  {ft.owner_first_name} {ft.owner_last_name}
+                                  {ft.ownerFirstName} {ft.ownerLastName}
                                 </div>
                                 <Link
-                                  to={`/user/${ft.owner_id}`}
+                                  to={`/user/${ft.ownerId}`}
                                   className={homeTabsStyles.ownerLink}
                                 >
-                                  @{ft.owner_username}
+                                  @{ft.ownerUsername}
                                 </Link>
                               </div>
                             </div>
@@ -906,21 +906,21 @@ const Home = () => {
                                   to={`/vacation/${ft.id}`}
                                   className={homeTabsStyles.tripNameLink}
                                 >
-                                  {ft.trip_name}
+                                  {ft.tripName}
                                 </Link>
                               ) : (
                                 <span className={homeTabsStyles.tripName}>
-                                  {ft.trip_name}
+                                  {ft.tripName}
                                 </span>
                               )}
-                              {ft.is_open_invite && (
+                              {ft.isOpenInvite && (
                                 <span className={homeTabsStyles.openInviteTag}>
                                   Open Invite
                                 </span>
                               )}
                               {isShared && (
                                 <span className={homeTabsStyles.roleTag}>
-                                  {ft.my_role === "editor"
+                                  {ft.myRole === "editor"
                                     ? "editor"
                                     : "view only"}
                                 </span>
@@ -931,7 +931,7 @@ const Home = () => {
                                 {ft.location}
                               </div>
                               <div className={homeTabsStyles.tripDetail}>
-                                {formatDate(ft.start_date)} &middot; {numDays}{" "}
+                                {formatDate(ft.startDate)} &middot; {numDays}{" "}
                                 day{numDays !== 1 ? "s" : ""}
                               </div>
                             </div>
@@ -950,7 +950,7 @@ const Home = () => {
                 {feedTrips.filter((ft) => {
                   const now = new Date();
                   now.setHours(0, 0, 0, 0);
-                  return new Date(ft.start_date) > now;
+                  return new Date(ft.startDate) > now;
                 }).length === 0 ? (
                   <p className={homeTabsStyles.emptyText}>
                     No upcoming trips from friends.
@@ -960,16 +960,16 @@ const Home = () => {
                     .filter((ft) => {
                       const now = new Date();
                       now.setHours(0, 0, 0, 0);
-                      return new Date(ft.start_date) > now;
+                      return new Date(ft.startDate) > now;
                     })
                     .map((ft) => {
                       const numDays = Math.ceil(
-                        (new Date(ft.end_date).getTime() -
-                          new Date(ft.start_date).getTime()) /
+                        (new Date(ft.endDate).getTime() -
+                          new Date(ft.startDate).getTime()) /
                           (1000 * 60 * 60 * 24),
                       );
                       const isShared =
-                        ft.my_role === "editor" || ft.my_role === "reader";
+                        ft.myRole === "editor" || ft.myRole === "reader";
                       return (
                         <div key={ft.id} className={homeTabsStyles.tripCard}>
                           <div className={homeTabsStyles.tripCardContent}>
@@ -979,13 +979,13 @@ const Home = () => {
                               </div>
                               <div className={homeTabsStyles.ownerInfo}>
                                 <div className={homeTabsStyles.ownerName}>
-                                  {ft.owner_first_name} {ft.owner_last_name}
+                                  {ft.ownerFirstName} {ft.ownerLastName}
                                 </div>
                                 <Link
-                                  to={`/user/${ft.owner_id}`}
+                                  to={`/user/${ft.ownerId}`}
                                   className={homeTabsStyles.ownerLink}
                                 >
-                                  @{ft.owner_username}
+                                  @{ft.ownerUsername}
                                 </Link>
                               </div>
                               <div></div>
@@ -996,21 +996,21 @@ const Home = () => {
                                   to={`/vacation/${ft.id}`}
                                   className={homeTabsStyles.tripNameLink}
                                 >
-                                  {ft.trip_name}
+                                  {ft.tripName}
                                 </Link>
                               ) : (
                                 <span className={homeTabsStyles.tripName}>
-                                  {ft.trip_name}
+                                  {ft.tripName}
                                 </span>
                               )}
-                              {ft.is_open_invite && (
+                              {ft.isOpenInvite && (
                                 <span className={homeTabsStyles.openInviteTag}>
                                   Open Invite
                                 </span>
                               )}
                               {isShared && (
                                 <span className={homeTabsStyles.roleTag}>
-                                  {ft.my_role === "editor"
+                                  {ft.myRole === "editor"
                                     ? "editor"
                                     : "view only"}
                                 </span>
@@ -1021,7 +1021,7 @@ const Home = () => {
                                 {ft.location}
                               </div>
                               <div className={homeTabsStyles.tripDetail}>
-                                {formatDate(ft.start_date)} &middot; {numDays}{" "}
+                                {formatDate(ft.startDate)} &middot; {numDays}{" "}
                                 day{numDays !== 1 ? "s" : ""}
                               </div>
                             </div>
@@ -1044,30 +1044,30 @@ const Home = () => {
                     <div key={fl.id} className={homeTabsStyles.logCard}>
                       {fl.visibility === "public" ? (
                         <Link
-                          to={`/user/${fl.user_id}/country/${fl.id}`}
+                          to={`/user/${fl.userId}/country/${fl.id}`}
                           className={homeTabsStyles.logName}
                         >
-                          {fl.country_name}
+                          {fl.countryName}
                         </Link>
                       ) : (
                         <span className={homeTabsStyles.logNamePrivate}>
-                          {fl.country_name}
+                          {fl.countryName}
                         </span>
                       )}
                       <div className={homeTabsStyles.logMeta}>
                         <div className={homeTabsStyles.ownerInfo}>
                           <div className={homeTabsStyles.ownerName}>
-                            {fl.user_first_name} {fl.user_last_name}
+                            {fl.userFirstName} {fl.userLastName}
                           </div>
                           <Link
-                            to={`/user/${fl.user_id}`}
+                            to={`/user/${fl.userId}`}
                             className={homeTabsStyles.logOwner}
                           >
-                            @{fl.user_username}
+                            @{fl.userUsername}
                           </Link>
                         </div>
                         <div className={homeTabsStyles.daysAgo}>
-                          {fl.days_ago === 0 ? "today" : `${fl.days_ago}d ago`}
+                          {fl.daysAgo === 0 ? "today" : `${fl.daysAgo}d ago`}
                         </div>
                       </div>
                     </div>
