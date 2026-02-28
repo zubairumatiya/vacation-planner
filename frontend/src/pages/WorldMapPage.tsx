@@ -251,15 +251,21 @@ const WorldMapPage = () => {
       if (!(target instanceof Element)) return;
       const path = target.closest("[data-geo]");
       const name = path?.getAttribute("data-geo") || null;
-      if (name && name !== lastGeoRef.current) {
-        lastGeoRef.current = name;
-        const normalized = normalizeGeoName(name);
-        const matched =
-          visitedMap.get(normalized) ||
-          visitedMap.get(name.toLowerCase()) ||
-          null;
-        setTooltipContent(name);
-        setHoveredCountry(matched);
+      if (name) {
+        if (name !== lastGeoRef.current) {
+          lastGeoRef.current = name;
+          const normalized = normalizeGeoName(name);
+          const matched =
+            visitedMap.get(normalized) ||
+            visitedMap.get(name.toLowerCase()) ||
+            null;
+          setTooltipContent(name);
+          setHoveredCountry(matched);
+        }
+      } else if (lastGeoRef.current) {
+        lastGeoRef.current = null;
+        setTooltipContent("");
+        setHoveredCountry(null);
       }
     };
 
