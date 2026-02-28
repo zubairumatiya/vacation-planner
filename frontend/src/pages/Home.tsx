@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext, useRef, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { TripRefreshContext } from "../context/TripRefreshContext";
 import styles from "../styles/Home.module.css";
@@ -217,7 +217,9 @@ const Home = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"home" | "friends">("home");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") === "friends" ? "friends" : "home";
+  const setActiveTab = (tab: "home" | "friends") => setSearchParams({ tab });
   const [feedTrips, setFeedTrips] = useState<FeedTrip[]>([]);
   const [feedLogs, setFeedLogs] = useState<FeedTravelLog[]>([]);
   const [loadingFeed, setLoadingFeed] = useState(false);
