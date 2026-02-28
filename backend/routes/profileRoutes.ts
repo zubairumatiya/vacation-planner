@@ -275,8 +275,11 @@ router.get(
       const userId = req.user.id;
 
       const tripsQuery = await db.query<FeedTrip>(
-        `SELECT DISTINCT ON (t.start_date, t.id) t.id, t.trip_name, t.location, t.start_date, t.end_date, t.is_public, t.is_open_invite,
-                u.id as owner_id, u.first_name as owner_first_name, u.last_name as owner_last_name
+        `SELECT DISTINCT ON (t.start_date, t.id)
+                t.id, t.trip_name, t.location, t.start_date, t.end_date, t.is_public, t.is_open_invite,
+                u.id as owner_id, u.first_name as owner_first_name, u.last_name as owner_last_name,
+                u.username as owner_username,
+                ut_me.role as my_role
          FROM trips t
          JOIN user_trips ut_owner ON ut_owner.trip_id = t.id AND ut_owner.role = 'owner'
          JOIN users u ON u.id = ut_owner.user_id
@@ -288,18 +291,22 @@ router.get(
             (ut_me.user_id = $1 AND ut_me.role IN ('editor', 'reader'))
          )
          AND t.end_date >= CURRENT_DATE
+         AND ut_owner.user_id != $1
          ORDER BY t.start_date ASC, t.id ASC`,
         [userId],
       );
 
       const travelLogsQuery = await db.query<FeedTravelLog>(
-        `SELECT uc.id, uc.country_name, uc.created_at, uc.visibility,
+        `SELECT uc.id, c.name as country_name, uc.created_at, uc.visibility,
                 u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name,
-                EXTRACT(DAY FROM CURRENT_TIMESTAMP - uc.created_at) as days_ago
+                u.username as user_username,
+                EXTRACT(DAY FROM CURRENT_TIMESTAMP - uc.created_at)::int as days_ago
          FROM user_countries uc
+         JOIN countries c ON c.id = uc.country_id
          JOIN users u ON u.id = uc.user_id
          JOIN follows f ON ((f.requester_id = $1 AND f.receiver_id = u.id) OR (f.receiver_id = $1 AND f.requester_id = u.id)) AND f.status = 'accepted'
          WHERE uc.visibility IN ('public', 'friends')
+         AND uc.user_id != $1
          ORDER BY uc.created_at DESC`,
         [userId],
       );

@@ -9,6 +9,7 @@ import VacationForm from "../components/VacationForm";
 import refreshFn from "../utils/refreshFn";
 import dropDownIcon from "../assets/arrow-drop-big.svg";
 import SharePanel from "../components/SharePanel";
+import profileIcon from "../assets/profile.svg";
 
 interface FeedTrip {
   id: string;
@@ -21,6 +22,8 @@ interface FeedTrip {
   owner_id: string;
   owner_first_name: string;
   owner_last_name: string;
+  owner_username: string;
+  my_role: string | null;
 }
 
 interface FeedTravelLog {
@@ -31,6 +34,7 @@ interface FeedTravelLog {
   user_id: string;
   user_first_name: string;
   user_last_name: string;
+  user_username: string;
   days_ago: number;
 }
 
@@ -212,7 +216,7 @@ const Home = () => {
   const sharePanelRef = useRef<HTMLDivElement>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   const [activeTab, setActiveTab] = useState<"home" | "friends">("home");
   const [feedTrips, setFeedTrips] = useState<FeedTrip[]>([]);
   const [feedLogs, setFeedLogs] = useState<FeedTravelLog[]>([]);
@@ -327,7 +331,10 @@ const Home = () => {
               headers: { Authorization: `Bearer ${continueReq.token}` },
             });
             if (retryReq.ok) {
-              const data = await retryReq.json() as { trips: FeedTrip[]; travelLogs: FeedTravelLog[] };
+              const data = (await retryReq.json()) as {
+                trips: FeedTrip[];
+                travelLogs: FeedTravelLog[];
+              };
               setFeedTrips(data.trips || []);
               setFeedLogs(data.travelLogs || []);
             }
@@ -335,7 +342,10 @@ const Home = () => {
             logout();
           }
         } else if (res.ok) {
-          const data = await res.json() as { trips: FeedTrip[]; travelLogs: FeedTravelLog[] };
+          const data = (await res.json()) as {
+            trips: FeedTrip[];
+            travelLogs: FeedTravelLog[];
+          };
           setFeedTrips(data.trips || []);
           setFeedLogs(data.travelLogs || []);
         }
@@ -348,7 +358,17 @@ const Home = () => {
     if (feedTrips.length === 0 && feedLogs.length === 0) {
       getFeed();
     }
-  }, [activeTab, logout, login, refreshInFlightRef, token, apiUrl, loggingOutRef, feedTrips.length, feedLogs.length]);
+  }, [
+    activeTab,
+    logout,
+    login,
+    refreshInFlightRef,
+    token,
+    apiUrl,
+    loggingOutRef,
+    feedTrips.length,
+    feedLogs.length,
+  ]);
 
   const editTrip = (tripId: string) => {
     setEditing(true);
@@ -742,7 +762,7 @@ const Home = () => {
   return (
     <>
       {toastMessage && <div className={styles.toast}>{toastMessage}</div>}
-      
+
       <div className={homeTabsStyles.navWrapper}>
         <ul className={homeTabsStyles.navPills} role="tablist">
           <li className={homeTabsStyles.navItem}>
@@ -829,64 +849,230 @@ const Home = () => {
       {activeTab === "friends" && (
         <div className={styles.content}>
           {loadingFeed ? (
-            <p className={styles.emptyText}>Loading friends feed...</p>
+            <p className={homeTabsStyles.emptyText}>Loading friends feed...</p>
           ) : (
             <>
+              {/* Currently Tripping - only shows if there are active trips */}
+              {feedTrips.filter((ft) => {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                return (
+                  new Date(ft.start_date) <= now && new Date(ft.end_date) >= now
+                );
+              }).length > 0 && (
+                <div className={homeTabsStyles.friendSection}>
+                  <div className={homeTabsStyles.sectionTitle}>
+                    Currently Tripping
+                  </div>
+                  {feedTrips
+                    .filter((ft) => {
+                      const now = new Date();
+                      now.setHours(0, 0, 0, 0);
+                      return (
+                        new Date(ft.start_date) <= now &&
+                        new Date(ft.end_date) >= now
+                      );
+                    })
+                    .map((ft) => {
+                      const numDays = Math.ceil(
+                        (new Date(ft.end_date).getTime() -
+                          new Date(ft.start_date).getTime()) /
+                          (1000 * 60 * 60 * 24),
+                      );
+                      const isShared =
+                        ft.my_role === "editor" || ft.my_role === "reader";
+                      return (
+                        <div key={ft.id} className={homeTabsStyles.tripCard}>
+                          <div className={homeTabsStyles.tripCardContent}>
+                            <div className={homeTabsStyles.tripCardLeft}>
+                              <div className={homeTabsStyles.avatarSmall}>
+                                <img src={profileIcon} alt="" />
+                              </div>
+                              <div className={homeTabsStyles.ownerInfo}>
+                                <div className={homeTabsStyles.ownerName}>
+                                  {ft.owner_first_name} {ft.owner_last_name}
+                                </div>
+                                <Link
+                                  to={`/user/${ft.owner_id}`}
+                                  className={homeTabsStyles.ownerLink}
+                                >
+                                  @{ft.owner_username}
+                                </Link>
+                              </div>
+                            </div>
+                            <div className={homeTabsStyles.tripCardCenter}>
+                              {isShared ? (
+                                <Link
+                                  to={`/vacation/${ft.id}`}
+                                  className={homeTabsStyles.tripNameLink}
+                                >
+                                  {ft.trip_name}
+                                </Link>
+                              ) : (
+                                <span className={homeTabsStyles.tripName}>
+                                  {ft.trip_name}
+                                </span>
+                              )}
+                              {ft.is_open_invite && (
+                                <span className={homeTabsStyles.openInviteTag}>
+                                  Open Invite
+                                </span>
+                              )}
+                              {isShared && (
+                                <span className={homeTabsStyles.roleTag}>
+                                  {ft.my_role === "editor"
+                                    ? "editor"
+                                    : "view only"}
+                                </span>
+                              )}
+                            </div>
+                            <div className={homeTabsStyles.tripCardSecondary}>
+                              <div className={homeTabsStyles.tripDetail}>
+                                {ft.location}
+                              </div>
+                              <div className={homeTabsStyles.tripDetail}>
+                                {formatDate(ft.start_date)} &middot; {numDays}{" "}
+                                day{numDays !== 1 ? "s" : ""}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+
+              {/* Upcoming Trips */}
               <div className={homeTabsStyles.friendSection}>
-                <div className={homeTabsStyles.friendSectionHeader}>
-                  <h2 className="text-2xl font-bold">Upcoming Friends&apos; Trips</h2>
+                <div className={homeTabsStyles.sectionTitle}>
+                  Upcoming Trips
                 </div>
-                <div>
-                  {feedTrips.length === 0 ? (
-                    <p className={styles.emptyText}>No upcoming trips from friends.</p>
-                  ) : (
-                    feedTrips.map((ft) => (
-                      <div key={ft.id} className={homeTabsStyles.feedItem}>
-                        <div className={homeTabsStyles.feedTitleRow}>
-                          <Link to={`/vacation/${ft.id}`} className={homeTabsStyles.feedTitle}>
-                            {ft.trip_name}
-                          </Link>
-                          {ft.is_open_invite && (
-                            <span className={homeTabsStyles.openInviteTag}>Open Invite</span>
-                          )}
+                {feedTrips.filter((ft) => {
+                  const now = new Date();
+                  now.setHours(0, 0, 0, 0);
+                  return new Date(ft.start_date) > now;
+                }).length === 0 ? (
+                  <p className={homeTabsStyles.emptyText}>
+                    No upcoming trips from friends.
+                  </p>
+                ) : (
+                  feedTrips
+                    .filter((ft) => {
+                      const now = new Date();
+                      now.setHours(0, 0, 0, 0);
+                      return new Date(ft.start_date) > now;
+                    })
+                    .map((ft) => {
+                      const numDays = Math.ceil(
+                        (new Date(ft.end_date).getTime() -
+                          new Date(ft.start_date).getTime()) /
+                          (1000 * 60 * 60 * 24),
+                      );
+                      const isShared =
+                        ft.my_role === "editor" || ft.my_role === "reader";
+                      return (
+                        <div key={ft.id} className={homeTabsStyles.tripCard}>
+                          <div className={homeTabsStyles.tripCardContent}>
+                            <div className={homeTabsStyles.tripCardLeft}>
+                              <div className={homeTabsStyles.avatarSmall}>
+                                <img src={profileIcon} alt="" />
+                              </div>
+                              <div className={homeTabsStyles.ownerInfo}>
+                                <div className={homeTabsStyles.ownerName}>
+                                  {ft.owner_first_name} {ft.owner_last_name}
+                                </div>
+                                <Link
+                                  to={`/user/${ft.owner_id}`}
+                                  className={homeTabsStyles.ownerLink}
+                                >
+                                  @{ft.owner_username}
+                                </Link>
+                              </div>
+                              <div></div>
+                            </div>
+                            <div className={homeTabsStyles.tripCardCenter}>
+                              {isShared ? (
+                                <Link
+                                  to={`/vacation/${ft.id}`}
+                                  className={homeTabsStyles.tripNameLink}
+                                >
+                                  {ft.trip_name}
+                                </Link>
+                              ) : (
+                                <span className={homeTabsStyles.tripName}>
+                                  {ft.trip_name}
+                                </span>
+                              )}
+                              {ft.is_open_invite && (
+                                <span className={homeTabsStyles.openInviteTag}>
+                                  Open Invite
+                                </span>
+                              )}
+                              {isShared && (
+                                <span className={homeTabsStyles.roleTag}>
+                                  {ft.my_role === "editor"
+                                    ? "editor"
+                                    : "view only"}
+                                </span>
+                              )}
+                            </div>
+                            <div className={homeTabsStyles.tripCardSecondary}>
+                              <div className={homeTabsStyles.tripDetail}>
+                                {ft.location}
+                              </div>
+                              <div className={homeTabsStyles.tripDetail}>
+                                {formatDate(ft.start_date)} &middot; {numDays}{" "}
+                                day{numDays !== 1 ? "s" : ""}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className={homeTabsStyles.feedSubtitle}>
-                          By {ft.owner_first_name} {ft.owner_last_name}
-                        </div>
-                        <div className={homeTabsStyles.feedDateRow}>
-                          {formatDate(ft.start_date)} - {formatDate(ft.end_date)}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
+                      );
+                    })
+                )}
               </div>
 
+              {/* Travel Logs */}
               <div className={homeTabsStyles.friendSection}>
-                <div className={homeTabsStyles.friendSectionHeader}>
-                  <h2 className="text-2xl font-bold">Recent Travel Logs</h2>
-                </div>
-                <div>
-                  {feedLogs.length === 0 ? (
-                    <p className={styles.emptyText}>No recent travel logs from friends.</p>
-                  ) : (
-                    feedLogs.map((fl) => (
-                      <div key={fl.id} className={homeTabsStyles.feedItem}>
-                        <div className={homeTabsStyles.feedTitleRow}>
-                          <Link to={`/user/${fl.user_id}/country/${fl.id}`} className={homeTabsStyles.feedTitle}>
-                            {fl.country_name}
+                <div className={homeTabsStyles.sectionTitle}>Travel Logs</div>
+                {feedLogs.length === 0 ? (
+                  <p className={homeTabsStyles.emptyText}>
+                    No travel logs from friends.
+                  </p>
+                ) : (
+                  feedLogs.map((fl) => (
+                    <div key={fl.id} className={homeTabsStyles.logCard}>
+                      {fl.visibility === "public" ? (
+                        <Link
+                          to={`/user/${fl.user_id}/country/${fl.id}`}
+                          className={homeTabsStyles.logName}
+                        >
+                          {fl.country_name}
+                        </Link>
+                      ) : (
+                        <span className={homeTabsStyles.logNamePrivate}>
+                          {fl.country_name}
+                        </span>
+                      )}
+                      <div className={homeTabsStyles.logMeta}>
+                        <div className={homeTabsStyles.ownerInfo}>
+                          <div className={homeTabsStyles.ownerName}>
+                            {fl.user_first_name} {fl.user_last_name}
+                          </div>
+                          <Link
+                            to={`/user/${fl.user_id}`}
+                            className={homeTabsStyles.logOwner}
+                          >
+                            @{fl.user_username}
                           </Link>
                         </div>
-                        <div className={homeTabsStyles.feedSubtitle}>
-                          Added by {fl.user_first_name} {fl.user_last_name}
-                        </div>
                         <div className={homeTabsStyles.daysAgo}>
-                          {fl.days_ago}d ago
+                          {fl.days_ago === 0 ? "today" : `${fl.days_ago}d ago`}
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    </div>
+                  ))
+                )}
               </div>
             </>
           )}

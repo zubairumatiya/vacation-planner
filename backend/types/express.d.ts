@@ -498,6 +498,8 @@ export interface FeedTrip {
   owner_id: string;
   owner_first_name: string;
   owner_last_name: string;
+  owner_username: string;
+  my_role: string | null;
 }
 
 export interface FeedTravelLog {
@@ -508,6 +510,7 @@ export interface FeedTravelLog {
   user_id: string;
   user_first_name: string;
   user_last_name: string;
+  user_username: string;
   days_ago: number;
 }
 

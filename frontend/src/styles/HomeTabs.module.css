@@ -49,70 +49,195 @@
 }
 
 .friendSection {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  width: 25%;
 }
 
-.friendSectionHeader {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-
-.feedItem {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  padding: 1rem 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.feedItem:first-of-type {
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.feedTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.feedTitle {
-  font-size: 1.25rem;
+.sectionTitle {
+  color: #2fe782;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #818cf8;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #444;
+  padding-bottom: 0.4rem;
+  text-align: center;
+}
+
+/* Trip cards */
+.tripCard {
+  background-color: #333;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.tripCardContent {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.tripCardLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 0;
+  flex-shrink: 0;
+  flex-direction: column;
+}
+
+.ownerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.avatarSmall {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #2fe782;
+  flex-shrink: 0;
+}
+
+.avatarSmall img {
+  width: 32px;
+  height: 32px;
+  opacity: 0.7;
+}
+
+.ownerName {
+  color: #ccc;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ownerLink {
+  color: #9ca3af;
+  font-size: 0.65rem;
   text-decoration: none;
   transition: color 0.2s;
 }
 
-.feedTitle:hover {
+.ownerLink:hover {
+  color: #818cf8;
+}
+
+.tripCardCenter {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.tripName {
+  color: #fcf7ea;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.tripNameLink {
+  color: #818cf8;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.tripNameLink:hover {
   color: #6366f1;
+}
+
+.tripCardSecondary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.tripDetail {
+  color: #aaa;
+  font-size: 0.7rem;
+  line-height: 1.3;
 }
 
 .openInviteTag {
   background-color: #16a34a;
   color: #fff;
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   font-weight: 600;
-  padding: 1px 8px;
+  padding: 0px 6px;
   border-radius: 9999px;
   white-space: nowrap;
   line-height: 1.4;
 }
 
-.feedSubtitle {
-  font-size: 0.875rem;
+.roleTag {
+  font-size: 0.6rem;
   color: #9ca3af;
-  margin-top: 0.25rem;
+  font-style: italic;
 }
 
-.feedDateRow {
-  font-size: 1rem;
-  margin-top: 0.5rem;
+/* Travel log cards - compact */
+.logCard {
+  background-color: #2a2a2d;
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  margin-bottom: 0.2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logName {
+  color: #818cf8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.logName:hover {
+  color: #6366f1;
+}
+
+.logNamePrivate {
+  color: #e5e5e5;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.logMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logOwner {
+  color: #9ca3af;
+  font-size: 0.65rem;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.logOwner:hover {
+  color: #818cf8;
 }
 
 .daysAgo {
-  font-size: 0.875rem;
-  color: #9ca3af;
+  font-size: 0.6rem;
+  color: #666;
   font-style: italic;
-  margin-top: 0.25rem;
+}
+
+.emptyText {
+  color: #666;
+  font-size: 0.8rem;
+  padding: 0.4rem 0;
+  text-align: center;
 }
