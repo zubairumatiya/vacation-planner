@@ -16,6 +16,8 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   const [newItem, setNewItem] = useState<string>("");
   const [addingNewItem, setAddingNewItem] = useState<boolean>(true);
   const [editItemId, setEditItemId] = useState<UniqueIdentifier>("-1");
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [noteText, setNoteText] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -79,7 +81,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         setBannerMsg("This list could not be found");
       } else if (response.status >= 500) {
         setBannerMsg(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
         );
       } else if (response.ok) {
         const data = (await response.json()) as ListGetResponse;
@@ -103,18 +105,22 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       return;
     }
     const item = raw.trim();
-    const res = await props.handleSubmitItem(item);
+    if (!item) return;
+    const details = noteText.trim() || null;
+    const res = await props.handleSubmitItem(item, undefined, details);
 
     if (res === 200 || res === 400 || res === 500) {
       setEditItemId("-1");
       setNewItem("");
+      setNoteText("");
+      setShowNoteInput(false);
     }
   };
 
   const handleEditItem = async (
     e: React.FormEvent<HTMLFormElement>,
     index: number,
-    itemId: UniqueIdentifier
+    itemId: UniqueIdentifier,
   ) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -123,6 +129,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       return;
     }
     const item: string = raw.trim();
+    const details = noteText.trim() || null;
     console.log(props.list[index]);
     const response = await fetch(`${apiURL}/list/${itemId}`, {
       method: "PATCH",
@@ -132,6 +139,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       },
       body: JSON.stringify({
         value: item,
+        details,
         tripId,
         lastModified: props.list[index].lastModified,
       }),
@@ -163,6 +171,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
           },
           body: JSON.stringify({
             value: item,
+            details,
             tripId,
             lastModified: props.list[index].lastModified,
           }),
@@ -193,11 +202,11 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       const data = (await response.json()) as ListConflictResponse;
       props.setList(data.newData);
       setBannerMsg(
-        "Another user has updated this resource, your change was not applied"
+        "Another user has updated this resource, your change was not applied",
       );
     } else if (response.status >= 500) {
       setBannerMsg(
-        "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+        "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
       );
     } else if (response.ok) {
       const data = (await response.json()) as ListUpdateResponse;
@@ -214,23 +223,27 @@ const WantToSeeList = (props: WantToSeeListProps) => {
 
     setEditItemId("-1");
     setNewItem("");
+    setNoteText("");
+    setShowNoteInput(false);
     setAddingNewItem(true);
   };
 
   const editItem = (
     e: React.MouseEvent,
     index: number,
-    itemId: UniqueIdentifier
+    itemId: UniqueIdentifier,
   ) => {
     e.preventDefault();
     setAddingNewItem(false);
     setEditItemId(itemId);
     setNewItem(props.list[index].value);
+    setNoteText(props.list[index].details || "");
+    setShowNoteInput(!!props.list[index].details);
   };
 
   const handleDeleteItem = async (
     e: React.MouseEvent,
-    itemId: UniqueIdentifier
+    itemId: UniqueIdentifier,
   ) => {
     e.preventDefault();
     const res = await props.handleDeleteItem(itemId, false);
@@ -238,16 +251,20 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     if (res === 200 || res === 400 || res === 500) {
       setEditItemId("-1");
       setNewItem("");
+      setNoteText("");
+      setShowNoteInput(false);
       setAddingNewItem(true);
     }
   };
 
   const clickAwayToCancel = (e: React.MouseEvent) => {
     // prettier-ignore
-    if (!(e.target instanceof HTMLImageElement || e.target instanceof HTMLButtonElement)) {
+    if (!(e.target instanceof HTMLImageElement || e.target instanceof HTMLButtonElement || e.target instanceof HTMLTextAreaElement)) {
       e.preventDefault();
       setEditItemId("-1");
       setNewItem("");
+      setNoteText("");
+      setShowNoteInput(false);
       setAddingNewItem(true);
     }
   };
@@ -256,7 +273,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     e: React.MouseEvent,
     currentState: boolean,
     itemId: UniqueIdentifier,
-    index: number
+    index: number,
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -331,7 +348,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         setBannerMsg("Error: Trip not found");
       } else if (result.status >= 500) {
         setBannerMsg(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
         );
       }
     }
@@ -351,43 +368,80 @@ const WantToSeeList = (props: WantToSeeListProps) => {
               <div className={styles.checkBubbleWrapper}>
                 <CheckBubble checked={v.itemAdded} />
               </div>
-              <div className={styles.editItemWrapper}>
-                <form
-                  onSubmit={(e) => handleEditItem(e, i, v.id)}
-                  className={`${styles.form} ${
-                    v.fromGoogle && styles.showMessage
-                  }`}
-                >
-                  <input
-                    className={`${styles.input} ${
-                      v.fromGoogle && styles.noEditingInput
+              <div className={styles.itemValueWrapper}>
+                <div className={styles.editItemWrapper}>
+                  <form
+                    onSubmit={(e) => handleEditItem(e, i, v.id)}
+                    className={`${styles.form} ${
+                      v.fromGoogle && styles.showMessagei
                     }`}
-                    type="text"
-                    name="newItem"
-                    autoComplete="off"
-                    ref={inputRef}
-                    value={newItem}
-                    onChange={(e) => setNewItem(e.target.value)}
-                    id="newItem"
-                    disabled={v.fromGoogle ? true : false}
-                  />
-                  <div className={`${styles.hiddenMessage}`}>
-                    Places added from map cannot be edited
-                  </div>
-                </form>
-                <button
-                  type="button"
-                  className={styles.trashButton}
-                  onClick={(e) => {
-                    handleDeleteItem(e, v.id);
-                  }}
-                >
-                  <img
-                    src={trashIcon}
-                    className={styles.trashIcon}
-                    alt="trashIcon"
-                  />
-                </button>
+                  >
+                    <div className={`${styles.editItemTopRow}`}>
+                      <div className={v.fromGoogle ? styles.showMessage : ""}>
+                        <input
+                          className={`${styles.input} ${
+                            v.fromGoogle && styles.noEditingInput
+                          }`}
+                          type="text"
+                          name="newItem"
+                          autoComplete="off"
+                          ref={inputRef}
+                          value={newItem}
+                          onChange={(e) => setNewItem(e.target.value)}
+                          id="newItem"
+                          disabled={v.fromGoogle ? true : false}
+                        />
+                      </div>
+                      <div className={`${styles.hiddenMessage}`}>
+                        Places added from map cannot be edited
+                      </div>
+
+                      <button
+                        type="button"
+                        className={styles.trashButton}
+                        onClick={(e) => {
+                          handleDeleteItem(e, v.id);
+                        }}
+                      >
+                        <img
+                          src={trashIcon}
+                          className={styles.trashIcon}
+                          alt="trashIcon"
+                        />
+                      </button>
+                    </div>
+                    <div className={styles.noteSection}>
+                      {showNoteInput ? (
+                        <div className={styles.noteInputWrapper}>
+                          <textarea
+                            className={styles.noteTextarea}
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            placeholder="Write a note..."
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                const form = e.currentTarget.form;
+                                if (form) {
+                                  form.requestSubmit();
+                                }
+                              }
+                            }}
+                            autoFocus
+                          />
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.noteToggleBtn}
+                          onClick={() => setShowNoteInput(true)}
+                        >
+                          {v.details ? "Edit note" : "Add note"}
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
               </div>
             </li>
           ) : (
@@ -417,6 +471,39 @@ const WantToSeeList = (props: WantToSeeListProps) => {
                 onChange={(e) => setNewItem(e.target.value)}
                 id="newItem"
               />
+
+              {newItem.trim() && (
+                <div className={styles.noteSection}>
+                  {showNoteInput ? (
+                    <div className={styles.noteInputWrapper}>
+                      <textarea
+                        className={styles.noteTextarea}
+                        value={noteText}
+                        onChange={(e) => setNoteText(e.target.value)}
+                        placeholder="Write a note..."
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            const form = e.currentTarget.form;
+                            if (form) {
+                              form.requestSubmit();
+                            }
+                          }
+                        }}
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.noteToggleBtn}
+                      onClick={() => setShowNoteInput(true)}
+                    >
+                      Add note
+                    </button>
+                  )}
+                </div>
+              )}
             </form>
           </li>
         )}

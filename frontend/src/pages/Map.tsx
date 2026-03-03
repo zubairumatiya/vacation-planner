@@ -44,12 +44,12 @@ const MyMapComponent = ({
 }: Props) => {
   const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   const [locationName, setLocationName] = useState<string>(startLocation ?? "");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
-  const [searchDisabled, setSearchDisabled] = useState<boolean>(true);
+  const [searchDisabled, setSearchDisabled] = useState<boolean>(false);
   const [submitButtonTrigger, setSubmitButtonTrigger] =
     useState<boolean>(false);
   const [viewport, setViewport] = useState<Viewport | null>(() =>
@@ -58,7 +58,7 @@ const MyMapComponent = ({
       : {
           high: { latitude: 0, longitude: 0 },
           low: { latitude: 0, longitude: 0 },
-        }
+        },
   );
   const colorScheme = useRef<ColorScheme>("light"); //if we incorporate changing colors in the future, a state hook would work better
   const detailsSize = useRef<DetailsSize>("FULL");

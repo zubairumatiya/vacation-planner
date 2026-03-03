@@ -652,10 +652,16 @@ router.patch(
     next: NextFunction,
   ) => {
     try {
-      const result: QueryResult<TripList> = await db.query(
-        "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
-        [req.body.value, req.params.id],
-      );
+      const details = req.body.details !== undefined ? req.body.details : undefined;
+      const result: QueryResult<TripList> = details !== undefined
+        ? await db.query(
+            "UPDATE trip_list SET value=$1, details=$2, last_modified=NOW() WHERE id=$3 RETURNING *",
+            [req.body.value, details, req.params.id],
+          )
+        : await db.query(
+            "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
+            [req.body.value, req.params.id],
+          );
       snakeToCamel<TripList>(result.rows);
       res.status(200).json({ data: result.rows });
       return;

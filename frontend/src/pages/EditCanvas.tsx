@@ -969,7 +969,7 @@ const EditCanvas = ({
   };
 
   const handleSubmitItem = useCallback(
-    async (value: string, id?: UniqueIdentifier) => {
+    async (value: string, id?: UniqueIdentifier, details?: string | null) => {
       const val = value;
       const response = await fetch(`${apiURL}/list/${tripId}`, {
         method: "POST",
@@ -977,7 +977,7 @@ const EditCanvas = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ value: val, fromGoogle: id ?? null }),
+        body: JSON.stringify({ value: val, fromGoogle: id ?? null, details: details ?? null }),
       });
       if (response.status === 401) {
         const resData = (await response.json()) as ApiErrorResponse;
@@ -1003,7 +1003,7 @@ const EditCanvas = ({
               "Content-Type": "application/json",
               Authorization: `Bearer ${continueReq.token}`,
             },
-            body: JSON.stringify({ value: val, fromGoogle: id ?? null }),
+            body: JSON.stringify({ value: val, fromGoogle: id ?? null, details: details ?? null }),
           });
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");

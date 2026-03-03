@@ -37,7 +37,7 @@ export const SearchBar = memo(function SearchBar({
       { value: "amusementPark", label: "Amusement parks" },
       { value: "touristAttraction", label: "Popular tourism" },
     ],
-    []
+    [],
   );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -58,9 +58,9 @@ export const SearchBar = memo(function SearchBar({
 
   const placeTypeRef = useRef<PlaceType>(placeType);
 
-  const [localSearchDisabled, setLocalSearchDisabled] = useState<boolean>(true);
-
-  const [holdName, setHoldName] = useState<string>("");
+  const [localSearchDisabled, setLocalSearchDisabled] =
+    useState<boolean>(false);
+  const [holdName, setHoldName] = useState<string>(locationName);
 
   const autocompleteRef = useRef<{
     handleKeyDown: (key: string) => void;
@@ -89,7 +89,7 @@ export const SearchBar = memo(function SearchBar({
   }, [placeTypeValue, holdName]);
 
   const handlePlaceTypeChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<HTMLSelectElement>,
   ) => {
     setPlaceTypeValue(event.target.value as PlaceType);
   };
@@ -104,7 +104,7 @@ export const SearchBar = memo(function SearchBar({
       setHoldName(name);
       const bounds = new google.maps.LatLngBounds(
         new google.maps.LatLng(vp.low.latitude, vp.low.longitude),
-        new google.maps.LatLng(vp.high.latitude, vp.high.longitude)
+        new google.maps.LatLng(vp.high.latitude, vp.high.longitude),
       );
       const holdValues = () => {
         setLocationName(name);
@@ -117,7 +117,7 @@ export const SearchBar = memo(function SearchBar({
 
       setClosure(() => holdValues);
     },
-    [map]
+    [map],
   );
 
   return (

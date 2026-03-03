@@ -174,7 +174,8 @@ declare global {
     ) => Promise<UniqueIdentifier | undefined>;
     handleSubmitItem: (
       val: string,
-      id?: UniqueIdentifier
+      id?: UniqueIdentifier,
+      details?: string | null
     ) => Promise<UniqueIdentifier | undefined>;
     activeListId: UniqueIdentifier | null;
     isMobile?: boolean;
