@@ -35,7 +35,7 @@
 
 .listItem {
   display: flex;
-  align-items: end;
+  align-items: start;
   margin-left: -1.7rem;
 }
 
@@ -51,6 +51,7 @@
 
 .checkBubbleWrapper {
   margin-right: 0.3rem;
+  margin-top: 0.25rem;
 }
 
 .checkBubbleWrapper:hover {
@@ -121,7 +122,9 @@
   width: 8rem;
   right: 0;
   opacity: 0;
-  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  transition:
+    opacity 0.2s ease-in-out,
+    visibility 0.2s ease-in-out;
 }
 
 .showMessage:hover .hiddenMessage {

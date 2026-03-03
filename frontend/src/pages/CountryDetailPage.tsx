@@ -311,12 +311,10 @@ const CountryDetailPage = () => {
       if (res.ok) {
         const data = (await res.json()) as Record<string, unknown>[];
         const trips = data
-          .filter(
-            (t) => t.role === "owner" || t.role === "editor",
-          )
+          .filter((t) => t.role === "owner" || t.role === "editor")
           .map((t) => ({
             id: t.id as string,
-            tripName: t.trip_name as string,
+            tripName: t.tripName as string,
           }));
         setViewerTrips(trips);
       }
@@ -327,10 +325,7 @@ const CountryDetailPage = () => {
     }
   };
 
-  const handleAddPlaceToTrip = async (
-    tripId: string,
-    place: CountryPlace,
-  ) => {
+  const handleAddPlaceToTrip = async (tripId: string, place: CountryPlace) => {
     setAddingToTrip(true);
     try {
       const res = await authFetch(`${apiUrl}/list/${tripId}`, {
@@ -696,30 +691,45 @@ const CountryDetailPage = () => {
                           )}
                         </div>
                       )}
-                      <button
-                        type="button"
-                        className={
-                          place.isFavorite
-                            ? styles.starBtnActive
-                            : styles.starBtn
-                        }
-                        onClick={() => isOwner && handleToggleFavorite(place)}
-                        aria-label="Favorite"
-                        style={!isOwner ? { cursor: "default" } : undefined}
-                      >
-                        {place.isFavorite ? "\u2605" : "\u2606"}
-                      </button>
-                      <button
-                        type="button"
-                        className={
-                          place.isPuke ? styles.pukeBtnActive : styles.pukeBtn
-                        }
-                        onClick={() => isOwner && handleTogglePuke(place)}
-                        aria-label="Not recommended"
-                        style={!isOwner ? { cursor: "default" } : undefined}
-                      >
-                        🤮
-                      </button>
+                      {isOwner ? (
+                        <button
+                          type="button"
+                          className={
+                            place.isFavorite
+                              ? styles.starBtnActive
+                              : styles.starBtn
+                          }
+                          onClick={() => isOwner && handleToggleFavorite(place)}
+                          aria-label="Favorite"
+                          style={!isOwner ? { cursor: "default" } : undefined}
+                        >
+                          {place.isFavorite ? "\u2605" : "\u2606"}
+                        </button>
+                      ) : (
+                        place.isFavorite && (
+                          <p
+                            className={styles.starBtnActive}
+                            style={{ cursor: "default" }}
+                          >
+                            {"\u2605"}
+                          </p>
+                        )
+                      )}
+                      {isOwner ? (
+                        <button
+                          type="button"
+                          className={
+                            place.isPuke ? styles.pukeBtnActive : styles.pukeBtn
+                          }
+                          onClick={() => isOwner && handleTogglePuke(place)}
+                          aria-label="Not recommended"
+                          style={!isOwner ? { cursor: "default" } : undefined}
+                        >
+                          🤮
+                        </button>
+                      ) : (
+                        place.isPuke && <p>🤮</p>
+                      )}
                       {isOwner && (
                         <button
                           type="button"
