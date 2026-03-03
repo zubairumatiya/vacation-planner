@@ -85,13 +85,12 @@ declare global {
     place: google.maps.places.Place;
   }
 
-  interface GmpBasicPlaceAutocomplete
-    extends React.HTMLAttributes<HTMLElement> {
+  interface GmpBasicPlaceAutocomplete extends React.HTMLAttributes<HTMLElement> {
     "ongmp-select"?: (event: GmpSelectEvent) => void;
   }
 
   interface PlaceDetailsMarkerProps {
-    place: google.maps.places.Place;
+    place: MapSearchPlace;
     selected: boolean;
     onClick: (placeId: string | undefined) => void;
     detailsSize: "FULL";
@@ -99,7 +98,7 @@ declare global {
 
   interface PlaceSearchProps {
     onPlaceSelect: (place: google.maps.places.Place.id | undefined) => void;
-    setPlaces: (markers: google.maps.places.Place[]) => void;
+    setPlaces: (markers: MapSearchPlace[]) => void;
     locationName: string | null;
     placeType: string | null;
     setSearchDisabled: (boolean: boolean) => void;
@@ -155,8 +154,7 @@ declare global {
     "page-size"?: number;
   }
 
-  interface GmpPlaceTextSearchRequestAttributes
-    extends React.HTMLAttributes<google.maps.places.PlaceTextSearchRequestElement> {
+  interface GmpPlaceTextSearchRequestAttributes extends React.HTMLAttributes<google.maps.places.PlaceTextSearchRequestElement> {
     "location-bias"?: string;
     "text-query"?: string;
   }

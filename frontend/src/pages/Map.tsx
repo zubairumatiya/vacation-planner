@@ -42,7 +42,7 @@ const MyMapComponent = ({
   handleSubmitItem,
   handleDeleteItem,
 }: Props) => {
-  const [places, setPlaces] = useState<google.maps.places.Place[]>([]);
+  const [places, setPlaces] = useState<MapSearchPlace[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined,
   );

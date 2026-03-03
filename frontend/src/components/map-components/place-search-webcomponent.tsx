@@ -32,18 +32,18 @@ const PlaceSearchWebComponent = ({
   const ratingRef = useRef<HTMLSelectElement>(null);
   const reviewCountRef = useRef<HTMLSelectElement>(null);
   const [newParams, setNewParams] = useState<boolean>(false);
-  const [results, setResults] = useState<google.maps.places.Place[]>([]);
+  const [results, setResults] = useState<MapSearchPlace[]>([]);
   const [rememberFilter, setRememberFilter] = useState({
     rating: "",
     reviews: "",
   });
-  const [holdNPT, setHoldNPT] = useState<string>("");
+  const [holdNPT, setHoldNPT] = useState<string | undefined>("");
   const [pageCount, setPageCount] = useState<number>(1);
   const [loadingNext, setLoadingNext] = useState<boolean>(true);
   const [currentPageMax, setCurrentPageMax] = useState<number>(0);
   const [pageCountSwitch, setPageCountSwitch] = useState<boolean>(false);
   const [newPageRequest, setNewPageRequest] = useState<boolean>(false);
-  const [holdRemainder, setHoldRemainder] = useState<[]>([]);
+  const [holdRemainder, setHoldRemainder] = useState<MapSearchPlace[]>([]);
   const firstLoad = useRef<number>(0);
   const loggingOutRef = auth?.loggingOutRef;
   const placesContainerRef = useRef<HTMLDivElement>(null);
@@ -136,7 +136,6 @@ const PlaceSearchWebComponent = ({
                 alert("Trouble completing request, please try again");
               } else if (retryReq.ok) {
                 const data = (await retryReq.json()) as MapSearchResponse;
-                console.log(data.places);
                 setRememberFilter({
                   rating: ratingRef?.current?.value,
                   reviews: reviewCountRef?.current?.value,
@@ -286,7 +285,7 @@ const PlaceSearchWebComponent = ({
   };
   const handleListRemoval = (
     e: React.MouseEvent,
-    placeId: UniqueIdentifier
+    placeId: UniqueIdentifier,
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -296,7 +295,7 @@ const PlaceSearchWebComponent = ({
   const handleListAdd = (
     e: React.MouseEvent,
     placeId: UniqueIdentifier,
-    placeName: string
+    placeName: string,
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -392,7 +391,7 @@ const PlaceSearchWebComponent = ({
                           handleListAdd(
                             e,
                             place.id,
-                            place?.displayName?.text ?? "undefined"
+                            place?.displayName?.text ?? "undefined",
                           )
                         }
                       >
