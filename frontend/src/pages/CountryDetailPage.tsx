@@ -87,6 +87,7 @@ const CountryDetailPage = () => {
   >([]);
   const [loadingViewerTrips, setLoadingViewerTrips] = useState(false);
   const [addingToTrip, setAddingToTrip] = useState(false);
+  const [addedPlaces, setAddedPlaces] = useState<Set<string>>(new Set());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const authFetch = useCallback(
@@ -337,6 +338,11 @@ const CountryDetailPage = () => {
       });
       if (res.ok) {
         setAddToTripPlaceId(null);
+        setAddedPlaces((prev) => {
+          const newSet = new Set(prev);
+          newSet.add(place.id);
+          return newSet;
+        });
       }
     } catch {
       // handled
@@ -543,6 +549,24 @@ const CountryDetailPage = () => {
               <ul className={styles.placeList}>
                 {items.map((place) => (
                   <li key={place.id} className={styles.placeItem}>
+                    {!isOwner && addedPlaces.has(place.id) && (
+                      <div className={styles.addedBadgeWrapper}>
+                        <button
+                          type="button"
+                          className={styles.addedBadgeBtn}
+                          onClick={() => {
+                            setAddedPlaces((prev) => {
+                              const next = new Set(prev);
+                              next.delete(place.id);
+                              return next;
+                            });
+                          }}
+                        >
+                          <span className={styles.addedBadgeCheck}>✓ item added</span>
+                          <span className={styles.addedBadgeDismiss}>✗ dismiss</span>
+                        </button>
+                      </div>
+                    )}
                     <div className={styles.placeRow}>
                       <span className={styles.placeName}>{place.name}</span>
                       {editingNoteId !== place.id ? (

@@ -265,10 +265,62 @@
   align-items: flex-start;
   border-bottom: 1px solid #2a2a2a;
   padding: 0.35rem 0;
+  position: relative;
 }
 
 .placeItem:last-child {
   border-bottom: none;
+}
+
+.addedBadgeWrapper {
+  display: flex;
+  align-items: center;
+  margin-right: 0.5rem;
+  margin-top: 0.15rem;
+  position: absolute;
+  left: 0;
+}
+
+.addedBadgeBtn {
+  background: rgba(186, 187, 187, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  color: #a6b5ad;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  padding: 2px 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 75px;
+  height: 20px;
+  white-space: nowrap; /* prevent wrapping */
+  overflow: hidden; /* hide overflow */
+  text-overflow: ellipsis;
+}
+
+.addedBadgeBtn:hover {
+  background: rgba(186, 187, 187, 0.1);
+  border-color: rgba(0, 0, 0, 0.3);
+  color: #a6b5ad;
+}
+
+.addedBadgeCheck {
+  display: inline;
+  line-height: 1;
+}
+
+.addedBadgeDismiss {
+  display: none;
+}
+
+.addedBadgeBtn:hover .addedBadgeCheck {
+  display: none;
+}
+
+.addedBadgeBtn:hover .addedBadgeDismiss {
+  display: inline;
 }
 
 .placeRow {
