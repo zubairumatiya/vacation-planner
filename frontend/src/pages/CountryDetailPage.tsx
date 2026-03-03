@@ -87,8 +87,22 @@ const CountryDetailPage = () => {
   >([]);
   const [loadingViewerTrips, setLoadingViewerTrips] = useState(false);
   const [addingToTrip, setAddingToTrip] = useState(false);
-  const [addedPlaces, setAddedPlaces] = useState<Set<string>>(new Set());
+  const [addedPlaces, setAddedPlaces] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("addedPlaces");
+      if (stored) {
+        return new Set(JSON.parse(stored));
+      }
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem("addedPlaces", JSON.stringify(Array.from(addedPlaces)));
+  }, [addedPlaces]);
 
   const authFetch = useCallback(
     async (url: string, options: RequestInit = {}) => {
