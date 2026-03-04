@@ -43,7 +43,7 @@ import { BannerContextProvider } from "../context/BannerContext";
 import Banner from "../components/Banner";
 import AiTripQuestionnaire from "../components/AiTripQuestionnaire";
 import type { QuestionnaireAnswers } from "../components/AiTripQuestionnaire";
-import { getGeminiToken } from "../utils/googleOAuth";
+
 import refreshFn from "../utils/refreshFn";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
@@ -153,7 +153,7 @@ const EditCanvas = ({
   }, [tripId, token]);
 
   useEffect(() => {
-    if (searchParams.get("ai") === "ready" && getGeminiToken()) {
+    if (searchParams.get("ai") === "ready") {
       setShowAiQuestionnaire(true);
       searchParams.delete("ai");
       setSearchParams(searchParams, { replace: true });
