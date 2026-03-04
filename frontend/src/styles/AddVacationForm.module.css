@@ -1,17 +1,9 @@
 .dateError {
-  border-color: red;
+  border-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.1) !important;
 }
 
-.submitButton {
-  height: 5vh;
-  width: 10vh;
-  border-radius: 15px;
-  border-width: 5px;
-  box-shadow: 10px;
-  color: dodgerblue;
+.dateError:focus {
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) !important;
 }
 
-button.submitButton.disabledSubmitButton {
-  border-width: 10px;
-  color: #f1f1f1;
-}

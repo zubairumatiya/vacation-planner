@@ -275,7 +275,9 @@ const VacationForm = (props?: Props) => {
   const [location, setLocation] = useState(props?.preFill?.location ?? "");
   const [hideSuggestions, setHideSuggestions] = useState(true);
   const [isPublic, setIsPublic] = useState(props?.preFill?.isPublic ?? false);
-  const [isOpenInvite, setIsOpenInvite] = useState(props?.preFill?.isOpenInvite ?? false);
+  const [isOpenInvite, setIsOpenInvite] = useState(
+    props?.preFill?.isOpenInvite ?? false,
+  );
   const skipEORef = useRef<boolean | undefined>(undefined);
 
   useEffect(() => {
@@ -463,47 +465,56 @@ const VacationForm = (props?: Props) => {
     console.log(e.target.validity.valid);
   };
 
-  const divs = "flex justify-center my-4 w-full";
-  const labels = "flex justify-end ml-4 mr-2 w-1/6 items-center";
-  const inputs = "flex justify-start w-4/10 border-2 border-green-500";
+  const divs =
+    "flex flex-col sm:flex-row sm:items-center w-full gap-2 sm:gap-4 mb-6";
+  const labels =
+    "sm:w-1/3 flex sm:justify-end items-center text-sm font-semibold text-gray-300";
+  const inputContainer = "sm:w-2/3 w-full relative";
+  const inputs =
+    "w-full border border-gray-700 rounded-lg shadow-sm px-4 py-2.5 text-gray-100 bg-[#0000798a] focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 placeholder-gray-500";
 
   return (
     <>
-      <div>{errMessage && <p className="text-red-500">{errMessage}</p>}</div>
+      {errMessage && (
+        <div className="mb-6 p-4 bg-red-900/30 border-l-4 border-red-500 rounded-md shadow-sm w-full max-w-xl mx-auto">
+          <p className="text-sm text-red-400 font-medium">{errMessage}</p>
+        </div>
+      )}
       <div className="flex flex-col items-center justify-around w-full">
-        <div
-          //onSubmit={formSubmit}
-          className="w-full flex flex-col items-center"
-        >
-          <div className="flex w-4/10 flex-col items-center ">
+        <div className="w-full flex flex-col items-center">
+          <div className="w-full max-w-xl flex flex-col items-center bg-transparent">
             <div className={divs}>
               <label className={labels} htmlFor="tripname">
-                Trip name:{" "}
+                Trip name:
               </label>
-              <input
-                ref={tripNameRef}
-                className={clsx(fieldError && styles.dateError, inputs)}
-                type="text"
-                name="tripname"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setTripName(e.target.value);
-                }}
-                value={tripName}
-                id="tripname"
-                placeholder="Honeymoon Trip"
-              />
+              <div className={inputContainer}>
+                <input
+                  ref={tripNameRef}
+                  className={clsx(
+                    fieldError && !tripName && styles.dateError,
+                    inputs,
+                  )}
+                  type="text"
+                  name="tripname"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setTripName(e.target.value);
+                  }}
+                  value={tripName}
+                  id="tripname"
+                  placeholder="e.g., Summer Getaway"
+                />
+              </div>
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="location">
-                Destination:{" "}
+                Destination:
               </label>
-              <div className="w-4/10">
+              <div className={inputContainer}>
                 <input
                   ref={locationInputRef}
                   className={clsx(
-                    fieldError && styles.dateError,
+                    fieldError && !location && styles.dateError,
                     inputs,
-                    "w-full",
                   )}
                   type="text"
                   name="location"
@@ -535,70 +546,89 @@ const VacationForm = (props?: Props) => {
                   }}
                   value={location}
                   id="location"
-                  placeholder="country, city, etc"
+                  placeholder="e.g., Paris, France"
                   autoComplete="off"
                 />
                 {!hideSuggestions && (
-                  <AutocompleteWebComponent
-                    ref={autocompleteRef}
-                    inputValue={location}
-                    setInputVal={setLocation}
-                    setHideSuggestions={setHideSuggestions}
-                    storeValues={storeValues}
-                    tripIdProp={props?.preFill?.id}
-                    skipEO={skipEORef.current}
-                  />
+                  <div className="absolute top-full left-0 w-full z-10 mt-1">
+                    <AutocompleteWebComponent
+                      ref={autocompleteRef}
+                      inputValue={location}
+                      setInputVal={setLocation}
+                      setHideSuggestions={setHideSuggestions}
+                      storeValues={storeValues}
+                      tripIdProp={props?.preFill?.id}
+                      skipEO={skipEORef.current}
+                    />
+                  </div>
                 )}
               </div>
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="startdate">
-                Start date:{" "}
+                Start date:
               </label>
-              <input
-                ref={startDateRef}
-                className={clsx(fieldError && styles.dateError, inputs)}
-                type="date"
-                name="startdate"
-                id="startdate"
-                value={startDate}
-                min={props?.method === "PATCH" ? undefined : today}
-                max={tenYearsFromNow}
-                onChange={startDateChange}
-              />
+              <div className={inputContainer}>
+                <input
+                  ref={startDateRef}
+                  className={clsx(
+                    fieldError &&
+                      (!startDate || !sHtmlDateErr) &&
+                      styles.dateError,
+                    inputs,
+                  )}
+                  type="date"
+                  name="startdate"
+                  id="startdate"
+                  value={startDate}
+                  min={props?.method === "PATCH" ? undefined : today}
+                  max={tenYearsFromNow}
+                  onChange={startDateChange}
+                />
+              </div>
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="enddate">
-                End date:{" "}
+                End date:
               </label>
-              <input
-                className={clsx(fieldError && styles.dateError, inputs)}
-                type="date"
-                name="enddate"
-                id="enddate"
-                value={endDate}
-                min={startDate}
-                max={oneYearRange}
-                onChange={endDateChange}
-              />
+              <div className={inputContainer}>
+                <input
+                  className={clsx(
+                    fieldError &&
+                      (!endDate || !eHtmlDateErr) &&
+                      styles.dateError,
+                    inputs,
+                  )}
+                  type="date"
+                  name="enddate"
+                  id="enddate"
+                  value={endDate}
+                  min={startDate}
+                  max={oneYearRange}
+                  onChange={endDateChange}
+                />
+              </div>
             </div>
             <div className={divs}>
               <label className={labels} htmlFor="isPublic">
                 <QuestionMarkIcon
                   title="Public Trip"
                   description="Friends can see: Trip name, location, start date and length of trip (days)"
-                />{" "}
-                Public:{" "}
+                />
+                Public:
               </label>
-              <div className="flex items-center w-4/10">
+              <div className={`${inputContainer} flex items-center h-[42px]`}>
                 <input
                   type="checkbox"
                   name="isPublic"
                   id="isPublic"
                   checked={isPublic}
                   onChange={(e) => setIsPublic(e.target.checked)}
-                  className="w-5 h-5 cursor-pointer accent-green-500"
+                  className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-gray-900 cursor-pointer transition-colors"
                 />
+                <span className="ml-2 text-sm text-gray-400">
+                  Allow friends to view this trip
+                </span>
               </div>
             </div>
             <div className={divs}>
@@ -606,22 +636,24 @@ const VacationForm = (props?: Props) => {
                 <QuestionMarkIcon
                   title="Open Invite"
                   description="This indicates to your fellow travelers they are free to contact you to tag along on the trip"
-                />{" "}
-                Open Invite:{" "}
+                />
+                Open Invite:
               </label>
-              <div className="flex items-center w-4/10">
+              <div className={`${inputContainer} flex items-center h-[42px]`}>
                 <input
                   type="checkbox"
                   name="isOpenInvite"
                   id="isOpenInvite"
                   checked={isOpenInvite}
                   onChange={(e) => setIsOpenInvite(e.target.checked)}
-                  className="w-5 h-5 cursor-pointer accent-green-500"
+                  className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-gray-900 cursor-pointer transition-colors"
                 />
+                <span className="ml-2 text-sm text-gray-400">
+                  Let friends know they can join
+                </span>
               </div>
             </div>
           </div>
-          <div></div>
         </div>
       </div>
     </>
