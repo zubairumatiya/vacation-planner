@@ -27,24 +27,28 @@ const INTEREST_OPTIONS = [
 type AiTripQuestionnaireProps = {
   onClose: () => void;
   onSubmit: (answers: QuestionnaireAnswers) => void;
+  initialAnswers?: QuestionnaireAnswers;
 };
 
 const AiTripQuestionnaire = ({
   onClose,
   onSubmit,
+  initialAnswers,
 }: AiTripQuestionnaireProps) => {
-  const [answers, setAnswers] = useState<QuestionnaireAnswers>({
-    budget: "",
-    interests: [],
-    dietaryRestrictions: "",
-    pace: "",
-    travelingWithKidsOrElderly: "",
-    accessibilityNeeds: "",
-    tourPreference: "",
-    accommodationType: "",
-    mustSeeExperiences: "",
-    startTimePreference: "",
-  });
+  const [answers, setAnswers] = useState<QuestionnaireAnswers>(
+    initialAnswers ?? {
+      budget: "",
+      interests: [],
+      dietaryRestrictions: "",
+      pace: "",
+      travelingWithKidsOrElderly: "",
+      accessibilityNeeds: "",
+      tourPreference: "",
+      accommodationType: "",
+      mustSeeExperiences: "",
+      startTimePreference: "",
+    },
+  );
 
   const toggleInterest = (interest: string) => {
     setAnswers((prev) => ({
@@ -372,7 +376,9 @@ const chipsContainerStyle: React.CSSProperties = {
 
 const chipStyle: React.CSSProperties = {
   background: "#2a2a2c",
-  border: "1px solid #555",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#555",
   borderRadius: "20px",
   padding: "0.4rem 0.9rem",
   color: "white",

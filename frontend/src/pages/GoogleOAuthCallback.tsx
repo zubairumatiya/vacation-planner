@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   exchangeCodeForToken,
@@ -9,8 +9,12 @@ import {
 const GoogleOAuthCallback = () => {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return;
+    hasRun.current = true;
+
     const handleCallback = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get("code");
@@ -27,8 +31,8 @@ const GoogleOAuthCallback = () => {
       }
 
       try {
-        await exchangeCodeForToken(code);
         const tripId = getStoredTripId();
+        await exchangeCodeForToken(code);
         clearOAuthTripId();
 
         if (tripId) {
@@ -37,6 +41,7 @@ const GoogleOAuthCallback = () => {
           navigate("/", { replace: true });
         }
       } catch (err) {
+        console.error("[OAuth Callback] Error:", err);
         setError(
           err instanceof Error ? err.message : "Failed to complete authentication"
         );

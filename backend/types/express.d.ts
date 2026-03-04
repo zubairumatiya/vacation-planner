@@ -519,6 +519,41 @@ export interface FriendsFeedResponse {
   travelLogs: FeedTravelLog[];
 }
 
+export interface QuestionnaireRow {
+  id: string;
+  trip_id: string;
+  budget: string | null;
+  interests: string | null;
+  dietary_restrictions: string | null;
+  pace: string | null;
+  traveling_with_kids_or_elderly: string | null;
+  accessibility_needs: string | null;
+  tour_preference: string | null;
+  accommodation_type: string | null;
+  must_see_experiences: string | null;
+  start_time_preference: string | null;
+  created_at: Date;
+  last_modified: Date;
+}
+
+export interface QuestionnaireBody {
+  budget?: string;
+  interests?: string;
+  dietaryRestrictions?: string;
+  pace?: string;
+  travelingWithKidsOrElderly?: string;
+  accessibilityNeeds?: string;
+  tourPreference?: string;
+  accommodationType?: string;
+  mustSeeExperiences?: string;
+  startTimePreference?: string;
+}
+
+export interface QuestionnaireResponse {
+  questionnaire?: QuestionnaireRow;
+  message?: string;
+}
+
 declare global {
   namespace Express {
     interface Request {

@@ -1,8 +1,12 @@
 const GOOGLE_CLIENT_ID =
   "191976318949-1et61pfo2d5dgjfp62iogt8it7kit6mb.apps.googleusercontent.com";
+const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string;
 const GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
-const GOOGLE_SCOPE = "https://www.googleapis.com/auth/generative-language";
+const GOOGLE_SCOPES = [
+  "https://www.googleapis.com/auth/cloud-platform",
+  "https://www.googleapis.com/auth/generative-language.retriever",
+].join(" ");
 const REDIRECT_URI = `${window.location.origin}/auth/google/callback`;
 
 const SESSION_KEYS = {
@@ -40,7 +44,7 @@ export async function startGoogleOAuth(tripId: string): Promise<void> {
     client_id: GOOGLE_CLIENT_ID,
     redirect_uri: REDIRECT_URI,
     response_type: "code",
-    scope: GOOGLE_SCOPE,
+    scope: GOOGLE_SCOPES,
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     access_type: "offline",
@@ -71,6 +75,7 @@ export async function exchangeCodeForToken(
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
       code,
       code_verifier: codeVerifier,
       grant_type: "authorization_code",

@@ -56,7 +56,11 @@ const EditCanvas = ({
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
 }) => {
   const { tripId } = useParams();
-  const { role } = useOutletContext<{ role: string }>();
+  const { role, showQuestionnaire, setShowQuestionnaire } = useOutletContext<{
+    role: string;
+    showQuestionnaire: boolean;
+    setShowQuestionnaire: (v: boolean) => void;
+  }>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loading2, setLoading2] = useState<boolean>(true);
   const [vp, setVp] = useState<null | Vp>(null);
@@ -71,6 +75,9 @@ const EditCanvas = ({
   const recentlyMovedToNewContainer = useRef<boolean>(false);
   const lastOverId = useRef<UniqueIdentifier | null>(null);
   const auth = useContext(AuthContext);
+  const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const tempScheduleItem = useRef<Schedule | null>(null);
   const initialListDrag = useRef<boolean>(true);
@@ -97,6 +104,8 @@ const EditCanvas = ({
   );
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAiQuestionnaire, setShowAiQuestionnaire] = useState(false);
+  const [savedAnswers, setSavedAnswers] = useState<QuestionnaireAnswers | null>(null);
+  const [answersLoaded, setAnswersLoaded] = useState(false);
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 700px)");
@@ -106,6 +115,44 @@ const EditCanvas = ({
   }, []);
 
   useEffect(() => {
+    const fetchQuestionnaire = async () => {
+      try {
+        const response = await fetch(`${apiURL}/questionnaire/${tripId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.questionnaire) {
+            const q = data.questionnaire;
+            setSavedAnswers({
+              budget: q.budget ?? "",
+              interests: q.interests ? q.interests.split(",") : [],
+              dietaryRestrictions: q.dietaryRestrictions ?? "",
+              pace: q.pace ?? "",
+              travelingWithKidsOrElderly: q.travelingWithKidsOrElderly ?? "",
+              accessibilityNeeds: q.accessibilityNeeds ?? "",
+              tourPreference: q.tourPreference ?? "",
+              accommodationType: q.accommodationType ?? "",
+              mustSeeExperiences: q.mustSeeExperiences ?? "",
+              startTimePreference: q.startTimePreference ?? "",
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch questionnaire:", err);
+      } finally {
+        setAnswersLoaded(true);
+      }
+    };
+    if (tripId && token) {
+      fetchQuestionnaire();
+    }
+  }, [tripId, token]);
+
+  useEffect(() => {
     if (searchParams.get("ai") === "ready" && getGeminiToken()) {
       setShowAiQuestionnaire(true);
       searchParams.delete("ai");
@@ -113,9 +160,39 @@ const EditCanvas = ({
     }
   }, [searchParams, setSearchParams]);
 
-  const handleQuestionnaireSubmit = (answers: QuestionnaireAnswers) => {
-    sessionStorage.setItem("aiTripAnswers", JSON.stringify(answers));
+  useEffect(() => {
+    if (showQuestionnaire && answersLoaded) {
+      setShowAiQuestionnaire(true);
+      setShowQuestionnaire(false);
+    }
+  }, [showQuestionnaire, answersLoaded, setShowQuestionnaire]);
+
+  const handleQuestionnaireSubmit = async (answers: QuestionnaireAnswers) => {
     setShowAiQuestionnaire(false);
+    setSavedAnswers(answers);
+    try {
+      await fetch(`${apiURL}/questionnaire/${tripId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          budget: answers.budget,
+          interests: answers.interests.join(","),
+          dietaryRestrictions: answers.dietaryRestrictions,
+          pace: answers.pace,
+          travelingWithKidsOrElderly: answers.travelingWithKidsOrElderly,
+          accessibilityNeeds: answers.accessibilityNeeds,
+          tourPreference: answers.tourPreference,
+          accommodationType: answers.accommodationType,
+          mustSeeExperiences: answers.mustSeeExperiences,
+          startTimePreference: answers.startTimePreference,
+        }),
+      });
+    } catch (err) {
+      console.error("Failed to save questionnaire:", err);
+    }
   };
 
   const days = useMemo<DayContainer[]>(() => {
@@ -189,10 +266,6 @@ const EditCanvas = ({
     },
     [activeId, schedule]
   );
-
-  const token = auth?.token;
-  const login = auth?.login;
-  const logout = auth?.logout;
 
   function isDragData(data: DragData | AnyData | undefined): data is DragData {
     if (data === undefined) {
@@ -1642,6 +1715,7 @@ const EditCanvas = ({
         <AiTripQuestionnaire
           onClose={() => setShowAiQuestionnaire(false)}
           onSubmit={handleQuestionnaireSubmit}
+          initialAnswers={savedAnswers ?? undefined}
         />
       )}
     <DndContext

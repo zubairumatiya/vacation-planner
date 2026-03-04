@@ -191,3 +191,87 @@
   padding: 0.25rem 0.75rem;
   font-style: italic;
 }
+
+.geminiChatButton {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #2a2a2c;
+  border: 1px solid #4285f4;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.geminiChatButton:hover {
+  background: #3a3a3c;
+}
+
+.geminiChatDropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  background: #2a2a2c;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 0.5rem;
+  z-index: 100;
+  display: flex;
+  gap: 0.4rem;
+  min-width: 280px;
+}
+
+.geminiChatInput {
+  flex: 1;
+  background: #1e1e20;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  color: white;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.geminiChatInput:focus {
+  border-color: #4285f4;
+}
+
+.geminiChatSend {
+  background: #4285f4;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.geminiChatSend:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.editQuestionnaireButton {
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 6px;
+  padding: 0.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.editQuestionnaireButton:hover {
+  background: #3a3a3c;
+}

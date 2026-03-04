@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
-import { startGoogleOAuth } from "../utils/googleOAuth";
+import { startGoogleOAuth, getGeminiToken } from "../utils/googleOAuth";
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -27,10 +27,16 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const sharePanelRef = useRef<HTMLDivElement>(null);
   const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
   const aiDropdownRef = useRef<HTMLDivElement>(null);
+  const [geminiChatOpen, setGeminiChatOpen] = useState(false);
+  const geminiChatRef = useRef<HTMLDivElement>(null);
+  const [geminiPrompt, setGeminiPrompt] = useState("");
+  const [geminiLoading, setGeminiLoading] = useState(false);
+  const hasGeminiToken = Boolean(getGeminiToken());
   const loggingOutRef = auth?.loggingOutRef;
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditPage = location.pathname.endsWith("/edit");
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -72,9 +78,64 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [aiDropdownOpen]);
 
+  useEffect(() => {
+    if (!geminiChatOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        geminiChatRef.current &&
+        !geminiChatRef.current.contains(e.target as Node)
+      ) {
+        setGeminiChatOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [geminiChatOpen]);
+
   const handleGeminiClick = () => {
     if (tripId) {
       startGoogleOAuth(tripId);
+    }
+  };
+
+  const handleGeminiSend = async () => {
+    const geminiToken = getGeminiToken();
+    if (!geminiPrompt.trim() || !geminiToken) return;
+
+    setGeminiLoading(true);
+    try {
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${geminiToken}`,
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: geminiPrompt }] }],
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[Gemini] API error:", errorData);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("[Gemini] Response:", data);
+
+      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (text) {
+        console.log("[Gemini] Reply:", text);
+      }
+    } catch (err) {
+      console.error("[Gemini] Request failed:", err);
+    } finally {
+      setGeminiLoading(false);
+      setGeminiPrompt("");
     }
   };
 
@@ -210,6 +271,69 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             </NavLink>
           </div>
           <div className={styles.costAndAiWrapper}>
+            {isEditPage && hasGeminiToken && (
+              <div ref={geminiChatRef} className={styles.aiButtonWrapper}>
+                <button
+                  type="button"
+                  className={styles.geminiChatButton}
+                  onClick={() => setGeminiChatOpen((prev) => !prev)}
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path
+                      d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
+                      fill="#4285F4"
+                    />
+                  </svg>
+                  Ask Gemini
+                </button>
+                {geminiChatOpen && (
+                  <div className={styles.geminiChatDropdown}>
+                    <button
+                      type="button"
+                      className={styles.editQuestionnaireButton}
+                      onClick={() => {
+                        setShowQuestionnaire(true);
+                        setGeminiChatOpen(false);
+                      }}
+                      title="Edit questionnaire"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Ask Gemini something..."
+                      value={geminiPrompt}
+                      onChange={(e) => setGeminiPrompt(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") handleGeminiSend();
+                      }}
+                      className={styles.geminiChatInput}
+                      disabled={geminiLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGeminiSend}
+                      className={styles.geminiChatSend}
+                      disabled={geminiLoading || !geminiPrompt.trim()}
+                    >
+                      {geminiLoading ? "..." : "Send"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
             {isEditPage && (
               <div ref={aiDropdownRef} className={styles.aiButtonWrapper}>
                 <button
@@ -339,7 +463,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         </ul>
       </nav>
       <div className={styles.hiddenCard}></div>
-      <Outlet context={{ role }} />
+      <Outlet context={{ role, showQuestionnaire, setShowQuestionnaire }} />
     </div>
   );
 };

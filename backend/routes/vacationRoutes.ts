@@ -35,6 +35,9 @@ import {
   DetailsResponse,
   CheckListItemBody,
   DeleteListBody,
+  QuestionnaireRow,
+  QuestionnaireBody,
+  QuestionnaireResponse,
 } from "../types/express.js";
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
@@ -866,6 +869,98 @@ router.post(
       if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
       const data = (await result.json()) as DetailsResponse;
       res.status(200).json(data);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  "/questionnaire/:tripId",
+  ensureLoggedIn,
+  ensureTripAccess,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<QuestionnaireResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const result: QueryResult<QuestionnaireRow> = await db.query(
+        "SELECT * FROM trip_questionnaire WHERE trip_id = $1",
+        [req.params.tripId],
+      );
+      if (result.rowCount === null || result.rowCount < 1) {
+        res.status(200).json({ questionnaire: undefined });
+        return;
+      }
+      snakeToCamel<QuestionnaireRow>(result.rows);
+      res.status(200).json({ questionnaire: result.rows[0] });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.post(
+  "/questionnaire/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (
+    req: TypedRequest<QuestionnaireBody, unknown, TripIdParam>,
+    res: TypedResponse<QuestionnaireResponse>,
+    next: NextFunction,
+  ) => {
+    const {
+      budget,
+      interests,
+      dietaryRestrictions,
+      pace,
+      travelingWithKidsOrElderly,
+      accessibilityNeeds,
+      tourPreference,
+      accommodationType,
+      mustSeeExperiences,
+      startTimePreference,
+    } = req.body;
+
+    try {
+      const result: QueryResult<QuestionnaireRow> = await db.query(
+        `INSERT INTO trip_questionnaire (
+          trip_id, budget, interests, dietary_restrictions, pace,
+          traveling_with_kids_or_elderly, accessibility_needs, tour_preference,
+          accommodation_type, must_see_experiences, start_time_preference
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        ON CONFLICT (trip_id) DO UPDATE SET
+          budget = EXCLUDED.budget,
+          interests = EXCLUDED.interests,
+          dietary_restrictions = EXCLUDED.dietary_restrictions,
+          pace = EXCLUDED.pace,
+          traveling_with_kids_or_elderly = EXCLUDED.traveling_with_kids_or_elderly,
+          accessibility_needs = EXCLUDED.accessibility_needs,
+          tour_preference = EXCLUDED.tour_preference,
+          accommodation_type = EXCLUDED.accommodation_type,
+          must_see_experiences = EXCLUDED.must_see_experiences,
+          start_time_preference = EXCLUDED.start_time_preference,
+          last_modified = NOW()
+        RETURNING *`,
+        [
+          req.params.tripId,
+          budget ?? null,
+          interests ?? null,
+          dietaryRestrictions ?? null,
+          pace ?? null,
+          travelingWithKidsOrElderly ?? null,
+          accessibilityNeeds ?? null,
+          tourPreference ?? null,
+          accommodationType ?? null,
+          mustSeeExperiences ?? null,
+          startTimePreference ?? null,
+        ],
+      );
+      snakeToCamel<QuestionnaireRow>(result.rows);
+      res.status(200).json({ questionnaire: result.rows[0] });
+      return;
     } catch (err) {
       next(err);
     }
