@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
-import { startGoogleOAuth, getGeminiToken } from "../utils/googleOAuth";
+import { startGoogleOAuth } from "../utils/googleOAuth";
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -31,7 +31,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const geminiChatRef = useRef<HTMLDivElement>(null);
   const [geminiPrompt, setGeminiPrompt] = useState("");
   const [geminiLoading, setGeminiLoading] = useState(false);
-  const hasGeminiToken = Boolean(getGeminiToken());
+  const [geminiConnected, setGeminiConnected] = useState(false);
   const loggingOutRef = auth?.loggingOutRef;
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -92,6 +92,24 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [geminiChatOpen]);
 
+  useEffect(() => {
+    if (!token) return;
+    const checkGemini = async () => {
+      try {
+        const res = await fetch(`${apiURL}/gemini/status`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setGeminiConnected(data.connected);
+        }
+      } catch {
+        // silent fail
+      }
+    };
+    checkGemini();
+  }, [token]);
+
   const handleGeminiClick = () => {
     if (tripId) {
       startGoogleOAuth(tripId);
@@ -99,37 +117,35 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   };
 
   const handleGeminiSend = async () => {
-    const geminiToken = getGeminiToken();
-    if (!geminiPrompt.trim() || !geminiToken) return;
+    if (!geminiPrompt.trim() || !token) return;
 
     setGeminiLoading(true);
     try {
-      const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${geminiToken}`,
-          },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: geminiPrompt }] }],
-          }),
+      const response = await fetch(`${apiURL}/gemini/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ prompt: geminiPrompt }),
+      });
+
+      if (response.status === 401) {
+        const data = await response.json();
+        if (data.error === "NoGeminiAuth") {
+          setGeminiConnected(false);
+          return;
+        }
+      }
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("[Gemini] API error:", errorData);
+        console.error("[Gemini] API error");
         return;
       }
 
       const data = await response.json();
-      console.log("[Gemini] Response:", data);
-
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) {
-        console.log("[Gemini] Reply:", text);
+      if (data.text) {
+        console.log("[Gemini] Reply:", data.text);
       }
     } catch (err) {
       console.error("[Gemini] Request failed:", err);
@@ -271,7 +287,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             </NavLink>
           </div>
           <div className={styles.costAndAiWrapper}>
-            {isEditPage && hasGeminiToken && (
+            {isEditPage && geminiConnected && (
               <div ref={geminiChatRef} className={styles.aiButtonWrapper}>
                 <button
                   type="button"

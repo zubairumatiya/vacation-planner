@@ -1,8 +1,6 @@
 const GOOGLE_CLIENT_ID =
   "191976318949-1et61pfo2d5dgjfp62iogt8it7kit6mb.apps.googleusercontent.com";
-const GOOGLE_CLIENT_SECRET = import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string;
 const GOOGLE_AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
-const GOOGLE_TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const GOOGLE_SCOPES = [
   "https://www.googleapis.com/auth/cloud-platform",
   "https://www.googleapis.com/auth/generative-language.retriever",
@@ -12,7 +10,6 @@ const REDIRECT_URI = `${window.location.origin}/auth/google/callback`;
 const SESSION_KEYS = {
   codeVerifier: "googleOAuthCodeVerifier",
   tripId: "googleOAuthTripId",
-  geminiToken: "googleGeminiToken",
 } as const;
 
 function generateCodeVerifier(): string {
@@ -54,48 +51,35 @@ export async function startGoogleOAuth(tripId: string): Promise<void> {
   window.location.href = `${GOOGLE_AUTH_ENDPOINT}?${params.toString()}`;
 }
 
-interface GoogleTokenResponse {
-  access_token: string;
-  expires_in: number;
-  token_type: string;
-  scope: string;
-  refresh_token?: string;
-}
-
-export async function exchangeCodeForToken(
-  code: string
-): Promise<GoogleTokenResponse> {
+export async function sendCodeToBackend(code: string): Promise<void> {
   const codeVerifier = sessionStorage.getItem(SESSION_KEYS.codeVerifier);
-  if (!codeVerifier) {
-    throw new Error("Missing PKCE code verifier");
-  }
+  if (!codeVerifier) throw new Error("Missing PKCE code verifier");
 
-  const response = await fetch(GOOGLE_TOKEN_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: GOOGLE_CLIENT_ID,
-      client_secret: GOOGLE_CLIENT_SECRET,
-      code,
-      code_verifier: codeVerifier,
-      grant_type: "authorization_code",
-      redirect_uri: REDIRECT_URI,
-    }),
-  });
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch(
+    `${import.meta.env.VITE_API_URL}/gemini/token-exchange`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        code,
+        codeVerifier,
+        redirectUri: REDIRECT_URI,
+      }),
+    }
+  );
 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(
-      `Token exchange failed: ${errorData.error_description || errorData.error}`
-    );
+    throw new Error(errorData.message || "Token exchange failed");
   }
 
-  const tokenData: GoogleTokenResponse = await response.json();
-
-  sessionStorage.setItem(SESSION_KEYS.geminiToken, tokenData.access_token);
   sessionStorage.removeItem(SESSION_KEYS.codeVerifier);
-
-  return tokenData;
 }
 
 export function getStoredTripId(): string | null {
@@ -104,8 +88,4 @@ export function getStoredTripId(): string | null {
 
 export function clearOAuthTripId(): void {
   sessionStorage.removeItem(SESSION_KEYS.tripId);
-}
-
-export function getGeminiToken(): string | null {
-  return sessionStorage.getItem(SESSION_KEYS.geminiToken);
 }

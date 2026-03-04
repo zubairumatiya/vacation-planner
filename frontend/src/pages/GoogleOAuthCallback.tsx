@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  exchangeCodeForToken,
+  sendCodeToBackend,
   getStoredTripId,
   clearOAuthTripId,
 } from "../utils/googleOAuth";
@@ -32,7 +32,7 @@ const GoogleOAuthCallback = () => {
 
       try {
         const tripId = getStoredTripId();
-        await exchangeCodeForToken(code);
+        await sendCodeToBackend(code);
         clearOAuthTripId();
 
         if (tripId) {

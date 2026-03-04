@@ -536,6 +536,36 @@ export interface QuestionnaireRow {
   last_modified: Date;
 }
 
+export interface GoogleTokenRow {
+  id: number;
+  user_id: string;
+  access_token: string;
+  refresh_token: string | null;
+  expires_at: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface TokenExchangeBody {
+  code: string;
+  codeVerifier: string;
+  redirectUri: string;
+}
+
+export interface GeminiChatBody {
+  prompt: string;
+}
+
+export interface GeminiChatResponse {
+  text?: string;
+  error?: string;
+  message?: string;
+}
+
+export interface GeminiStatusResponse {
+  connected: boolean;
+}
+
 export interface QuestionnaireBody {
   budget?: string;
   interests?: string;
