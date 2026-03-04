@@ -2,7 +2,14 @@ import EditVacationSchedule from "./EditVacationSchedule";
 import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
-import { useState, useCallback, useContext, useRef, useEffect, useMemo } from "react";
+import {
+  useState,
+  useCallback,
+  useContext,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import {
   useParams,
   useOutletContext,
@@ -29,7 +36,7 @@ import {
 import { type DraggingState } from "./EditVacationSchedule";
 import type { CollisionDetection } from "@dnd-kit/core/dist/utilities/algorithms/types";
 import { arrayMove } from "@dnd-kit/sortable";
-import type { AnyData } from "@dnd-kit/core/dist/store/types";
+import type { Data as DndData } from "@dnd-kit/core/dist/store/types";
 import {
   bucketizeSchedule,
   calculateNewSortIndex,
@@ -47,6 +54,24 @@ import type { QuestionnaireAnswers } from "../components/AiTripQuestionnaire";
 import refreshFn from "../utils/refreshFn";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
+
+/** Mutate ScheduleFromApi items in-place, converting date strings → Date objects and id → string. Returns the array typed as Schedule[]. */
+function hydrateSchedule(items: ScheduleFromApi[]): Schedule[] {
+  for (const i of items) {
+    (i as unknown as Schedule).startTime = new Date(i.startTime);
+    (i as unknown as Schedule).endTime = new Date(i.endTime);
+    i.id = String(i.id);
+  }
+  return items as unknown as Schedule[];
+}
+
+/** Mutate a single ScheduleFromApi in-place, converting date strings → Date objects. Returns it typed as Schedule. */
+function hydrateScheduleItem(item: ScheduleFromApi): Schedule {
+  (item as unknown as Schedule).startTime = new Date(item.startTime);
+  (item as unknown as Schedule).endTime = new Date(item.endTime);
+  item.id = String(item.id);
+  return item as unknown as Schedule;
+}
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -83,7 +108,7 @@ const EditCanvas = ({
   const initialListDrag = useRef<boolean>(true);
   const overlayWidthRef = useRef<OverlayWidths | null>(null);
   const [activeListId, setActiveListId] = useState<UniqueIdentifier | null>(
-    null
+    null,
   );
   const [utcStart, setUtcStart] = useState(0);
   const [utcEnd, setUtcEnd] = useState(0);
@@ -100,11 +125,13 @@ const EditCanvas = ({
   const [mapRetries, setMapRetries] = useState<number>(0);
   const [scheduleRetries, setScheduleRetries] = useState<number>(0);
   const [isMobile, setIsMobile] = useState<boolean>(
-    () => window.matchMedia("(max-width: 700px)").matches
+    () => window.matchMedia("(max-width: 700px)").matches,
   );
   const [searchParams, setSearchParams] = useSearchParams();
   const [showAiQuestionnaire, setShowAiQuestionnaire] = useState(false);
-  const [savedAnswers, setSavedAnswers] = useState<QuestionnaireAnswers | null>(null);
+  const [savedAnswers, setSavedAnswers] = useState<QuestionnaireAnswers | null>(
+    null,
+  );
   const [answersLoaded, setAnswersLoaded] = useState(false);
 
   useEffect(() => {
@@ -212,8 +239,8 @@ const EditCanvas = ({
         Object.keys(schedule).reduce(
           (acc, v) =>
             acc + schedule[v].reduce((acc, v) => acc + Number(v.cost), 0),
-          0
-        )
+          0,
+        ),
       );
     }
   }, [schedule]);
@@ -223,7 +250,7 @@ const EditCanvas = ({
     useSensor(TouchSensor, {
       activationConstraint: { delay: 250, tolerance: 3 },
     }),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   const customCollisionsDetectionAlgorithm: CollisionDetection = useCallback(
@@ -249,7 +276,7 @@ const EditCanvas = ({
               droppableContainers: args.droppableContainers.filter(
                 (container) =>
                   container.id !== overId &&
-                  containerItems.find((v) => container.id === v.id)
+                  containerItems.find((v) => container.id === v.id),
               ),
             })[0]?.id;
           }
@@ -264,10 +291,10 @@ const EditCanvas = ({
 
       return lastOverId.current ? [{ id: lastOverId.current }] : [];
     },
-    [activeId, schedule]
+    [activeId, schedule],
   );
 
-  function isDragData(data: DragData | AnyData | undefined): data is DragData {
+  function isDragData(data: DragData | DndData | undefined): data is DragData {
     if (data === undefined) {
       return false;
     }
@@ -314,7 +341,7 @@ const EditCanvas = ({
       const containerAndIndex = findContainerAndIndex(e.active.id);
       if (containerAndIndex.container && containerAndIndex.index != null) {
         setDragRow(
-          schedule[containerAndIndex?.container][containerAndIndex.index]
+          schedule[containerAndIndex?.container][containerAndIndex.index],
         );
       }
     }
@@ -416,16 +443,16 @@ const EditCanvas = ({
           prevSchedule,
           activeIndex,
           overIndex,
-          overContainer
+          overContainer,
         );
         const newEndTime = changeEndDate(
           newStartTime,
-          prevSchedule[overContainer][activeIndex].multiDay
+          prevSchedule[overContainer][activeIndex].multiDay,
         );
         const newArr = arrayMove(
           prevSchedule[overContainer],
           activeIndex,
-          overIndex ?? 0
+          overIndex ?? 0,
         );
         chunk = indexChunk(active.id, newArr);
         const newItem = {
@@ -446,8 +473,8 @@ const EditCanvas = ({
       if (refIdSnapshot) {
         setWishList((prev) =>
           prev.map((v) =>
-            v.id === refIdSnapshot ? { ...v, itemAdded: true } : v
-          )
+            v.id === refIdSnapshot ? { ...v, itemAdded: true } : v,
+          ),
         );
       }
     } else {
@@ -560,7 +587,7 @@ const EditCanvas = ({
                       ...reqObj1.headers,
                       Authorization: `Bearer ${continueReq.token}`,
                     },
-                  }
+                  },
                 );
                 if (!retryReq1.ok) {
                   setBannerMsg("Trouble completing req, please try again");
@@ -579,28 +606,23 @@ const EditCanvas = ({
             if (!a && !b && hold != null) {
               const data = (await hold.json()) as ScheduleAddResponse;
               if (data.newlyIndexedSchedule != null) {
-                for (const i of data.newlyIndexedSchedule) {
-                  i.startTime = new Date(i.startTime);
-                  i.endTime = new Date(i.endTime);
-                  i.id = String(i.id);
-                }
+                const hydrated = hydrateSchedule(data.newlyIndexedSchedule);
                 const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
                 const dayContainers: DayContainer[] = makeContainers(
                   length,
-                  new Date(utcStart)
+                  new Date(utcStart),
                 );
                 const bucketizeItems: DaySchedule = bucketizeSchedule(
                   dayContainers,
-                  data.newlyIndexedSchedule
+                  hydrated,
                 );
                 setSchedule(bucketizeItems);
               } else if (data.addedItem != null) {
-                data.addedItem.startTime = new Date(data.addedItem.startTime);
-                data.addedItem.endTime = new Date(data.addedItem.endTime);
+                const addedItem = hydrateScheduleItem(data.addedItem);
                 setSchedule((prev) => ({
                   ...prev,
                   [overContainer]: prev[overContainer].map((v) =>
-                    refIdSnapshot === v.id ? data.addedItem : v
+                    refIdSnapshot === v.id ? addedItem : v,
                   ),
                 }));
               }
@@ -612,28 +634,23 @@ const EditCanvas = ({
           }
           const data = (await responses[0].json()) as ScheduleAddResponse;
           if (data.newlyIndexedSchedule != null) {
-            for (const i of data.newlyIndexedSchedule) {
-              i.startTime = new Date(i.startTime);
-              i.endTime = new Date(i.endTime);
-              i.id = String(i.id);
-            }
+            const hydrated = hydrateSchedule(data.newlyIndexedSchedule);
             const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
             const dayContainers: DayContainer[] = makeContainers(
               length,
-              new Date(utcStart)
+              new Date(utcStart),
             );
             const bucketizeItems: DaySchedule = bucketizeSchedule(
               dayContainers,
-              data.newlyIndexedSchedule
+              hydrated,
             );
             setSchedule(bucketizeItems);
           } else if (data.addedItem != null) {
-            data.addedItem.startTime = new Date(data.addedItem.startTime);
-            data.addedItem.endTime = new Date(data.addedItem.endTime);
+            const addedItem = hydrateScheduleItem(data.addedItem);
             setSchedule((prev) => ({
               ...prev,
               [overContainer]: prev[overContainer].map((v) =>
-                refIdSnapshot === v.id ? data.addedItem : v
+                refIdSnapshot === v.id ? addedItem : v,
               ),
             }));
           }
@@ -658,34 +675,29 @@ const EditCanvas = ({
           };
           const result = await fetch(
             `${apiURL}/update-time/${updatedItem.id}`,
-            reqObj
+            reqObj,
           );
 
           const okResFn = async (okRes: Response) => {
             const data = (await okRes.json()) as ScheduleUpdateResponse;
             if (data.newlyIndexedSchedule != null) {
-              for (const i of data.newlyIndexedSchedule) {
-                i.startTime = new Date(i.startTime);
-                i.endTime = new Date(i.endTime);
-                i.id = String(i.id);
-              }
+              const hydrated = hydrateSchedule(data.newlyIndexedSchedule);
               const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
               const dayContainers: DayContainer[] = makeContainers(
                 length,
-                new Date(utcStart)
+                new Date(utcStart),
               );
               const bucketizeItems: DaySchedule = bucketizeSchedule(
                 dayContainers,
-                data.newlyIndexedSchedule
+                hydrated,
               );
               setSchedule(bucketizeItems);
             } else if (data.updatedData != null) {
-              data.updatedData.startTime = new Date(data.updatedData.startTime);
-              data.updatedData.endTime = new Date(data.updatedData.endTime);
+              const updatedData = hydrateScheduleItem(data.updatedData);
               setSchedule((prev) => ({
                 ...prev,
                 [overContainer]: prev[overContainer].map((v) =>
-                  v.id === data.updatedData?.id ? data.updatedData : v
+                  v.id === updatedData.id ? updatedData : v,
                 ),
               }));
             }
@@ -717,7 +729,7 @@ const EditCanvas = ({
                       ...reqObj.headers,
                       Authorization: `Bearer ${continueReq.token}`,
                     },
-                  }
+                  },
                 );
                 if (!retryReq.ok) {
                   setBannerMsg("Trouble completing req, please try again");
@@ -734,38 +746,34 @@ const EditCanvas = ({
               }
             } else if (result.status === 403) {
               setBannerMsg(
-                "You do not have permission to access this resource"
+                "You do not have permission to access this resource",
               );
             } else if (result.status === 404) {
               setBannerMsg("Error: Trip not found");
             } else if (result.status === 409) {
               const data = (await result.json()) as ScheduleConflictResponse;
               b = true;
-              for (const i of data.newData) {
-                i.startTime = new Date(i.startTime);
-                i.endTime = new Date(i.endTime);
-                i.id = String(i.id);
-              }
+              const hydrated = hydrateSchedule(data.newData);
 
               const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
               const dayContainers: DayContainer[] = makeContainers(
                 length,
-                new Date(utcStart)
+                new Date(utcStart),
               );
               const bucketizeItems: DaySchedule = bucketizeSchedule(
                 dayContainers,
-                data.newData
+                hydrated,
               );
               setSchedule(bucketizeItems);
               previous[overContainer][activeIndex].sortIndex =
                 calculateNewSortIndex(chunk);
               setHoldOverwrite(previous[overContainer][activeIndex]);
               setBannerMsg(
-                "Another user has updated this resource, your change was not applied"
+                "Another user has updated this resource, your change was not applied",
               );
             } else if (result.status >= 500) {
               setBannerMsg(
-                "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+                "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
               );
             } else {
               setBannerMsg("Uh oh. Something went wrong.");
@@ -791,7 +799,7 @@ const EditCanvas = ({
   const changeEndDate = (
     newStartTime: Date,
     multiDayCheck: boolean,
-    fromList?: boolean
+    fromList?: boolean,
   ): Date => {
     if (fromList) {
       return new Date(newStartTime.getTime() + 60 * 60 * 1000);
@@ -807,7 +815,7 @@ const EditCanvas = ({
     currentSchedule: DaySchedule,
     activeIndex: number,
     overIndex: number | null,
-    overContainer: string
+    overContainer: string,
   ): Date => {
     // active index is still the original index despite it shifting around (for same table items)
     // ts-ignore
@@ -835,7 +843,7 @@ const EditCanvas = ({
               const newHour = prefixZero(timeBelow.getUTCHours() - 1);
               const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
               activeStartTime = new Date(
-                `${overContainer}T${newHour}:${sameMinute}:00Z`
+                `${overContainer}T${newHour}:${sameMinute}:00Z`,
               );
             }
           }
@@ -845,8 +853,8 @@ const EditCanvas = ({
           } else {
             activeStartTime = new Date(
               `${overContainer}T${prefixZero(
-                timeAbove.getUTCHours() + 1
-              )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                timeAbove.getUTCHours() + 1,
+              )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`,
             );
           }
         } else {
@@ -865,8 +873,8 @@ const EditCanvas = ({
               if (timeBelow.getUTCHours() - timeAbove.getUTCHours() > 1) {
                 activeStartTime = new Date(
                   `${overContainer}T${prefixZero(
-                    timeAbove.getUTCHours() + 1
-                  )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                    timeAbove.getUTCHours() + 1,
+                  )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`,
                 );
               } else {
                 if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
@@ -877,21 +885,21 @@ const EditCanvas = ({
                     ) {
                       activeStartTime = new Date(
                         `${overContainer}T${prefixZero(
-                          timeAbove.getUTCHours() + 1
-                        )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                          timeAbove.getUTCHours() + 1,
+                        )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`,
                       );
                     } else {
                       activeStartTime = new Date(
                         `${overContainer}T${prefixZero(
-                          timeAbove.getUTCHours() + 1
-                        )}:00:00Z`
+                          timeAbove.getUTCHours() + 1,
+                        )}:00:00Z`,
                       );
                     }
                   } else {
                     activeStartTime = new Date(
                       `${overContainer}T${prefixZero(
-                        timeAbove.getUTCHours() + 1
-                      )}:00:00Z`
+                        timeAbove.getUTCHours() + 1,
+                      )}:00:00Z`,
                     );
                   }
                 } else {
@@ -911,7 +919,7 @@ const EditCanvas = ({
               const newHour = prefixZero(timeBelow.getUTCHours() - 1);
               const sameMinute = prefixZero(activeStartTime.getUTCMinutes());
               activeStartTime = new Date(
-                `${overContainer}T${newHour}:${sameMinute}:00Z`
+                `${overContainer}T${newHour}:${sameMinute}:00Z`,
               );
             }
           }
@@ -931,8 +939,8 @@ const EditCanvas = ({
               if (activeStartTime.getTime() <= timeAbove.getTime()) {
                 activeStartTime = new Date(
                   `${overContainer}T${prefixZero(
-                    timeAbove.getUTCHours() + 1
-                  )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                    timeAbove.getUTCHours() + 1,
+                  )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`,
                 );
               } else {
                 // day is correct, no item below, time is after item above, no action needed
@@ -954,8 +962,8 @@ const EditCanvas = ({
                 if (timeBelow.getUTCHours() - timeAbove.getUTCHours() > 1) {
                   activeStartTime = new Date(
                     `${overContainer}T${prefixZero(
-                      timeAbove.getUTCHours() + 1
-                    )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                      timeAbove.getUTCHours() + 1,
+                    )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`,
                   );
                 } else {
                   if (timeBelow.getUTCHours() - timeAbove.getUTCHours() === 1) {
@@ -966,21 +974,21 @@ const EditCanvas = ({
                       ) {
                         activeStartTime = new Date(
                           `${overContainer}T${prefixZero(
-                            timeAbove.getUTCHours() + 1
-                          )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`
+                            timeAbove.getUTCHours() + 1,
+                          )}:${prefixZero(activeStartTime.getUTCMinutes())}:00Z`,
                         );
                       } else {
                         activeStartTime = new Date(
                           `${overContainer}T${prefixZero(
-                            timeAbove.getUTCHours() + 1
-                          )}:00:00Z`
+                            timeAbove.getUTCHours() + 1,
+                          )}:00:00Z`,
                         );
                       }
                     } else {
                       activeStartTime = new Date(
                         `${overContainer}T${prefixZero(
-                          timeAbove.getUTCHours() + 1
-                        )}:00:00Z`
+                          timeAbove.getUTCHours() + 1,
+                        )}:00:00Z`,
                       );
                     }
                   } else {
@@ -999,7 +1007,7 @@ const EditCanvas = ({
 
   const handleDragCancel = (
     noErrEnd?: boolean | null,
-    skipTheClone?: boolean
+    skipTheClone?: boolean,
   ) => {
     if (noErrEnd == null) {
       if (skipTheClone == null) {
@@ -1020,7 +1028,7 @@ const EditCanvas = ({
 
   const findContainerAndIndex = (
     id: UniqueIdentifier | undefined | string,
-    specificSchedule?: DaySchedule
+    specificSchedule?: DaySchedule,
   ): DraggingState => {
     const containerAndIndex: DraggingState = { container: null, index: null };
     if (!id) return containerAndIndex;
@@ -1058,7 +1066,7 @@ const EditCanvas = ({
 
   const gValuesFn = (
     vp: Vp,
-    gLocation: string /* optional gId if needed */
+    gLocation: string /* optional gId if needed */,
   ) => {
     setVp(vp);
     setLocation(gLocation);
@@ -1073,7 +1081,11 @@ const EditCanvas = ({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ value: val, fromGoogle: id ?? null, details: details ?? null }),
+        body: JSON.stringify({
+          value: val,
+          fromGoogle: id ?? null,
+          details: details ?? null,
+        }),
       });
       if (response.status === 401) {
         const resData = (await response.json()) as ApiErrorResponse;
@@ -1099,7 +1111,11 @@ const EditCanvas = ({
               "Content-Type": "application/json",
               Authorization: `Bearer ${continueReq.token}`,
             },
-            body: JSON.stringify({ value: val, fromGoogle: id ?? null, details: details ?? null }),
+            body: JSON.stringify({
+              value: val,
+              fromGoogle: id ?? null,
+              details: details ?? null,
+            }),
           });
           if (!retryReq.ok) {
             alert("Trouble completing request, please try again");
@@ -1122,7 +1138,7 @@ const EditCanvas = ({
         return 400;
       } else if (response.status >= 500) {
         setBannerMsg(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
         );
         return 500;
       } else if (response.ok) {
@@ -1131,7 +1147,7 @@ const EditCanvas = ({
         return 200;
       }
     },
-    []
+    [],
   );
 
   const handleDeleteItem = useCallback(
@@ -1176,7 +1192,7 @@ const EditCanvas = ({
           } else if (retryReq.ok) {
             const data = (await retryReq.json()) as ListDeleteResponse;
             setWishList((prev) =>
-              prev.filter((v) => v.id !== data.deletedData[0].id)
+              prev.filter((v) => v.id !== data.deletedData[0].id),
             );
             return 200;
           }
@@ -1194,26 +1210,22 @@ const EditCanvas = ({
         return 400;
       } else if (response.status >= 500) {
         setBannerMsg(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
         );
         return 500;
       } else if (response.ok) {
         const data = (await response.json()) as ListDeleteResponse;
         setWishList((prev) =>
-          prev.filter((v) => v.id !== data.deletedData[0].id)
+          prev.filter((v) => v.id !== data.deletedData[0].id),
         );
         return 200;
       }
     },
-    []
+    [],
   );
 
   const onMobileAddToSchedule = useCallback(
-    async (
-      itemId: UniqueIdentifier,
-      dayKey: string,
-      timeString: string
-    ) => {
+    async (itemId: UniqueIdentifier, dayKey: string, timeString: string) => {
       if (!token) return;
       const listItem = wishList.find((item) => item.id == itemId);
       if (!listItem) return;
@@ -1236,7 +1248,7 @@ const EditCanvas = ({
 
       const currentDayItems = schedule[dayKey] ?? [];
       const newArr = [...currentDayItems, tempItem].sort(
-        (a, b) => a.startTime.getTime() - b.startTime.getTime()
+        (a, b) => a.startTime.getTime() - b.startTime.getTime(),
       );
       const chunk = indexChunk(itemId, newArr);
 
@@ -1245,7 +1257,7 @@ const EditCanvas = ({
         [dayKey]: newArr,
       }));
       setWishList((prev) =>
-        prev.map((v) => (v.id === itemId ? { ...v, itemAdded: true } : v))
+        prev.map((v) => (v.id === itemId ? { ...v, itemAdded: true } : v)),
       );
 
       try {
@@ -1305,8 +1317,8 @@ const EditCanvas = ({
             }));
             setWishList((prev) =>
               prev.map((v) =>
-                v.id === itemId ? { ...v, itemAdded: false } : v
-              )
+                v.id === itemId ? { ...v, itemAdded: false } : v,
+              ),
             );
           }
           return;
@@ -1314,21 +1326,16 @@ const EditCanvas = ({
 
         const data = (await scheduleRes.json()) as ScheduleAddResponse;
         if (data.newlyIndexedSchedule != null) {
-          for (const i of data.newlyIndexedSchedule) {
-            i.startTime = new Date(i.startTime);
-            i.endTime = new Date(i.endTime);
-            i.id = String(i.id);
-          }
+          const hydrated = hydrateSchedule(data.newlyIndexedSchedule);
           const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
           const dayContainers = makeContainers(length, new Date(utcStart));
-          setSchedule(bucketizeSchedule(dayContainers, data.newlyIndexedSchedule));
+          setSchedule(bucketizeSchedule(dayContainers, hydrated));
         } else if (data.addedItem != null) {
-          data.addedItem.startTime = new Date(data.addedItem.startTime);
-          data.addedItem.endTime = new Date(data.addedItem.endTime);
+          const addedItem = hydrateScheduleItem(data.addedItem);
           setSchedule((prev) => ({
             ...prev,
             [dayKey]: prev[dayKey].map((v) =>
-              v.id === itemId ? data.addedItem : v
+              v.id === itemId ? addedItem : v,
             ),
           }));
         }
@@ -1338,18 +1345,16 @@ const EditCanvas = ({
           [dayKey]: currentDayItems,
         }));
         setWishList((prev) =>
-          prev.map((v) =>
-            v.id === itemId ? { ...v, itemAdded: false } : v
-          )
+          prev.map((v) => (v.id === itemId ? { ...v, itemAdded: false } : v)),
         );
       }
     },
-    [token, wishList, schedule, tripId, utcStart, utcEnd]
+    [token, wishList, schedule, tripId, utcStart, utcEnd],
   );
 
   const placeItemInSchedule = (
     oldArr: Schedule[],
-    item: Schedule
+    item: Schedule,
   ): Schedule[] => {
     return [...oldArr, item].sort((a: Schedule, b: Schedule) => {
       if (a.startTime.getTime() === b.startTime.getTime()) {
@@ -1392,7 +1397,7 @@ const EditCanvas = ({
     if (itemFound === -1 || newItemContainer !== previousItemContainer) {
       newArrOldItem = placeItemInSchedule(
         schedule[previousItemContainer].slice(),
-        holdOverwrite
+        holdOverwrite,
       );
       chunk = indexChunk(holdOverwrite.id, newArrOldItem);
     } else {
@@ -1425,21 +1430,15 @@ const EditCanvas = ({
         });
         if (addingReq.ok) {
           const data = (await addingReq.json()) as ScheduleAddResponse;
-          const startTime = new Date(data.addedItem.startTime);
-          const day = startTime.toISOString().split("T")[0];
-          setSchedule((prev) => {
-            const addedItem = {
-              ...data.addedItem,
-              startTime: new Date(data.addedItem.startTime),
-              endTime: new Date(data.addedItem.endTime),
-            };
-            return {
-              ...prev,
-              [day]: newArrOldItem.map((v) =>
-                v.id === addedItem.id ? addedItem : v
-              ),
-            };
-          });
+          if (!data.addedItem) return;
+          const addedItem = hydrateScheduleItem(data.addedItem);
+          const day = addedItem.startTime.toISOString().split("T")[0];
+          setSchedule((prev) => ({
+            ...prev,
+            [day]: newArrOldItem.map((v) =>
+              v.id === addedItem.id ? addedItem : v,
+            ),
+          }));
           clearOverwriteBanner();
         } else if (addingReq.status === 401) {
           const resData = (await addingReq.json()) as ApiErrorResponse;
@@ -1480,21 +1479,15 @@ const EditCanvas = ({
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
               const data = (await retryReq.json()) as ScheduleAddResponse;
-              const startTime = new Date(data.addedItem.startTime);
-              const day = startTime.toISOString().split("T")[0];
-              setSchedule((prev) => {
-                const addedItem = {
-                  ...data.addedItem,
-                  startTime: new Date(data.addedItem.startTime),
-                  endTime: new Date(data.addedItem.endTime),
-                };
-                return {
-                  ...prev,
-                  [day]: newArrOldItem.map((v) =>
-                    v.id === addedItem.id ? addedItem : v
-                  ),
-                };
-              });
+              if (!data.addedItem) return;
+              const addedItem = hydrateScheduleItem(data.addedItem);
+              const day = addedItem.startTime.toISOString().split("T")[0];
+              setSchedule((prev) => ({
+                ...prev,
+                [day]: newArrOldItem.map((v) =>
+                  v.id === addedItem.id ? addedItem : v,
+                ),
+              }));
               clearOverwriteBanner();
             }
           } else if (continueReq.err) {
@@ -1512,7 +1505,7 @@ const EditCanvas = ({
         } else if (addingReq.status >= 500) {
           clearOverwriteBanner();
           setBannerMsg(
-            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
           );
         }
       } else {
@@ -1536,35 +1529,24 @@ const EditCanvas = ({
         });
         if (patchRes.ok) {
           const data = (await patchRes.json()) as ScheduleUpdateResponse;
+          if (!data.updatedData) return;
+          const updated = hydrateScheduleItem(data.updatedData);
           clearOverwriteBanner();
           setSchedule((prev) => {
+            const mapped = newArrOldItem.map((v) =>
+              v.id === holdOverwrite.id ? updated : v,
+            );
             return newItemContainer !== previousItemContainer
               ? {
                   ...prev,
                   [newItemContainer]: prev[newItemContainer].filter(
-                    (v) => v.id !== holdOverwrite.id
+                    (v) => v.id !== holdOverwrite.id,
                   ),
-                  [previousItemContainer]: newArrOldItem.map((v: Schedule) =>
-                    v.id === holdOverwrite.id
-                      ? {
-                          ...data.updatedData,
-                          startTime: new Date(data.updatedData.startTime),
-                          endTime: new Date(data.updatedData.endTime),
-                        }
-                      : v
-                  ),
+                  [previousItemContainer]: mapped,
                 }
               : {
                   ...prev,
-                  [previousItemContainer]: newArrOldItem.map((v) =>
-                    v.id === holdOverwrite.id
-                      ? {
-                          ...data.updatedData,
-                          startTime: new Date(data.updatedData.startTime),
-                          endTime: new Date(data.updatedData.endTime),
-                        }
-                      : v
-                  ),
+                  [previousItemContainer]: mapped,
                 };
           });
         } else if (patchRes.status === 401) {
@@ -1605,42 +1587,30 @@ const EditCanvas = ({
                   lastModified:
                     schedule[newItemContainer][newItemIndex].lastModified,
                 }),
-              }
+              },
             );
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
             } else if (retryReq.ok) {
               const data = (await retryReq.json()) as ScheduleUpdateResponse;
+              if (!data.updatedData) return;
+              const updated = hydrateScheduleItem(data.updatedData);
               clearOverwriteBanner();
               setSchedule((prev) => {
+                const mapped = newArrOldItem.map((v) =>
+                  v.id === holdOverwrite.id ? updated : v,
+                );
                 return newItemContainer !== previousItemContainer
                   ? {
                       ...prev,
                       [newItemContainer]: prev[newItemContainer].filter(
-                        (v) => v.id !== holdOverwrite.id
+                        (v) => v.id !== holdOverwrite.id,
                       ),
-                      [previousItemContainer]: newArrOldItem.map(
-                        (v: Schedule) =>
-                          v.id === holdOverwrite.id
-                            ? {
-                                ...data.updatedData,
-                                startTime: new Date(data.updatedData.startTime),
-                                endTime: new Date(data.updatedData.endTime),
-                              }
-                            : v
-                      ),
+                      [previousItemContainer]: mapped,
                     }
                   : {
                       ...prev,
-                      [previousItemContainer]: newArrOldItem.map((v) =>
-                        v.id === holdOverwrite.id
-                          ? {
-                              ...data.updatedData,
-                              startTime: new Date(data.updatedData.startTime),
-                              endTime: new Date(data.updatedData.endTime),
-                            }
-                          : v
-                      ),
+                      [previousItemContainer]: mapped,
                     };
               });
             }
@@ -1658,35 +1628,31 @@ const EditCanvas = ({
           setBannerMsg("Error: Trip not found");
         } else if (patchRes.status === 409) {
           const data = (await patchRes.json()) as ScheduleConflictResponse;
-          for (const i of data.newData) {
-            i.startTime = new Date(i.startTime);
-            i.endTime = new Date(i.endTime);
-            i.id = String(i.id);
-          }
+          const hydrated = hydrateSchedule(data.newData);
           const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
           const dayContainers: DayContainer[] = makeContainers(
             length,
-            new Date(utcStart)
+            new Date(utcStart),
           );
           const bucketizeItems: DaySchedule = bucketizeSchedule(
             dayContainers,
-            data.newData
+            hydrated,
           );
           setSchedule(bucketizeItems);
           setHoldOverwrite({ ...holdOverwrite });
           setBannerMsg(
-            "Another user has updated this resource AGAIN, your change was not applied"
+            "Another user has updated this resource AGAIN, your change was not applied",
           );
           setBannerMsg(
-            "Another user has updated this resource, your change was not applied"
+            "Another user has updated this resource, your change was not applied",
           );
         } else if (patchRes.status >= 500) {
           clearOverwriteBanner();
           setBannerMsg(
-            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
           );
           setBannerMsg(
-            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
           );
         } else {
           setBannerMsg("Uh oh. Something went wrong.");
@@ -1718,104 +1684,107 @@ const EditCanvas = ({
           initialAnswers={savedAnswers ?? undefined}
         />
       )}
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-      onDragCancel={() => handleDragCancel()}
-      sensors={sensors}
-      collisionDetection={customCollisionsDetectionAlgorithm}
-      autoScroll={{
-        enabled: true,
-        threshold: { x: 0.08, y: 0.25 },
-        acceleration: 2.5,
-      }}
-    >
-      <BannerContextProvider bannerMsg={bannerMsg} setBannerMsg={setBannerMsg}>
-        <div className={styles.pageWrapper}>
-          <div className={styles.tableAndList}>
-            <EditScheduleProvider
-              utcStart={utcStart}
-              utcEnd={utcEnd}
-              setUtcStart={setUtcStart}
-              setUtcEnd={setUtcEnd}
-              individualAddition={individualAddition}
-              setIndividualAddition={setIndividualAddition}
-              editLineId={editLineId}
-              setEditLineId={setEditLineId}
-              addingItem={addingItem}
-              setAddingItem={setAddingItem}
-              setHoldOverwrite={setHoldOverwrite}
-            >
-              <ErrorBoundary
-                fallbackRender={(fallbackProps) => (
-                  <ErrorFallback
-                    {...fallbackProps}
-                    retryCount={scheduleRetries}
-                  />
-                )}
-                onReset={() => {
-                  setScheduleRetries((prev) => prev + 1);
-                  console.log("Resetting state...");
-                }}
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={() => handleDragCancel()}
+        sensors={sensors}
+        collisionDetection={customCollisionsDetectionAlgorithm}
+        autoScroll={{
+          enabled: true,
+          threshold: { x: 0.08, y: 0.25 },
+          acceleration: 2.5,
+        }}
+      >
+        <BannerContextProvider
+          bannerMsg={bannerMsg}
+          setBannerMsg={setBannerMsg}
+        >
+          <div className={styles.pageWrapper}>
+            <div className={styles.tableAndList}>
+              <EditScheduleProvider
+                utcStart={utcStart}
+                utcEnd={utcEnd}
+                setUtcStart={setUtcStart}
+                setUtcEnd={setUtcEnd}
+                individualAddition={individualAddition}
+                setIndividualAddition={setIndividualAddition}
+                editLineId={editLineId}
+                setEditLineId={setEditLineId}
+                addingItem={addingItem}
+                setAddingItem={setAddingItem}
+                setHoldOverwrite={setHoldOverwrite}
               >
-                <EditVacationSchedule
-                  loadFirst={() => setLoading(false)}
-                  getMapValues={gValuesFn}
-                  schedule={schedule}
-                  setSchedule={setSchedule}
-                  activeItem={activeId}
-                  dragRow={dragRow}
-                  overlayWidthRef={overlayWidthRef.current}
-                  dragFrom={dragFrom}
+                <ErrorBoundary
+                  fallbackRender={(fallbackProps) => (
+                    <ErrorFallback
+                      {...fallbackProps}
+                      retryCount={scheduleRetries}
+                    />
+                  )}
+                  onReset={() => {
+                    setScheduleRetries((prev) => prev + 1);
+                    console.log("Resetting state...");
+                  }}
+                >
+                  <EditVacationSchedule
+                    loadFirst={() => setLoading(false)}
+                    getMapValues={gValuesFn}
+                    schedule={schedule}
+                    setSchedule={setSchedule}
+                    activeItem={activeId}
+                    dragRow={dragRow}
+                    overlayWidthRef={overlayWidthRef.current}
+                    dragFrom={dragFrom}
+                  />
+                </ErrorBoundary>
+              </EditScheduleProvider>
+              {!loading && (
+                <WantToSeeList
+                  loadSecond={() => setLoading2(false)}
+                  setList={setWishList}
+                  list={wishList}
+                  handleSubmitItem={handleSubmitItem}
+                  handleDeleteItem={handleDeleteItem}
+                  activeListId={activeListId}
+                  isMobile={isMobile}
+                  days={days}
+                  onMobileAddToSchedule={onMobileAddToSchedule}
                 />
-              </ErrorBoundary>
-            </EditScheduleProvider>
-            {!loading && (
-              <WantToSeeList
-                loadSecond={() => setLoading2(false)}
-                setList={setWishList}
-                list={wishList}
-                handleSubmitItem={handleSubmitItem}
-                handleDeleteItem={handleDeleteItem}
-                activeListId={activeListId}
-                isMobile={isMobile}
-                days={days}
-                onMobileAddToSchedule={onMobileAddToSchedule}
-              />
-            )}
+              )}
+            </div>
+            <ErrorBoundary
+              fallbackRender={(fallbackProps) => (
+                <ErrorFallback {...fallbackProps} retryCount={mapRetries} />
+              )}
+              onReset={() => {
+                setMapRetries((prev) => prev + 1);
+                console.log("Resetting state...");
+              }}
+            >
+              {!loading2 && (
+                <MyMapComponent
+                  bounds={vp}
+                  startLocation={location}
+                  list={wishList}
+                  handleSubmitItem={handleSubmitItem}
+                  handleDeleteItem={handleDeleteItem}
+                />
+              )}
+            </ErrorBoundary>
           </div>
-          <ErrorBoundary
-            fallbackRender={(fallbackProps) => (
-              <ErrorFallback {...fallbackProps} retryCount={mapRetries} />
-            )}
-            onReset={() => {
-              setMapRetries((prev) => prev + 1);
-              console.log("Resetting state...");
-            }}
-          >
-            {!loading2 && (
-              <MyMapComponent
-                bounds={vp}
-                startLocation={location}
-                list={wishList}
-                handleSubmitItem={handleSubmitItem}
-                handleDeleteItem={handleDeleteItem}
-              />
-            )}
-          </ErrorBoundary>
-        </div>
-        {bannerMsg && (
-          <Banner
-            key={remountKey}
-            bannerMsg={bannerMsg}
-            holdOverwrite={holdOverwrite}
-            handleOverwrite={handleOverwrite}
-            clearOverwriteBanner={clearOverwriteBanner}
-          />
-        )}
-      </BannerContextProvider>
-    </DndContext>
+          {bannerMsg && (
+            <Banner
+              key={remountKey}
+              bannerMsg={bannerMsg}
+              holdOverwrite={holdOverwrite}
+              handleOverwrite={handleOverwrite}
+              clearOverwriteBanner={clearOverwriteBanner}
+            />
+          )}
+        </BannerContextProvider>
+      </DndContext>
     </>
   );
 };
