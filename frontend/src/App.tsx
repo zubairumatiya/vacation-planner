@@ -23,6 +23,7 @@ import WorldMapPage from "./pages/WorldMapPage.tsx";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "./components/ErrorFallback.tsx";
 import RequireAuth from "./pages/RequireAuth.tsx";
+import GoogleOAuthCallback from "./pages/GoogleOAuthCallback.tsx";
 
 function App() {
   const [costTotal, setCostTotal] = useState(0);
@@ -83,6 +84,10 @@ function App() {
           />
           <Route path="/reset-password-wait" element={<ResetPasswordWait />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route
+            path="/auth/google/callback"
+            element={<GoogleOAuthCallback />}
+          />
         </Route>
       </Routes>
     </BrowserRouter>

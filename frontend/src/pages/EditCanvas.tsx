@@ -3,7 +3,12 @@ import WantToSeeList from "./WantToSeeList";
 import MyMapComponent from "./Map";
 import styles from "../styles/EditCanvas.module.css";
 import { useState, useCallback, useContext, useRef, useEffect, useMemo } from "react";
-import { useParams, useOutletContext, Navigate } from "react-router-dom";
+import {
+  useParams,
+  useOutletContext,
+  Navigate,
+  useSearchParams,
+} from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { EditScheduleProvider } from "../context/EditScheduleContext";
 import {
@@ -36,6 +41,9 @@ import {
 import { BannerContextProvider } from "../context/BannerContext";
 
 import Banner from "../components/Banner";
+import AiTripQuestionnaire from "../components/AiTripQuestionnaire";
+import type { QuestionnaireAnswers } from "../components/AiTripQuestionnaire";
+import { getGeminiToken } from "../utils/googleOAuth";
 import refreshFn from "../utils/refreshFn";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
@@ -87,6 +95,8 @@ const EditCanvas = ({
   const [isMobile, setIsMobile] = useState<boolean>(
     () => window.matchMedia("(max-width: 700px)").matches
   );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [showAiQuestionnaire, setShowAiQuestionnaire] = useState(false);
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 700px)");
@@ -94,6 +104,19 @@ const EditCanvas = ({
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("ai") === "ready" && getGeminiToken()) {
+      setShowAiQuestionnaire(true);
+      searchParams.delete("ai");
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  const handleQuestionnaireSubmit = (answers: QuestionnaireAnswers) => {
+    sessionStorage.setItem("aiTripAnswers", JSON.stringify(answers));
+    setShowAiQuestionnaire(false);
+  };
 
   const days = useMemo<DayContainer[]>(() => {
     if (utcStart === 0 || utcEnd === 0) return [];
@@ -1614,6 +1637,13 @@ const EditCanvas = ({
   }
 
   return (
+    <>
+      {showAiQuestionnaire && (
+        <AiTripQuestionnaire
+          onClose={() => setShowAiQuestionnaire(false)}
+          onSubmit={handleQuestionnaireSubmit}
+        />
+      )}
     <DndContext
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -1712,6 +1742,7 @@ const EditCanvas = ({
         )}
       </BannerContextProvider>
     </DndContext>
+    </>
   );
 };
 
