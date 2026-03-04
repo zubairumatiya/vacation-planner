@@ -4,3 +4,8 @@
 *.sql
 node_modules/
 backend/certs/
+vacation-planner.code-workspace
+.DS_Store
+**/.DS_Store
+**/node_modules/
+**/*.log
