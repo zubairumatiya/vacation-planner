@@ -35,7 +35,7 @@ const AddVacation = () => {
   return (
     <div className="max-w-3xl mx-auto my-12 p-6 sm:p-10 bg-[rgb(60,60,60)] shadow-2xl rounded-2xl border border-[rgb(38,164,93)]/31">
       <div className="mb-8 text-center">
-        <h2 className="text-3xl font-extrabold text-white tracking-tight mb-2">
+        <h2 className="text-3xl font-extrabold text-[#b0b0b0] tracking-tight mb-2">
           Plan a New Vacation
         </h2>
         <p className="text-gray-400 text-sm">
@@ -48,7 +48,10 @@ const AddVacation = () => {
           <button
             type="submit"
             disabled={submitButtonDisabled}
-            className="w-full max-w-sm px-8 py-3.5 rounded-xl bg-[#2fe782] text-white font-bold text-lg shadow-md transition-all duration-200 ease-in-out hover:bg-indigo-400 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none transform active:scale-95 disabled:active:scale-100"
+            className="w-full max-w-sm px-8 py-3.5 rounded-xl bg-[#2fe782] text-gray-900 font-bold text-lg shadow-md transition-all duration-200 ease-in-out hover:bg-[#28c770] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#2fe782] focus:ring-offset-2 focus:ring-offset-gray-900 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed disabled:shadow-none transform active:scale-95 disabled:active:scale-100"
+            style={{
+              backgroundColor: submitButtonDisabled ? "#ffffff" : "#2fe782",
+            }}
           >
             Create Vacation
           </button>
