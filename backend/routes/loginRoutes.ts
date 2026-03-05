@@ -52,6 +52,10 @@ if (process.env.SIGNATURE === undefined) {
 const SECRET: string = process.env.SIGNATURE;
 const SECRET2 = process.env.SIGNATURE2!;
 
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 const registerSubj = `${appName}: Verify Your Email Address`;
 const sendRegistrationEmail = (
   userEmail: string,
@@ -116,10 +120,14 @@ router.post(
       }
 
       if (existingUnverifiedEmail.rows.length > 0) {
-        token = existingUnverifiedEmail.rows[0].token;
         const now = new Date();
         const lastSent = existingUnverifiedEmail.rows[0].last_email_sent_at;
         if (now.getTime() - lastSent.getTime() >= 10 * 60 * 1000) {
+          token = crypto.randomBytes(32).toString("hex");
+          await db.query(
+            "UPDATE unverified_users SET token=$1, last_email_sent_at=NOW() WHERE email=$2",
+            [hashToken(token), email],
+          );
           await sendRegistrationEmail(email, token);
         }
         res
@@ -135,7 +143,7 @@ router.post(
       } else {
         await db.query(
           "INSERT INTO unverified_users (email, password, first_name, last_name, username, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()+ interval '1 hour', NOW())",
-          [email, hash, firstName, lastName, username, token],
+          [email, hash, firstName, lastName, username, hashToken(token)],
         );
         await sendRegistrationEmail(email, token);
         res.status(200).json({ message: "success" });
@@ -160,9 +168,10 @@ router.get(
     const token = req.query.token;
     if (token) {
       try {
+        const hashedToken = hashToken(token);
         const checkExpiration: QueryResult<UnverifiedUser> = await db.query(
           "SELECT * FROM unverified_users WHERE token=$1 AND expires_at > NOW()",
-          [token],
+          [hashedToken],
         );
         if (checkExpiration.rows.length === 0) {
           res.status(400).json({ message: "token not found or expired token" });
@@ -174,10 +183,10 @@ router.get(
             await client.query("BEGIN");
             await client.query(
               "INSERT INTO users (email, password, first_name, last_name, username) SELECT email, password, first_name, last_name, username FROM unverified_users WHERE token=$1",
-              [token],
+              [hashedToken],
             );
             await client.query("DELETE FROM unverified_users WHERE token=$1", [
-              token,
+              hashedToken,
             ]);
             await client.query("COMMIT");
           } catch (err) {
@@ -407,10 +416,12 @@ router.post(
         const lastSent = existingUnverifiedUser.rows[0].last_email_sent_at;
         if (now.getTime() - lastSent.getTime() >= 5 * 1000) {
           // change this back in production to 5 minutes!! (just add * 60)
-          await sendRegistrationEmail(
-            email,
-            existingUnverifiedUser.rows[0].token,
+          const newToken = crypto.randomBytes(32).toString("hex");
+          await db.query(
+            "UPDATE unverified_users SET token=$1, last_email_sent_at=NOW() WHERE email=$2",
+            [hashToken(newToken), email],
           );
+          await sendRegistrationEmail(email, newToken);
           res.redirect(200, `${BASE_URL}/verify-email`);
           return;
         } else {
@@ -453,7 +464,7 @@ router.post(
 
         await db.query(
           "INSERT INTO password_reset (token, email) VALUES ($1,$2)",
-          [token, email],
+          [hashToken(token), email],
         );
         await emailSender(
           email,
@@ -489,13 +500,14 @@ router.get(
       return;
     }
     try {
+      const hashedToken = hashToken(token);
       const foundUser: QueryResult<PasswordResetRow> = await db.query(
         "SELECT * FROM password_reset WHERE token=$1",
-        [token],
+        [hashedToken],
       );
       const checkExpired: QueryResult<PasswordResetRow> = await db.query(
         "SELECT * FROM password_reset WHERE token=$1 AND expires_at > NOW()",
-        [token],
+        [hashedToken],
       );
 
       if (foundUser.rows.length < 1) {
@@ -533,14 +545,15 @@ router.post(
       return;
     }
     try {
+      const hashedToken = hashToken(token);
       const existingReset: QueryResult<PasswordResetRow> = await db.query(
         "SELECT * FROM password_reset WHERE token=$1 AND expires_at > NOW()",
-        [token],
+        [hashedToken],
       );
       if (existingReset.rows.length < 1) {
         const expiredEmail: QueryResult<PasswordResetRow> = await db.query(
           "SELECT * FROM password_reset WHERE token=$1",
-          [token],
+          [hashedToken],
         );
         const sendExpEmail = expiredEmail?.rows[0]?.email || "";
         res.status(401).json({ email: sendExpEmail });
@@ -578,7 +591,7 @@ router.post(
           email,
         ]);
         await client.query("DELETE FROM password_reset WHERE token=$1", [
-          token,
+          hashedToken,
         ]);
         await client.query("COMMIT");
       } catch (err) {
