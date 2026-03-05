@@ -214,17 +214,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             const data = (await retryReq.json()) as TripScheduleResponse;
             const convertStart = new Date(data.startDate);
             const convertEnd = new Date(data.endDate);
-            let costTotal = 0;
-            for (const i of data.schedule) {
-              i.startTime = new Date(i.startTime);
-              i.endTime = new Date(i.endTime);
-              costTotal += Number(i.cost);
-            }
-            setCostTotal(costTotal);
-            // data.schedule.sort(  don't need this i don't think
-            //   (a: Schedule, b: Schedule) =>
-            //     a.start_time.getTime() - b.start_time.getTime()
-            // );
+            const totalCost = data.schedule.reduce(
+              (sum, i) => sum + Number(i.cost),
+              0,
+            );
+            setCostTotal(totalCost);
             setTitle(data.tripName);
             setRole(data.role ?? "");
             const UtcStart = convertStart.getTime();
@@ -252,17 +246,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         const data = (await response.json()) as TripScheduleResponse;
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
-        let costTotal = 0;
-        for (const i of data.schedule) {
-          i.startTime = new Date(i.startTime);
-          i.endTime = new Date(i.endTime);
-          costTotal += Number(i.cost);
-        }
-        setCostTotal(costTotal);
-        // data.schedule.sort(  don't need this i don't think
-        //   (a: Schedule, b: Schedule) =>
-        //     a.start_time.getTime() - b.start_time.getTime()
-        // );
+        const totalCost = data.schedule.reduce(
+          (sum, i) => sum + Number(i.cost),
+          0,
+        );
+        setCostTotal(totalCost);
         setTitle(data.tripName);
         setRole(data.role ?? "");
         const UtcStart = convertStart.getTime();
