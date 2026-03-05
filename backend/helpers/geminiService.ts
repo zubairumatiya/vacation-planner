@@ -22,7 +22,7 @@ interface TripContext {
 
 export async function chat(
   tripId: string,
-  userMessage: string
+  userMessage: string,
 ): Promise<{ text: string; itinerary?: GeminiItineraryItem[] }> {
   const context = await fetchTripContext(tripId);
   const systemPrompt = buildSystemPrompt(context);
@@ -56,26 +56,31 @@ export async function chat(
 }
 
 async function fetchTripContext(tripId: string): Promise<TripContext> {
-  const [tripResult, scheduleResult, questionnaireResult, recResult, wishResult] =
-    await Promise.all([
-      db.query<Trip>("SELECT * FROM trips WHERE id = $1", [tripId]),
-      db.query<Schedule>(
-        "SELECT * FROM trip_schedule WHERE trip_id = $1 ORDER BY start_time ASC, sort_index ASC",
-        [tripId]
-      ),
-      db.query<QuestionnaireRow>(
-        "SELECT * FROM trip_questionnaire WHERE trip_id = $1",
-        [tripId]
-      ),
-      db.query<GeminiRecommendedPlace>(
-        "SELECT * FROM gemini_recommended_places WHERE trip_id = $1 ORDER BY recommended_at ASC",
-        [tripId]
-      ),
-      db.query<TripList>(
-        "SELECT * FROM trip_list WHERE trip_id = $1 AND item_added = false",
-        [tripId]
-      ),
-    ]);
+  const [
+    tripResult,
+    scheduleResult,
+    questionnaireResult,
+    recResult,
+    wishResult,
+  ] = await Promise.all([
+    db.query<Trip>("SELECT * FROM trips WHERE id = $1", [tripId]),
+    db.query<Schedule>(
+      "SELECT * FROM trip_schedule WHERE trip_id = $1 ORDER BY start_time ASC, sort_index ASC",
+      [tripId],
+    ),
+    db.query<QuestionnaireRow>(
+      "SELECT * FROM trip_questionnaire WHERE trip_id = $1",
+      [tripId],
+    ),
+    db.query<GeminiRecommendedPlace>(
+      "SELECT * FROM gemini_recommended_places WHERE trip_id = $1 ORDER BY recommended_at ASC",
+      [tripId],
+    ),
+    db.query<TripList>(
+      "SELECT * FROM trip_list WHERE trip_id = $1 AND item_added = false",
+      [tripId],
+    ),
+  ]);
 
   return {
     trip: tripResult.rows[0],
@@ -92,7 +97,7 @@ function buildSystemPrompt(ctx: TripContext): string {
   const startDate = new Date(trip.start_date);
   const endDate = new Date(trip.end_date);
   const tripLength = Math.ceil(
-    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   const formattedSchedule =
@@ -104,10 +109,13 @@ function buildSystemPrompt(ctx: TripContext): string {
               month: "short",
               day: "numeric",
             });
-            const startTime = new Date(s.start_time).toLocaleTimeString("en-US", {
-              hour: "numeric",
-              minute: "2-digit",
-            });
+            const startTime = new Date(s.start_time).toLocaleTimeString(
+              "en-US",
+              {
+                hour: "numeric",
+                minute: "2-digit",
+              },
+            );
             const endTime = new Date(s.end_time).toLocaleTimeString("en-US", {
               hour: "numeric",
               minute: "2-digit",
@@ -123,9 +131,7 @@ function buildSystemPrompt(ctx: TripContext): string {
       : "None yet.";
 
   const wishListItems =
-    wishList.length > 0
-      ? wishList.map((w) => w.value).join(", ")
-      : "None.";
+    wishList.length > 0 ? wishList.map((w) => w.value).join(", ") : "None.";
 
   // Build questionnaire section
   let questionnaireSection = "No questionnaire filled out yet.";
@@ -134,14 +140,19 @@ function buildSystemPrompt(ctx: TripContext): string {
     const fields = [
       q.budget && `- **Budget:** ${q.budget}`,
       q.interests && `- **Interests:** ${q.interests}`,
-      q.dietary_restrictions && `- **Dietary Restrictions:** ${q.dietary_restrictions}`,
+      q.dietary_restrictions &&
+        `- **Dietary Restrictions:** ${q.dietary_restrictions}`,
       q.pace && `- **Pace:** ${q.pace}`,
-      q.traveling_with_kids_or_elderly && `- **Traveling with kids/elderly:** ${q.traveling_with_kids_or_elderly}`,
-      q.accessibility_needs && `- **Accessibility Needs:** ${q.accessibility_needs}`,
+      q.traveling_with_kids_or_elderly &&
+        `- **Traveling with kids/elderly:** ${q.traveling_with_kids_or_elderly}`,
+      q.accessibility_needs &&
+        `- **Accessibility Needs:** ${q.accessibility_needs}`,
       q.tour_preference && `- **Tour Preference:** ${q.tour_preference}`,
-      q.accommodation_type && `- **Accommodation Type:** ${q.accommodation_type}`,
+      q.accommodation_type &&
+        `- **Accommodation Type:** ${q.accommodation_type}`,
       q.must_see_experiences && `- **Must-See:** ${q.must_see_experiences}`,
-      q.start_time_preference && `- **Start Time Preference:** ${q.start_time_preference}`,
+      q.start_time_preference &&
+        `- **Start Time Preference:** ${q.start_time_preference}`,
     ].filter(Boolean);
     if (fields.length > 0) {
       questionnaireSection = fields.join("\n");
@@ -153,6 +164,7 @@ function buildSystemPrompt(ctx: TripContext): string {
 ## Your Role
 Help users plan the perfect trip by recommending places, activities, restaurants, and experiences. Base your recommendations on:
 - Google Reviews (prioritize highly-rated places with significant review counts)
+- The Infatuation restaurant reviews (if available)
 - Reddit travel recommendations and local subreddit insights
 - Rick Steves travel guides and recommendations
 - Local and current events happening during the trip dates (sports, concerts, festivals, fairs, cultural events, seasonal activities)
@@ -259,7 +271,7 @@ function parseItinerary(text: string): GeminiItineraryItem[] {
 
 async function storeRecommendedPlaces(
   tripId: string,
-  items: GeminiItineraryItem[]
+  items: GeminiItineraryItem[],
 ): Promise<void> {
   const values: string[] = [];
   const params: (string | null)[] = [];
@@ -276,16 +288,16 @@ async function storeRecommendedPlaces(
   await db.query(
     `INSERT INTO gemini_recommended_places (trip_id, place_name, place_category)
      VALUES ${values.join(", ")}`,
-    params
+    params,
   );
 }
 
 export async function getRecommendedPlaces(
-  tripId: string
+  tripId: string,
 ): Promise<GeminiRecommendedPlace[]> {
   const result = await db.query<GeminiRecommendedPlace>(
     "SELECT * FROM gemini_recommended_places WHERE trip_id = $1 ORDER BY recommended_at DESC",
-    [tripId]
+    [tripId],
   );
   return result.rows;
 }
@@ -299,6 +311,6 @@ export async function clearRecommendedPlaces(tripId: string): Promise<void> {
 export async function markPlaceAdded(placeId: string): Promise<void> {
   await db.query(
     "UPDATE gemini_recommended_places SET added_to_schedule = true WHERE id = $1",
-    [placeId]
+    [placeId],
   );
 }
