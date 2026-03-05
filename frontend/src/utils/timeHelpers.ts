@@ -54,7 +54,7 @@ export const testLessThan24 = (
     meridiem: string;
   },
   setHoldStartTime: React.Dispatch<React.SetStateAction<string>>,
-  setHoldEndTime: React.Dispatch<React.SetStateAction<string>>
+  setHoldEndTime: React.Dispatch<React.SetStateAction<string>>,
 ) => {
   let startISO: string = "";
   let endISO: string = "";
@@ -67,7 +67,7 @@ export const testLessThan24 = (
   ) {
     startISO = customISOTime(
       obj.date,
-      `${obj.hour}:${obj.minute} ${obj.meridiem}`
+      `${obj.hour}:${obj.minute} ${obj.meridiem}`,
     );
     setHoldStartTime(startISO);
   }
@@ -80,7 +80,7 @@ export const testLessThan24 = (
   ) {
     endISO = customISOTime(
       obj.date,
-      `${obj.hour}:${obj.minute} ${obj.meridiem}`
+      `${obj.hour}:${obj.minute} ${obj.meridiem}`,
     );
     setHoldEndTime(endISO);
   }
@@ -88,7 +88,7 @@ export const testLessThan24 = (
 
 export const indexChunk = (
   id: UniqueIdentifier,
-  newArray: Schedule[]
+  newArray: Schedule[],
 ): Chunk => {
   if (newArray.length <= 1) {
     return {};
@@ -98,7 +98,7 @@ export const indexChunk = (
     "making our chunk - above:",
     newArray[newIndex - 1]?.sortIndex,
     "below:",
-    newArray[newIndex + 1]?.sortIndex
+    newArray[newIndex + 1]?.sortIndex,
   );
   if (newIndex === newArray.length - 1) {
     // non-empty and at the bottom
@@ -193,14 +193,15 @@ export const makeContainers = (length: number, startDate: Date) => {
 
 export const bucketizeSchedule = (
   dayContainers: DayContainer[],
-  arr: Schedule[]
+  arr: Schedule[],
 ) => {
   const bucketizeItems: DaySchedule = {};
   dayContainers.forEach(
     (dayObj: DayContainer) =>
       (bucketizeItems[dayObj.day] = arr.filter(
-        (v: Schedule) => v.startTime.toISOString().split("T")[0] === dayObj.day
-      ))
+        (v: Schedule | ScheduleFromApi) =>
+          new Date(v.startTime).toISOString().split("T")[0] === dayObj.day,
+      )),
   );
   return bucketizeItems;
 };

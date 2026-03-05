@@ -170,12 +170,12 @@ declare global {
     setList: React.Dispatch<React.SetStateAction<Item[] | []>>;
     handleDeleteItem: (
       a: UniqueIdentifier,
-      fromGoogle: boolean
+      fromGoogle: boolean,
     ) => Promise<UniqueIdentifier | undefined>;
     handleSubmitItem: (
       val: string,
       id?: UniqueIdentifier,
-      details?: string | null
+      details?: string | null,
     ) => Promise<UniqueIdentifier | undefined>;
     activeListId: UniqueIdentifier | null;
     isMobile?: boolean;
@@ -183,7 +183,7 @@ declare global {
     onMobileAddToSchedule?: (
       itemId: UniqueIdentifier,
       dayKey: string,
-      timeString: string
+      timeString: string,
     ) => Promise<void>;
   }
 
@@ -261,14 +261,14 @@ declare global {
     preFilledMultiDay: boolean,
     startDate: string,
     endDate: string,
-    dayOfTrip: string
+    dayOfTrip: string,
   ) => void;
 
   type SubmitDeleteScheduleItem = (
     e: React.MouseEvent,
     itemID: UniqueIdentifier,
     index: number,
-    dateAdded: string
+    dateAdded: string,
   ) => void;
 
   type TimeObj = {
@@ -281,7 +281,7 @@ declare global {
     which: "start" | "end",
     hour: string,
     minute: string,
-    meridiem: string
+    meridiem: string,
   ) => void;
 
   type ListItemProps = {
@@ -290,13 +290,13 @@ declare global {
     editItem: (
       e: React.MouseEvent,
       index: number,
-      itemId: UniqueIdentifier
+      itemId: UniqueIdentifier,
     ) => void;
     handleCheckItem: (
       e: React.MouseEvent,
       currentState: boolean,
       itemId: UniqueIdentifier,
-      index: number
+      index: number,
     ) => void;
     activeListId: UniqueIdentifier | null;
     isMobile?: boolean;
@@ -304,7 +304,7 @@ declare global {
     onMobileAddToSchedule?: (
       itemId: UniqueIdentifier,
       dayKey: string,
-      timeString: string
+      timeString: string,
     ) => Promise<void>;
   };
 

@@ -31,7 +31,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [geminiConnected, setGeminiConnected] = useState(false);
   const [geminiResponse, setGeminiResponse] = useState<string | null>(null);
-  const [geminiItinerary, setGeminiItinerary] = useState<GeminiItineraryItem[]>([]);
+  const [geminiItinerary, setGeminiItinerary] = useState<GeminiItineraryItem[]>(
+    [],
+  );
   const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
   const [addingItem, setAddingItem] = useState<number | null>(null);
   const loggingOutRef = auth?.loggingOutRef;
@@ -65,7 +67,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [sharePanelOpen]);
-
 
   useEffect(() => {
     if (!geminiChatOpen) return;
@@ -138,7 +139,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     }
   };
 
-  const handleAddToSchedule = async (item: GeminiItineraryItem, index: number) => {
+  const handleAddToSchedule = async (
+    item: GeminiItineraryItem,
+    index: number,
+  ) => {
     if (!token || !tripId || addedItems.has(index)) return;
     setAddingItem(index);
     try {
@@ -362,53 +366,107 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     )}
                     {geminiResponse && (
                       <div className={styles.geminiResponseArea}>
-                        <p className={styles.geminiResponseText}>{geminiResponse}</p>
+                        <p className={styles.geminiResponseText}>
+                          {geminiResponse}
+                        </p>
                       </div>
                     )}
                     {geminiItinerary.length > 0 && (
                       <div className={styles.geminiItineraryList}>
                         {(() => {
-                          const grouped: Record<string, { label: string; items: { item: typeof geminiItinerary[0]; idx: number }[] }> = {};
+                          const grouped: Record<
+                            string,
+                            {
+                              label: string;
+                              items: {
+                                item: (typeof geminiItinerary)[0];
+                                idx: number;
+                              }[];
+                            }
+                          > = {};
                           geminiItinerary.forEach((item, i) => {
                             const d = new Date(item.startTime);
                             const dateKey = d.toISOString().slice(0, 10);
                             if (!grouped[dateKey]) {
-                              const day = d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
-                              const dateStr = d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", timeZone: "UTC" });
-                              grouped[dateKey] = { label: `${day} ${dateStr}`, items: [] };
+                              const day = d.toLocaleDateString("en-US", {
+                                weekday: "short",
+                                timeZone: "UTC",
+                              });
+                              const dateStr = d.toLocaleDateString("en-US", {
+                                month: "2-digit",
+                                day: "2-digit",
+                                timeZone: "UTC",
+                              });
+                              grouped[dateKey] = {
+                                label: `${day} ${dateStr}`,
+                                items: [],
+                              };
                             }
                             grouped[dateKey].items.push({ item, idx: i });
                           });
-                          return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([dateKey, { label, items }]) => (
-                            <div key={dateKey}>
-                              <div className={styles.geminiDateHeader}>{label}</div>
-                              {items.map(({ item, idx }) => (
-                                <div
-                                  key={`${item.location}-${idx}`}
-                                  className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
-                                >
-                                  <div className={styles.geminiPlaceInfo}>
-                                    <span className={styles.geminiPlaceName}>{item.location}</span>
-                                    <span className={styles.geminiPlaceTime}>
-                                      {new Date(item.startTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                                      {" – "}
-                                      {new Date(item.endTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                                    </span>
-                                    <span className={styles.geminiPlaceDetails}>{item.details}</span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className={styles.geminiAddButton}
-                                    onClick={() => handleAddToSchedule(item, idx)}
-                                    disabled={addedItems.has(idx) || addingItem === idx}
-                                    title={addedItems.has(idx) ? "Added" : "Add to schedule"}
-                                  >
-                                    {addedItems.has(idx) ? "✓" : addingItem === idx ? "..." : "+"}
-                                  </button>
+                          return Object.entries(grouped)
+                            .sort(([a], [b]) => a.localeCompare(b))
+                            .map(([dateKey, { label, items }]) => (
+                              <div key={dateKey}>
+                                <div className={styles.geminiDateHeader}>
+                                  {label}
                                 </div>
-                              ))}
-                            </div>
-                          ));
+                                {items.map(({ item, idx }) => (
+                                  <div
+                                    key={`${item.location}-${idx}`}
+                                    className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
+                                  >
+                                    <div className={styles.geminiPlaceInfo}>
+                                      <span className={styles.geminiPlaceName}>
+                                        {item.location}
+                                      </span>
+                                      <span className={styles.geminiPlaceTime}>
+                                        {new Date(
+                                          item.startTime,
+                                        ).toLocaleTimeString("en-US", {
+                                          hour: "numeric",
+                                          minute: "2-digit",
+                                        })}
+                                        {" – "}
+                                        {new Date(
+                                          item.endTime,
+                                        ).toLocaleTimeString("en-US", {
+                                          hour: "numeric",
+                                          minute: "2-digit",
+                                        })}
+                                      </span>
+                                      <span
+                                        className={styles.geminiPlaceDetails}
+                                      >
+                                        {item.details}
+                                      </span>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      className={styles.geminiAddButton}
+                                      onClick={() =>
+                                        handleAddToSchedule(item, idx)
+                                      }
+                                      disabled={
+                                        addedItems.has(idx) ||
+                                        addingItem === idx
+                                      }
+                                      title={
+                                        addedItems.has(idx)
+                                          ? "Added"
+                                          : "Add to schedule"
+                                      }
+                                    >
+                                      {addedItems.has(idx)
+                                        ? "✓"
+                                        : addingItem === idx
+                                          ? "..."
+                                          : "+"}
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ));
                         })()}
                       </div>
                     )}
