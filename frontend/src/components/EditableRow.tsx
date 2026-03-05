@@ -8,6 +8,8 @@ import {
   makeContainers,
   bucketizeSchedule,
   calculateNewSortIndex,
+  toSchedule,
+  toScheduleList,
 } from "../utils/timeHelpers";
 import CustomTimePicker from "./CustomTimePicker";
 import type { UniqueIdentifier } from "@dnd-kit/core";
@@ -297,11 +299,7 @@ const EditableRow = ({
         const data = (await response.json()) as ScheduleConflictResponse;
         setEditLineId(null);
         setAddingItem(false);
-        for (const i of data.newData) {
-          i.startTime = new Date(i.startTime);
-          i.endTime = new Date(i.endTime);
-          i.id = String(i.id);
-        }
+        const scheduleItems = toScheduleList(data.newData);
         const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
         const dayContainers: DayContainer[] = makeContainers(
           length,
@@ -309,7 +307,7 @@ const EditableRow = ({
         );
         const bucketizeItems: DaySchedule = bucketizeSchedule(
           dayContainers,
-          data.newData
+          scheduleItems
         );
         setSchedule(bucketizeItems);
 
@@ -366,7 +364,7 @@ const EditableRow = ({
       : false;
     const postEditDate = startDateAssembler.split("T")[0];
     const newTable = postEditDate === dateAdded ? false : true;
-    const tempItem = {
+    const tempItem: Schedule = {
       startTime: new Date(startDateAssembler),
       id: itemID,
       endTime: new Date(endDateAssembler),
@@ -375,8 +373,9 @@ const EditableRow = ({
       cost: 0,
       multiDay: false,
       sortIndex: 0,
-      tripId: tripId ?? 0,
-    } as Schedule;
+      tripId: tripId ?? "",
+      lastModified: "",
+    };
     const tempArr = reSort(
       newTable
         ? [...schedule[postEditDate], tempItem]
@@ -416,11 +415,7 @@ const EditableRow = ({
         setEditLineId(null);
         setAddingItem(false);
         if (data.newlyIndexedSchedule != null) {
-          for (const i of data.newlyIndexedSchedule) {
-            i.startTime = new Date(i.startTime);
-            i.endTime = new Date(i.endTime);
-            i.id = String(i.id);
-          }
+          const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
           const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
           const dayContainers: DayContainer[] = makeContainers(
             length,
@@ -428,35 +423,24 @@ const EditableRow = ({
           );
           const bucketizeItems: DaySchedule = bucketizeSchedule(
             dayContainers,
-            data.newlyIndexedSchedule
+            scheduleItems
           );
           setSchedule(bucketizeItems);
         } else if (data.updatedData != null) {
+          const updated = toSchedule(data.updatedData);
           setSchedule((prev) =>
             newTable
               ? {
                   ...prev,
                   [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
                   [postEditDate]: tempArr.map((v) =>
-                    v.id === itemID
-                      ? {
-                          ...data.updatedData,
-                          startTime: new Date(data.updatedData.startTime),
-                          endTime: new Date(data.updatedData.endTime),
-                        }
-                      : v
+                    v.id === itemID ? updated : v
                   ),
                 }
               : {
                   ...prev,
                   [postEditDate]: tempArr.map((v) =>
-                    v.id === itemID
-                      ? {
-                          ...data.updatedData,
-                          startTime: new Date(data.updatedData.startTime),
-                          endTime: new Date(data.updatedData.endTime),
-                        }
-                      : v
+                    v.id === itemID ? updated : v
                   ),
                 }
           );
@@ -500,11 +484,9 @@ const EditableRow = ({
             setEditLineId(null);
             setAddingItem(false);
             if (data.newlyIndexedSchedule != null) {
-              for (const i of data.newlyIndexedSchedule) {
-                i.startTime = new Date(i.startTime);
-                i.endTime = new Date(i.endTime);
-                i.id = String(i.id);
-              }
+              const scheduleItems = toScheduleList(
+                data.newlyIndexedSchedule
+              );
               const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
               const dayContainers: DayContainer[] = makeContainers(
                 length,
@@ -512,10 +494,11 @@ const EditableRow = ({
               );
               const bucketizeItems: DaySchedule = bucketizeSchedule(
                 dayContainers,
-                data.newlyIndexedSchedule
+                scheduleItems
               );
               setSchedule(bucketizeItems);
             } else if (data.updatedData != null) {
+              const updated = toSchedule(data.updatedData);
               setSchedule((prev) =>
                 newTable
                   ? {
@@ -524,25 +507,13 @@ const EditableRow = ({
                         (v) => v.id !== itemID
                       ),
                       [postEditDate]: tempArr.map((v) =>
-                        v.id === itemID
-                          ? {
-                              ...data.updatedData,
-                              startTime: new Date(data.updatedData.startTime),
-                              endTime: new Date(data.updatedData.endTime),
-                            }
-                          : v
+                        v.id === itemID ? updated : v
                       ),
                     }
                   : {
                       ...prev,
                       [postEditDate]: tempArr.map((v) =>
-                        v.id === itemID
-                          ? {
-                              ...data.updatedData,
-                              startTime: new Date(data.updatedData.startTime),
-                              endTime: new Date(data.updatedData.endTime),
-                            }
-                          : v
+                        v.id === itemID ? updated : v
                       ),
                     }
               );
@@ -566,11 +537,7 @@ const EditableRow = ({
         const data = (await response.json()) as ScheduleConflictResponse;
         setEditLineId(null);
         setAddingItem(false);
-        for (const i of data.newData) {
-          i.startTime = new Date(i.startTime);
-          i.endTime = new Date(i.endTime);
-          i.id = String(i.id);
-        }
+        const scheduleItems = toScheduleList(data.newData);
         const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
         const dayContainers: DayContainer[] = makeContainers(
           length,
@@ -578,7 +545,7 @@ const EditableRow = ({
         );
         const bucketizeItems: DaySchedule = bucketizeSchedule(
           dayContainers,
-          data.newData
+          scheduleItems
         );
         setSchedule(bucketizeItems);
         const holdIntent = {

@@ -3,7 +3,11 @@ import styles from "../styles/ViewSchedule.module.css";
 import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
-import { bucketizeSchedule, makeContainers } from "../utils/timeHelpers";
+import {
+  bucketizeSchedule,
+  makeContainers,
+  toScheduleList,
+} from "../utils/timeHelpers";
 import CustomTableComponent from "../components/CustomTableComponent";
 import hideArrow from "../assets/arrow-drop.svg";
 const apiURL = import.meta.env.VITE_API_URL;
@@ -63,12 +67,7 @@ const ViewVacationSchedule = () => {
             const data = (await retryReq.json()) as TripScheduleResponse;
             const convertStart = new Date(data.startDate);
             const convertEnd = new Date(data.endDate);
-            for (const i of data.schedule) {
-              // times come from DB as strings, converting to Date obj's
-              i.startTime = new Date(i.startTime);
-              i.endTime = new Date(i.endTime);
-              i.id = String(i.id);
-            }
+            const scheduleItems = toScheduleList(data.schedule);
 
             const UtcStart = convertStart.getTime();
             const UtcEnd = convertEnd.getTime();
@@ -82,7 +81,7 @@ const ViewVacationSchedule = () => {
 
             const bucketizeItems: DaySchedule = bucketizeSchedule(
               dayContainers,
-              data.schedule
+              scheduleItems
             );
 
             const createHideDays: HideDay = {};
@@ -112,12 +111,7 @@ const ViewVacationSchedule = () => {
         const data = (await response.json()) as TripScheduleResponse;
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
-        for (const i of data.schedule) {
-          // times come from DB as strings, converting to Date obj's
-          i.startTime = new Date(i.startTime);
-          i.endTime = new Date(i.endTime);
-          i.id = String(i.id);
-        }
+        const scheduleItems = toScheduleList(data.schedule);
 
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
@@ -131,7 +125,7 @@ const ViewVacationSchedule = () => {
 
         const bucketizeItems: DaySchedule = bucketizeSchedule(
           dayContainers,
-          data.schedule
+          scheduleItems
         );
 
         setDays(dayContainers);

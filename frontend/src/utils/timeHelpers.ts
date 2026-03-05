@@ -1,5 +1,15 @@
 import type { UniqueIdentifier } from "@dnd-kit/core";
 
+export const toSchedule = (item: ScheduleFromApi): Schedule => ({
+  ...item,
+  id: String(item.id),
+  startTime: new Date(item.startTime),
+  endTime: new Date(item.endTime),
+});
+
+export const toScheduleList = (items: ScheduleFromApi[]): Schedule[] =>
+  items.map(toSchedule);
+
 export const addMeridiem = (militaryTime: string) => {
   let hour = Number(militaryTime.split(":")[0]);
   const minute = militaryTime.split(":")[1];

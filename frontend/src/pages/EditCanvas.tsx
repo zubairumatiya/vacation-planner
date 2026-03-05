@@ -135,7 +135,7 @@ const EditCanvas = ({
     null,
   );
   const [answersLoaded, setAnswersLoaded] = useState(false);
-  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const [sidebarRefreshKey] = useState(0);
 
   const handleSidebarAddToSchedule = useCallback(
     async (place: GeminiRecommendedPlace) => {

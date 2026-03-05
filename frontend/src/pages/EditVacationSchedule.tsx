@@ -15,6 +15,8 @@ import {
   customISOTime,
   indexChunk,
   makeContainers,
+  toSchedule,
+  toScheduleList,
 } from "../utils/timeHelpers";
 import NormalRow from "../components/NormalRow";
 import addToSchedule from "../assets/add-to-schedule.svg";
@@ -133,12 +135,7 @@ const EditVacationSchedule = ({
             props.getMapValues(data.gVp, data.location, data.gId);
             const convertStart = new Date(data.startDate);
             const convertEnd = new Date(data.endDate);
-            for (const i of data.schedule) {
-              // times come from DB as strings, converting to Date obj's
-              i.startTime = new Date(i.startTime);
-              i.endTime = new Date(i.endTime);
-              i.id = String(i.id);
-            }
+            const scheduleItems = toScheduleList(data.schedule);
 
             const UtcStart = convertStart.getTime();
             const UtcEnd = convertEnd.getTime();
@@ -155,7 +152,7 @@ const EditVacationSchedule = ({
 
             const bucketizeItems: DaySchedule = bucketizeSchedule(
               dayContainers,
-              data.schedule
+              scheduleItems
             );
 
             setDays(dayContainers);
@@ -182,12 +179,7 @@ const EditVacationSchedule = ({
         props.getMapValues(data.gVp, data.location, data.gId);
         const convertStart = new Date(data.startDate);
         const convertEnd = new Date(data.endDate);
-        for (const i of data.schedule) {
-          // times come from DB as strings, converting to Date obj's
-          i.startTime = new Date(i.startTime);
-          i.endTime = new Date(i.endTime);
-          i.id = String(i.id);
-        }
+        const scheduleItems = toScheduleList(data.schedule);
 
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
@@ -204,7 +196,7 @@ const EditVacationSchedule = ({
 
         const bucketizeItems: DaySchedule = bucketizeSchedule(
           dayContainers,
-          data.schedule
+          scheduleItems
         );
 
         setDays(dayContainers);
@@ -297,7 +289,7 @@ const EditVacationSchedule = ({
         startDateAssembler = customISOTime(dateAdded, startTimePick!);
         endDateAssembler = customISOTime(dateAdded, endTimePick!);
       }
-      const tempItem = {
+      const tempItem: Schedule = {
         startTime: new Date(startDateAssembler),
         id: "temp",
         endTime: new Date(endDateAssembler),
@@ -306,8 +298,9 @@ const EditVacationSchedule = ({
         cost: 0,
         multiDay: false,
         sortIndex: 0,
-        tripId: tripId ?? 0,
-      } as Schedule;
+        tripId: tripId ?? "",
+        lastModified: "",
+      };
       const tempArr = reSort([...schedule[dateAdded].slice(), tempItem]);
       const chunk = indexChunk("temp", tempArr);
       try {
@@ -330,11 +323,7 @@ const EditVacationSchedule = ({
         if (addingReq.ok) {
           const data = (await addingReq.json()) as ScheduleAddResponse;
           if (data.newlyIndexedSchedule != null) {
-            for (const i of data.newlyIndexedSchedule) {
-              i.startTime = new Date(i.startTime);
-              i.endTime = new Date(i.endTime);
-              i.id = String(i.id);
-            }
+            const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
             const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
             const dayContainers: DayContainer[] = makeContainers(
               length,
@@ -342,21 +331,16 @@ const EditVacationSchedule = ({
             );
             const bucketizeItems: DaySchedule = bucketizeSchedule(
               dayContainers,
-              data.newlyIndexedSchedule
+              scheduleItems
             );
             setSchedule(bucketizeItems);
           } else if (data.addedItem != null) {
+            const addedSchedule = toSchedule(data.addedItem);
             setSchedule((prev) => {
               return {
                 ...prev,
                 [dateAdded]: tempArr.map((v) =>
-                  v.id === "temp"
-                    ? {
-                        ...data.addedItem,
-                        startTime: new Date(data.addedItem.startTime),
-                        endTime: new Date(data.addedItem.endTime),
-                      }
-                    : v
+                  v.id === "temp" ? addedSchedule : v
                 ),
               };
             });
@@ -400,11 +384,9 @@ const EditVacationSchedule = ({
             } else if (retryReq.ok) {
               const data = (await retryReq.json()) as ScheduleAddResponse;
               if (data.newlyIndexedSchedule != null) {
-                for (const i of data.newlyIndexedSchedule) {
-                  i.startTime = new Date(i.startTime);
-                  i.endTime = new Date(i.endTime);
-                  i.id = String(i.id);
-                }
+                const scheduleItems = toScheduleList(
+                  data.newlyIndexedSchedule
+                );
                 const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
                 const dayContainers: DayContainer[] = makeContainers(
                   length,
@@ -412,21 +394,16 @@ const EditVacationSchedule = ({
                 );
                 const bucketizeItems: DaySchedule = bucketizeSchedule(
                   dayContainers,
-                  data.newlyIndexedSchedule
+                  scheduleItems
                 );
                 setSchedule(bucketizeItems);
               } else if (data.addedItem != null) {
+                const addedSchedule = toSchedule(data.addedItem);
                 setSchedule((prev) => {
                   return {
                     ...prev,
                     [dateAdded]: tempArr.map((v) =>
-                      v.id === "temp"
-                        ? {
-                            ...data.addedItem,
-                            startTime: new Date(data.addedItem.startTime),
-                            endTime: new Date(data.addedItem.endTime),
-                          }
-                        : v
+                      v.id === "temp" ? addedSchedule : v
                     ),
                   };
                 });
