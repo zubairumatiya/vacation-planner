@@ -1,7 +1,12 @@
 import express, { NextFunction } from "express";
 import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
-import refreshGoogleToken from "../helpers/refreshGoogleToken.js";
+import {
+  chat,
+  getRecommendedPlaces,
+  clearRecommendedPlaces,
+  markPlaceAdded,
+} from "../helpers/geminiService.js";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -12,7 +17,9 @@ import type {
   GeminiChatBody,
   GeminiChatResponse,
   GeminiStatusResponse,
+  GeminiRecommendedPlace,
   GoogleTokenRow,
+  TripIdParam,
 } from "../types/express.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,6 +38,10 @@ interface GoogleTokenResponse {
   scope: string;
   refresh_token?: string;
 }
+
+// ──────────────────────────────────────────────
+// OAuth endpoints (kept wired but no longer used by Gemini chat)
+// ──────────────────────────────────────────────
 
 // POST /gemini/token-exchange
 router.post(
@@ -94,6 +105,10 @@ router.post(
   }
 );
 
+// ──────────────────────────────────────────────
+// Gemini Chat (API key, no OAuth needed)
+// ──────────────────────────────────────────────
+
 // POST /gemini/chat
 router.post(
   "/gemini/chat",
@@ -103,75 +118,22 @@ router.post(
     res: TypedResponse<GeminiChatResponse>,
     next: NextFunction
   ) => {
-    const { prompt } = req.body;
+    const { tripId, prompt } = req.body;
     if (!prompt || !prompt.trim()) {
-      res.status(400).json({ message: "Prompt is required" });
+      res.status(400).json({ text: "", message: "Prompt is required" });
+      return;
+    }
+    if (!tripId) {
+      res.status(400).json({ text: "", message: "tripId is required" });
       return;
     }
 
     try {
-      const result = await db.query<GoogleTokenRow>(
-        "SELECT * FROM google_tokens WHERE user_id = $1",
-        [req.user.id]
-      );
-
-      if (result.rowCount === null || result.rowCount < 1) {
-        res
-          .status(401)
-          .json({ error: "NoGeminiAuth", message: "Google authentication required" });
-        return;
-      }
-
-      let accessToken = result.rows[0].access_token;
-      const expiresAt = new Date(result.rows[0].expires_at);
-
-      // Refresh if token expires within 60 seconds
-      if (expiresAt.getTime() - Date.now() < 60000) {
-        try {
-          accessToken = await refreshGoogleToken(req.user.id);
-        } catch {
-          res
-            .status(401)
-            .json({ error: "NoGeminiAuth", message: "Google authentication expired" });
-          return;
-        }
-      }
-
-      const geminiResponse = await callGemini(accessToken, prompt);
-
-      if (geminiResponse.status === 401) {
-        // Token was rejected, try one refresh
-        try {
-          accessToken = await refreshGoogleToken(req.user.id);
-          const retryResponse = await callGemini(accessToken, prompt);
-          if (!retryResponse.ok) {
-            res.status(502).json({ message: "Gemini API error after token refresh" });
-            return;
-          }
-          const retryData = await retryResponse.json();
-          const text = retryData?.candidates?.[0]?.content?.parts?.[0]?.text;
-          res.status(200).json({ text: text ?? "" });
-          return;
-        } catch {
-          res
-            .status(401)
-            .json({ error: "NoGeminiAuth", message: "Google authentication expired" });
-          return;
-        }
-      }
-
-      if (!geminiResponse.ok) {
-        const errorData = await geminiResponse.json();
-        console.error("[Gemini] API error:", errorData);
-        res.status(502).json({ message: "Gemini API error" });
-        return;
-      }
-
-      const data = await geminiResponse.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      res.status(200).json({ text: text ?? "" });
+      const result = await chat(tripId, prompt);
+      res.status(200).json(result);
       return;
     } catch (err) {
+      console.error("[Gemini] Chat error:", err);
       next(err);
     }
   }
@@ -187,13 +149,7 @@ router.get(
     next: NextFunction
   ) => {
     try {
-      const result = await db.query(
-        "SELECT 1 FROM google_tokens WHERE user_id = $1",
-        [req.user.id]
-      );
-      res
-        .status(200)
-        .json({ connected: result.rowCount !== null && result.rowCount > 0 });
+      res.status(200).json({ connected: !!process.env.GEMINI_API_KEY });
       return;
     } catch (err) {
       next(err);
@@ -201,20 +157,65 @@ router.get(
   }
 );
 
-async function callGemini(accessToken: string, prompt: string) {
-  return fetch(
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-      }),
+// ──────────────────────────────────────────────
+// Recommended Places
+// ──────────────────────────────────────────────
+
+// GET /gemini/recommended-places/:tripId
+router.get(
+  "/gemini/recommended-places/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<{ places: GeminiRecommendedPlace[] }>,
+    next: NextFunction
+  ) => {
+    try {
+      const places = await getRecommendedPlaces(req.params.tripId);
+      res.status(200).json({ places });
+      return;
+    } catch (err) {
+      next(err);
     }
-  );
-}
+  }
+);
+
+// DELETE /gemini/recommended-places/:tripId
+router.delete(
+  "/gemini/recommended-places/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<{ message: string }>,
+    next: NextFunction
+  ) => {
+    try {
+      await clearRecommendedPlaces(req.params.tripId);
+      res.status(200).json({ message: "Cleared" });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PATCH /gemini/recommended-places/:id/added
+router.patch(
+  "/gemini/recommended-places/:id/added",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, { id: string }>,
+    res: TypedResponse<{ message: string }>,
+    next: NextFunction
+  ) => {
+    try {
+      await markPlaceAdded(req.params.id);
+      res.status(200).json({ message: "Marked as added" });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 export default router;

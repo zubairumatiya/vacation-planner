@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
-import { startGoogleOAuth } from "../utils/googleOAuth";
+import type { GeminiItineraryItem } from "../types/gemini";
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -25,13 +25,15 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [role, setRole] = useState("");
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const sharePanelRef = useRef<HTMLDivElement>(null);
-  const [aiDropdownOpen, setAiDropdownOpen] = useState(false);
-  const aiDropdownRef = useRef<HTMLDivElement>(null);
   const [geminiChatOpen, setGeminiChatOpen] = useState(false);
   const geminiChatRef = useRef<HTMLDivElement>(null);
   const [geminiPrompt, setGeminiPrompt] = useState("");
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [geminiConnected, setGeminiConnected] = useState(false);
+  const [geminiResponse, setGeminiResponse] = useState<string | null>(null);
+  const [geminiItinerary, setGeminiItinerary] = useState<GeminiItineraryItem[]>([]);
+  const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
+  const [addingItem, setAddingItem] = useState<number | null>(null);
   const loggingOutRef = auth?.loggingOutRef;
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -64,19 +66,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [sharePanelOpen]);
 
-  useEffect(() => {
-    if (!aiDropdownOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        aiDropdownRef.current &&
-        !aiDropdownRef.current.contains(e.target as Node)
-      ) {
-        setAiDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [aiDropdownOpen]);
 
   useEffect(() => {
     if (!geminiChatOpen) return;
@@ -110,16 +99,13 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     checkGemini();
   }, [token]);
 
-  const handleGeminiClick = () => {
-    if (tripId) {
-      startGoogleOAuth(tripId);
-    }
-  };
-
   const handleGeminiSend = async () => {
-    if (!geminiPrompt.trim() || !token) return;
+    if (!geminiPrompt.trim() || !token || !tripId) return;
 
     setGeminiLoading(true);
+    setGeminiResponse(null);
+    setGeminiItinerary([]);
+    setAddedItems(new Set());
     try {
       const response = await fetch(`${apiURL}/gemini/chat`, {
         method: "POST",
@@ -127,31 +113,58 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ prompt: geminiPrompt }),
+        body: JSON.stringify({ tripId, prompt: geminiPrompt }),
       });
-
-      if (response.status === 401) {
-        const data = await response.json();
-        if (data.error === "NoGeminiAuth") {
-          setGeminiConnected(false);
-          return;
-        }
-      }
 
       if (!response.ok) {
         console.error("[Gemini] API error");
+        setGeminiResponse("Something went wrong. Please try again.");
         return;
       }
 
       const data = await response.json();
       if (data.text) {
-        console.log("[Gemini] Reply:", data.text);
+        setGeminiResponse(data.text);
+      }
+      if (data.itinerary && data.itinerary.length > 0) {
+        setGeminiItinerary(data.itinerary);
       }
     } catch (err) {
       console.error("[Gemini] Request failed:", err);
+      setGeminiResponse("Request failed. Please try again.");
     } finally {
       setGeminiLoading(false);
       setGeminiPrompt("");
+    }
+  };
+
+  const handleAddToSchedule = async (item: GeminiItineraryItem, index: number) => {
+    if (!token || !tripId || addedItems.has(index)) return;
+    setAddingItem(index);
+    try {
+      const response = await fetch(`${apiURL}/schedule/${tripId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          location: item.location,
+          details: item.details,
+          start: item.startTime,
+          end: item.endTime,
+          cost: item.cost,
+          multiDay: item.multiDay,
+          chunk: {},
+        }),
+      });
+      if (response.ok) {
+        setAddedItems((prev) => new Set(prev).add(index));
+      }
+    } catch (err) {
+      console.error("[Gemini] Failed to add item:", err);
+    } finally {
+      setAddingItem(null);
     }
   };
 
@@ -291,97 +304,114 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               <div ref={geminiChatRef} className={styles.aiButtonWrapper}>
                 <button
                   type="button"
-                  className={styles.geminiChatButton}
+                  className={styles.aiButton}
                   onClick={() => setGeminiChatOpen((prev) => !prev)}
                 >
-                  <svg viewBox="0 0 24 24" width="16" height="16">
-                    <path
-                      d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-                      fill="#4285F4"
-                    />
-                  </svg>
-                  Ask Gemini
+                  Ask AI
                 </button>
                 {geminiChatOpen && (
                   <div className={styles.geminiChatDropdown}>
-                    <button
-                      type="button"
-                      className={styles.editQuestionnaireButton}
-                      onClick={() => {
-                        setShowQuestionnaire(true);
-                        setGeminiChatOpen(false);
-                      }}
-                      title="Edit questionnaire"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="16"
-                        height="16"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                    <div className={styles.geminiChatInputRow}>
+                      <button
+                        type="button"
+                        className={styles.editQuestionnaireButton}
+                        onClick={() => {
+                          setShowQuestionnaire(true);
+                          setGeminiChatOpen(false);
+                        }}
+                        title="Edit questionnaire"
                       >
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                      </svg>
-                    </button>
-                    <input
-                      type="text"
-                      placeholder="Ask Gemini something..."
-                      value={geminiPrompt}
-                      onChange={(e) => setGeminiPrompt(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") handleGeminiSend();
-                      }}
-                      className={styles.geminiChatInput}
-                      disabled={geminiLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleGeminiSend}
-                      className={styles.geminiChatSend}
-                      disabled={geminiLoading || !geminiPrompt.trim()}
-                    >
-                      {geminiLoading ? "..." : "Send"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-            {isEditPage && (
-              <div ref={aiDropdownRef} className={styles.aiButtonWrapper}>
-                <button
-                  type="button"
-                  className={styles.aiButton}
-                  onClick={() => setAiDropdownOpen((prev) => !prev)}
-                >
-                  Plan With AI
-                </button>
-                {aiDropdownOpen && (
-                  <div className={styles.aiDropdown}>
-                    <button
-                      type="button"
-                      className={styles.aiDropdownItem}
-                      onClick={handleGeminiClick}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        width="20"
-                        height="20"
-                        className={styles.geminiIcon}
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="16"
+                          height="16"
+                          fill="none"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                      </button>
+                      <input
+                        type="text"
+                        placeholder="Ask AI something..."
+                        value={geminiPrompt}
+                        onChange={(e) => setGeminiPrompt(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleGeminiSend();
+                        }}
+                        className={styles.geminiChatInput}
+                        disabled={geminiLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleGeminiSend}
+                        className={styles.geminiChatSend}
+                        disabled={geminiLoading || !geminiPrompt.trim()}
                       >
-                        <path
-                          d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z"
-                          fill="#4285F4"
-                        />
-                      </svg>
-                      Gemini
-                    </button>
-                    <span className={styles.aiComingSoon}>
-                      More options coming soon
-                    </span>
+                        {geminiLoading ? "..." : "Send"}
+                      </button>
+                    </div>
+                    {geminiLoading && (
+                      <div className={styles.geminiResponseArea}>
+                        <p className={styles.geminiThinking}>Thinking...</p>
+                      </div>
+                    )}
+                    {geminiResponse && (
+                      <div className={styles.geminiResponseArea}>
+                        <p className={styles.geminiResponseText}>{geminiResponse}</p>
+                      </div>
+                    )}
+                    {geminiItinerary.length > 0 && (
+                      <div className={styles.geminiItineraryList}>
+                        {(() => {
+                          const grouped: Record<string, { label: string; items: { item: typeof geminiItinerary[0]; idx: number }[] }> = {};
+                          geminiItinerary.forEach((item, i) => {
+                            const d = new Date(item.startTime);
+                            const dateKey = d.toISOString().slice(0, 10);
+                            if (!grouped[dateKey]) {
+                              const day = d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" });
+                              const dateStr = d.toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", timeZone: "UTC" });
+                              grouped[dateKey] = { label: `${day} ${dateStr}`, items: [] };
+                            }
+                            grouped[dateKey].items.push({ item, idx: i });
+                          });
+                          return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([dateKey, { label, items }]) => (
+                            <div key={dateKey}>
+                              <div className={styles.geminiDateHeader}>{label}</div>
+                              {items.map(({ item, idx }) => (
+                                <div
+                                  key={`${item.location}-${idx}`}
+                                  className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
+                                >
+                                  <div className={styles.geminiPlaceInfo}>
+                                    <span className={styles.geminiPlaceName}>{item.location}</span>
+                                    <span className={styles.geminiPlaceTime}>
+                                      {new Date(item.startTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                                      {" – "}
+                                      {new Date(item.endTime).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                                    </span>
+                                    <span className={styles.geminiPlaceDetails}>{item.details}</span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    className={styles.geminiAddButton}
+                                    onClick={() => handleAddToSchedule(item, idx)}
+                                    disabled={addedItems.has(idx) || addingItem === idx}
+                                    title={addedItems.has(idx) ? "Added" : "Add to schedule"}
+                                  >
+                                    {addedItems.has(idx) ? "✓" : addingItem === idx ? "..." : "+"}
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

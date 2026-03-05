@@ -1,0 +1,143 @@
+.sidebarTab {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  z-index: 90;
+  width: 2rem;
+  height: 56px;
+  background-color: #2a2a2a;
+  border: 1.5px solid #444;
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2fe782;
+  padding: 0;
+}
+
+.sidebarTab:hover {
+  background-color: #333;
+}
+
+.sidebarTabOpen {
+  right: 300px;
+}
+
+.sidebar {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 300px;
+  background: #1e1e20;
+  border-left: 1px solid #444;
+  z-index: 89;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.sidebarTitle {
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.sidebarClose {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0 0.25rem;
+}
+
+.sidebarClose:hover {
+  color: #fff;
+}
+
+.sidebarList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #2a2a2c;
+  border: 1px solid #333;
+  border-radius: 8px;
+  transition: opacity 0.2s;
+}
+
+.sidebarItemAdded {
+  opacity: 0.45;
+}
+
+.sidebarItemInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.sidebarItemName {
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebarItemCategory {
+  color: #2fe782;
+  font-size: 0.7rem;
+  text-transform: capitalize;
+}
+
+.sidebarAddButton {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid white;
+  background: transparent;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  padding: .5rem 1.40rem .75rem;
+}
+
+.sidebarAddButton:hover:not(:disabled) {
+  background: #fff;
+  color: #242424;
+}
+
+.sidebarAddButton:disabled {
+  cursor: default;
+  border-color: #555;
+  color: #555;
+}

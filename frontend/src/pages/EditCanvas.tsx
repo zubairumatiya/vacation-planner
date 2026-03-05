@@ -54,6 +54,8 @@ import type { QuestionnaireAnswers } from "../components/AiTripQuestionnaire";
 import refreshFn from "../utils/refreshFn";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
+import SuggestionsSidebar from "../components/SuggestionsSidebar";
+import type { GeminiRecommendedPlace } from "../types/gemini";
 
 /** Mutate ScheduleFromApi items in-place, converting date strings → Date objects and id → string. Returns the array typed as Schedule[]. */
 function hydrateSchedule(items: ScheduleFromApi[]): Schedule[] {
@@ -133,6 +135,29 @@ const EditCanvas = ({
     null,
   );
   const [answersLoaded, setAnswersLoaded] = useState(false);
+  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+
+  const handleSidebarAddToSchedule = useCallback(
+    async (place: GeminiRecommendedPlace) => {
+      if (!token || !tripId) return;
+      await fetch(`${apiURL}/schedule/${tripId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          location: place.place_name,
+          details: "",
+          start: new Date().toISOString(),
+          end: new Date(Date.now() + 3600000).toISOString(),
+          cost: 0,
+          chunk: {},
+        }),
+      });
+    },
+    [token, tripId]
+  );
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 700px)");
@@ -179,9 +204,9 @@ const EditCanvas = ({
     }
   }, [tripId, token]);
 
+  // Clean up any leftover ?ai=ready param from old OAuth flow
   useEffect(() => {
-    if (searchParams.get("ai") === "ready") {
-      setShowAiQuestionnaire(true);
+    if (searchParams.get("ai")) {
       searchParams.delete("ai");
       setSearchParams(searchParams, { replace: true });
     }
@@ -1785,6 +1810,13 @@ const EditCanvas = ({
           )}
         </BannerContextProvider>
       </DndContext>
+      {tripId && (
+        <SuggestionsSidebar
+          tripId={tripId}
+          refreshKey={sidebarRefreshKey}
+          onAddToSchedule={handleSidebarAddToSchedule}
+        />
+      )}
     </>
   );
 };
