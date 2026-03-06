@@ -27,13 +27,13 @@ const ListItem = ({
   days,
   onMobileAddToSchedule,
 }: ListItemProps) => {
+  const isActive = activeListId === v.id;
+  const useDrag = !isMobile && !isActive;
   const draggable = useDraggable({
-    id: v.id,
+    id: isActive ? `dragging-${v.id}` : v.id,
     data: { type: "list" } as DragData,
-    disabled: isMobile || activeListId === v.id,
+    disabled: isMobile || isActive,
   });
-
-  const useDrag = !isMobile && activeListId !== v.id;
   const style = useDrag
     ? { transform: CSS.Translate.toString(draggable.transform!) }
     : {};
