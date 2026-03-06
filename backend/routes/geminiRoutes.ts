@@ -4,8 +4,12 @@ import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import {
   chat,
   getRecommendedPlaces,
+  getListPlaces,
   clearRecommendedPlaces,
+  clearListPlaces,
   markPlaceAdded,
+  markPlaceAddedByName,
+  markListPlaceAdded,
 } from "../helpers/geminiService.js";
 import dotenv from "dotenv";
 import path from "path";
@@ -18,6 +22,7 @@ import type {
   GeminiChatResponse,
   GeminiStatusResponse,
   GeminiRecommendedPlace,
+  GeminiListPlace,
   GoogleTokenRow,
   TripIdParam,
 } from "../types/express.js";
@@ -118,7 +123,7 @@ router.post(
     res: TypedResponse<GeminiChatResponse>,
     next: NextFunction
   ) => {
-    const { tripId, prompt } = req.body;
+    const { tripId, prompt, mode, categories } = req.body;
     if (!prompt || !prompt.trim()) {
       res.status(400).json({ text: "", message: "Prompt is required" });
       return;
@@ -129,7 +134,7 @@ router.post(
     }
 
     try {
-      const result = await chat(tripId, prompt);
+      const result = await chat(tripId, prompt, mode ?? "list", categories);
       res.status(200).json(result);
       return;
     } catch (err) {
@@ -210,6 +215,91 @@ router.patch(
   ) => {
     try {
       await markPlaceAdded(req.params.id);
+      res.status(200).json({ message: "Marked as added" });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PATCH /gemini/mark-added-by-name/:tripId
+router.patch(
+  "/gemini/mark-added-by-name/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<{ placeName: string }, unknown, TripIdParam>,
+    res: TypedResponse<{ message: string }>,
+    next: NextFunction
+  ) => {
+    try {
+      const { placeName } = req.body;
+      if (!placeName) {
+        res.status(400).json({ message: "placeName is required" });
+        return;
+      }
+      await markPlaceAddedByName(req.params.tripId, placeName);
+      res.status(200).json({ message: "Marked as added" });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// ──────────────────────────────────────────────
+// List Places
+// ──────────────────────────────────────────────
+
+// GET /gemini/list-places/:tripId
+router.get(
+  "/gemini/list-places/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<{ places: GeminiListPlace[] }>,
+    next: NextFunction
+  ) => {
+    try {
+      const places = await getListPlaces(req.params.tripId);
+      res.status(200).json({ places });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// DELETE /gemini/list-places/:tripId
+router.delete(
+  "/gemini/list-places/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<{ message: string }>,
+    next: NextFunction
+  ) => {
+    try {
+      await clearListPlaces(req.params.tripId);
+      res.status(200).json({ message: "Cleared" });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PATCH /gemini/list-places/:id/added
+router.patch(
+  "/gemini/list-places/:id/added",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, { id: string }>,
+    res: TypedResponse<{ message: string }>,
+    next: NextFunction
+  ) => {
+    try {
+      await markListPlaceAdded(req.params.id);
       res.status(200).json({ message: "Marked as added" });
       return;
     } catch (err) {

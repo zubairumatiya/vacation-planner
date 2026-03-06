@@ -22,6 +22,16 @@ const INTEREST_OPTIONS = [
   "History",
   "Adventure",
   "Relaxation",
+  "Wellness/Spa",
+  "Art",
+  "Music",
+  "Sports",
+  "Photography",
+  "Architecture",
+  "Wildlife",
+  "Beach",
+  "Markets/Street Food",
+  "Wine/Brewery",
 ];
 
 type AiTripQuestionnaireProps = {
@@ -142,18 +152,25 @@ const AiTripQuestionnaire = ({
             <label style={labelStyle}>
               4. What&apos;s your preferred pace?
             </label>
-            <div style={radioGroupStyle}>
-              {["Relaxed", "Moderate", "Packed"].map((option) => (
-                <label key={option} style={radioLabelStyle}>
-                  <input
-                    type="radio"
-                    name="pace"
-                    value={option}
-                    checked={answers.pace === option}
-                    onChange={() => updateField("pace", option)}
-                    style={radioInputStyle}
-                  />
-                  {option}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {([
+                ["Packed", "Something every hour from your start time to evening"],
+                ["Moderate", "Fewer activities with breathing room between them"],
+                ["Relaxed", "Just a few highlights per day"],
+              ] as const).map(([option, desc]) => (
+                <label key={option} style={{ ...radioLabelStyle, flexDirection: "column", alignItems: "flex-start", gap: "0.1rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <input
+                      type="radio"
+                      name="pace"
+                      value={option}
+                      checked={answers.pace === option}
+                      onChange={() => updateField("pace", option)}
+                      style={radioInputStyle}
+                    />
+                    {option}
+                  </div>
+                  <span style={{ fontSize: "0.75rem", color: "#888", marginLeft: "1.35rem" }}>{desc}</span>
                 </label>
               ))}
             </div>

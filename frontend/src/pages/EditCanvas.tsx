@@ -83,10 +83,18 @@ const EditCanvas = ({
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
 }) => {
   const { tripId } = useParams();
-  const { role, showQuestionnaire, setShowQuestionnaire } = useOutletContext<{
+  const {
+    role,
+    showQuestionnaire,
+    setShowQuestionnaire,
+    sidebarRefreshKey: parentRefreshKey,
+    onQuestionnaireSubmitted,
+  } = useOutletContext<{
     role: string;
     showQuestionnaire: boolean;
     setShowQuestionnaire: (v: boolean) => void;
+    sidebarRefreshKey: number;
+    onQuestionnaireSubmitted: () => void;
   }>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loading2, setLoading2] = useState<boolean>(true);
@@ -135,12 +143,10 @@ const EditCanvas = ({
     null,
   );
   const [answersLoaded, setAnswersLoaded] = useState(false);
-  const [sidebarRefreshKey] = useState(0);
-
   const handleSidebarAddToSchedule = useCallback(
     async (place: GeminiRecommendedPlace) => {
       if (!token || !tripId) return;
-      await fetch(`${apiURL}/schedule/${tripId}`, {
+      const res = await fetch(`${apiURL}/schedule/${tripId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -148,13 +154,53 @@ const EditCanvas = ({
         },
         body: JSON.stringify({
           location: place.place_name,
-          details: "",
-          start: new Date().toISOString(),
-          end: new Date(Date.now() + 3600000).toISOString(),
-          cost: 0,
+          details: place.details ?? "",
+          start: place.start_time ?? new Date().toISOString(),
+          end: place.end_time ?? new Date(Date.now() + 3600000).toISOString(),
+          cost: place.cost ?? 0,
           chunk: {},
         }),
       });
+      if (res.ok) {
+        const data = (await res.json()) as ScheduleAddResponse;
+        if (data.newlyIndexedSchedule != null) {
+          const hydrated = hydrateSchedule(data.newlyIndexedSchedule);
+          const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+          const dayContainers: DayContainer[] = makeContainers(length, new Date(utcStart));
+          setSchedule(bucketizeSchedule(dayContainers, hydrated));
+        } else if (data.addedItem != null) {
+          const addedItem = hydrateScheduleItem(data.addedItem);
+          const container = addedItem.startTime.toISOString().split("T")[0];
+          setSchedule((prev) => ({
+            ...prev,
+            [container]: [...(prev[container] ?? []), addedItem].sort(
+              (a, b) => a.startTime.getTime() - b.startTime.getTime(),
+            ),
+          }));
+        }
+      }
+    },
+    [token, tripId, utcStart, utcEnd]
+  );
+
+  const handleSidebarAddToList = useCallback(
+    async (placeName: string, details: string | null) => {
+      if (!token || !tripId) return;
+      const res = await fetch(`${apiURL}/list/${tripId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          value: placeName,
+          details: details ?? null,
+        }),
+      });
+      if (res.ok) {
+        const apiData = (await res.json()) as ListAddResponse;
+        setWishList((prev) => [...prev, apiData.data]);
+      }
     },
     [token, tripId]
   );
@@ -242,6 +288,7 @@ const EditCanvas = ({
           startTimePreference: answers.startTimePreference,
         }),
       });
+      onQuestionnaireSubmitted();
     } catch (err) {
       console.error("Failed to save questionnaire:", err);
     }
@@ -1813,8 +1860,9 @@ const EditCanvas = ({
       {tripId && (
         <SuggestionsSidebar
           tripId={tripId}
-          refreshKey={sidebarRefreshKey}
+          refreshKey={parentRefreshKey}
           onAddToSchedule={handleSidebarAddToSchedule}
+          onAddToList={handleSidebarAddToList}
         />
       )}
     </>

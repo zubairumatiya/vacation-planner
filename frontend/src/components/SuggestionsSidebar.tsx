@@ -1,36 +1,74 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
-import type { GeminiRecommendedPlace } from "../types/gemini";
+import type { GeminiRecommendedPlace, GeminiListPlace } from "../types/gemini";
 import styles from "../styles/SuggestionsSidebar.module.css";
 
 const apiURL = import.meta.env.VITE_API_URL;
+
+const GREEN = "#2fe782";
+const INDIGO = "#6366f1";
 
 type SuggestionsSidebarProps = {
   tripId: string;
   refreshKey: number;
   onAddToSchedule: (place: GeminiRecommendedPlace) => Promise<void>;
+  onAddToList: (placeName: string, details: string | null) => Promise<void>;
+};
+
+type UnifiedPlace = {
+  id: string;
+  place_name: string;
+  place_category: string | null;
+  details: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  cost?: number;
+  added_to_schedule: boolean;
+  recommended_at: string;
+  source: "schedule" | "list";
+};
+
+const formatDateBucket = (dateStr: string): string => {
+  const d = new Date(dateStr);
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return `${mm}/${dd} - ${dayNames[d.getDay()]}`;
 };
 
 const SuggestionsSidebar = ({
   tripId,
   refreshKey,
   onAddToSchedule,
+  onAddToList,
 }: SuggestionsSidebarProps) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const [open, setOpen] = useState(false);
-  const [places, setPlaces] = useState<GeminiRecommendedPlace[]>([]);
+  const [schedulePlaces, setSchedulePlaces] = useState<GeminiRecommendedPlace[]>([]);
+  const [listPlaces, setListPlaces] = useState<GeminiListPlace[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [choiceId, setChoiceId] = useState<string | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   const fetchPlaces = useCallback(async () => {
     if (!token) return;
     try {
-      const res = await fetch(`${apiURL}/gemini/recommended-places/${tripId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPlaces(data.places ?? []);
+      const [schedRes, listRes] = await Promise.all([
+        fetch(`${apiURL}/gemini/recommended-places/${tripId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${apiURL}/gemini/list-places/${tripId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      if (schedRes.ok) {
+        const data = await schedRes.json();
+        setSchedulePlaces(data.places ?? []);
+      }
+      if (listRes.ok) {
+        const data = await listRes.json();
+        setListPlaces(data.places ?? []);
       }
     } catch {
       // silent
@@ -41,27 +79,302 @@ const SuggestionsSidebar = ({
     fetchPlaces();
   }, [fetchPlaces, refreshKey]);
 
-  const handleAdd = async (place: GeminiRecommendedPlace) => {
+  // Group schedule places by date bucket, list places separate
+  const scheduleBuckets: Record<string, UnifiedPlace[]> = {};
+  const listItems: UnifiedPlace[] = [];
+
+  for (const p of schedulePlaces) {
+    const unified: UnifiedPlace = { ...p, source: "schedule" as const };
+    if (p.start_time) {
+      const bucket = formatDateBucket(p.start_time);
+      if (!scheduleBuckets[bucket]) scheduleBuckets[bucket] = [];
+      scheduleBuckets[bucket].push(unified);
+    } else {
+      // No date — put in "Unscheduled" bucket
+      if (!scheduleBuckets["Unscheduled"]) scheduleBuckets["Unscheduled"] = [];
+      scheduleBuckets["Unscheduled"].push(unified);
+    }
+  }
+
+  // Sort items within each bucket by start_time
+  for (const key of Object.keys(scheduleBuckets)) {
+    scheduleBuckets[key].sort((a, b) => {
+      if (!a.start_time || !b.start_time) return 0;
+      return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    });
+  }
+
+  for (const p of listPlaces) {
+    listItems.push({ ...p, source: "list" as const });
+  }
+
+  // Sort bucket keys chronologically
+  const sortedBucketKeys = Object.keys(scheduleBuckets).sort((a, b) => {
+    if (a === "Unscheduled") return 1;
+    if (b === "Unscheduled") return -1;
+    return a.localeCompare(b);
+  });
+
+  const handleAddAsSchedule = async (place: UnifiedPlace) => {
     setAddingId(place.id);
+    setChoiceId(null);
     try {
-      await onAddToSchedule(place);
-      // Mark as added locally
-      setPlaces((prev) =>
-        prev.map((p) =>
-          p.id === place.id ? { ...p, added_to_schedule: true } : p
-        )
-      );
-      // Also mark on backend
-      await fetch(`${apiURL}/gemini/recommended-places/${place.id}/added`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const schedPlace = schedulePlaces.find((p) => p.id === place.id);
+      if (schedPlace) {
+        await onAddToSchedule(schedPlace);
+        setSchedulePlaces((prev) =>
+          prev.map((p) =>
+            p.id === place.id ? { ...p, added_to_schedule: true } : p,
+          ),
+        );
+        await fetch(`${apiURL}/gemini/recommended-places/${place.id}/added`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
     } finally {
       setAddingId(null);
     }
   };
 
-  if (places.length === 0) return null;
+  const handleAddAsList = async (place: UnifiedPlace) => {
+    if (!token || !tripId) return;
+    setAddingId(place.id);
+    setChoiceId(null);
+    try {
+      await onAddToList(place.place_name, place.details ?? null);
+
+      if (place.source === "list") {
+        setListPlaces((prev) =>
+          prev.map((p) =>
+            p.id === place.id ? { ...p, added_to_schedule: true } : p,
+          ),
+        );
+        await fetch(`${apiURL}/gemini/list-places/${place.id}/added`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } else {
+        setSchedulePlaces((prev) =>
+          prev.map((p) =>
+            p.id === place.id ? { ...p, added_to_schedule: true } : p,
+          ),
+        );
+        await fetch(`${apiURL}/gemini/recommended-places/${place.id}/added`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } finally {
+      setAddingId(null);
+    }
+  };
+
+  const handleAddClick = (place: UnifiedPlace) => {
+    if (place.source === "list") {
+      handleAddAsList(place);
+    } else {
+      setChoiceId(choiceId === place.id ? null : place.id);
+    }
+  };
+
+  const handleClear = async () => {
+    if (!token || !tripId) return;
+    setClearing(true);
+    try {
+      await Promise.all([
+        fetch(`${apiURL}/gemini/recommended-places/${tripId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${apiURL}/gemini/list-places/${tripId}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      setSchedulePlaces([]);
+      setListPlaces([]);
+    } finally {
+      setClearing(false);
+    }
+  };
+
+  const totalCount = schedulePlaces.length + listPlaces.length;
+  if (totalCount === 0) return null;
+
+  const accentColor = (source: "schedule" | "list") =>
+    source === "schedule" ? GREEN : INDIGO;
+
+  const renderPlace = (place: UnifiedPlace) => (
+    <div
+      key={`${place.source}-${place.id}`}
+      className={`${styles.sidebarItem} ${place.added_to_schedule ? styles.sidebarItemAdded : ""}`}
+      style={{
+        borderLeft: `3px solid ${accentColor(place.source)}`,
+      }}
+    >
+      <div className={styles.sidebarItemInfo}>
+        <span className={styles.sidebarItemName}>
+          {place.place_name}
+        </span>
+        {place.source === "schedule" &&
+          place.start_time &&
+          place.end_time && (
+            <span style={{ fontSize: "0.7rem", color: GREEN }}>
+              {new Date(place.start_time).toLocaleTimeString(
+                "en-US",
+                { hour: "numeric", minute: "2-digit" },
+              )}
+              {" – "}
+              {new Date(place.end_time).toLocaleTimeString("en-US", {
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </span>
+          )}
+        {place.place_category && (
+          <span
+            style={{
+              fontSize: "0.7rem",
+              color: accentColor(place.source),
+              textTransform: "capitalize",
+            }}
+          >
+            {place.place_category}
+          </span>
+        )}
+        {place.details && (
+          <span
+            style={{
+              fontSize: "0.7rem",
+              color: "#999",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+            }}
+          >
+            {place.details}
+          </span>
+        )}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "0.2rem",
+          position: "relative",
+        }}
+      >
+        <button
+          type="button"
+          className={styles.sidebarAddButton}
+          onClick={() => handleAddClick(place)}
+          disabled={
+            place.added_to_schedule || addingId === place.id
+          }
+          title={
+            place.added_to_schedule
+              ? "Already added"
+              : place.source === "list"
+                ? "Add to list"
+                : "Add"
+          }
+        >
+          {place.added_to_schedule
+            ? "✓"
+            : addingId === place.id
+              ? "..."
+              : "+"}
+        </button>
+        {choiceId === place.id && (
+          <div
+            style={{
+              position: "absolute",
+              top: "100%",
+              right: 0,
+              marginTop: "0.2rem",
+              background: "#2a2a2c",
+              border: "1px solid #555",
+              borderRadius: "6px",
+              zIndex: 10,
+              overflow: "hidden",
+              minWidth: "110px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => handleAddAsSchedule(place)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                width: "100%",
+                padding: "0.4rem 0.6rem",
+                background: "transparent",
+                border: "none",
+                color: GREEN,
+                fontSize: "0.75rem",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: GREEN,
+                }}
+              />
+              Schedule
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAddAsList(place)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                width: "100%",
+                padding: "0.4rem 0.6rem",
+                background: "transparent",
+                border: "none",
+                color: INDIGO,
+                fontSize: "0.75rem",
+                cursor: "pointer",
+                textAlign: "left",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#333")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              <span
+                style={{
+                  width: 6,
+                  height: 6,
+                  borderRadius: "50%",
+                  background: INDIGO,
+                }}
+              />
+              List
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -69,7 +382,11 @@ const SuggestionsSidebar = ({
         type="button"
         className={`${styles.sidebarTab} ${open ? styles.sidebarTabOpen : ""}`}
         onClick={() => setOpen((prev) => !prev)}
-        aria-label={open ? "Close suggestions sidebar" : "Open suggestions sidebar"}
+        aria-label={
+          open
+            ? "Close recommendations sidebar"
+            : "Open recommendations sidebar"
+        }
       >
         {!open ? (
           <svg
@@ -97,35 +414,124 @@ const SuggestionsSidebar = ({
       {open && (
         <div className={styles.sidebar}>
           <div className={styles.sidebarHeader}>
-            <span className={styles.sidebarTitle}>Past Suggestions</span>
+            <span className={styles.sidebarTitle}>Recommendations</span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.6rem",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.15rem",
+                  fontSize: "0.65rem",
+                }}
+              >
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: GREEN,
+                      display: "inline-block",
+                    }}
+                  />
+                  <span style={{ color: "#aaa" }}>Schedule</span>
+                </span>
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 7,
+                      height: 7,
+                      borderRadius: "50%",
+                      background: INDIGO,
+                      display: "inline-block",
+                    }}
+                  />
+                  <span style={{ color: "#aaa" }}>List</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleClear}
+                disabled={clearing}
+                style={{
+                  background: "transparent",
+                  border: "1px solid #555",
+                  borderRadius: "4px",
+                  color: "#888",
+                  fontSize: "0.65rem",
+                  padding: "0.2rem 0.4rem",
+                  cursor: "pointer",
+                  transition: "color 0.15s, border-color 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#ef4444";
+                  e.currentTarget.style.borderColor = "#ef4444";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#888";
+                  e.currentTarget.style.borderColor = "#555";
+                }}
+                title="Clear all recommendations"
+              >
+                {clearing ? "..." : "Clear"}
+              </button>
+            </div>
           </div>
           <div className={styles.sidebarList}>
-            {places.map((place) => (
-              <div
-                key={place.id}
-                className={`${styles.sidebarItem} ${place.added_to_schedule ? styles.sidebarItemAdded : ""}`}
-              >
-                <div className={styles.sidebarItemInfo}>
-                  <span className={styles.sidebarItemName}>
-                    {place.place_name}
-                  </span>
-                  {place.place_category && (
-                    <span className={styles.sidebarItemCategory}>
-                      {place.place_category}
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  className={styles.sidebarAddButton}
-                  onClick={() => handleAdd(place)}
-                  disabled={place.added_to_schedule || addingId === place.id}
-                  title={place.added_to_schedule ? "Already added" : "Add to schedule"}
+            {/* Schedule items grouped by date */}
+            {sortedBucketKeys.map((bucket) => (
+              <div key={bucket}>
+                <div
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 600,
+                    color: GREEN,
+                    padding: "0.4rem 0.25rem 0.2rem",
+                    borderBottom: "1px solid #333",
+                    marginBottom: "0.25rem",
+                  }}
                 >
-                  {place.added_to_schedule ? "✓" : addingId === place.id ? "..." : "+"}
-                </button>
+                  {bucket}
+                </div>
+                {scheduleBuckets[bucket].map(renderPlace)}
               </div>
             ))}
+            {/* List items */}
+            {listItems.length > 0 && (
+              <div>
+                <div
+                  style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 600,
+                    color: INDIGO,
+                    padding: "0.4rem 0.25rem 0.2rem",
+                    borderBottom: "1px solid #333",
+                    marginBottom: "0.25rem",
+                  }}
+                >
+                  List
+                </div>
+                {listItems.map(renderPlace)}
+              </div>
+            )}
           </div>
         </div>
       )}

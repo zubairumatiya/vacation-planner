@@ -555,11 +555,14 @@ export interface TokenExchangeBody {
 export interface GeminiChatBody {
   tripId: string;
   prompt: string;
+  mode?: "schedule" | "list";
+  categories?: string[];
 }
 
 export interface GeminiChatResponse {
   text: string;
   itinerary?: GeminiItineraryItem[];
+  question?: string;
   error?: string;
   message?: string;
 }
@@ -579,8 +582,23 @@ export interface GeminiRecommendedPlace {
   trip_id: string;
   place_name: string;
   place_category: string | null;
+  start_time: Date | null;
+  end_time: Date | null;
+  cost: number;
+  details: string | null;
   recommended_at: Date;
   added_to_schedule: boolean;
+}
+
+export interface GeminiListPlace {
+  id: string;
+  trip_id: string;
+  place_name: string;
+  place_category: string | null;
+  details: string | null;
+  cost: number;
+  added_to_schedule: boolean;
+  recommended_at: Date;
 }
 
 export interface GeminiStatusResponse {

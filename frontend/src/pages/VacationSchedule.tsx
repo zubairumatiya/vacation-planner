@@ -11,6 +11,10 @@ type VacationProps = {
   costTotal: number;
 };
 
+type AiMode = "list" | "schedule";
+
+const LIST_CATEGORIES = ["Accommodation", "Food", "Activities"];
+
 const apiURL = import.meta.env.VITE_API_URL;
 const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const { tripId } = useParams();
@@ -31,6 +35,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [geminiLoading, setGeminiLoading] = useState(false);
   const [geminiConnected, setGeminiConnected] = useState(false);
   const [geminiResponse, setGeminiResponse] = useState<string | null>(null);
+  const [geminiQuestion, setGeminiQuestion] = useState<string | null>(null);
   const [geminiItinerary, setGeminiItinerary] = useState<GeminiItineraryItem[]>(
     [],
   );
@@ -41,6 +46,15 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditPage = location.pathname.endsWith("/edit");
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [aiMode, setAiMode] = useState<AiMode>("list");
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([
+    ...LIST_CATEGORIES,
+  ]);
+  const [hasQuestionnaire, setHasQuestionnaire] = useState<boolean | null>(
+    null,
+  );
+  const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -100,11 +114,56 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     checkGemini();
   }, [token]);
 
+  // Check if questionnaire exists
+  useEffect(() => {
+    if (!token || !tripId) return;
+    const checkQuestionnaire = async () => {
+      try {
+        const res = await fetch(`${apiURL}/questionnaire/${tripId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setHasQuestionnaire(!!data.questionnaire);
+        }
+      } catch {
+        // silent
+      }
+    };
+    checkQuestionnaire();
+  }, [token, tripId]);
+
+  const handleAiButtonClick = () => {
+    if (hasQuestionnaire === false) {
+      setShowQuestionnaire(true);
+    } else {
+      setGeminiChatOpen((prev) => !prev);
+    }
+  };
+
+  // After questionnaire is submitted, mark it as filled and open chat
+  const handleQuestionnaireSubmitted = () => {
+    setHasQuestionnaire(true);
+    setShowQuestionnaire(false);
+    setGeminiChatOpen(true);
+  };
+
+  const toggleCategory = (cat: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
+    );
+  };
+
   const handleGeminiSend = async () => {
     if (!geminiPrompt.trim() || !token || !tripId) return;
+    if (aiMode === "list" && selectedCategories.length === 0) return;
 
     setGeminiLoading(true);
     setGeminiResponse(null);
+    setGeminiQuestion(null);
     setGeminiItinerary([]);
     setAddedItems(new Set());
     try {
@@ -114,7 +173,12 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ tripId, prompt: geminiPrompt }),
+        body: JSON.stringify({
+          tripId,
+          prompt: geminiPrompt,
+          mode: aiMode,
+          categories: aiMode === "list" ? selectedCategories : undefined,
+        }),
       });
 
       if (!response.ok) {
@@ -127,8 +191,19 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       if (data.text) {
         setGeminiResponse(data.text);
       }
+      if (data.question) {
+        setGeminiQuestion(data.question);
+      }
       if (data.itinerary && data.itinerary.length > 0) {
         setGeminiItinerary(data.itinerary);
+      }
+      // Refresh sidebar if we got recommendations and no question was asked
+      if (
+        data.itinerary &&
+        data.itinerary.length > 0 &&
+        !data.question
+      ) {
+        setSidebarRefreshKey((prev) => prev + 1);
       }
     } catch (err) {
       console.error("[Gemini] Request failed:", err);
@@ -136,40 +211,77 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     } finally {
       setGeminiLoading(false);
       setGeminiPrompt("");
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
     }
   };
 
   const handleAddToSchedule = async (
     item: GeminiItineraryItem,
     index: number,
+    mode: AiMode = aiMode,
   ) => {
     if (!token || !tripId || addedItems.has(index)) return;
     setAddingItem(index);
     try {
-      const response = await fetch(`${apiURL}/schedule/${tripId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          location: item.location,
-          details: item.details,
-          start: item.startTime,
-          end: item.endTime,
-          cost: item.cost,
-          multiDay: item.multiDay,
-          chunk: {},
-        }),
-      });
+      let response: Response;
+      if (mode === "list") {
+        response = await fetch(`${apiURL}/list/${tripId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            value: item.location,
+            details: item.details ?? null,
+          }),
+        });
+      } else {
+        response = await fetch(`${apiURL}/schedule/${tripId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            location: item.location,
+            details: item.details,
+            start: item.startTime,
+            end: item.endTime,
+            cost: item.cost,
+            multiDay: item.multiDay,
+            chunk: {},
+          }),
+        });
+      }
       if (response.ok) {
         setAddedItems((prev) => new Set(prev).add(index));
+        // Mark the corresponding recommendation as added
+        fetch(`${apiURL}/gemini/mark-added-by-name/${tripId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ placeName: item.location }),
+        }).then(() => {
+          setSidebarRefreshKey((prev) => prev + 1);
+        }).catch(() => {});
       }
     } catch (err) {
       console.error("[Gemini] Failed to add item:", err);
     } finally {
       setAddingItem(null);
     }
+  };
+
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setGeminiPrompt(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
   };
 
   useEffect(() => {
@@ -297,12 +409,124 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                 <button
                   type="button"
                   className={styles.aiButton}
-                  onClick={() => setGeminiChatOpen((prev) => !prev)}
+                  onClick={handleAiButtonClick}
                 >
                   Ask AI
                 </button>
                 {geminiChatOpen && (
                   <div className={styles.geminiChatDropdown}>
+                    {/* Mode toggle */}
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "0.5rem",
+                        padding: "0.5rem 0.6rem 0",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setAiMode("list")}
+                        style={{
+                          flex: 1,
+                          padding: "0.35rem 0.5rem",
+                          borderRadius: "6px",
+                          border:
+                            aiMode === "list"
+                              ? "1px solid #2fe782"
+                              : "1px solid #555",
+                          background:
+                            aiMode === "list" ? "rgba(47,231,130,0.15)" : "#1e1e20",
+                          color: aiMode === "list" ? "#2fe782" : "#999",
+                          cursor: "pointer",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          textAlign: "left",
+                        }}
+                      >
+                        <div>List</div>
+                        <div
+                          style={{
+                            fontSize: "0.65rem",
+                            fontWeight: 400,
+                            marginTop: "0.15rem",
+                            color: aiMode === "list" ? "#2fe782" : "#777",
+                          }}
+                        >
+                          Choose from a list — schedule later
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAiMode("schedule")}
+                        style={{
+                          flex: 1,
+                          padding: "0.35rem 0.5rem",
+                          borderRadius: "6px",
+                          border:
+                            aiMode === "schedule"
+                              ? "1px solid #2fe782"
+                              : "1px solid #555",
+                          background:
+                            aiMode === "schedule"
+                              ? "rgba(47,231,130,0.15)"
+                              : "#1e1e20",
+                          color: aiMode === "schedule" ? "#2fe782" : "#999",
+                          cursor: "pointer",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          textAlign: "left",
+                        }}
+                      >
+                        <div>Schedule</div>
+                        <div
+                          style={{
+                            fontSize: "0.65rem",
+                            fontWeight: 400,
+                            marginTop: "0.15rem",
+                            color: aiMode === "schedule" ? "#2fe782" : "#777",
+                          }}
+                        >
+                          Get a ready-to-add itinerary
+                        </div>
+                      </button>
+                    </div>
+
+                    {/* Category checkboxes for list mode */}
+                    {aiMode === "list" && (
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.5rem",
+                          padding: "0.4rem 0.6rem 0",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        {LIST_CATEGORIES.map((cat) => (
+                          <label
+                            key={cat}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "0.25rem",
+                              fontSize: "0.75rem",
+                              color: selectedCategories.includes(cat)
+                                ? "#2fe782"
+                                : "#999",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.includes(cat)}
+                              onChange={() => toggleCategory(cat)}
+                              style={{ accentColor: "#2fe782" }}
+                            />
+                            {cat}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+
                     <div className={styles.geminiChatInputRow}>
                       <button
                         type="button"
@@ -327,22 +551,35 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                         </svg>
                       </button>
-                      <input
-                        type="text"
+                      <textarea
+                        ref={textareaRef}
                         placeholder="Ask AI something..."
                         value={geminiPrompt}
-                        onChange={(e) => setGeminiPrompt(e.target.value)}
+                        onChange={handleTextareaInput}
                         onKeyDown={(e) => {
-                          if (e.key === "Enter") handleGeminiSend();
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleGeminiSend();
+                          }
                         }}
                         className={styles.geminiChatInput}
                         disabled={geminiLoading}
+                        rows={1}
+                        style={{
+                          resize: "none",
+                          overflow: "auto",
+                          maxHeight: "120px",
+                        }}
                       />
                       <button
                         type="button"
                         onClick={handleGeminiSend}
                         className={styles.geminiChatSend}
-                        disabled={geminiLoading || !geminiPrompt.trim()}
+                        disabled={
+                          geminiLoading ||
+                          !geminiPrompt.trim() ||
+                          (aiMode === "list" && selectedCategories.length === 0)
+                        }
                       >
                         {geminiLoading ? "..." : "Send"}
                       </button>
@@ -350,6 +587,39 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     {geminiLoading && (
                       <div className={styles.geminiResponseArea}>
                         <p className={styles.geminiThinking}>Thinking...</p>
+                      </div>
+                    )}
+                    {/* Question from Gemini */}
+                    {geminiQuestion && (
+                      <div
+                        style={{
+                          margin: "0.5rem 0.6rem",
+                          padding: "0.6rem 0.75rem",
+                          background: "rgba(66,133,244,0.12)",
+                          border: "1px solid rgba(66,133,244,0.3)",
+                          borderRadius: "8px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: "0.7rem",
+                            color: "#4285F4",
+                            fontWeight: 600,
+                            marginBottom: "0.3rem",
+                          }}
+                        >
+                          AI has a question:
+                        </div>
+                        <p
+                          style={{
+                            fontSize: "0.85rem",
+                            color: "white",
+                            margin: 0,
+                            whiteSpace: "pre-wrap",
+                          }}
+                        >
+                          {geminiQuestion}
+                        </p>
                       </div>
                     )}
                     {geminiResponse && (
@@ -361,101 +631,182 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     )}
                     {geminiItinerary.length > 0 && (
                       <div className={styles.geminiItineraryList}>
-                        {(() => {
-                          const grouped: Record<
-                            string,
-                            {
-                              label: string;
-                              items: {
-                                item: (typeof geminiItinerary)[0];
-                                idx: number;
-                              }[];
-                            }
-                          > = {};
-                          geminiItinerary.forEach((item, i) => {
-                            const d = new Date(item.startTime);
-                            const dateKey = d.toISOString().slice(0, 10);
-                            if (!grouped[dateKey]) {
-                              const day = d.toLocaleDateString("en-US", {
-                                weekday: "short",
-                                timeZone: "UTC",
+                        {aiMode === "schedule"
+                          ? (() => {
+                              const grouped: Record<
+                                string,
+                                {
+                                  label: string;
+                                  items: {
+                                    item: (typeof geminiItinerary)[0];
+                                    idx: number;
+                                  }[];
+                                }
+                              > = {};
+                              geminiItinerary.forEach((item, i) => {
+                                const d = new Date(item.startTime);
+                                const dateKey = d.toISOString().slice(0, 10);
+                                if (!grouped[dateKey]) {
+                                  const day = d.toLocaleDateString("en-US", {
+                                    weekday: "short",
+                                    timeZone: "UTC",
+                                  });
+                                  const dateStr = d.toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "2-digit",
+                                      day: "2-digit",
+                                      timeZone: "UTC",
+                                    },
+                                  );
+                                  grouped[dateKey] = {
+                                    label: `${day} ${dateStr}`,
+                                    items: [],
+                                  };
+                                }
+                                grouped[dateKey].items.push({ item, idx: i });
                               });
-                              const dateStr = d.toLocaleDateString("en-US", {
-                                month: "2-digit",
-                                day: "2-digit",
-                                timeZone: "UTC",
-                              });
-                              grouped[dateKey] = {
-                                label: `${day} ${dateStr}`,
-                                items: [],
-                              };
-                            }
-                            grouped[dateKey].items.push({ item, idx: i });
-                          });
-                          return Object.entries(grouped)
-                            .sort(([a], [b]) => a.localeCompare(b))
-                            .map(([dateKey, { label, items }]) => (
-                              <div key={dateKey}>
-                                <div className={styles.geminiDateHeader}>
-                                  {label}
-                                </div>
-                                {items.map(({ item, idx }) => (
-                                  <div
-                                    key={`${item.location}-${idx}`}
-                                    className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
-                                  >
-                                    <div className={styles.geminiPlaceInfo}>
-                                      <span className={styles.geminiPlaceName}>
-                                        {item.location}
-                                      </span>
-                                      <span className={styles.geminiPlaceTime}>
-                                        {new Date(
-                                          item.startTime,
-                                        ).toLocaleTimeString("en-US", {
-                                          hour: "numeric",
-                                          minute: "2-digit",
-                                        })}
-                                        {" – "}
-                                        {new Date(
-                                          item.endTime,
-                                        ).toLocaleTimeString("en-US", {
-                                          hour: "numeric",
-                                          minute: "2-digit",
-                                        })}
-                                      </span>
-                                      <span
-                                        className={styles.geminiPlaceDetails}
-                                      >
-                                        {item.details}
-                                      </span>
+                              return Object.entries(grouped)
+                                .sort(([a], [b]) => a.localeCompare(b))
+                                .map(([dateKey, { label, items }]) => (
+                                  <div key={dateKey}>
+                                    <div className={styles.geminiDateHeader}>
+                                      {label}
                                     </div>
-                                    <button
-                                      type="button"
-                                      className={styles.geminiAddButton}
-                                      onClick={() =>
-                                        handleAddToSchedule(item, idx)
-                                      }
-                                      disabled={
-                                        addedItems.has(idx) ||
-                                        addingItem === idx
-                                      }
-                                      title={
-                                        addedItems.has(idx)
-                                          ? "Added"
-                                          : "Add to schedule"
-                                      }
-                                    >
-                                      {addedItems.has(idx)
-                                        ? "✓"
-                                        : addingItem === idx
-                                          ? "..."
-                                          : "+"}
-                                    </button>
+                                    {items.map(({ item, idx }) => (
+                                      <div
+                                        key={`${item.location}-${idx}`}
+                                        className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
+                                      >
+                                        <div
+                                          className={styles.geminiPlaceInfo}
+                                        >
+                                          <span
+                                            className={styles.geminiPlaceName}
+                                          >
+                                            {item.location}
+                                          </span>
+                                          <span
+                                            className={styles.geminiPlaceTime}
+                                          >
+                                            {new Date(
+                                              item.startTime,
+                                            ).toLocaleTimeString("en-US", {
+                                              hour: "numeric",
+                                              minute: "2-digit",
+                                            })}
+                                            {" – "}
+                                            {new Date(
+                                              item.endTime,
+                                            ).toLocaleTimeString("en-US", {
+                                              hour: "numeric",
+                                              minute: "2-digit",
+                                            })}
+                                          </span>
+                                          <span
+                                            className={
+                                              styles.geminiPlaceDetails
+                                            }
+                                          >
+                                            {item.details}
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          className={styles.geminiAddButton}
+                                          onClick={() =>
+                                            handleAddToSchedule(item, idx)
+                                          }
+                                          disabled={
+                                            addedItems.has(idx) ||
+                                            addingItem === idx
+                                          }
+                                          title={
+                                            addedItems.has(idx)
+                                              ? "Added"
+                                              : "Add to schedule"
+                                          }
+                                        >
+                                          {addedItems.has(idx)
+                                            ? "✓"
+                                            : addingItem === idx
+                                              ? "..."
+                                              : "+"}
+                                        </button>
+                                      </div>
+                                    ))}
                                   </div>
-                                ))}
-                              </div>
-                            ));
-                        })()}
+                                ));
+                            })()
+                          : /* List mode — group by category */
+                            (() => {
+                              const grouped: Record<
+                                string,
+                                {
+                                  item: (typeof geminiItinerary)[0];
+                                  idx: number;
+                                }[]
+                              > = {};
+                              geminiItinerary.forEach((item, i) => {
+                                const cat = item.category || "Other";
+                                if (!grouped[cat]) grouped[cat] = [];
+                                grouped[cat].push({ item, idx: i });
+                              });
+                              return Object.entries(grouped).map(
+                                ([cat, items]) => (
+                                  <div key={cat}>
+                                    <div className={styles.geminiDateHeader}>
+                                      {cat}
+                                    </div>
+                                    {items.map(({ item, idx }) => (
+                                      <div
+                                        key={`${item.location}-${idx}`}
+                                        className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
+                                      >
+                                        <div
+                                          className={styles.geminiPlaceInfo}
+                                        >
+                                          <span
+                                            className={styles.geminiPlaceName}
+                                          >
+                                            {item.location}
+                                          </span>
+                                          <span
+                                            className={
+                                              styles.geminiPlaceDetails
+                                            }
+                                          >
+                                            {item.details}
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          className={styles.geminiAddButton}
+                                          onClick={() =>
+                                            handleAddToSchedule(item, idx)
+                                          }
+                                          disabled={
+                                            addedItems.has(idx) ||
+                                            addingItem === idx
+                                          }
+                                          title={
+                                            addedItems.has(idx)
+                                              ? "Added"
+                                              : "Add to list"
+                                          }
+                                        >
+                                          {addedItems.has(idx)
+                                            ? "✓"
+                                            : addingItem === idx
+                                              ? "..."
+                                              : "+"}
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ),
+                              );
+                            })()}
                       </div>
                     )}
                   </div>
@@ -555,7 +906,15 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         </ul>
       </nav>
       <div className={styles.hiddenCard}></div>
-      <Outlet context={{ role, showQuestionnaire, setShowQuestionnaire }} />
+      <Outlet
+        context={{
+          role,
+          showQuestionnaire,
+          setShowQuestionnaire,
+          sidebarRefreshKey,
+          onQuestionnaireSubmitted: handleQuestionnaireSubmitted,
+        }}
+      />
     </div>
   );
 };
