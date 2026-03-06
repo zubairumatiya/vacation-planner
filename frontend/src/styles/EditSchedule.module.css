@@ -344,6 +344,7 @@ div .viewTable {
   height: 3rem;
   background-color: white;
   position: relative;
+  z-index: 3;
 }
 
 .listDragOverlay {
