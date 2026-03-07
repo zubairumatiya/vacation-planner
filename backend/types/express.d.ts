@@ -555,8 +555,8 @@ export interface TokenExchangeBody {
 
 export interface GeminiChatBody {
   tripId: string;
-  prompt: string;
-  mode?: "schedule" | "list";
+  prompt?: string;
+  mode?: "schedule" | "list" | null;
   categories?: string[];
 }
 

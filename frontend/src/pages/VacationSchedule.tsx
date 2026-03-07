@@ -11,7 +11,7 @@ type VacationProps = {
   costTotal: number;
 };
 
-type AiMode = "list" | "schedule";
+type AiMode = "list" | "schedule" | null;
 
 const LIST_CATEGORIES = ["Accommodation", "Food", "Activities"];
 
@@ -46,7 +46,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditPage = location.pathname.endsWith("/edit");
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
-  const [aiMode, setAiMode] = useState<AiMode>("list");
+  const [aiMode, setAiMode] = useState<AiMode>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
     ...LIST_CATEGORIES,
   ]);
@@ -56,6 +56,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
   const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [hasUnreadAiResponse, setHasUnreadAiResponse] = useState(false);
+  const geminiChatOpenRef = useRef(geminiChatOpen);
+  geminiChatOpenRef.current = geminiChatOpen;
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -141,7 +144,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     if (hasQuestionnaire === false) {
       setShowQuestionnaire(true);
     } else {
-      setGeminiChatOpen((prev) => !prev);
+      setGeminiChatOpen((prev) => {
+        if (!prev) setHasUnreadAiResponse(false);
+        return !prev;
+      });
     }
   };
 
@@ -159,7 +165,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   };
 
   const handleGeminiSend = async () => {
-    if (!geminiPrompt.trim() || !token || !tripId) return;
+    if (!token || !tripId || geminiLoading) return;
+    const hasPrompt = geminiPrompt.trim().length > 0;
+    const hasMode = aiMode !== null;
+    if (!hasPrompt && !hasMode) return;
     if (aiMode === "list" && selectedCategories.length === 0) return;
 
     setGeminiLoading(true);
@@ -176,7 +185,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         },
         body: JSON.stringify({
           tripId,
-          prompt: geminiPrompt,
+          prompt: geminiPrompt.trim() || undefined,
           mode: aiMode,
           categories: aiMode === "list" ? selectedCategories : undefined,
         }),
@@ -196,7 +205,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       }
 
       if (data.itinerary && data.itinerary.length > 0) {
-        if (aiMode === "schedule") {
+        if (aiMode === null) {
+          // General mode — just show items as cards
+          setGeminiItinerary(data.itinerary);
+          setSidebarRefreshKey((prev) => prev + 1);
+        } else if (aiMode === "schedule") {
           // Fetch user's list and current schedule to identify what needs adding
           const [listRes, scheduleRes] = await Promise.all([
             fetch(`${apiURL}/list/${tripId}`, {
@@ -275,6 +288,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       setGeminiPrompt("");
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
+      }
+      if (!geminiChatOpenRef.current) {
+        setHasUnreadAiResponse(true);
       }
     }
   };
@@ -491,8 +507,22 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                   type="button"
                   className={styles.aiButton}
                   onClick={handleAiButtonClick}
+                  style={{ position: "relative" }}
                 >
                   Ask AI
+                  {hasUnreadAiResponse && !geminiChatOpen && (
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "-3px",
+                        right: "-3px",
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ef4444",
+                      }}
+                    />
+                  )}
                 </button>
                 {geminiChatOpen && (
                   <div className={styles.geminiChatDropdown}>
@@ -506,7 +536,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     >
                       <button
                         type="button"
-                        onClick={() => setAiMode("list")}
+                        onClick={() => setAiMode((prev) => prev === "list" ? null : "list")}
+                        disabled={geminiLoading}
                         style={{
                           flex: 1,
                           padding: "0.35rem 0.5rem",
@@ -518,10 +549,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           background:
                             aiMode === "list" ? "rgba(47,231,130,0.15)" : "#1e1e20",
                           color: aiMode === "list" ? "#2fe782" : "#999",
-                          cursor: "pointer",
+                          cursor: geminiLoading ? "not-allowed" : "pointer",
                           fontSize: "0.75rem",
                           fontWeight: 600,
                           textAlign: "left",
+                          opacity: geminiLoading ? 0.5 : 1,
                         }}
                       >
                         <div>List</div>
@@ -538,7 +570,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAiMode("schedule")}
+                        onClick={() => setAiMode((prev) => prev === "schedule" ? null : "schedule")}
+                        disabled={geminiLoading}
                         style={{
                           flex: 1,
                           padding: "0.35rem 0.5rem",
@@ -552,10 +585,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               ? "rgba(47,231,130,0.15)"
                               : "#1e1e20",
                           color: aiMode === "schedule" ? "#2fe782" : "#999",
-                          cursor: "pointer",
+                          cursor: geminiLoading ? "not-allowed" : "pointer",
                           fontSize: "0.75rem",
                           fontWeight: 600,
                           textAlign: "left",
+                          opacity: geminiLoading ? 0.5 : 1,
                         }}
                       >
                         <div>Schedule</div>
@@ -600,6 +634,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               type="checkbox"
                               checked={selectedCategories.includes(cat)}
                               onChange={() => toggleCategory(cat)}
+                              disabled={geminiLoading}
                               style={{ accentColor: "#2fe782" }}
                             />
                             {cat}
@@ -658,7 +693,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                         className={styles.geminiChatSend}
                         disabled={
                           geminiLoading ||
-                          !geminiPrompt.trim() ||
+                          (!geminiPrompt.trim() && aiMode === null) ||
                           (aiMode === "list" && selectedCategories.length === 0)
                         }
                       >

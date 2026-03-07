@@ -125,8 +125,10 @@ router.post(
     next: NextFunction
   ) => {
     const { tripId, prompt, mode, categories } = req.body;
-    if (!prompt || !prompt.trim()) {
-      res.status(400).json({ text: "", message: "Prompt is required" });
+    const hasPrompt = prompt && prompt.trim();
+    const hasMode = mode === "list" || mode === "schedule";
+    if (!hasPrompt && !hasMode) {
+      res.status(400).json({ text: "", message: "Prompt or mode is required" });
       return;
     }
     if (!tripId) {
@@ -135,7 +137,7 @@ router.post(
     }
 
     try {
-      const result = await chat(tripId, prompt, mode ?? "list", categories);
+      const result = await chat(tripId, prompt?.trim() || "", mode ?? null, categories);
       res.status(200).json(result);
       return;
     } catch (err) {

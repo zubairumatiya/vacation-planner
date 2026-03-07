@@ -25,18 +25,31 @@ interface TripContext {
 export async function chat(
   tripId: string,
   userMessage: string,
-  mode: "schedule" | "list" = "list",
+  mode: "schedule" | "list" | null = null,
   categories?: string[],
 ): Promise<{ text: string; itinerary?: GeminiItineraryItem[]; question?: string }> {
   const context = await fetchTripContext(tripId);
-  const systemPrompt =
-    mode === "list"
-      ? buildListSystemPrompt(context, categories ?? [])
-      : buildSystemPrompt(context);
+
+  let systemPrompt: string;
+  let effectiveMessage = userMessage;
+
+  if (mode === "list") {
+    systemPrompt = buildListSystemPrompt(context, categories ?? []);
+    if (!effectiveMessage) {
+      effectiveMessage = `Please recommend the top places for my trip to ${context.trip.location}.`;
+    }
+  } else if (mode === "schedule") {
+    systemPrompt = buildSystemPrompt(context);
+    if (!effectiveMessage) {
+      effectiveMessage = `Please organize my list items into an optimized daily schedule for my trip.`;
+    }
+  } else {
+    systemPrompt = buildGeneralSystemPrompt(context);
+  }
 
   const response = await ai.models.generateContent({
     model: MODEL,
-    contents: userMessage,
+    contents: effectiveMessage,
     config: {
       systemInstruction: systemPrompt,
       thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
@@ -231,34 +244,88 @@ async function fetchTripContext(tripId: string): Promise<TripContext> {
   };
 }
 
-function formatSchedule(schedule: Schedule[]): string {
-  if (schedule.length === 0) return "No activities scheduled yet.";
-  return schedule
-    .map((s) => {
-      const date = new Date(s.start_time).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      });
-      const startTime = new Date(s.start_time).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      });
-      const endTime = new Date(s.end_time).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      });
-      return `- ${date} ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}`;
-    })
-    .join("\n");
+function formatSchedule(schedule: Schedule[], trip?: Trip): string {
+  // Build a map of date -> items
+  const byDate = new Map<string, Schedule[]>();
+  for (const s of schedule) {
+    const dateKey = new Date(s.start_time).toISOString().slice(0, 10);
+    if (!byDate.has(dateKey)) byDate.set(dateKey, []);
+    byDate.get(dateKey)!.push(s);
+  }
+
+  // Generate all trip days so the AI can see empty days
+  const allDays: string[] = [];
+  if (trip) {
+    const start = new Date(trip.start_date);
+    const end = new Date(trip.end_date);
+    const cursor = new Date(start);
+    while (cursor <= end) {
+      allDays.push(cursor.toISOString().slice(0, 10));
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+  } else {
+    // Fallback: just use dates from schedule
+    allDays.push(...byDate.keys());
+  }
+
+  if (allDays.length === 0 && schedule.length === 0) return "No activities scheduled yet.";
+
+  const lines: string[] = [];
+  for (const dateKey of allDays) {
+    const d = new Date(dateKey + "T00:00:00Z");
+    const dayLabel = d.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      timeZone: "UTC",
+    });
+    const items = byDate.get(dateKey);
+    if (!items || items.length === 0) {
+      lines.push(`### ${dayLabel}\n  (No activities scheduled — available for planning)`);
+    } else {
+      lines.push(`### ${dayLabel}`);
+      for (const s of items) {
+        const startTime = new Date(s.start_time).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        const endTime = new Date(s.end_time).toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+        });
+        lines.push(`  - ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}`);
+      }
+    }
+  }
+  return lines.join("\n");
 }
 
 function formatListItems(ctx: TripContext): string {
+  if (ctx.wishList.length === 0) return "No list items yet.";
+
+  // Count occurrences of each item name to inform AI about duplicates
+  const countMap = new Map<string, { count: number; details: string | null }>();
+  for (const w of ctx.wishList) {
+    const key = w.value.toLowerCase().trim();
+    const existing = countMap.get(key);
+    if (existing) {
+      existing.count++;
+    } else {
+      countMap.set(key, { count: 1, details: w.details });
+    }
+  }
+
   const items: string[] = [];
   for (const w of ctx.wishList) {
-    items.push(`- ${w.value}${w.details ? ` — ${w.details}` : ""}`);
+    const key = w.value.toLowerCase().trim();
+    const entry = countMap.get(key)!;
+    // Only emit each unique name once
+    if (entry.count === -1) continue; // already emitted
+    const countNote = entry.count > 1 ? ` (×${entry.count} — can be scheduled up to ${entry.count} times)` : "";
+    items.push(`- ${w.value}${entry.details ? ` — ${entry.details}` : ""}${countNote}`);
+    countMap.set(key, { ...entry, count: -1 }); // mark as emitted
   }
-  return items.length > 0 ? items.join("\n") : "No list items yet.";
+  return items.join("\n");
 }
 
 function buildSystemPrompt(ctx: TripContext): string {
@@ -270,7 +337,7 @@ function buildSystemPrompt(ctx: TripContext): string {
     (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
   );
 
-  const formattedSchedule = formatSchedule(schedule);
+  const formattedSchedule = formatSchedule(schedule, trip);
   const formattedListItems = formatListItems(ctx);
 
   const recPlaceNames =
@@ -322,7 +389,8 @@ ${questionnaire?.transport_mode ? `The user is getting around by: **${questionna
 - Include buffer time between activities for transit + rest
 - Don't schedule back-to-back intensive activities (e.g., two long museum visits)
 - Spread activities evenly across trip days — don't front-load or back-load
-- NEVER place the same restaurant or venue in consecutive time slots. A place can appear multiple times across different days, but never back-to-back on the same day.
+- **PRIORITIZE EMPTY DAYS:** When adding new items, fill days that have NO activities first before adding more to days that already have items. Look at the Current Schedule section — any day marked "(No activities scheduled — available for planning)" should be filled before adding extra items to busy days.
+- NEVER place the same restaurant or venue in consecutive time slots or on the same day. A place can ONLY appear multiple times if the user's list contains multiple entries of that item (marked with ×N). Otherwise, each place appears exactly once.
 
 ### Practical Awareness
 - Flag places that need advance reservations and suggest booking timeline
@@ -349,8 +417,11 @@ ${formattedListItems}
 ## Current Schedule (already planned — work around these)
 ${formattedSchedule}
 
-**CRITICAL:** Do NOT re-add items that are already in the current schedule above. Only schedule list items that do not yet appear in the schedule. Compare place names — if a list item's name matches (or closely matches) a scheduled item's location, it is already scheduled and must be skipped.
-If rearranging existing items would significantly improve the schedule (e.g., better proximity grouping), you may suggest changes in your text response — but do NOT include already-scheduled items in the itinerary JSON unless the user explicitly asks to reschedule.
+**CRITICAL DUPLICATE RULES:**
+- Each list item can only appear in the schedule as many times as it appears in the list. If an item appears once in the list (no ×N marker), it can only be scheduled ONCE total. If it says "×2", it can be scheduled up to 2 times.
+- Count how many times each item already appears in the Current Schedule above. Subtract that from the allowed count. If the remaining count is 0, do NOT schedule that item again.
+- Compare place names case-insensitively — if a list item's name matches (or closely matches) a scheduled item's location, count it as already scheduled.
+- If rearranging existing items would significantly improve the schedule (e.g., better proximity grouping), you may suggest changes in your text response — but do NOT include already-scheduled items in the itinerary JSON unless the user explicitly asks to reschedule.
 
 ## Already Recommended Places (avoid re-recommending)
 ${recPlaceNames}
@@ -458,6 +529,59 @@ Wrap your list recommendations in delimiters:
 ## Recommendation Style
 - Keep descriptions succinct. Include star rating and review count when notable (e.g., "4.7★, 2k reviews").
 - Flag practical details (cash only, reservations needed, etc.) in the details field.`;
+}
+
+function buildGeneralSystemPrompt(ctx: TripContext): string {
+  const { trip, schedule, questionnaire, wishList } = ctx;
+
+  const startDate = new Date(trip.start_date);
+  const endDate = new Date(trip.end_date);
+  const tripLength = Math.ceil(
+    (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
+  );
+
+  const formattedSchedule = formatSchedule(schedule, trip);
+  const formattedListItems = formatListItems(ctx);
+  const questionnaireSection = buildQuestionnaireSection(questionnaire);
+
+  return `You are a helpful trip planning assistant embedded in a trip planning app. The user is asking a general question about their trip. Answer helpfully and concisely.
+
+## Trip Details
+- **Destination:** ${trip.location}
+- **Dates:** ${startDate.toLocaleDateString("en-US")} to ${endDate.toLocaleDateString("en-US")} (${tripLength} days)
+- **Trip Name:** ${trip.trip_name}
+
+## User Preferences (from questionnaire)
+${questionnaireSection}
+
+## User's List Items
+${formattedListItems}
+
+## Current Schedule
+${formattedSchedule}
+
+## Response Guidelines
+- Answer the user's question directly using the trip context above.
+- If the user references specific items from their list or schedule, use the data above to respond accurately.
+- You may suggest places or schedule changes if relevant to the question.
+- If suggesting places, you can use the itinerary format:
+
+====ITINERARY_START====
+[
+  {
+    "location": "Place Name",
+    "details": "Brief description.",
+    "category": "restaurant|museum|park|event|activity|landmark|nightlife|shopping",
+    "startTime": "",
+    "endTime": "",
+    "cost": 0.00,
+    "multiDay": false
+  }
+]
+====ITINERARY_END====
+
+- If you need to ask a clarifying question, use: ====QUESTION_START==== your question ====QUESTION_END====
+- Keep responses concise and helpful.`;
 }
 
 function buildQuestionnaireSection(questionnaire: QuestionnaireRow | null): string {
@@ -653,6 +777,17 @@ export async function markPlaceAddedByName(tripId: string, placeName: string): P
   );
   await db.query(
     "UPDATE gemini_list_places SET added_to_schedule = true WHERE trip_id = $1 AND place_name = $2",
+    [tripId, placeName],
+  );
+  // Also mark one corresponding trip_list item as added so the AI
+  // doesn't see it as "still to be scheduled" on subsequent requests
+  await db.query(
+    `UPDATE trip_list SET item_added = true, last_modified = NOW()
+     WHERE id = (
+       SELECT id FROM trip_list
+       WHERE trip_id = $1 AND LOWER(value) = LOWER($2) AND item_added = false
+       ORDER BY created_at ASC LIMIT 1
+     )`,
     [tripId, placeName],
   );
 }
