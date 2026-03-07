@@ -532,6 +532,7 @@ export interface QuestionnaireRow {
   accommodation_type: string | null;
   must_see_experiences: string | null;
   start_time_preference: string | null;
+  transport_mode: string | null;
   created_at: Date;
   last_modified: Date;
 }
@@ -616,6 +617,7 @@ export interface QuestionnaireBody {
   accommodationType?: string;
   mustSeeExperiences?: string;
   startTimePreference?: string;
+  transportMode?: string;
 }
 
 export interface QuestionnaireResponse {

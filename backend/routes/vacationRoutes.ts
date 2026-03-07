@@ -922,6 +922,7 @@ router.post(
       accommodationType,
       mustSeeExperiences,
       startTimePreference,
+      transportMode,
     } = req.body;
 
     try {
@@ -929,8 +930,8 @@ router.post(
         `INSERT INTO trip_questionnaire (
           trip_id, budget, interests, dietary_restrictions, pace,
           traveling_with_kids_or_elderly, accessibility_needs, tour_preference,
-          accommodation_type, must_see_experiences, start_time_preference
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          accommodation_type, must_see_experiences, start_time_preference, transport_mode
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         ON CONFLICT (trip_id) DO UPDATE SET
           budget = EXCLUDED.budget,
           interests = EXCLUDED.interests,
@@ -942,6 +943,7 @@ router.post(
           accommodation_type = EXCLUDED.accommodation_type,
           must_see_experiences = EXCLUDED.must_see_experiences,
           start_time_preference = EXCLUDED.start_time_preference,
+          transport_mode = EXCLUDED.transport_mode,
           last_modified = NOW()
         RETURNING *`,
         [
@@ -956,6 +958,7 @@ router.post(
           accommodationType ?? null,
           mustSeeExperiences ?? null,
           startTimePreference ?? null,
+          transportMode ?? null,
         ],
       );
       snakeToCamel<QuestionnaireRow>(result.rows);

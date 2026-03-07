@@ -54,6 +54,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     null,
   );
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const showToast = useCallback((message: string) => {
@@ -182,7 +183,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       });
 
       if (!response.ok) {
-        console.error("[Gemini] API error");
         setGeminiResponse("Something went wrong. Please try again.");
         return;
       }
@@ -194,16 +194,78 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       if (data.question) {
         setGeminiQuestion(data.question);
       }
+
       if (data.itinerary && data.itinerary.length > 0) {
-        setGeminiItinerary(data.itinerary);
-      }
-      // Refresh sidebar if we got recommendations and no question was asked
-      if (
-        data.itinerary &&
-        data.itinerary.length > 0 &&
-        !data.question
-      ) {
-        setSidebarRefreshKey((prev) => prev + 1);
+        if (aiMode === "schedule") {
+          // Fetch user's list and current schedule to identify what needs adding
+          const [listRes, scheduleRes] = await Promise.all([
+            fetch(`${apiURL}/list/${tripId}`, {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+            fetch(`${apiURL}/schedule/${tripId}`, {
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }),
+          ]);
+
+          const listNames = new Set<string>();
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            (listData.data ?? []).forEach((item: { value: string }) => {
+              listNames.add(item.value.toLowerCase().trim());
+            });
+          }
+
+          // Build set of already-scheduled location names to avoid duplicates
+          const scheduledNames = new Set<string>();
+          if (scheduleRes.ok) {
+            const scheduleData = await scheduleRes.json();
+            (scheduleData.schedule ?? []).forEach((item: { location: string }) => {
+              scheduledNames.add(item.location.toLowerCase().trim());
+            });
+          }
+
+          const listSourced: { item: GeminiItineraryItem; idx: number }[] = [];
+          const recommendations: GeminiItineraryItem[] = [];
+
+          data.itinerary.forEach((item: GeminiItineraryItem, i: number) => {
+            const name = item.location.toLowerCase().trim();
+            if (listNames.has(name) && !scheduledNames.has(name)) {
+              // On user's list but not yet in schedule — auto-add
+              listSourced.push({ item, idx: i });
+            } else if (!listNames.has(name)) {
+              // Not on user's list — it's a recommendation
+              recommendations.push(item);
+            }
+            // If it's on the list AND already scheduled, skip it
+          });
+
+          // Auto-add list-sourced items to schedule
+          for (const { item, idx } of listSourced) {
+            await handleAddToSchedule(item, idx, "schedule");
+          }
+
+          // Signal EditCanvas to re-fetch schedule with the newly added items
+          if (listSourced.length > 0) {
+            setScheduleUpdateKey((prev) => prev + 1);
+          }
+
+          // Only show recommendations as cards in chat
+          if (recommendations.length > 0) {
+            setGeminiItinerary(recommendations);
+            setSidebarRefreshKey((prev) => prev + 1);
+          }
+        } else {
+          setGeminiItinerary(data.itinerary);
+          if (!data.question) {
+            setSidebarRefreshKey((prev) => prev + 1);
+          }
+        }
       }
     } catch (err) {
       console.error("[Gemini] Request failed:", err);
@@ -258,6 +320,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       }
       if (response.ok) {
         setAddedItems((prev) => new Set(prev).add(index));
+        // Refresh schedule UI immediately when adding to schedule
+        if (mode === "schedule") {
+          setScheduleUpdateKey((prev) => prev + 1);
+        }
         // Mark the corresponding recommendation as added
         fetch(`${apiURL}/gemini/mark-added-by-name/${tripId}`, {
           method: "PATCH",
@@ -282,6 +348,21 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     const el = e.target;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  };
+
+  const [addingAllRecs, setAddingAllRecs] = useState(false);
+  const handleAddAllRecs = async () => {
+    if (!token || !tripId || addingAllRecs) return;
+    setAddingAllRecs(true);
+    const newAdded = new Set(addedItems);
+    for (let i = 0; i < geminiItinerary.length; i++) {
+      if (!addedItems.has(i)) {
+        await handleAddToSchedule(geminiItinerary[i], i);
+        newAdded.add(i);
+      }
+    }
+    setAddedItems(newAdded);
+    setAddingAllRecs(false);
   };
 
   useEffect(() => {
@@ -452,7 +533,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                             color: aiMode === "list" ? "#2fe782" : "#777",
                           }}
                         >
-                          Choose from a list — schedule later
+                          Choose from a list (start here)
                         </div>
                       </button>
                       <button
@@ -486,7 +567,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                             color: aiMode === "schedule" ? "#2fe782" : "#777",
                           }}
                         >
-                          Get a ready-to-add itinerary
+                          Organize my list into a schedule
                         </div>
                       </button>
                     </div>
@@ -595,15 +676,15 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                         style={{
                           margin: "0.5rem 0.6rem",
                           padding: "0.6rem 0.75rem",
-                          background: "rgba(66,133,244,0.12)",
-                          border: "1px solid rgba(66,133,244,0.3)",
+                          background: "rgba(99,102,241,0.12)",
+                          border: "1px solid rgba(99,102,241,0.3)",
                           borderRadius: "8px",
                         }}
                       >
                         <div
                           style={{
                             fontSize: "0.7rem",
-                            color: "#4285F4",
+                            color: "#6366f1",
                             fontWeight: 600,
                             marginBottom: "0.3rem",
                           }}
@@ -631,6 +712,28 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     )}
                     {geminiItinerary.length > 0 && (
                       <div className={styles.geminiItineraryList}>
+                        {/* Add all recs button */}
+                        {geminiItinerary.some((_, i) => !addedItems.has(i)) && (
+                          <button
+                            type="button"
+                            onClick={handleAddAllRecs}
+                            disabled={addingAllRecs}
+                            style={{
+                              width: "100%",
+                              padding: "0.4rem 0.6rem",
+                              background: "rgba(47,231,130,0.12)",
+                              border: "1px solid rgba(47,231,130,0.3)",
+                              borderRadius: "6px",
+                              color: "#2fe782",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              marginBottom: "0.25rem",
+                            }}
+                          >
+                            {addingAllRecs ? "Adding..." : `Add all ${aiMode === "schedule" ? "recommendations" : "items"}`}
+                          </button>
+                        )}
                         {aiMode === "schedule"
                           ? (() => {
                               const grouped: Record<
@@ -644,25 +747,33 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                 }
                               > = {};
                               geminiItinerary.forEach((item, i) => {
-                                const d = new Date(item.startTime);
-                                const dateKey = d.toISOString().slice(0, 10);
+                                const d = item.startTime ? new Date(item.startTime) : null;
+                                const isValid = d && !isNaN(d.getTime());
+                                const dateKey = isValid ? d.toISOString().slice(0, 10) : "Unscheduled";
                                 if (!grouped[dateKey]) {
-                                  const day = d.toLocaleDateString("en-US", {
-                                    weekday: "short",
-                                    timeZone: "UTC",
-                                  });
-                                  const dateStr = d.toLocaleDateString(
-                                    "en-US",
-                                    {
-                                      month: "2-digit",
-                                      day: "2-digit",
+                                  if (isValid) {
+                                    const day = d.toLocaleDateString("en-US", {
+                                      weekday: "short",
                                       timeZone: "UTC",
-                                    },
-                                  );
-                                  grouped[dateKey] = {
-                                    label: `${day} ${dateStr}`,
-                                    items: [],
-                                  };
+                                    });
+                                    const dateStr = d.toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        month: "2-digit",
+                                        day: "2-digit",
+                                        timeZone: "UTC",
+                                      },
+                                    );
+                                    grouped[dateKey] = {
+                                      label: `${day} ${dateStr}`,
+                                      items: [],
+                                    };
+                                  } else {
+                                    grouped[dateKey] = {
+                                      label: "Recommendations",
+                                      items: [],
+                                    };
+                                  }
                                 }
                                 grouped[dateKey].items.push({ item, idx: i });
                               });
@@ -686,6 +797,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                           >
                                             {item.location}
                                           </span>
+                                          {item.startTime && item.endTime && (
                                           <span
                                             className={styles.geminiPlaceTime}
                                           >
@@ -703,6 +815,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                               minute: "2-digit",
                                             })}
                                           </span>
+                                          )}
                                           <span
                                             className={
                                               styles.geminiPlaceDetails
@@ -912,6 +1025,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           showQuestionnaire,
           setShowQuestionnaire,
           sidebarRefreshKey,
+          scheduleUpdateKey,
           onQuestionnaireSubmitted: handleQuestionnaireSubmitted,
         }}
       />

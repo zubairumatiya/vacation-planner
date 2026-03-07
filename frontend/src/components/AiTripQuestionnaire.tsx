@@ -11,6 +11,7 @@ type QuestionnaireAnswers = {
   accommodationType: string;
   mustSeeExperiences: string;
   startTimePreference: string;
+  transportMode: string;
 };
 
 const INTEREST_OPTIONS = [
@@ -57,6 +58,7 @@ const AiTripQuestionnaire = ({
       accommodationType: "",
       mustSeeExperiences: "",
       startTimePreference: "",
+      transportMode: "",
     },
   );
 
@@ -294,6 +296,34 @@ const AiTripQuestionnaire = ({
                     onChange={() =>
                       updateField("startTimePreference", option)
                     }
+                    style={radioInputStyle}
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+          </div>
+          {/* 11. Transport */}
+          <div style={questionBlockStyle}>
+            <label style={labelStyle}>
+              11. How will you be getting around?
+            </label>
+            <div style={radioGroupStyle}>
+              {[
+                "Walking",
+                "Public transit (bus/metro/tram)",
+                "Rental car",
+                "Taxi/rideshare",
+                "Bicycle",
+                "Unsure",
+              ].map((option) => (
+                <label key={option} style={radioLabelStyle}>
+                  <input
+                    type="radio"
+                    name="transportMode"
+                    value={option}
+                    checked={answers.transportMode === option}
+                    onChange={() => updateField("transportMode", option)}
                     style={radioInputStyle}
                   />
                   {option}

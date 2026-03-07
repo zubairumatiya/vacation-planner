@@ -88,12 +88,14 @@ const EditCanvas = ({
     showQuestionnaire,
     setShowQuestionnaire,
     sidebarRefreshKey: parentRefreshKey,
+    scheduleUpdateKey,
     onQuestionnaireSubmitted,
   } = useOutletContext<{
     role: string;
     showQuestionnaire: boolean;
     setShowQuestionnaire: (v: boolean) => void;
     sidebarRefreshKey: number;
+    scheduleUpdateKey: number;
     onQuestionnaireSubmitted: () => void;
   }>();
   const [loading, setLoading] = useState<boolean>(true);
@@ -236,6 +238,7 @@ const EditCanvas = ({
               accommodationType: q.accommodationType ?? "",
               mustSeeExperiences: q.mustSeeExperiences ?? "",
               startTimePreference: q.startTimePreference ?? "",
+              transportMode: q.transportMode ?? "",
             });
           }
         }
@@ -286,6 +289,7 @@ const EditCanvas = ({
           accommodationType: answers.accommodationType,
           mustSeeExperiences: answers.mustSeeExperiences,
           startTimePreference: answers.startTimePreference,
+          transportMode: answers.transportMode,
         }),
       });
       onQuestionnaireSubmitted();
@@ -293,6 +297,44 @@ const EditCanvas = ({
       console.error("Failed to save questionnaire:", err);
     }
   };
+
+  // Re-fetch schedule when AI schedule mode adds items
+  useEffect(() => {
+    if (scheduleUpdateKey === 0 || !token || !tripId || utcStart === 0 || utcEnd === 0) return;
+    const refetchSchedule = async () => {
+      try {
+        const res = await fetch(`${apiURL}/schedule/${tripId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.schedule) {
+            const hydrated = hydrateSchedule(data.schedule);
+            const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+            const dayContainers = makeContainers(length, new Date(utcStart));
+            setSchedule(bucketizeSchedule(dayContainers, hydrated));
+            setCostTotal(hydrated.reduce((sum, i) => sum + Number(i.cost), 0));
+          }
+          const listRes = await fetch(`${apiURL}/list/${tripId}`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          if (listRes.ok) {
+            const listData = await listRes.json();
+            setWishList(listData.data ?? []);
+          }
+        }
+      } catch {
+        // silent
+      }
+    };
+    refetchSchedule();
+  }, [scheduleUpdateKey]);
 
   const days = useMemo<DayContainer[]>(() => {
     if (utcStart === 0 || utcEnd === 0) return [];

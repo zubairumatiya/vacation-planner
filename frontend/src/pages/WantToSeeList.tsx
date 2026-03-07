@@ -259,7 +259,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
 
   const clickAwayToCancel = (e: React.MouseEvent) => {
     // prettier-ignore
-    if (!(e.target instanceof HTMLImageElement || e.target instanceof HTMLButtonElement || e.target instanceof HTMLTextAreaElement)) {
+    if (!(e.target instanceof HTMLImageElement || e.target instanceof HTMLButtonElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement)) {
       e.preventDefault();
       setEditItemId("-1");
       setNewItem("");

@@ -3,6 +3,7 @@ import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import {
   chat,
+  scheduleListItems,
   getRecommendedPlaces,
   getListPlaces,
   clearRecommendedPlaces,
@@ -144,6 +145,46 @@ router.post(
   }
 );
 
+// POST /gemini/schedule-list
+router.post(
+  "/gemini/schedule-list",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<{ tripId: string; prompt: string }>,
+    res: TypedResponse<{
+      text: string;
+      recommendations?: GeminiChatResponse["itinerary"];
+      schedule?: unknown[];
+      question?: string;
+    }>,
+    next: NextFunction
+  ) => {
+    const { tripId, prompt } = req.body;
+    if (!prompt || !prompt.trim()) {
+      res.status(400).json({ text: "Prompt is required" });
+      return;
+    }
+    if (!tripId) {
+      res.status(400).json({ text: "tripId is required" });
+      return;
+    }
+
+    try {
+      const result = await scheduleListItems(tripId, prompt);
+      res.status(200).json({
+        text: result.text,
+        recommendations: result.recommendations.length > 0 ? result.recommendations : undefined,
+        schedule: result.schedule,
+        question: result.question,
+      });
+      return;
+    } catch (err) {
+      console.error("[Gemini] Schedule list error:", err);
+      next(err);
+    }
+  }
+);
+
 // GET /gemini/status
 router.get(
   "/gemini/status",
@@ -209,13 +250,14 @@ router.patch(
   "/gemini/recommended-places/:id/added",
   ensureLoggedIn,
   async (
-    req: TypedRequest<unknown, unknown, { id: string }>,
+    req: TypedRequest<{ added?: boolean }, unknown, { id: string }>,
     res: TypedResponse<{ message: string }>,
     next: NextFunction
   ) => {
     try {
-      await markPlaceAdded(req.params.id);
-      res.status(200).json({ message: "Marked as added" });
+      const added = req.body.added ?? true;
+      await markPlaceAdded(req.params.id, added);
+      res.status(200).json({ message: added ? "Marked as added" : "Unmarked" });
       return;
     } catch (err) {
       next(err);
@@ -294,13 +336,14 @@ router.patch(
   "/gemini/list-places/:id/added",
   ensureLoggedIn,
   async (
-    req: TypedRequest<unknown, unknown, { id: string }>,
+    req: TypedRequest<{ added?: boolean }, unknown, { id: string }>,
     res: TypedResponse<{ message: string }>,
     next: NextFunction
   ) => {
     try {
-      await markListPlaceAdded(req.params.id);
-      res.status(200).json({ message: "Marked as added" });
+      const added = req.body.added ?? true;
+      await markListPlaceAdded(req.params.id, added);
+      res.status(200).json({ message: added ? "Marked as added" : "Unmarked" });
       return;
     } catch (err) {
       next(err);

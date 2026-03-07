@@ -170,7 +170,44 @@ const SuggestionsSidebar = ({
     }
   };
 
+  const handleUnmark = async (place: UnifiedPlace) => {
+    if (!token) return;
+    const endpoint =
+      place.source === "schedule"
+        ? `${apiURL}/gemini/recommended-places/${place.id}/added`
+        : `${apiURL}/gemini/list-places/${place.id}/added`;
+    try {
+      await fetch(endpoint, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ added: false }),
+      });
+      if (place.source === "schedule") {
+        setSchedulePlaces((prev) =>
+          prev.map((p) =>
+            p.id === place.id ? { ...p, added_to_schedule: false } : p,
+          ),
+        );
+      } else {
+        setListPlaces((prev) =>
+          prev.map((p) =>
+            p.id === place.id ? { ...p, added_to_schedule: false } : p,
+          ),
+        );
+      }
+    } catch {
+      // silent
+    }
+  };
+
   const handleAddClick = (place: UnifiedPlace) => {
+    if (place.added_to_schedule) {
+      handleUnmark(place);
+      return;
+    }
     if (place.source === "list") {
       handleAddAsList(place);
     } else {
@@ -271,12 +308,10 @@ const SuggestionsSidebar = ({
           type="button"
           className={styles.sidebarAddButton}
           onClick={() => handleAddClick(place)}
-          disabled={
-            place.added_to_schedule || addingId === place.id
-          }
+          disabled={addingId === place.id}
           title={
             place.added_to_schedule
-              ? "Already added"
+              ? "Click to unmark"
               : place.source === "list"
                 ? "Add to list"
                 : "Add"
@@ -514,24 +549,38 @@ const SuggestionsSidebar = ({
                 {scheduleBuckets[bucket].map(renderPlace)}
               </div>
             ))}
-            {/* List items */}
-            {listItems.length > 0 && (
-              <div>
-                <div
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 600,
-                    color: INDIGO,
-                    padding: "0.4rem 0.25rem 0.2rem",
-                    borderBottom: "1px solid #333",
-                    marginBottom: "0.25rem",
-                  }}
-                >
-                  List
+            {/* List items grouped by category */}
+            {(() => {
+              const listByCategory: Record<string, UnifiedPlace[]> = {};
+              for (const place of listItems) {
+                const cat = place.place_category || "Other";
+                if (!listByCategory[cat]) listByCategory[cat] = [];
+                listByCategory[cat].push(place);
+              }
+              const sortedCats = Object.keys(listByCategory).sort((a, b) => {
+                if (a === "Other") return 1;
+                if (b === "Other") return -1;
+                return a.localeCompare(b);
+              });
+              return sortedCats.map((cat) => (
+                <div key={cat}>
+                  <div
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 600,
+                      color: INDIGO,
+                      padding: "0.4rem 0.25rem 0.2rem",
+                      borderBottom: "1px solid #333",
+                      marginBottom: "0.25rem",
+                      textTransform: "capitalize",
+                    }}
+                  >
+                    {cat}
+                  </div>
+                  {listByCategory[cat].map(renderPlace)}
                 </div>
-                {listItems.map(renderPlace)}
-              </div>
-            )}
+              ));
+            })()}
           </div>
         </div>
       )}

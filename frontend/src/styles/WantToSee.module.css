@@ -10,6 +10,7 @@
   flex: 0.5;
   z-index: 0;
   position: relative;
+  max-height: 85vh;
 }
 
 @media (max-width: 700px) {
