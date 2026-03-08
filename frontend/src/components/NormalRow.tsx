@@ -4,6 +4,8 @@ import { addMeridiem, fourDigitTime, prefixZero } from "../utils/timeHelpers";
 import styles from "../styles/EditSchedule.module.css";
 import editIcon from "../assets/icons/edit-icon.svg";
 import duplicateIcon from "../assets/icons/duplicate-icon.svg";
+import lockIcon from "../assets/icons/lock-icon.svg";
+import unlockIcon from "../assets/icons/unlock-icon.svg";
 import dragIcon from "../assets/icons/dragger.svg";
 import { useContext } from "react";
 import { EditScheduleContext } from "../context/EditScheduleContext";
@@ -15,6 +17,7 @@ type NormalRowProps = {
   attributes?: DraggableAttributes | undefined;
   viewMode: boolean;
   onDuplicate?: (item: Schedule, dayContainer: string) => void;
+  onToggleLock?: (item: Schedule) => void;
 };
 
 const NormalRow = ({
@@ -22,6 +25,7 @@ const NormalRow = ({
   dayContainer,
   viewMode,
   onDuplicate,
+  onToggleLock,
   ...restOfProps
 }: NormalRowProps) => {
   const { handleEdit } = useContext(EditScheduleContext);
@@ -75,35 +79,53 @@ const NormalRow = ({
       <td>{value.multiDay ? "yes" : "no"}</td>
       {!viewMode && (
         <td className={styles.actionsTd}>
-          <img
-            className={styles.editIcon}
-            src={editIcon}
-            alt="edit-icon"
-            title="Edit"
-            onClick={(e) =>
-              handleEdit(
-                e,
-                value.id,
-                value.location,
-                value.cost,
-                value.details,
-                value.multiDay,
-                startDate,
-                endDate,
-                dayContainer,
-              )
-            }
-          />
-          <img
-            className={styles.editIcon}
-            src={duplicateIcon}
-            alt="duplicate-icon"
-            title="Duplicate"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDuplicate?.(value, dayContainer);
-            }}
-          />
+          <div className={styles.leftActionsCol}>
+            <img
+              className={styles.editIcon}
+              src={editIcon}
+              alt="edit-icon"
+              title="Edit"
+              onClick={(e) =>
+                handleEdit(
+                  e,
+                  value.id,
+                  value.location,
+                  value.cost,
+                  value.details,
+                  value.multiDay,
+                  startDate,
+                  endDate,
+                  dayContainer,
+                )
+              }
+            />
+            <img
+              className={styles.editIcon}
+              src={duplicateIcon}
+              alt="duplicate-icon"
+              title="Duplicate"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDuplicate?.(value, dayContainer);
+              }}
+            />
+          </div>
+          <div className={styles.rightActionsCol}>
+            <img
+              className={`${styles.editIcon} ${value.isLocked ? styles.lockActive : ""}`}
+              src={value.isLocked ? lockIcon : unlockIcon}
+              alt={value.isLocked ? "locked" : "unlocked"}
+              title={
+                value.isLocked
+                  ? "Unlock (AI can move this)"
+                  : "Lock (AI won't move this)"
+              }
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleLock?.(value);
+              }}
+            />
+          </div>
         </td>
       )}
     </>

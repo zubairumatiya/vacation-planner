@@ -33,6 +33,7 @@ declare global {
     multiDay: boolean;
     sortIndex: number;
     lastModified: string;
+    isLocked: boolean;
   }
 
   /** GET /schedule/:tripId */
@@ -231,6 +232,7 @@ declare global {
     activeId: UniqueIdentifier | null | undefined;
     viewMode: boolean;
     onDuplicate?: (item: Schedule, dayContainer: string) => void;
+    onToggleLock?: (item: Schedule) => void;
   };
 
   type TableRowProps = {
@@ -244,6 +246,7 @@ declare global {
     activeId: UniqueIdentifier | null | undefined;
     viewMode: boolean;
     onDuplicate?: (item: Schedule, dayContainer: string) => void;
+    onToggleLock?: (item: Schedule) => void;
   };
 
   type EditRowProps = {

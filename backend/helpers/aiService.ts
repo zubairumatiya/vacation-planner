@@ -307,7 +307,8 @@ function formatSchedule(schedule: Schedule[], trip?: Trip): string {
           hour: "numeric",
           minute: "2-digit",
         });
-        lines.push(`  - ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}`);
+        const lockTag = s.is_locked ? " 🔒 LOCKED" : "";
+        lines.push(`  - ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}${lockTag}`);
       }
     }
   }
@@ -360,7 +361,8 @@ function formatScheduleWithIds(schedule: Schedule[], trip?: Trip): string {
           hour: "numeric",
           minute: "2-digit",
         });
-        lines.push(`  - [id:${s.id}] ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}`);
+        const lockTag = s.is_locked ? " 🔒 LOCKED" : "";
+        lines.push(`  - [id:${s.id}] ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}${lockTag}`);
       }
     }
   }
@@ -487,12 +489,15 @@ These rules are absolute. Do not break them under any circumstances unless the u
 30. If there are multiple accommodations on the list and it's NOT obvious why (e.g., they are in the same city or area and would overlap in dates), ask a clarifying question using ====QUESTION_START==== before scheduling. Example: "I see two hotels — Hotel A and Hotel B. Are you staying at one for the first half and the other for the second, or choosing between them?"
 31. If the reason IS obvious (different cities for different legs of the trip, or clearly for separate date ranges), schedule them without asking.
 
+### Locked Items
+32. Items marked with 🔒 LOCKED in the schedule MUST NOT be moved, rescheduled, or deleted. They are pinned to their current day and time slot. Schedule other activities around locked items. Never emit a "move", "swap_days", or "delete" action for a locked item. If the user explicitly asks to move a locked item, inform them that the item is locked and they need to unlock it first.
+
 ### Output Integrity
-32. Always use the trip's actual dates (from Trip Details below) for startTime and endTime. Never use placeholder or example dates.
-33. When scheduling an item from the user's list, the "location" field MUST match the user's list item name exactly (preserve original capitalization and spelling).
-34. The "category" field must be one of the allowed values specified in the mode-specific instructions below. Never invent new categories.
-35. Every itinerary item must have both startTime and endTime set (except in list mode, where they are empty strings).
-36. Cost should be a reasonable estimate in the local currency equivalent. Use 0 for free activities. Never leave cost as null.`);
+33. Always use the trip's actual dates (from Trip Details below) for startTime and endTime. Never use placeholder or example dates.
+34. When scheduling an item from the user's list, the "location" field MUST match the user's list item name exactly (preserve original capitalization and spelling).
+35. The "category" field must be one of the allowed values specified in the mode-specific instructions below. Never invent new categories.
+36. Every itinerary item must have both startTime and endTime set (except in list mode, where they are empty strings).
+37. Cost should be a reasonable estimate in the local currency equivalent. Use 0 for free activities. Never leave cost as null.`);
 
   // ── Trip Details ──
   sections.push(`## Trip Details
@@ -592,6 +597,8 @@ ${questionnaire?.transport_mode ? `The user is getting around by: **${questionna
 - **PRIORITIZE EMPTY DAYS:** When adding new items, fill days that have NO activities first before adding more to days that already have items. Any day marked "(No activities scheduled — available for planning)" should be filled before adding extra items to busy days.
 
 ${schedulingRules}
+
+**LOCKED ITEMS:** Items marked 🔒 LOCKED in the Current Schedule are pinned — do NOT reschedule, move, or remove them. Plan around them.
 
 **CRITICAL DUPLICATE RULES:**
 - Each list item can only appear in the schedule as many times as it appears in the list. If an item appears once in the list (no ×N marker), it can only be scheduled ONCE total. If it says "×2", it can be scheduled up to 2 times.
@@ -752,6 +759,8 @@ When the user asks to MODIFY their existing schedule (move items, swap days, del
 - **add**: Add a NEW activity directly to the schedule. Requires "location", "startTime", "endTime". Optional: "details", "cost", "multiDay". Use this when the user asks to add more items/activities to a specific day, fill gaps in their schedule, or says things like "add more activities for Monday". Choose places appropriate for the destination, user preferences, and time of day. Use the trip's actual dates.
 
 ### Rules for actions:
+- NEVER move, delete, or reschedule items marked 🔒 LOCKED. They are pinned to their current time slot. If the user asks to move a locked item, tell them to unlock it first.
+- When using "swap_days", if ANY item on either day is locked, do NOT swap. Inform the user which items are locked.
 - ALWAYS use the exact item IDs shown in the Current Schedule for move/delete/update_details. Never guess or fabricate IDs.
 - For "add" actions, you do NOT need an ID — just provide the location and times.
 - You can combine multiple actions in one block (e.g., move several items and add new ones).
@@ -879,7 +888,7 @@ async function executeActions(tripId: string, actions: ScheduleAction[]): Promis
           if (!action.id || !action.startTime || !action.endTime) break;
           await client.query(
             `UPDATE trip_schedule SET start_time = $1, end_time = $2, last_modified = NOW()
-             WHERE id = $3 AND trip_id = $4`,
+             WHERE id = $3 AND trip_id = $4 AND is_locked = false`,
             [action.startTime, action.endTime, action.id, tripId],
           );
           break;
@@ -888,6 +897,14 @@ async function executeActions(tripId: string, actions: ScheduleAction[]): Promis
           if (!action.date1 || !action.date2) break;
           const d1 = action.date1;
           const d2 = action.date2;
+          // Skip swap if any item on either day is locked
+          const lockedCheck = await client.query(
+            `SELECT COUNT(*) as cnt FROM trip_schedule
+             WHERE trip_id = $1 AND is_locked = true
+             AND (start_time::date = $2::date OR start_time::date = $3::date)`,
+            [tripId, d1, d2],
+          );
+          if (parseInt(lockedCheck.rows[0].cnt) > 0) break;
           const dayDiff = (new Date(d2 + "T00:00:00Z").getTime() - new Date(d1 + "T00:00:00Z").getTime()) / 86400000;
           // Collect IDs for each date first to avoid overlap issues
           const d1Items = await client.query(
@@ -925,7 +942,7 @@ async function executeActions(tripId: string, actions: ScheduleAction[]): Promis
         case "delete": {
           if (!action.id) break;
           await client.query(
-            "DELETE FROM trip_schedule WHERE id = $1 AND trip_id = $2",
+            "DELETE FROM trip_schedule WHERE id = $1 AND trip_id = $2 AND is_locked = false",
             [action.id, tripId],
           );
           break;

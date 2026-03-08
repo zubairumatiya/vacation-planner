@@ -51,6 +51,7 @@ export interface Schedule {
   multi_day: boolean;
   sort_index: number;
   last_modified: string;
+  is_locked: boolean;
 }
 
 export interface TripList {

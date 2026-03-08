@@ -544,6 +544,44 @@ const EditVacationSchedule = ({
     setIndividualAddition({ addingContainer: "" });
   };
 
+  const handleToggleLock = async (item: Schedule) => {
+    if (!token) {
+      navigate("/redirect", {
+        state: { message: "Session expired, redirecting to log in..." },
+      });
+      return;
+    }
+    try {
+      const res = await fetch(`${apiURL}/toggle-lock/${item.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tripId }),
+      });
+      if (res.ok) {
+        const data: ScheduleUpdateResponse = await res.json();
+        if (data.updatedData) {
+          setSchedule((prev) => {
+            const updated = { ...prev };
+            for (const day in updated) {
+              updated[day] = updated[day].map((s) =>
+                s.id === item.id
+                  ? { ...s, isLocked: !item.isLocked, lastModified: data.updatedData!.lastModified }
+                  : s,
+              );
+            }
+            return updated;
+          });
+        }
+      }
+    } catch {
+      // silent fail for lock toggle
+    }
+  };
+
   const duplicateItem = async (item: Schedule, dayContainer: string) => {
     if (!token) {
       navigate("/redirect", {
@@ -738,6 +776,7 @@ const EditVacationSchedule = ({
                 activeId={props.activeItem}
                 viewMode={false}
                 onDuplicate={duplicateItem}
+                onToggleLock={handleToggleLock}
               />
             </div>
             {individualAddition.addingContainer !== dayObj.day ? (

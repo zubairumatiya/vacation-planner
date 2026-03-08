@@ -555,6 +555,34 @@ router.patch(
   },
 );
 
+router.patch(
+  "/toggle-lock/:id",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (
+    req: TypedRequest<{ tripId?: string }, unknown, IdParam>,
+    res: TypedResponse<ScheduleResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const result: QueryResult<Schedule> = await db.query(
+        "UPDATE trip_schedule SET is_locked = NOT is_locked, last_modified=NOW() WHERE id=$1 RETURNING *",
+        [req.params.id],
+      );
+      if (result.rowCount !== null && result.rowCount > 0) {
+        snakeToCamel<Schedule>(result.rows);
+        res.status(200).json({ updatedData: result.rows[0] });
+        return;
+      } else {
+        res.sendStatus(404);
+        return;
+      }
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 router.delete(
   "/schedule/:id",
   ensureLoggedIn,

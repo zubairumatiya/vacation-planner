@@ -36,6 +36,7 @@ declare global {
     multiDay: boolean;
     sortIndex: number;
     lastModified: string;
+    isLocked: boolean;
   };
 
   type Chunk = {

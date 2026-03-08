@@ -16,6 +16,7 @@ const CustomTableComponent = ({
   viewMode,
   activeId,
   onDuplicate,
+  onToggleLock,
 }: TableComponentProps) => {
   const { startError, endError, editLineId, errMessage } =
     useContext(EditScheduleContext);
@@ -81,6 +82,7 @@ const CustomTableComponent = ({
                   activeId={activeId}
                   viewMode={viewMode}
                   onDuplicate={onDuplicate}
+                  onToggleLock={onToggleLock}
                 ></CustomTableRow>
                 {editLineId === item.id && (
                   <tr className={styles.errDiv}>
