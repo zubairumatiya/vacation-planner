@@ -409,7 +409,35 @@ const EditCanvas = ({
         intersections = pointerCollisions;
       } else {
         if (dragFrom === "list") {
-          intersections = pointerCollisions;
+          // If the pointer is completely outside, let's check horizontally
+          if (pointerCollisions.length === 0 && args.pointerCoordinates) {
+            const { x } = args.pointerCoordinates;
+            
+            // Find schedule boundary limits
+            let minLeft = Infinity;
+            let maxRight = -Infinity;
+
+            for (const container of args.droppableContainers) {
+              // We only care about schedule containers (they're dates like 2026-03-03)
+              if (container.id in schedule && container.rect.current) {
+                const rect = container.rect.current;
+                if (rect.left < minLeft) minLeft = rect.left;
+                if (rect.left + rect.width > maxRight) maxRight = rect.left + rect.width;
+              }
+            }
+
+            // If we are still between the left and right edges of the schedule columns,
+            // we are likely scrolling up or down. Keep snapping it.
+            if (x >= minLeft && x <= maxRight) {
+              intersections = closestCorners(args);
+            } else {
+              // We pulled it sideways completely. Unsnap it.
+              intersections = pointerCollisions;
+            }
+          } else {
+            // Still hovering over something, stick with pointer
+            intersections = pointerCollisions;
+          }
         } else {
           intersections =
             pointerCollisions.length > 0
@@ -1924,6 +1952,7 @@ const EditCanvas = ({
                   isMobile={isMobile}
                   days={days}
                   onMobileAddToSchedule={onMobileAddToSchedule}
+                  isDragging={!!activeId}
                 />
               )}
             </div>

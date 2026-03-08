@@ -186,6 +186,7 @@ declare global {
       dayKey: string,
       timeString: string,
     ) => Promise<void>;
+    isDragging?: boolean;
   }
 
   type HideDay = {

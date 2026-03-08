@@ -357,6 +357,7 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   return (
     <div
       className={styles.pageWrapper}
+      style={props.isDragging ? { overflow: "hidden" } : undefined}
       onClick={addingNewItem ? undefined : clickAwayToCancel}
     >
       <h3 className={styles.title}>Want to See</h3>
