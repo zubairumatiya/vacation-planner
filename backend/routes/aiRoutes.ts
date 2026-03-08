@@ -11,7 +11,7 @@ import {
   markPlaceAdded,
   markPlaceAddedByName,
   markListPlaceAdded,
-} from "../helpers/geminiService.js";
+} from "../helpers/aiService.js";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,11 +19,11 @@ import type {
   TypedRequest,
   TypedResponse,
   TokenExchangeBody,
-  GeminiChatBody,
-  GeminiChatResponse,
-  GeminiStatusResponse,
-  GeminiRecommendedPlace,
-  GeminiListPlace,
+  AiChatBody,
+  AiChatResponse,
+  AiStatusResponse,
+  AiRecommendedPlace,
+  AiListPlace,
   GoogleTokenRow,
   TripIdParam,
 } from "../types/express.js";
@@ -46,12 +46,12 @@ interface GoogleTokenResponse {
 }
 
 // ──────────────────────────────────────────────
-// OAuth endpoints (kept wired but no longer used by Gemini chat)
+// OAuth endpoints (kept wired but no longer used by AI chat)
 // ──────────────────────────────────────────────
 
-// POST /gemini/token-exchange
+// POST /ai/token-exchange
 router.post(
-  "/gemini/token-exchange",
+  "/ai/token-exchange",
   ensureLoggedIn,
   async (
     req: TypedRequest<TokenExchangeBody>,
@@ -80,7 +80,7 @@ router.post(
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("[Gemini] Token exchange error:", errorData);
+        console.error("[AI] Token exchange error:", errorData);
         res.status(502).json({
           message:
             errorData.error_description || "Token exchange with Google failed",
@@ -112,16 +112,16 @@ router.post(
 );
 
 // ──────────────────────────────────────────────
-// Gemini Chat (API key, no OAuth needed)
+// AI Chat (API key, no OAuth needed)
 // ──────────────────────────────────────────────
 
-// POST /gemini/chat
+// POST /ai/chat
 router.post(
-  "/gemini/chat",
+  "/ai/chat",
   ensureLoggedIn,
   async (
-    req: TypedRequest<GeminiChatBody>,
-    res: TypedResponse<GeminiChatResponse>,
+    req: TypedRequest<AiChatBody>,
+    res: TypedResponse<AiChatResponse>,
     next: NextFunction
   ) => {
     const { tripId, prompt, mode, categories } = req.body;
@@ -141,21 +141,21 @@ router.post(
       res.status(200).json(result);
       return;
     } catch (err) {
-      console.error("[Gemini] Chat error:", err);
+      console.error("[AI] Chat error:", err);
       next(err);
     }
   }
 );
 
-// POST /gemini/schedule-list
+// POST /ai/schedule-list
 router.post(
-  "/gemini/schedule-list",
+  "/ai/schedule-list",
   ensureLoggedIn,
   async (
     req: TypedRequest<{ tripId: string; prompt: string }>,
     res: TypedResponse<{
       text: string;
-      recommendations?: GeminiChatResponse["itinerary"];
+      recommendations?: AiChatResponse["itinerary"];
       schedule?: unknown[];
       question?: string;
     }>,
@@ -181,19 +181,19 @@ router.post(
       });
       return;
     } catch (err) {
-      console.error("[Gemini] Schedule list error:", err);
+      console.error("[AI] Schedule list error:", err);
       next(err);
     }
   }
 );
 
-// GET /gemini/status
+// GET /ai/status
 router.get(
-  "/gemini/status",
+  "/ai/status",
   ensureLoggedIn,
   async (
     req: TypedRequest,
-    res: TypedResponse<GeminiStatusResponse>,
+    res: TypedResponse<AiStatusResponse>,
     next: NextFunction
   ) => {
     try {
@@ -209,13 +209,13 @@ router.get(
 // Recommended Places
 // ──────────────────────────────────────────────
 
-// GET /gemini/recommended-places/:tripId
+// GET /ai/recommended-places/:tripId
 router.get(
-  "/gemini/recommended-places/:tripId",
+  "/ai/recommended-places/:tripId",
   ensureLoggedIn,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
-    res: TypedResponse<{ places: GeminiRecommendedPlace[] }>,
+    res: TypedResponse<{ places: AiRecommendedPlace[] }>,
     next: NextFunction
   ) => {
     try {
@@ -228,9 +228,9 @@ router.get(
   }
 );
 
-// DELETE /gemini/recommended-places/:tripId
+// DELETE /ai/recommended-places/:tripId
 router.delete(
-  "/gemini/recommended-places/:tripId",
+  "/ai/recommended-places/:tripId",
   ensureLoggedIn,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
@@ -247,9 +247,9 @@ router.delete(
   }
 );
 
-// PATCH /gemini/recommended-places/:id/added
+// PATCH /ai/recommended-places/:id/added
 router.patch(
-  "/gemini/recommended-places/:id/added",
+  "/ai/recommended-places/:id/added",
   ensureLoggedIn,
   async (
     req: TypedRequest<{ added?: boolean }, unknown, { id: string }>,
@@ -267,9 +267,9 @@ router.patch(
   }
 );
 
-// PATCH /gemini/mark-added-by-name/:tripId
+// PATCH /ai/mark-added-by-name/:tripId
 router.patch(
-  "/gemini/mark-added-by-name/:tripId",
+  "/ai/mark-added-by-name/:tripId",
   ensureLoggedIn,
   async (
     req: TypedRequest<{ placeName: string }, unknown, TripIdParam>,
@@ -295,13 +295,13 @@ router.patch(
 // List Places
 // ──────────────────────────────────────────────
 
-// GET /gemini/list-places/:tripId
+// GET /ai/list-places/:tripId
 router.get(
-  "/gemini/list-places/:tripId",
+  "/ai/list-places/:tripId",
   ensureLoggedIn,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
-    res: TypedResponse<{ places: GeminiListPlace[] }>,
+    res: TypedResponse<{ places: AiListPlace[] }>,
     next: NextFunction
   ) => {
     try {
@@ -314,9 +314,9 @@ router.get(
   }
 );
 
-// DELETE /gemini/list-places/:tripId
+// DELETE /ai/list-places/:tripId
 router.delete(
-  "/gemini/list-places/:tripId",
+  "/ai/list-places/:tripId",
   ensureLoggedIn,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
@@ -333,9 +333,9 @@ router.delete(
   }
 );
 
-// PATCH /gemini/list-places/:id/added
+// PATCH /ai/list-places/:id/added
 router.patch(
-  "/gemini/list-places/:id/added",
+  "/ai/list-places/:id/added",
   ensureLoggedIn,
   async (
     req: TypedRequest<{ added?: boolean }, unknown, { id: string }>,

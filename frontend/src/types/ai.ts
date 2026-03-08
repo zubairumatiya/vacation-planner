@@ -1,4 +1,4 @@
-export interface GeminiItineraryItem {
+export interface AiItineraryItem {
   location: string;
   details: string;
   category: string;
@@ -8,15 +8,15 @@ export interface GeminiItineraryItem {
   multiDay: boolean;
 }
 
-export interface GeminiChatResponse {
+export interface AiChatResponse {
   text: string;
-  itinerary?: GeminiItineraryItem[];
+  itinerary?: AiItineraryItem[];
   question?: string;
   error?: string;
   message?: string;
 }
 
-export interface GeminiRecommendedPlace {
+export interface AiRecommendedPlace {
   id: string;
   trip_id: string;
   place_name: string;
@@ -29,7 +29,7 @@ export interface GeminiRecommendedPlace {
   added_to_schedule: boolean;
 }
 
-export interface GeminiListPlace {
+export interface AiListPlace {
   id: string;
   trip_id: string;
   place_name: string;

@@ -181,7 +181,7 @@
   background: #3a3a3c;
 }
 
-.geminiIcon {
+.aiIcon {
   flex-shrink: 0;
 }
 
@@ -192,7 +192,7 @@
   font-style: italic;
 }
 
-.geminiChatButton {
+.aiChatButton {
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -208,11 +208,11 @@
   transition: background 0.15s;
 }
 
-.geminiChatButton:hover {
+.aiChatButton:hover {
   background: #3a3a3c;
 }
 
-.geminiChatDropdown {
+.aiChatDropdown {
   position: absolute;
   right: 0;
   top: 100%;
@@ -231,12 +231,12 @@
   overflow-y: auto;
 }
 
-.geminiChatInputRow {
+.aiChatInputRow {
   display: flex;
   gap: 0.4rem;
 }
 
-.geminiChatInput {
+.aiChatInput {
   flex: 1;
   background: #1e1e20;
   border: 1px solid #555;
@@ -247,11 +247,11 @@
   outline: none;
 }
 
-.geminiChatInput:focus {
+.aiChatInput:focus {
   border-color: #2fe782;
 }
 
-.geminiChatSend {
+.aiChatSend {
   background: #2fe782;
   border: none;
   border-radius: 6px;
@@ -263,7 +263,7 @@
   white-space: nowrap;
 }
 
-.geminiChatSend:disabled {
+.aiChatSend:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -285,20 +285,20 @@
   background: #3a3a3c;
 }
 
-/* Gemini Response Area */
-.geminiResponseArea {
+/* AI Response Area */
+.aiResponseArea {
   padding: 0.5rem;
   border-top: 1px solid #444;
 }
 
-.geminiResponseText {
+.aiResponseText {
   color: #ddd;
   font-size: 0.85rem;
   line-height: 1.5;
   margin: 0;
 }
 
-.geminiResponseText h3 {
+.aiResponseText h3 {
   color: #2fe782;
   font-size: 0.85rem;
   font-weight: 600;
@@ -306,62 +306,62 @@
   letter-spacing: 0.01em;
 }
 
-.geminiResponseText h3:first-child {
+.aiResponseText h3:first-child {
   margin-top: 0;
 }
 
-.geminiResponseText p {
+.aiResponseText p {
   margin: 0 0 0.5rem;
 }
 
-.geminiResponseText p:last-child {
+.aiResponseText p:last-child {
   margin-bottom: 0;
 }
 
-.geminiResponseText strong {
+.aiResponseText strong {
   color: #fff;
   font-weight: 600;
 }
 
-.geminiResponseText em {
+.aiResponseText em {
   color: #bbb;
   font-style: italic;
 }
 
-.geminiResponseText ul {
+.aiResponseText ul {
   margin: 0.25rem 0 0.5rem;
   padding-left: 1.2rem;
   list-style: none;
 }
 
-.geminiResponseText ul li {
+.aiResponseText ul li {
   position: relative;
   padding-left: 0.15rem;
   margin-bottom: 0.35rem;
 }
 
-.geminiResponseText ul li::before {
-  content: "•";
+.aiResponseText ul li::before {
+  content: "\2022";
   position: absolute;
   left: -1rem;
   color: #666;
 }
 
-.geminiResponseText hr {
+.aiResponseText hr {
   border: none;
   border-top: 1px solid #444;
   margin: 0.75rem 0;
 }
 
-.geminiThinking {
+.aiThinking {
   color: #888;
   font-size: 0.85rem;
   font-style: italic;
   margin: 0;
 }
 
-/* Gemini Place Cards */
-.geminiItineraryList {
+/* AI Place Cards */
+.aiItineraryList {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -369,7 +369,7 @@
   padding-top: 0.5rem;
 }
 
-.geminiDateHeader {
+.aiDateHeader {
   color: #2fe782;
   font-size: 0.8rem;
   font-weight: 600;
@@ -378,7 +378,7 @@
   margin-bottom: 0.25rem;
 }
 
-.geminiPlaceCard {
+.aiPlaceCard {
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
@@ -389,11 +389,11 @@
   transition: opacity 0.2s;
 }
 
-.geminiPlaceCardAdded {
+.aiPlaceCardAdded {
   opacity: 0.5;
 }
 
-.geminiPlaceInfo {
+.aiPlaceInfo {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -401,18 +401,18 @@
   min-width: 0;
 }
 
-.geminiPlaceName {
+.aiPlaceName {
   color: #fff;
   font-weight: 600;
   font-size: 0.85rem;
 }
 
-.geminiPlaceTime {
+.aiPlaceTime {
   color: #2fe782;
   font-size: 0.75rem;
 }
 
-.geminiPlaceDetails {
+.aiPlaceDetails {
   color: #999;
   font-size: 0.75rem;
   line-height: 1.3;
@@ -422,7 +422,7 @@
   -webkit-box-orient: vertical;
 }
 
-.geminiAddButton {
+.aiAddButton {
   flex-shrink: 0;
   width: 28px;
   height: 28px;
@@ -443,13 +443,30 @@
   padding: 0.5rem 1.4rem 0.75rem;
 }
 
-.geminiAddButton:hover:not(:disabled) {
+.aiAddButton:hover:not(:disabled) {
   background: #fff;
   color: #242424;
 }
 
-.geminiAddButton:disabled {
+.aiAddButton:disabled {
   cursor: default;
   border-color: #555;
   color: #555;
+}
+
+/* Fullscreen AI dropdown on small screens */
+@media (max-width: 500px) {
+  .aiChatDropdown {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    margin-top: 0;
+    border-radius: 0;
+    border: none;
+    z-index: 1000;
+  }
 }

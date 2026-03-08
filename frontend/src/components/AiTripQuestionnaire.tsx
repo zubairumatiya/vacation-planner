@@ -90,8 +90,8 @@ const AiTripQuestionnaire = ({
         </button>
         <h2 style={titleStyle}>Plan Your Trip with AI</h2>
         <p style={subtitleStyle}>
-          Answer these questions so Gemini can create a personalized itinerary
-          for you.
+          Answer these questions so AI can create a personalized itinerary for
+          you.
         </p>
 
         <div style={questionsContainerStyle}>

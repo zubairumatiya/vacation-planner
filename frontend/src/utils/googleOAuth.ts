@@ -59,7 +59,7 @@ export async function sendCodeToBackend(code: string): Promise<void> {
   if (!token) throw new Error("Not authenticated");
 
   const response = await fetch(
-    `${import.meta.env.VITE_API_URL}/gemini/token-exchange`,
+    `${import.meta.env.VITE_API_URL}/ai/token-exchange`,
     {
       method: "POST",
       headers: {

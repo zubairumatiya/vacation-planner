@@ -55,7 +55,7 @@ import refreshFn from "../utils/refreshFn";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
 import SuggestionsSidebar from "../components/SuggestionsSidebar";
-import type { GeminiRecommendedPlace } from "../types/gemini";
+import type { AiRecommendedPlace } from "../types/ai";
 
 /** Mutate ScheduleFromApi items in-place, converting date strings → Date objects and id → string. Returns the array typed as Schedule[]. */
 function hydrateSchedule(items: ScheduleFromApi[]): Schedule[] {
@@ -148,7 +148,7 @@ const EditCanvas = ({
   );
   const [answersLoaded, setAnswersLoaded] = useState(false);
   const handleSidebarAddToSchedule = useCallback(
-    async (place: GeminiRecommendedPlace) => {
+    async (place: AiRecommendedPlace) => {
       if (!token || !tripId) return;
       const res = await fetch(`${apiURL}/schedule/${tripId}`, {
         method: "POST",

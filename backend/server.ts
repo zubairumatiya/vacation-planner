@@ -4,7 +4,7 @@ const app = express();
 import vacationRoutes from "./routes/vacationRoutes.js";
 import loginRoutes from "./routes/loginRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
-import geminiRoutes from "./routes/geminiRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import dotenv from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
@@ -31,7 +31,7 @@ app.use(morgan("tiny"));
 app.use("/", vacationRoutes);
 app.use("/", loginRoutes);
 app.use("/", profileRoutes);
-app.use("/", geminiRoutes);
+app.use("/", aiRoutes);
 
 const port = process.env.PORT;
 

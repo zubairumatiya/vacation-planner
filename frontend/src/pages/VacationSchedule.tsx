@@ -4,7 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
-import type { GeminiItineraryItem } from "../types/gemini";
+import type { AiItineraryItem } from "../types/ai";
 import ReactMarkdown from "react-markdown";
 
 type VacationProps = {
@@ -30,14 +30,14 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [role, setRole] = useState("");
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const sharePanelRef = useRef<HTMLDivElement>(null);
-  const [geminiChatOpen, setGeminiChatOpen] = useState(false);
-  const geminiChatRef = useRef<HTMLDivElement>(null);
-  const [geminiPrompt, setGeminiPrompt] = useState("");
-  const [geminiLoading, setGeminiLoading] = useState(false);
-  const [geminiConnected, setGeminiConnected] = useState(false);
-  const [geminiResponse, setGeminiResponse] = useState<string | null>(null);
-  const [geminiQuestion, setGeminiQuestion] = useState<string | null>(null);
-  const [geminiItinerary, setGeminiItinerary] = useState<GeminiItineraryItem[]>(
+  const [aiChatOpen, setAiChatOpen] = useState(false);
+  const aiChatRef = useRef<HTMLDivElement>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiConnected, setAiConnected] = useState(false);
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [aiQuestion, setAiQuestion] = useState<string | null>(null);
+  const [aiItinerary, setAiItinerary] = useState<AiItineraryItem[]>(
     [],
   );
   const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
@@ -59,8 +59,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [listUpdateKey, setListUpdateKey] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [hasUnreadAiResponse, setHasUnreadAiResponse] = useState(false);
-  const geminiChatOpenRef = useRef(geminiChatOpen);
-  geminiChatOpenRef.current = geminiChatOpen;
+  const aiChatOpenRef = useRef(aiChatOpen);
+  aiChatOpenRef.current = aiChatOpen;
 
   const showToast = useCallback((message: string) => {
     setToastMessage(message);
@@ -89,35 +89,35 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   }, [sharePanelOpen]);
 
   useEffect(() => {
-    if (!geminiChatOpen) return;
+    if (!aiChatOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (
-        geminiChatRef.current &&
-        !geminiChatRef.current.contains(e.target as Node)
+        aiChatRef.current &&
+        !aiChatRef.current.contains(e.target as Node)
       ) {
-        setGeminiChatOpen(false);
+        setAiChatOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [geminiChatOpen]);
+  }, [aiChatOpen]);
 
   useEffect(() => {
     if (!token) return;
-    const checkGemini = async () => {
+    const checkAiStatus = async () => {
       try {
-        const res = await fetch(`${apiURL}/gemini/status`, {
+        const res = await fetch(`${apiURL}/ai/status`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await res.json();
-          setGeminiConnected(data.connected);
+          setAiConnected(data.connected);
         }
       } catch {
         // silent fail
       }
     };
-    checkGemini();
+    checkAiStatus();
   }, [token]);
 
   // Check if questionnaire exists
@@ -146,7 +146,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     if (hasQuestionnaire === false) {
       setShowQuestionnaire(true);
     } else {
-      setGeminiChatOpen((prev) => {
+      setAiChatOpen((prev) => {
         if (!prev) setHasUnreadAiResponse(false);
         return !prev;
       });
@@ -157,7 +157,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const handleQuestionnaireSubmitted = () => {
     setHasQuestionnaire(true);
     setShowQuestionnaire(false);
-    setGeminiChatOpen(true);
+    setAiChatOpen(true);
   };
 
   const toggleCategory = (cat: string) => {
@@ -166,20 +166,20 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     );
   };
 
-  const handleGeminiSend = async () => {
-    if (!token || !tripId || geminiLoading) return;
-    const hasPrompt = geminiPrompt.trim().length > 0;
+  const handleAiSend = async () => {
+    if (!token || !tripId || aiLoading) return;
+    const hasPrompt = aiPrompt.trim().length > 0;
     const hasMode = aiMode !== null;
     if (!hasPrompt && !hasMode) return;
     if (aiMode === "list" && selectedCategories.length === 0) return;
 
-    setGeminiLoading(true);
-    setGeminiResponse(null);
-    setGeminiQuestion(null);
-    setGeminiItinerary([]);
+    setAiLoading(true);
+    setAiResponse(null);
+    setAiQuestion(null);
+    setAiItinerary([]);
     setAddedItems(new Set());
     try {
-      const response = await fetch(`${apiURL}/gemini/chat`, {
+      const response = await fetch(`${apiURL}/ai/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -187,23 +187,23 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         },
         body: JSON.stringify({
           tripId,
-          prompt: geminiPrompt.trim() || undefined,
+          prompt: aiPrompt.trim() || undefined,
           mode: aiMode,
           categories: aiMode === "list" ? selectedCategories : undefined,
         }),
       });
 
       if (!response.ok) {
-        setGeminiResponse("Something went wrong. Please try again.");
+        setAiResponse("Something went wrong. Please try again.");
         return;
       }
 
       const data = await response.json();
       if (data.text) {
-        setGeminiResponse(data.text);
+        setAiResponse(data.text);
       }
       if (data.question) {
-        setGeminiQuestion(data.question);
+        setAiQuestion(data.question);
       }
 
       // If the AI modified the schedule (general mode actions), refresh it
@@ -214,7 +214,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       if (data.itinerary && data.itinerary.length > 0) {
         if (aiMode === null) {
           // General mode — just show items as cards
-          setGeminiItinerary(data.itinerary);
+          setAiItinerary(data.itinerary);
           setSidebarRefreshKey((prev) => prev + 1);
         } else if (aiMode === "schedule") {
           // Fetch user's list and current schedule to identify what needs adding
@@ -250,10 +250,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             });
           }
 
-          const listSourced: { item: GeminiItineraryItem; idx: number }[] = [];
-          const recommendations: GeminiItineraryItem[] = [];
+          const listSourced: { item: AiItineraryItem; idx: number }[] = [];
+          const recommendations: AiItineraryItem[] = [];
 
-          data.itinerary.forEach((item: GeminiItineraryItem, i: number) => {
+          data.itinerary.forEach((item: AiItineraryItem, i: number) => {
             const name = item.location.toLowerCase().trim();
             if (listNames.has(name) && !scheduledNames.has(name)) {
               // On user's list but not yet in schedule — auto-add
@@ -277,33 +277,33 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
 
           // Only show recommendations as cards in chat
           if (recommendations.length > 0) {
-            setGeminiItinerary(recommendations);
+            setAiItinerary(recommendations);
             setSidebarRefreshKey((prev) => prev + 1);
           }
         } else {
-          setGeminiItinerary(data.itinerary);
+          setAiItinerary(data.itinerary);
           if (!data.question) {
             setSidebarRefreshKey((prev) => prev + 1);
           }
         }
       }
     } catch (err) {
-      console.error("[Gemini] Request failed:", err);
-      setGeminiResponse("Request failed. Please try again.");
+      console.error("[AI] Request failed:", err);
+      setAiResponse("Request failed. Please try again.");
     } finally {
-      setGeminiLoading(false);
-      setGeminiPrompt("");
+      setAiLoading(false);
+      setAiPrompt("");
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
-      if (!geminiChatOpenRef.current) {
+      if (!aiChatOpenRef.current) {
         setHasUnreadAiResponse(true);
       }
     }
   };
 
   const handleAddToSchedule = async (
-    item: GeminiItineraryItem,
+    item: AiItineraryItem,
     index: number,
     mode: AiMode = aiMode,
   ) => {
@@ -347,7 +347,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           // Refresh schedule UI immediately when adding to schedule
           setScheduleUpdateKey((prev) => prev + 1);
           // Mark the corresponding recommendation as added
-          fetch(`${apiURL}/gemini/mark-added-by-name/${tripId}`, {
+          fetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
             method: "PATCH",
             headers: {
               "Content-Type": "application/json",
@@ -363,14 +363,14 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         }
       }
     } catch (err) {
-      console.error("[Gemini] Failed to add item:", err);
+      console.error("[AI] Failed to add item:", err);
     } finally {
       setAddingItem(null);
     }
   };
 
   const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setGeminiPrompt(e.target.value);
+    setAiPrompt(e.target.value);
     const el = e.target;
     el.style.height = "auto";
     el.style.height = Math.min(el.scrollHeight, 120) + "px";
@@ -381,9 +381,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     if (!token || !tripId || addingAllRecs) return;
     setAddingAllRecs(true);
     const newAdded = new Set(addedItems);
-    for (let i = 0; i < geminiItinerary.length; i++) {
+    for (let i = 0; i < aiItinerary.length; i++) {
       if (!addedItems.has(i)) {
-        await handleAddToSchedule(geminiItinerary[i], i);
+        await handleAddToSchedule(aiItinerary[i], i);
         newAdded.add(i);
       }
     }
@@ -511,8 +511,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             </NavLink>
           </div>
           <div className={styles.costAndAiWrapper}>
-            {isEditPage && geminiConnected && (
-              <div ref={geminiChatRef} className={styles.aiButtonWrapper}>
+            {isEditPage && aiConnected && (
+              <div ref={aiChatRef} className={styles.aiButtonWrapper}>
                 <button
                   type="button"
                   className={styles.aiButton}
@@ -520,7 +520,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                   style={{ position: "relative" }}
                 >
                   Ask AI
-                  {hasUnreadAiResponse && !geminiChatOpen && (
+                  {hasUnreadAiResponse && !aiChatOpen && (
                     <span
                       style={{
                         position: "absolute",
@@ -534,8 +534,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     />
                   )}
                 </button>
-                {geminiChatOpen && (
-                  <div className={styles.geminiChatDropdown}>
+                {aiChatOpen && (
+                  <div className={styles.aiChatDropdown}>
                     {/* Mode toggle */}
                     <div
                       style={{
@@ -547,7 +547,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       <button
                         type="button"
                         onClick={() => setAiMode((prev) => prev === "list" ? null : "list")}
-                        disabled={geminiLoading}
+                        disabled={aiLoading}
                         style={{
                           flex: 1,
                           padding: "0.35rem 0.5rem",
@@ -559,11 +559,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           background:
                             aiMode === "list" ? "rgba(47,231,130,0.15)" : "#1e1e20",
                           color: aiMode === "list" ? "#2fe782" : "#999",
-                          cursor: geminiLoading ? "not-allowed" : "pointer",
+                          cursor: aiLoading ? "not-allowed" : "pointer",
                           fontSize: "0.75rem",
                           fontWeight: 600,
                           textAlign: "left",
-                          opacity: geminiLoading ? 0.5 : 1,
+                          opacity: aiLoading ? 0.5 : 1,
                         }}
                       >
                         <div>List</div>
@@ -581,7 +581,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       <button
                         type="button"
                         onClick={() => setAiMode((prev) => prev === "schedule" ? null : "schedule")}
-                        disabled={geminiLoading}
+                        disabled={aiLoading}
                         style={{
                           flex: 1,
                           padding: "0.35rem 0.5rem",
@@ -595,11 +595,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               ? "rgba(47,231,130,0.15)"
                               : "#1e1e20",
                           color: aiMode === "schedule" ? "#2fe782" : "#999",
-                          cursor: geminiLoading ? "not-allowed" : "pointer",
+                          cursor: aiLoading ? "not-allowed" : "pointer",
                           fontSize: "0.75rem",
                           fontWeight: 600,
                           textAlign: "left",
-                          opacity: geminiLoading ? 0.5 : 1,
+                          opacity: aiLoading ? 0.5 : 1,
                         }}
                       >
                         <div>Schedule</div>
@@ -644,7 +644,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               type="checkbox"
                               checked={selectedCategories.includes(cat)}
                               onChange={() => toggleCategory(cat)}
-                              disabled={geminiLoading}
+                              disabled={aiLoading}
                               style={{ accentColor: "#2fe782" }}
                             />
                             {cat}
@@ -653,13 +653,13 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       </div>
                     )}
 
-                    <div className={styles.geminiChatInputRow}>
+                    <div className={styles.aiChatInputRow}>
                       <button
                         type="button"
                         className={styles.editQuestionnaireButton}
                         onClick={() => {
                           setShowQuestionnaire(true);
-                          setGeminiChatOpen(false);
+                          setAiChatOpen(false);
                         }}
                         title="Edit questionnaire"
                       >
@@ -680,16 +680,16 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       <textarea
                         ref={textareaRef}
                         placeholder="Ask AI something..."
-                        value={geminiPrompt}
+                        value={aiPrompt}
                         onChange={handleTextareaInput}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) {
                             e.preventDefault();
-                            handleGeminiSend();
+                            handleAiSend();
                           }
                         }}
-                        className={styles.geminiChatInput}
-                        disabled={geminiLoading}
+                        className={styles.aiChatInput}
+                        disabled={aiLoading}
                         rows={1}
                         style={{
                           resize: "none",
@@ -699,24 +699,24 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       />
                       <button
                         type="button"
-                        onClick={handleGeminiSend}
-                        className={styles.geminiChatSend}
+                        onClick={handleAiSend}
+                        className={styles.aiChatSend}
                         disabled={
-                          geminiLoading ||
-                          (!geminiPrompt.trim() && aiMode === null) ||
+                          aiLoading ||
+                          (!aiPrompt.trim() && aiMode === null) ||
                           (aiMode === "list" && selectedCategories.length === 0)
                         }
                       >
-                        {geminiLoading ? "..." : "Send"}
+                        {aiLoading ? "..." : "Send"}
                       </button>
                     </div>
-                    {geminiLoading && (
-                      <div className={styles.geminiResponseArea}>
-                        <p className={styles.geminiThinking}>Thinking...</p>
+                    {aiLoading && (
+                      <div className={styles.aiResponseArea}>
+                        <p className={styles.aiThinking}>Thinking...</p>
                       </div>
                     )}
-                    {/* Question from Gemini */}
-                    {geminiQuestion && (
+                    {/* Question from AI */}
+                    {aiQuestion && (
                       <div
                         style={{
                           margin: "0.5rem 0.6rem",
@@ -744,21 +744,21 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                             whiteSpace: "pre-wrap",
                           }}
                         >
-                          {geminiQuestion}
+                          {aiQuestion}
                         </p>
                       </div>
                     )}
-                    {geminiResponse && (
-                      <div className={styles.geminiResponseArea}>
-                        <div className={styles.geminiResponseText}>
-                          <ReactMarkdown>{geminiResponse}</ReactMarkdown>
+                    {aiResponse && (
+                      <div className={styles.aiResponseArea}>
+                        <div className={styles.aiResponseText}>
+                          <ReactMarkdown>{aiResponse}</ReactMarkdown>
                         </div>
                       </div>
                     )}
-                    {geminiItinerary.length > 0 && (
-                      <div className={styles.geminiItineraryList}>
+                    {aiItinerary.length > 0 && (
+                      <div className={styles.aiItineraryList}>
                         {/* Add all recs button */}
-                        {geminiItinerary.some((_, i) => !addedItems.has(i)) && (
+                        {aiItinerary.some((_, i) => !addedItems.has(i)) && (
                           <button
                             type="button"
                             onClick={handleAddAllRecs}
@@ -786,12 +786,12 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                 {
                                   label: string;
                                   items: {
-                                    item: (typeof geminiItinerary)[0];
+                                    item: (typeof aiItinerary)[0];
                                     idx: number;
                                   }[];
                                 }
                               > = {};
-                              geminiItinerary.forEach((item, i) => {
+                              aiItinerary.forEach((item, i) => {
                                 const d = item.startTime ? new Date(item.startTime) : null;
                                 const isValid = d && !isNaN(d.getTime());
                                 const dateKey = isValid ? d.toISOString().slice(0, 10) : "Unscheduled";
@@ -826,25 +826,25 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                 .sort(([a], [b]) => a.localeCompare(b))
                                 .map(([dateKey, { label, items }]) => (
                                   <div key={dateKey}>
-                                    <div className={styles.geminiDateHeader}>
+                                    <div className={styles.aiDateHeader}>
                                       {label}
                                     </div>
                                     {items.map(({ item, idx }) => (
                                       <div
                                         key={`${item.location}-${idx}`}
-                                        className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
+                                        className={`${styles.aiPlaceCard} ${addedItems.has(idx) ? styles.aiPlaceCardAdded : ""}`}
                                       >
                                         <div
-                                          className={styles.geminiPlaceInfo}
+                                          className={styles.aiPlaceInfo}
                                         >
                                           <span
-                                            className={styles.geminiPlaceName}
+                                            className={styles.aiPlaceName}
                                           >
                                             {item.location}
                                           </span>
                                           {item.startTime && item.endTime && (
                                           <span
-                                            className={styles.geminiPlaceTime}
+                                            className={styles.aiPlaceTime}
                                           >
                                             {new Date(
                                               item.startTime,
@@ -863,7 +863,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                           )}
                                           <span
                                             className={
-                                              styles.geminiPlaceDetails
+                                              styles.aiPlaceDetails
                                             }
                                           >
                                             {item.details}
@@ -871,7 +871,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                         </div>
                                         <button
                                           type="button"
-                                          className={styles.geminiAddButton}
+                                          className={styles.aiAddButton}
                                           onClick={() =>
                                             handleAddToSchedule(item, idx)
                                           }
@@ -901,11 +901,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               const grouped: Record<
                                 string,
                                 {
-                                  item: (typeof geminiItinerary)[0];
+                                  item: (typeof aiItinerary)[0];
                                   idx: number;
                                 }[]
                               > = {};
-                              geminiItinerary.forEach((item, i) => {
+                              aiItinerary.forEach((item, i) => {
                                 const cat = item.category || "Other";
                                 if (!grouped[cat]) grouped[cat] = [];
                                 grouped[cat].push({ item, idx: i });
@@ -913,25 +913,25 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               return Object.entries(grouped).map(
                                 ([cat, items]) => (
                                   <div key={cat}>
-                                    <div className={styles.geminiDateHeader}>
+                                    <div className={styles.aiDateHeader}>
                                       {cat}
                                     </div>
                                     {items.map(({ item, idx }) => (
                                       <div
                                         key={`${item.location}-${idx}`}
-                                        className={`${styles.geminiPlaceCard} ${addedItems.has(idx) ? styles.geminiPlaceCardAdded : ""}`}
+                                        className={`${styles.aiPlaceCard} ${addedItems.has(idx) ? styles.aiPlaceCardAdded : ""}`}
                                       >
                                         <div
-                                          className={styles.geminiPlaceInfo}
+                                          className={styles.aiPlaceInfo}
                                         >
                                           <span
-                                            className={styles.geminiPlaceName}
+                                            className={styles.aiPlaceName}
                                           >
                                             {item.location}
                                           </span>
                                           <span
                                             className={
-                                              styles.geminiPlaceDetails
+                                              styles.aiPlaceDetails
                                             }
                                           >
                                             {item.details}
@@ -939,7 +939,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                         </div>
                                         <button
                                           type="button"
-                                          className={styles.geminiAddButton}
+                                          className={styles.aiAddButton}
                                           onClick={() =>
                                             handleAddToSchedule(item, idx)
                                           }

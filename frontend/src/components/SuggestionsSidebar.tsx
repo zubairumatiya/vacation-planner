@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
-import type { GeminiRecommendedPlace, GeminiListPlace } from "../types/gemini";
+import type { AiRecommendedPlace, AiListPlace } from "../types/ai";
 import styles from "../styles/SuggestionsSidebar.module.css";
 
 const apiURL = import.meta.env.VITE_API_URL;
@@ -11,7 +11,7 @@ const INDIGO = "#6366f1";
 type SuggestionsSidebarProps = {
   tripId: string;
   refreshKey: number;
-  onAddToSchedule: (place: GeminiRecommendedPlace) => Promise<void>;
+  onAddToSchedule: (place: AiRecommendedPlace) => Promise<void>;
   onAddToList: (placeName: string, details: string | null) => Promise<void>;
 };
 
@@ -45,8 +45,8 @@ const SuggestionsSidebar = ({
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const [open, setOpen] = useState(false);
-  const [schedulePlaces, setSchedulePlaces] = useState<GeminiRecommendedPlace[]>([]);
-  const [listPlaces, setListPlaces] = useState<GeminiListPlace[]>([]);
+  const [schedulePlaces, setSchedulePlaces] = useState<AiRecommendedPlace[]>([]);
+  const [listPlaces, setListPlaces] = useState<AiListPlace[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [choiceId, setChoiceId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
@@ -55,10 +55,10 @@ const SuggestionsSidebar = ({
     if (!token) return;
     try {
       const [schedRes, listRes] = await Promise.all([
-        fetch(`${apiURL}/gemini/recommended-places/${tripId}`, {
+        fetch(`${apiURL}/ai/recommended-places/${tripId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${apiURL}/gemini/list-places/${tripId}`, {
+        fetch(`${apiURL}/ai/list-places/${tripId}`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -127,7 +127,7 @@ const SuggestionsSidebar = ({
             p.id === place.id ? { ...p, added_to_schedule: true } : p,
           ),
         );
-        await fetch(`${apiURL}/gemini/recommended-places/${place.id}/added`, {
+        await fetch(`${apiURL}/ai/recommended-places/${place.id}/added`, {
           method: "PATCH",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -150,7 +150,7 @@ const SuggestionsSidebar = ({
             p.id === place.id ? { ...p, added_to_schedule: true } : p,
           ),
         );
-        await fetch(`${apiURL}/gemini/list-places/${place.id}/added`, {
+        await fetch(`${apiURL}/ai/list-places/${place.id}/added`, {
           method: "PATCH",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -160,7 +160,7 @@ const SuggestionsSidebar = ({
             p.id === place.id ? { ...p, added_to_schedule: true } : p,
           ),
         );
-        await fetch(`${apiURL}/gemini/recommended-places/${place.id}/added`, {
+        await fetch(`${apiURL}/ai/recommended-places/${place.id}/added`, {
           method: "PATCH",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -174,8 +174,8 @@ const SuggestionsSidebar = ({
     if (!token) return;
     const endpoint =
       place.source === "schedule"
-        ? `${apiURL}/gemini/recommended-places/${place.id}/added`
-        : `${apiURL}/gemini/list-places/${place.id}/added`;
+        ? `${apiURL}/ai/recommended-places/${place.id}/added`
+        : `${apiURL}/ai/list-places/${place.id}/added`;
     try {
       await fetch(endpoint, {
         method: "PATCH",
@@ -220,11 +220,11 @@ const SuggestionsSidebar = ({
     setClearing(true);
     try {
       await Promise.all([
-        fetch(`${apiURL}/gemini/recommended-places/${tripId}`, {
+        fetch(`${apiURL}/ai/recommended-places/${tripId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${apiURL}/gemini/list-places/${tripId}`, {
+        fetch(`${apiURL}/ai/list-places/${tripId}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         }),

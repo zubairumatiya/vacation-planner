@@ -27,7 +27,7 @@ export default async function refreshGoogleToken(
   );
 
   if (result.rowCount === null || result.rowCount < 1) {
-    throw new Error("NoGeminiAuth");
+    throw new Error("NoAiAuth");
   }
 
   const row = result.rows[0];

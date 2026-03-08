@@ -1,9 +1,9 @@
 import { GoogleGenAI, ThinkingLevel } from "@google/genai";
 import db from "../db/db.js";
 import type {
-  GeminiItineraryItem,
-  GeminiListPlace,
-  GeminiRecommendedPlace,
+  AiItineraryItem,
+  AiListPlace,
+  AiRecommendedPlace,
   QuestionnaireRow,
   Schedule,
   Trip,
@@ -17,8 +17,8 @@ interface TripContext {
   trip: Trip;
   schedule: Schedule[];
   questionnaire: QuestionnaireRow | null;
-  recommendedPlaces: GeminiRecommendedPlace[];
-  listPlaces: GeminiListPlace[];
+  recommendedPlaces: AiRecommendedPlace[];
+  listPlaces: AiListPlace[];
   wishList: TripList[];
 }
 
@@ -27,7 +27,7 @@ export async function chat(
   userMessage: string,
   mode: "schedule" | "list" | null = null,
   categories?: string[],
-): Promise<{ text: string; itinerary?: GeminiItineraryItem[]; question?: string; scheduleUpdated?: boolean }> {
+): Promise<{ text: string; itinerary?: AiItineraryItem[]; question?: string; scheduleUpdated?: boolean }> {
   const context = await fetchTripContext(tripId);
 
   let systemPrompt: string;
@@ -57,7 +57,7 @@ export async function chat(
   });
 
   const text = response.text ?? "";
-  console.log("[Gemini] Raw response:", text);
+  console.log("[AI] Raw response:", text);
   const question = parseQuestion(text);
   const itinerary = parseItinerary(text);
 
@@ -100,7 +100,7 @@ export async function scheduleListItems(
   userMessage: string,
 ): Promise<{
   text: string;
-  recommendations: GeminiItineraryItem[];
+  recommendations: AiItineraryItem[];
   schedule: Schedule[];
   question?: string;
 }> {
@@ -117,7 +117,7 @@ export async function scheduleListItems(
   });
 
   const text = response.text ?? "";
-  console.log("[Gemini] Raw response:", text);
+  console.log("[AI] Raw response:", text);
   const question = parseQuestion(text);
   const itinerary = parseItinerary(text);
 
@@ -141,8 +141,8 @@ export async function scheduleListItems(
     listNameSet.add(w.value.toLowerCase());
   }
 
-  const listSourced: GeminiItineraryItem[] = [];
-  const recommendations: GeminiItineraryItem[] = [];
+  const listSourced: AiItineraryItem[] = [];
+  const recommendations: AiItineraryItem[] = [];
 
   for (const item of itinerary) {
     if (listNameSet.has(item.location.toLowerCase())) {
@@ -197,7 +197,7 @@ export async function scheduleListItems(
     client.release();
   }
 
-  // Store recommendations in gemini_recommended_places for sidebar
+  // Store recommendations in ai_recommended_places for sidebar
   if (recommendations.length > 0) {
     await storeRecommendedPlaces(tripId, recommendations);
   }
@@ -234,12 +234,12 @@ async function fetchTripContext(tripId: string): Promise<TripContext> {
       "SELECT * FROM trip_questionnaire WHERE trip_id = $1",
       [tripId],
     ),
-    db.query<GeminiRecommendedPlace>(
-      "SELECT * FROM gemini_recommended_places WHERE trip_id = $1 ORDER BY recommended_at ASC",
+    db.query<AiRecommendedPlace>(
+      "SELECT * FROM ai_recommended_places WHERE trip_id = $1 ORDER BY recommended_at ASC",
       [tripId],
     ),
-    db.query<GeminiListPlace>(
-      "SELECT * FROM gemini_list_places WHERE trip_id = $1 ORDER BY recommended_at ASC",
+    db.query<AiListPlace>(
+      "SELECT * FROM ai_list_places WHERE trip_id = $1 ORDER BY recommended_at ASC",
       [tripId],
     ),
     db.query<TripList>(
@@ -798,9 +798,9 @@ function buildSchedulingRules(questionnaire: QuestionnaireRow | null): string {
 - **Relaxed:** Schedule 2-3 activities per day with generous free time between them.`;
 }
 
-function parseItinerary(text: string): GeminiItineraryItem[] {
+function parseItinerary(text: string): AiItineraryItem[] {
   const regex = /====ITINERARY_START====([\s\S]*?)====ITINERARY_END====/g;
-  const items: GeminiItineraryItem[] = [];
+  const items: AiItineraryItem[] = [];
 
   let match;
   while ((match = regex.exec(text)) !== null) {
@@ -820,7 +820,7 @@ function parseItinerary(text: string): GeminiItineraryItem[] {
         }
       }
     } catch (err) {
-      console.error("[Gemini] Failed to parse itinerary block:", err);
+      console.error("[AI] Failed to parse itinerary block:", err);
     }
   }
 
@@ -861,7 +861,7 @@ function parseActions(text: string): ScheduleAction[] {
         }
       }
     } catch (err) {
-      console.error("[Gemini] Failed to parse actions block:", err);
+      console.error("[AI] Failed to parse actions block:", err);
     }
   }
 
@@ -975,11 +975,11 @@ async function executeActions(tripId: string, actions: ScheduleAction[]): Promis
 
 async function storeRecommendedPlaces(
   tripId: string,
-  items: GeminiItineraryItem[],
+  items: AiItineraryItem[],
 ): Promise<void> {
   // Fetch existing place names to skip duplicates
   const existing = await db.query<{ place_name: string }>(
-    "SELECT place_name FROM gemini_recommended_places WHERE trip_id = $1",
+    "SELECT place_name FROM ai_recommended_places WHERE trip_id = $1",
     [tripId],
   );
   const existingNames = new Set(
@@ -1010,7 +1010,7 @@ async function storeRecommendedPlaces(
   if (values.length === 0) return;
 
   await db.query(
-    `INSERT INTO gemini_recommended_places (trip_id, place_name, place_category, start_time, end_time, cost, details)
+    `INSERT INTO ai_recommended_places (trip_id, place_name, place_category, start_time, end_time, cost, details)
      VALUES ${values.join(", ")}`,
     params,
   );
@@ -1018,11 +1018,11 @@ async function storeRecommendedPlaces(
 
 async function storeListPlaces(
   tripId: string,
-  items: GeminiItineraryItem[],
+  items: AiItineraryItem[],
 ): Promise<void> {
   // Fetch existing place names to skip duplicates
   const existing = await db.query<{ place_name: string }>(
-    "SELECT place_name FROM gemini_list_places WHERE trip_id = $1",
+    "SELECT place_name FROM ai_list_places WHERE trip_id = $1",
     [tripId],
   );
   const existingNames = new Set(
@@ -1051,7 +1051,7 @@ async function storeListPlaces(
   if (values.length === 0) return;
 
   await db.query(
-    `INSERT INTO gemini_list_places (trip_id, place_name, place_category, details, cost)
+    `INSERT INTO ai_list_places (trip_id, place_name, place_category, details, cost)
      VALUES ${values.join(", ")}`,
     params,
   );
@@ -1059,9 +1059,9 @@ async function storeListPlaces(
 
 export async function getRecommendedPlaces(
   tripId: string,
-): Promise<GeminiRecommendedPlace[]> {
-  const result = await db.query<GeminiRecommendedPlace>(
-    "SELECT * FROM gemini_recommended_places WHERE trip_id = $1 ORDER BY recommended_at DESC",
+): Promise<AiRecommendedPlace[]> {
+  const result = await db.query<AiRecommendedPlace>(
+    "SELECT * FROM ai_recommended_places WHERE trip_id = $1 ORDER BY recommended_at DESC",
     [tripId],
   );
   return result.rows;
@@ -1069,34 +1069,34 @@ export async function getRecommendedPlaces(
 
 export async function getListPlaces(
   tripId: string,
-): Promise<GeminiListPlace[]> {
-  const result = await db.query<GeminiListPlace>(
-    "SELECT * FROM gemini_list_places WHERE trip_id = $1 ORDER BY recommended_at DESC",
+): Promise<AiListPlace[]> {
+  const result = await db.query<AiListPlace>(
+    "SELECT * FROM ai_list_places WHERE trip_id = $1 ORDER BY recommended_at DESC",
     [tripId],
   );
   return result.rows;
 }
 
 export async function clearRecommendedPlaces(tripId: string): Promise<void> {
-  await db.query("DELETE FROM gemini_recommended_places WHERE trip_id = $1", [
+  await db.query("DELETE FROM ai_recommended_places WHERE trip_id = $1", [
     tripId,
   ]);
 }
 
 export async function markPlaceAdded(placeId: string, added = true): Promise<void> {
   await db.query(
-    "UPDATE gemini_recommended_places SET added_to_schedule = $2 WHERE id = $1",
+    "UPDATE ai_recommended_places SET added_to_schedule = $2 WHERE id = $1",
     [placeId, added],
   );
 }
 
 export async function markPlaceAddedByName(tripId: string, placeName: string): Promise<void> {
   await db.query(
-    "UPDATE gemini_recommended_places SET added_to_schedule = true WHERE trip_id = $1 AND place_name = $2",
+    "UPDATE ai_recommended_places SET added_to_schedule = true WHERE trip_id = $1 AND place_name = $2",
     [tripId, placeName],
   );
   await db.query(
-    "UPDATE gemini_list_places SET added_to_schedule = true WHERE trip_id = $1 AND place_name = $2",
+    "UPDATE ai_list_places SET added_to_schedule = true WHERE trip_id = $1 AND place_name = $2",
     [tripId, placeName],
   );
   // Also mark one corresponding trip_list item as added so the AI
@@ -1113,12 +1113,12 @@ export async function markPlaceAddedByName(tripId: string, placeName: string): P
 }
 
 export async function clearListPlaces(tripId: string): Promise<void> {
-  await db.query("DELETE FROM gemini_list_places WHERE trip_id = $1", [tripId]);
+  await db.query("DELETE FROM ai_list_places WHERE trip_id = $1", [tripId]);
 }
 
 export async function markListPlaceAdded(placeId: string, added = true): Promise<void> {
   await db.query(
-    "UPDATE gemini_list_places SET added_to_schedule = $2 WHERE id = $1",
+    "UPDATE ai_list_places SET added_to_schedule = $2 WHERE id = $1",
     [placeId, added],
   );
 }
