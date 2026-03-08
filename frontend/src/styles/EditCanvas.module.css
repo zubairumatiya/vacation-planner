@@ -85,6 +85,13 @@
   max-height: 97vh;
 }
 
+@media (max-width: 700px) {
+  .listPanel {
+    flex: none;
+    width: 100%;
+  }
+}
+
 .mapPanel {
   width: 100%;
 }
