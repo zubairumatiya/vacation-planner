@@ -544,6 +544,177 @@ const EditVacationSchedule = ({
     setIndividualAddition({ addingContainer: "" });
   };
 
+  const duplicateItem = async (item: Schedule, dayContainer: string) => {
+    if (!token) {
+      navigate("/redirect", {
+        state: { message: "Session expired, redirecting to log in..." },
+      });
+      return;
+    }
+
+    const startISO = item.startTime.toISOString();
+    const endISO = item.endTime.toISOString();
+
+    const tempItem: Schedule = {
+      ...item,
+      id: "temp-dup",
+      sortIndex: 0,
+      lastModified: "",
+    };
+
+    const currentDayItems = schedule[dayContainer] ?? [];
+    const originalIndex = currentDayItems.findIndex((v) => v.id === item.id);
+    const newArr = [
+      ...currentDayItems.slice(0, originalIndex + 1),
+      tempItem,
+      ...currentDayItems.slice(originalIndex + 1),
+    ];
+    const chunk = indexChunk("temp-dup", newArr);
+
+    setSchedule((prev) => ({
+      ...prev,
+      [dayContainer]: newArr,
+    }));
+
+    try {
+      const addingReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          start: startISO,
+          end: endISO,
+          location: item.location,
+          details: item.details,
+          cost: item.cost,
+          multiDay: item.multiDay || undefined,
+          chunk,
+        }),
+      });
+      if (addingReq.ok) {
+        const data = (await addingReq.json()) as ScheduleAddResponse;
+        if (data.newlyIndexedSchedule != null) {
+          const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
+          const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+          const dayContainers: DayContainer[] = makeContainers(
+            length,
+            new Date(utcStart),
+          );
+          const bucketizeItems: DaySchedule = bucketizeSchedule(
+            dayContainers,
+            scheduleItems,
+          );
+          setSchedule(bucketizeItems);
+        } else if (data.addedItem != null) {
+          const addedSchedule = toSchedule(data.addedItem);
+          setSchedule((prev) => ({
+            ...prev,
+            [dayContainer]: prev[dayContainer].map((v) =>
+              v.id === "temp-dup" ? addedSchedule : v,
+            ),
+          }));
+        }
+      } else if (addingReq.status === 401) {
+        const resData = (await addingReq.json()) as ApiErrorResponse;
+        if (resData.error === "JwtError") {
+          if (logout) {
+            await logout();
+          }
+          return;
+        }
+        if (refreshInFlightRef == null) {
+          console.error("Auth flight ref not set");
+          return;
+        }
+        const continueReq: { token: string | null; err: boolean } =
+          await refreshFn(apiURL, refreshInFlightRef);
+        if (!continueReq.err) {
+          if (login && continueReq.token) {
+            login(String(continueReq.token));
+          }
+          const retryReq = await fetch(`${apiURL}/schedule/${tripId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${continueReq.token}`,
+            },
+            body: JSON.stringify({
+              start: startISO,
+              end: endISO,
+              location: item.location,
+              details: item.details,
+              cost: item.cost,
+              multiDay: item.multiDay || undefined,
+              chunk,
+            }),
+          });
+          if (!retryReq.ok) {
+            setSchedule((prev) => ({
+              ...prev,
+              [dayContainer]: prev[dayContainer].filter(
+                (v) => v.id !== "temp-dup",
+              ),
+            }));
+            setBannerMsg("Trouble completing request, please try again");
+          } else {
+            const data = (await retryReq.json()) as ScheduleAddResponse;
+            if (data.newlyIndexedSchedule != null) {
+              const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
+              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+              const dayContainers: DayContainer[] = makeContainers(
+                length,
+                new Date(utcStart),
+              );
+              const bucketizeItems: DaySchedule = bucketizeSchedule(
+                dayContainers,
+                scheduleItems,
+              );
+              setSchedule(bucketizeItems);
+            } else if (data.addedItem != null) {
+              const addedSchedule = toSchedule(data.addedItem);
+              setSchedule((prev) => ({
+                ...prev,
+                [dayContainer]: prev[dayContainer].map((v) =>
+                  v.id === "temp-dup" ? addedSchedule : v,
+                ),
+              }));
+            }
+          }
+        } else {
+          if (logout) {
+            await logout();
+          }
+        }
+      } else {
+        setSchedule((prev) => ({
+          ...prev,
+          [dayContainer]: prev[dayContainer].filter(
+            (v) => v.id !== "temp-dup",
+          ),
+        }));
+        if (addingReq.status === 403) {
+          setBannerMsg("You do not have permission to access this resource");
+        } else if (addingReq.status === 404) {
+          setBannerMsg("Error: Trip not found");
+        } else if (addingReq.status >= 500) {
+          setBannerMsg(
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
+          );
+        }
+      }
+    } catch (err) {
+      console.log(err);
+      setSchedule((prev) => ({
+        ...prev,
+        [dayContainer]: prev[dayContainer].filter(
+          (v) => v.id !== "temp-dup",
+        ),
+      }));
+    }
+  };
+
   return loading ? (
     <p>{bannerMsg}</p>
   ) : (
@@ -566,6 +737,7 @@ const EditVacationSchedule = ({
                 setSchedule={setSchedule}
                 activeId={props.activeItem}
                 viewMode={false}
+                onDuplicate={duplicateItem}
               />
             </div>
             {individualAddition.addingContainer !== dayObj.day ? (

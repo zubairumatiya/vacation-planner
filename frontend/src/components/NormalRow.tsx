@@ -3,6 +3,7 @@ import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { addMeridiem, fourDigitTime, prefixZero } from "../utils/timeHelpers";
 import styles from "../styles/EditSchedule.module.css";
 import editIcon from "../assets/icons/edit-icon.svg";
+import duplicateIcon from "../assets/icons/duplicate-icon.svg";
 import dragIcon from "../assets/icons/dragger.svg";
 import { useContext } from "react";
 import { EditScheduleContext } from "../context/EditScheduleContext";
@@ -13,12 +14,14 @@ type NormalRowProps = {
   listeners?: SyntheticListenerMap;
   attributes?: DraggableAttributes | undefined;
   viewMode: boolean;
+  onDuplicate?: (item: Schedule, dayContainer: string) => void;
 };
 
 const NormalRow = ({
   value,
   dayContainer,
   viewMode,
+  onDuplicate,
   ...restOfProps
 }: NormalRowProps) => {
   const { handleEdit } = useContext(EditScheduleContext);
@@ -71,11 +74,12 @@ const NormalRow = ({
       </td>
       <td>{value.multiDay ? "yes" : "no"}</td>
       {!viewMode && (
-        <td>
+        <td className={styles.actionsTd}>
           <img
             className={styles.editIcon}
             src={editIcon}
             alt="edit-icon"
+            title="Edit"
             onClick={(e) =>
               handleEdit(
                 e,
@@ -89,6 +93,16 @@ const NormalRow = ({
                 dayContainer,
               )
             }
+          />
+          <img
+            className={styles.editIcon}
+            src={duplicateIcon}
+            alt="duplicate-icon"
+            title="Duplicate"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate?.(value, dayContainer);
+            }}
           />
         </td>
       )}

@@ -402,6 +402,13 @@ div .tableContainerDragging {
   cursor: grabbing;
 }
 
+.actionsTd {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.25rem;
+}
+
 .editIcon {
   border: 1px solid white;
   border-radius: 5px;

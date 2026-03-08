@@ -16,6 +16,7 @@ const CustomTableRow = ({
   schedule,
   activeId,
   viewMode,
+  onDuplicate,
 }: TableRowProps) => {
   const [height, setHeight] = useState<number | null>(null);
   const { handleEdit, editLineId } = useContext(EditScheduleContext);
@@ -83,6 +84,7 @@ const CustomTableRow = ({
           value={scheduleItem}
           dayContainer={dayContainer}
           viewMode={viewMode}
+          onDuplicate={onDuplicate}
           {...attributes}
           {...listeners}
         ></NormalRow>

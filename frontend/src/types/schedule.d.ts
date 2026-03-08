@@ -230,6 +230,7 @@ declare global {
     setSchedule: React.Dispatch<React.SetStateAction<DaySchedule>>;
     activeId: UniqueIdentifier | null | undefined;
     viewMode: boolean;
+    onDuplicate?: (item: Schedule, dayContainer: string) => void;
   };
 
   type TableRowProps = {
@@ -242,6 +243,7 @@ declare global {
     schedule: DaySchedule;
     activeId: UniqueIdentifier | null | undefined;
     viewMode: boolean;
+    onDuplicate?: (item: Schedule, dayContainer: string) => void;
   };
 
   type EditRowProps = {
