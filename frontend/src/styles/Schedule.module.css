@@ -294,9 +294,63 @@
 .geminiResponseText {
   color: #ddd;
   font-size: 0.85rem;
-  line-height: 1.45;
-  white-space: pre-wrap;
+  line-height: 1.5;
   margin: 0;
+}
+
+.geminiResponseText h3 {
+  color: #2fe782;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 1rem 0 0.35rem;
+  letter-spacing: 0.01em;
+}
+
+.geminiResponseText h3:first-child {
+  margin-top: 0;
+}
+
+.geminiResponseText p {
+  margin: 0 0 0.5rem;
+}
+
+.geminiResponseText p:last-child {
+  margin-bottom: 0;
+}
+
+.geminiResponseText strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+.geminiResponseText em {
+  color: #bbb;
+  font-style: italic;
+}
+
+.geminiResponseText ul {
+  margin: 0.25rem 0 0.5rem;
+  padding-left: 1.2rem;
+  list-style: none;
+}
+
+.geminiResponseText ul li {
+  position: relative;
+  padding-left: 0.15rem;
+  margin-bottom: 0.35rem;
+}
+
+.geminiResponseText ul li::before {
+  content: "•";
+  position: absolute;
+  left: -1rem;
+  color: #666;
+}
+
+.geminiResponseText hr {
+  border: none;
+  border-top: 1px solid #444;
+  margin: 0.75rem 0;
 }
 
 .geminiThinking {

@@ -5,6 +5,7 @@ import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
 import type { GeminiItineraryItem } from "../types/gemini";
+import ReactMarkdown from "react-markdown";
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -749,9 +750,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     )}
                     {geminiResponse && (
                       <div className={styles.geminiResponseArea}>
-                        <p className={styles.geminiResponseText}>
-                          {geminiResponse}
-                        </p>
+                        <div className={styles.geminiResponseText}>
+                          <ReactMarkdown>{geminiResponse}</ReactMarkdown>
+                        </div>
                       </div>
                     )}
                     {geminiItinerary.length > 0 && (
