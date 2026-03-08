@@ -300,6 +300,7 @@ const EditVacationSchedule = ({
         sortIndex: 0,
         tripId: tripId ?? "",
         lastModified: "",
+        isLocked: false,
       };
       const tempArr = reSort([...schedule[dateAdded].slice(), tempItem]);
       const chunk = indexChunk("temp", tempArr);
@@ -569,7 +570,11 @@ const EditVacationSchedule = ({
             for (const day in updated) {
               updated[day] = updated[day].map((s) =>
                 s.id === item.id
-                  ? { ...s, isLocked: !item.isLocked, lastModified: data.updatedData!.lastModified }
+                  ? {
+                      ...s,
+                      isLocked: !item.isLocked,
+                      lastModified: data.updatedData!.lastModified,
+                    }
                   : s,
               );
             }
@@ -728,9 +733,7 @@ const EditVacationSchedule = ({
       } else {
         setSchedule((prev) => ({
           ...prev,
-          [dayContainer]: prev[dayContainer].filter(
-            (v) => v.id !== "temp-dup",
-          ),
+          [dayContainer]: prev[dayContainer].filter((v) => v.id !== "temp-dup"),
         }));
         if (addingReq.status === 403) {
           setBannerMsg("You do not have permission to access this resource");
@@ -746,9 +749,7 @@ const EditVacationSchedule = ({
       console.log(err);
       setSchedule((prev) => ({
         ...prev,
-        [dayContainer]: prev[dayContainer].filter(
-          (v) => v.id !== "temp-dup",
-        ),
+        [dayContainer]: prev[dayContainer].filter((v) => v.id !== "temp-dup"),
       }));
     }
   };

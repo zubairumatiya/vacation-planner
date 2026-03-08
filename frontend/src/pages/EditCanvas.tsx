@@ -170,7 +170,10 @@ const EditCanvas = ({
         if (data.newlyIndexedSchedule != null) {
           const hydrated = hydrateSchedule(data.newlyIndexedSchedule);
           const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
-          const dayContainers: DayContainer[] = makeContainers(length, new Date(utcStart));
+          const dayContainers: DayContainer[] = makeContainers(
+            length,
+            new Date(utcStart),
+          );
           setSchedule(bucketizeSchedule(dayContainers, hydrated));
         } else if (data.addedItem != null) {
           const addedItem = hydrateScheduleItem(data.addedItem);
@@ -184,7 +187,7 @@ const EditCanvas = ({
         }
       }
     },
-    [token, tripId, utcStart, utcEnd]
+    [token, tripId, utcStart, utcEnd],
   );
 
   const handleSidebarAddToList = useCallback(
@@ -206,7 +209,7 @@ const EditCanvas = ({
         setWishList((prev) => [...prev, apiData.data]);
       }
     },
-    [token, tripId]
+    [token, tripId],
   );
 
   useEffect(() => {
@@ -302,7 +305,14 @@ const EditCanvas = ({
 
   // Re-fetch schedule when AI schedule mode adds items
   useEffect(() => {
-    if (scheduleUpdateKey === 0 || !token || !tripId || utcStart === 0 || utcEnd === 0) return;
+    if (
+      scheduleUpdateKey === 0 ||
+      !token ||
+      !tripId ||
+      utcStart === 0 ||
+      utcEnd === 0
+    )
+      return;
     const refetchSchedule = async () => {
       try {
         const res = await fetch(`${apiURL}/schedule/${tripId}`, {
@@ -472,6 +482,7 @@ const EditCanvas = ({
         multiDay: false,
         sortIndex: 0,
         lastModified: "",
+        isLocked: false,
       };
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag?.type === "schedule") {
@@ -1382,6 +1393,7 @@ const EditCanvas = ({
         multiDay: false,
         sortIndex: 0,
         lastModified: "",
+        isLocked: false,
       };
 
       const currentDayItems = schedule[dayKey] ?? [];
