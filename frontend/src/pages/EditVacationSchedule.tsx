@@ -19,7 +19,7 @@ import {
   toScheduleList,
 } from "../utils/timeHelpers";
 import NormalRow from "../components/NormalRow";
-import addToSchedule from "../assets/add-to-schedule.svg";
+import addToSchedule from "../assets/icons/add-to-schedule.svg";
 import { BannerContext } from "../context/BannerContext";
 import refreshFn from "../utils/refreshFn";
 
@@ -147,12 +147,12 @@ const EditVacationSchedule = ({
 
             const dayContainers: DayContainer[] = makeContainers(
               length,
-              convertStart
+              convertStart,
             );
 
             const bucketizeItems: DaySchedule = bucketizeSchedule(
               dayContainers,
-              scheduleItems
+              scheduleItems,
             );
 
             setDays(dayContainers);
@@ -172,7 +172,7 @@ const EditVacationSchedule = ({
         setBannerMsg("Error: Trip not found");
       } else if (response.status >= 500) {
         setBannerMsg(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
         );
       } else if (response.ok) {
         const data = (await response.json()) as TripScheduleResponse;
@@ -191,12 +191,12 @@ const EditVacationSchedule = ({
 
         const dayContainers: DayContainer[] = makeContainers(
           length,
-          convertStart
+          convertStart,
         );
 
         const bucketizeItems: DaySchedule = bucketizeSchedule(
           dayContainers,
-          scheduleItems
+          scheduleItems,
         );
 
         setDays(dayContainers);
@@ -237,7 +237,7 @@ const EditVacationSchedule = ({
     });
     arr.sort(
       (a: Schedule, b: Schedule) =>
-        a.startTime.getTime() - b.startTime.getTime()
+        a.startTime.getTime() - b.startTime.getTime(),
     );
     return arr;
   };
@@ -249,7 +249,7 @@ const EditVacationSchedule = ({
           (new Date(`${day}T00:00:00Z`).getTime() / (1000 * 60 * 60) + 24) *
             1000 *
             60 *
-            60
+            60,
         )
           .toISOString()
           .slice(0, 10);
@@ -272,7 +272,7 @@ const EditVacationSchedule = ({
 
   const submitAddItem = async (
     e: React.FormEvent<HTMLFormElement>,
-    dateAdded: string
+    dateAdded: string,
   ) => {
     e.preventDefault();
     setAddingItem(false);
@@ -327,11 +327,11 @@ const EditVacationSchedule = ({
             const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
             const dayContainers: DayContainer[] = makeContainers(
               length,
-              new Date(utcStart)
+              new Date(utcStart),
             );
             const bucketizeItems: DaySchedule = bucketizeSchedule(
               dayContainers,
-              scheduleItems
+              scheduleItems,
             );
             setSchedule(bucketizeItems);
           } else if (data.addedItem != null) {
@@ -340,7 +340,7 @@ const EditVacationSchedule = ({
               return {
                 ...prev,
                 [dateAdded]: tempArr.map((v) =>
-                  v.id === "temp" ? addedSchedule : v
+                  v.id === "temp" ? addedSchedule : v,
                 ),
               };
             });
@@ -384,17 +384,15 @@ const EditVacationSchedule = ({
             } else if (retryReq.ok) {
               const data = (await retryReq.json()) as ScheduleAddResponse;
               if (data.newlyIndexedSchedule != null) {
-                const scheduleItems = toScheduleList(
-                  data.newlyIndexedSchedule
-                );
+                const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
                 const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
                 const dayContainers: DayContainer[] = makeContainers(
                   length,
-                  new Date(utcStart)
+                  new Date(utcStart),
                 );
                 const bucketizeItems: DaySchedule = bucketizeSchedule(
                   dayContainers,
-                  scheduleItems
+                  scheduleItems,
                 );
                 setSchedule(bucketizeItems);
               } else if (data.addedItem != null) {
@@ -403,7 +401,7 @@ const EditVacationSchedule = ({
                   return {
                     ...prev,
                     [dateAdded]: tempArr.map((v) =>
-                      v.id === "temp" ? addedSchedule : v
+                      v.id === "temp" ? addedSchedule : v,
                     ),
                   };
                 });
@@ -421,7 +419,7 @@ const EditVacationSchedule = ({
           setBannerMsg("Error: Trip not found");
         } else if (addingReq.status >= 500) {
           setBannerMsg(
-            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
           );
         }
         clearAdd();
@@ -504,13 +502,13 @@ const EditVacationSchedule = ({
       const differenceInHours: number = Math.floor(
         (new Date(customISOTime(endDate, endTimePick)).getTime() -
           new Date(customISOTime(date, startTimePick)).getTime()) /
-          (1000 * 60 * 60)
+          (1000 * 60 * 60),
       );
 
       if (differenceInHours < 24) {
         setEError(true);
         setAddingErrMessage(
-          "Multi-day selection must be greater than 24 hours"
+          "Multi-day selection must be greater than 24 hours",
         );
         return;
       } else {
@@ -598,7 +596,7 @@ const EditVacationSchedule = ({
                           onChange={(
                             hour: string,
                             minute: string,
-                            meridiem: string
+                            meridiem: string,
                           ) => constructDate("start", hour, minute, meridiem)}
                           preTime={() => undefined}
                           focusRef={tabStartRef}
@@ -627,7 +625,7 @@ const EditVacationSchedule = ({
                             onChange={(
                               hour: string,
                               minute: string,
-                              meridiem: string
+                              meridiem: string,
                             ) => constructDate("end", hour, minute, meridiem)}
                             preTime={() => undefined}
                           />

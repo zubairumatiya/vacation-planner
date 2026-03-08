@@ -2,7 +2,7 @@ import { useEffect, useState, useContext, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
-import profileIcon from "../assets/profile.svg";
+import profileIcon from "../assets/icons/profile.svg";
 import styles from "../styles/ProfilePage.module.css";
 import TravelLog from "../components/TravelLog";
 

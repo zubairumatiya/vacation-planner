@@ -1,7 +1,7 @@
 import styles from "../styles/WantToSee.module.css";
 import { useState, useRef, useEffect, useContext } from "react";
 import { useParams } from "react-router-dom";
-import trashIcon from "../assets/trash-icon.svg";
+import trashIcon from "../assets/icons/trash-icon.svg";
 import { AuthContext } from "../context/AuthContext";
 import CheckBubble from "../components/CheckBubble";
 import { type UniqueIdentifier } from "@dnd-kit/core";

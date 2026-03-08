@@ -9,7 +9,7 @@ import {
   toScheduleList,
 } from "../utils/timeHelpers";
 import CustomTableComponent from "../components/CustomTableComponent";
-import hideArrow from "../assets/arrow-drop.svg";
+import hideArrow from "../assets/icons/arrow-drop.svg";
 const apiURL = import.meta.env.VITE_API_URL;
 
 const ViewVacationSchedule = () => {
@@ -76,17 +76,17 @@ const ViewVacationSchedule = () => {
 
             const dayContainers: DayContainer[] = makeContainers(
               length,
-              convertStart
+              convertStart,
             );
 
             const bucketizeItems: DaySchedule = bucketizeSchedule(
               dayContainers,
-              scheduleItems
+              scheduleItems,
             );
 
             const createHideDays: HideDay = {};
             dayContainers.forEach(
-              (v: DayContainer) => (createHideDays[v.day] = false)
+              (v: DayContainer) => (createHideDays[v.day] = false),
             );
             setHideDay(createHideDays);
             setDays(dayContainers);
@@ -105,7 +105,7 @@ const ViewVacationSchedule = () => {
         setError("Error: Trip not found");
       } else if (response.status >= 500) {
         setError(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
         );
       } else if (response.ok) {
         const data = (await response.json()) as TripScheduleResponse;
@@ -120,12 +120,12 @@ const ViewVacationSchedule = () => {
 
         const dayContainers: DayContainer[] = makeContainers(
           length,
-          convertStart
+          convertStart,
         );
 
         const bucketizeItems: DaySchedule = bucketizeSchedule(
           dayContainers,
-          scheduleItems
+          scheduleItems,
         );
 
         setDays(dayContainers);

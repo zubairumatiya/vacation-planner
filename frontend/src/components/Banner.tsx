@@ -1,5 +1,5 @@
 import styles from "../styles/EditCanvas.module.css";
-import clearCircle from "../assets/clear-circle.svg";
+import clearCircle from "../assets/icons/clear-circle.svg";
 import Overwrite from "./Overwrite";
 import { useEffect } from "react";
 

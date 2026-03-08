@@ -566,6 +566,7 @@ export interface GeminiChatResponse {
   question?: string;
   error?: string;
   message?: string;
+  scheduleUpdated?: boolean;
 }
 
 export interface GeminiItineraryItem {

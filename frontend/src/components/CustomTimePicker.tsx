@@ -1,6 +1,6 @@
 import styles from "../styles/CustomTimePicker.module.css";
 import { useState, useRef, useEffect } from "react";
-import dropDownArrow from "../assets/arrow-drop.svg";
+import dropDownArrow from "../assets/icons/arrow-drop.svg";
 
 type Props = {
   onChange: (hour: string, minute: string, meridiem: string) => void;
@@ -23,7 +23,7 @@ const CustomTimePicker = (props: Props) => {
   const [meridiemSelection, setMeridiemSelection] = useState("AM");
   const [focusedHourIndex, setFocusedHourIndex] = useState<null | number>(null);
   const [focusedMinuteIndex, setFocusedMinuteIndex] = useState<null | number>(
-    null
+    null,
   );
   const hourInputRef = useRef<HTMLInputElement>(null);
   const minuteInputRef = useRef<HTMLInputElement>(null);
@@ -191,7 +191,7 @@ const CustomTimePicker = (props: Props) => {
       setFocusedHourIndex(previous);
 
       const toString = String(
-        previous < 9 ? "0" + (previous + 1) : previous + 1
+        previous < 9 ? "0" + (previous + 1) : previous + 1,
       );
       setHourSelection(toString);
     } else if (e.code === "Space") {

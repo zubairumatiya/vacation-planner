@@ -2,8 +2,8 @@ import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { addMeridiem, fourDigitTime, prefixZero } from "../utils/timeHelpers";
 import styles from "../styles/EditSchedule.module.css";
-import editIcon from "../assets/edit-icon.svg";
-import dragIcon from "../assets/dragger.svg";
+import editIcon from "../assets/icons/edit-icon.svg";
+import dragIcon from "../assets/icons/dragger.svg";
 import { useContext } from "react";
 import { EditScheduleContext } from "../context/EditScheduleContext";
 
@@ -40,9 +40,9 @@ const NormalRow = ({
   const endDate: string = value.endTime.toISOString().split("T")[0];
 
   const endDateFormatted: string = `${prefixZero(
-    value.endTime.getUTCMonth() + 1
+    value.endTime.getUTCMonth() + 1,
   )}-${prefixZero(
-    value.endTime.getUTCDate()
+    value.endTime.getUTCDate(),
   )}-${value.endTime.getUTCFullYear()}`;
 
   return (
@@ -86,7 +86,7 @@ const NormalRow = ({
                 value.multiDay,
                 startDate,
                 endDate,
-                dayContainer
+                dayContainer,
               )
             }
           />

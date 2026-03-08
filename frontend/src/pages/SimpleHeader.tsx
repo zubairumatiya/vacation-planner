@@ -1,4 +1,4 @@
-import placeholderLogo from "../assets/react.svg";
+import placeholderLogo from "../assets/icons/react.svg";
 import { Link } from "react-router-dom";
 import styles from "../styles/SimpleHeader.module.css";
 

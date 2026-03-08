@@ -8,8 +8,8 @@ import React, {
 } from "react";
 import { AutocompleteWebComponent } from "./autocomplete-webcomponent";
 import styles from "../../styles/Map.module.css";
-import autocompleteIcon from "../../assets/autocomplete-icon.svg";
-import clearIcon from "../../assets/clear-icon.svg";
+import autocompleteIcon from "../../assets/icons/autocomplete-icon.svg";
+import clearIcon from "../../assets/icons/clear-icon.svg";
 import { useMap } from "@vis.gl/react-google-maps";
 
 export const SearchBar = memo(function SearchBar({

@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef, useContext } from "react";
 import styles from "../../styles/Map.module.css";
-import starIcon from "../../assets/star-icon.svg";
-import addToList from "../../assets/add-to-list.svg";
-import added from "../../assets/check-mark.svg";
+import starIcon from "../../assets/icons/star-icon.svg";
+import addToList from "../../assets/icons/add-to-list.svg";
+import added from "../../assets/icons/check-mark.svg";
 import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../../context/AuthContext";
 import { useParams } from "react-router-dom";

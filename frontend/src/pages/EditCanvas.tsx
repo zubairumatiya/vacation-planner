@@ -89,6 +89,7 @@ const EditCanvas = ({
     setShowQuestionnaire,
     sidebarRefreshKey: parentRefreshKey,
     scheduleUpdateKey,
+    listUpdateKey,
     onQuestionnaireSubmitted,
   } = useOutletContext<{
     role: string;
@@ -96,6 +97,7 @@ const EditCanvas = ({
     setShowQuestionnaire: (v: boolean) => void;
     sidebarRefreshKey: number;
     scheduleUpdateKey: number;
+    listUpdateKey: number;
     onQuestionnaireSubmitted: () => void;
   }>();
   const [loading, setLoading] = useState<boolean>(true);
@@ -335,6 +337,28 @@ const EditCanvas = ({
     };
     refetchSchedule();
   }, [scheduleUpdateKey]);
+
+  // Re-fetch list when AI list mode adds items
+  useEffect(() => {
+    if (listUpdateKey === 0 || !token || !tripId) return;
+    const refetchList = async () => {
+      try {
+        const res = await fetch(`${apiURL}/list/${tripId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setWishList(data.data ?? []);
+        }
+      } catch {
+        // silent
+      }
+    };
+    refetchList();
+  }, [listUpdateKey]);
 
   const days = useMemo<DayContainer[]>(() => {
     if (utcStart === 0 || utcEnd === 0) return [];

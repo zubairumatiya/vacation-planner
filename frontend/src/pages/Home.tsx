@@ -4,12 +4,12 @@ import { AuthContext } from "../context/AuthContext";
 import { TripRefreshContext } from "../context/TripRefreshContext";
 import styles from "../styles/Home.module.css";
 import homeTabsStyles from "../styles/HomeTabs.module.css";
-import editIcon from "../assets/edit-icon.svg";
+import editIcon from "../assets/icons/edit-icon.svg";
 import VacationForm from "../components/VacationForm";
 import refreshFn from "../utils/refreshFn";
-import dropDownIcon from "../assets/arrow-drop-big.svg";
+import dropDownIcon from "../assets/icons/arrow-drop-big.svg";
 import SharePanel from "../components/SharePanel";
-import profileIcon from "../assets/profile.svg";
+import profileIcon from "../assets/icons/profile.svg";
 
 interface FeedTrip {
   id: string;
@@ -375,7 +375,10 @@ const Home = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (activeTab === "friends") {
-        sessionStorage.setItem("friendsTabScrollPos", document.body.scrollTop.toString());
+        sessionStorage.setItem(
+          "friendsTabScrollPos",
+          document.body.scrollTop.toString(),
+        );
       }
     };
     document.body.addEventListener("scroll", handleScroll, { passive: true });

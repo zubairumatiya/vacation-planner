@@ -1,10 +1,10 @@
 import styles from "../styles/Header.module.css";
 import { Link } from "react-router-dom";
-import addIcon from "../assets/add-icon.svg";
+import addIcon from "../assets/icons/add-icon.svg";
 import { AuthContext } from "../context/AuthContext";
 import { TripRefreshContext } from "../context/TripRefreshContext";
 import { useContext, useState, useRef, useEffect, useCallback } from "react";
-import profileIcon from "../assets/profile.svg";
+import profileIcon from "../assets/icons/profile.svg";
 import ProfileSideBar from "../components/ProfileSideBar";
 import InboxPanel from "../components/InboxPanel";
 
@@ -92,7 +92,11 @@ const Header = () => {
           className={styles.logo}
         >
           <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-          <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
+          <g
+            id="SVGRepo_tracerCarrier"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          ></g>
           <g id="SVGRepo_iconCarrier">
             {" "}
             <path d="M0 0h48v48H0z" fill="none"></path>{" "}
@@ -106,7 +110,12 @@ const Header = () => {
       </Link>
       <div className={styles.rightItems}>
         <div className={styles.addTrip}>
-          <Link to="/add-vacation" className={styles.iconLink} title="Add a trip" aria-label="Add a trip">
+          <Link
+            to="/add-vacation"
+            className={styles.iconLink}
+            title="Add a trip"
+            aria-label="Add a trip"
+          >
             <svg
               width="20"
               height="20"
@@ -151,9 +160,7 @@ const Header = () => {
                   <circle cx="12" cy="7" r="4" />
                 </svg>
               </button>
-              {unreadCount > 0 && (
-                <span className={styles.notificationDot} />
-              )}
+              {unreadCount > 0 && <span className={styles.notificationDot} />}
             </div>
           ) : (
             <Link

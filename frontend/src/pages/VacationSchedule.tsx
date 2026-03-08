@@ -55,6 +55,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   );
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
   const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
+  const [listUpdateKey, setListUpdateKey] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [hasUnreadAiResponse, setHasUnreadAiResponse] = useState(false);
   const geminiChatOpenRef = useRef(geminiChatOpen);
@@ -204,6 +205,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         setGeminiQuestion(data.question);
       }
 
+      // If the AI modified the schedule (general mode actions), refresh it
+      if (data.scheduleUpdated) {
+        setScheduleUpdateKey((prev) => prev + 1);
+      }
+
       if (data.itinerary && data.itinerary.length > 0) {
         if (aiMode === null) {
           // General mode — just show items as cards
@@ -336,21 +342,24 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       }
       if (response.ok) {
         setAddedItems((prev) => new Set(prev).add(index));
-        // Refresh schedule UI immediately when adding to schedule
         if (mode === "schedule") {
+          // Refresh schedule UI immediately when adding to schedule
           setScheduleUpdateKey((prev) => prev + 1);
+          // Mark the corresponding recommendation as added
+          fetch(`${apiURL}/gemini/mark-added-by-name/${tripId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ placeName: item.location }),
+          }).then(() => {
+            setSidebarRefreshKey((prev) => prev + 1);
+          }).catch(() => {});
+        } else if (mode === "list") {
+          // Refresh the want-to-see list UI
+          setListUpdateKey((prev) => prev + 1);
         }
-        // Mark the corresponding recommendation as added
-        fetch(`${apiURL}/gemini/mark-added-by-name/${tripId}`, {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ placeName: item.location }),
-        }).then(() => {
-          setSidebarRefreshKey((prev) => prev + 1);
-        }).catch(() => {});
       }
     } catch (err) {
       console.error("[Gemini] Failed to add item:", err);
@@ -1061,6 +1070,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           setShowQuestionnaire,
           sidebarRefreshKey,
           scheduleUpdateKey,
+          listUpdateKey,
           onQuestionnaireSubmitted: handleQuestionnaireSubmitted,
         }}
       />
