@@ -38,9 +38,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [aiConnected, setAiConnected] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
   const [aiQuestion, setAiQuestion] = useState<string | null>(null);
-  const [aiItinerary, setAiItinerary] = useState<AiItineraryItem[]>(
-    [],
-  );
+  const [aiItinerary, setAiItinerary] = useState<AiItineraryItem[]>([]);
   const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
   const [addingItem, setAddingItem] = useState<number | null>(null);
   const loggingOutRef = auth?.loggingOutRef;
@@ -60,6 +58,55 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [listUpdateKey, setListUpdateKey] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [hasUnreadAiResponse, setHasUnreadAiResponse] = useState(false);
+  const [csvExporting, setCsvExporting] = useState(false);
+
+  const handleExportCsv = useCallback(async () => {
+    if (!tripId || !token || csvExporting) return;
+    setCsvExporting(true);
+    try {
+      const res = await fetch(`${apiURL}/schedule/${tripId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Failed to fetch schedule");
+      const data: TripScheduleResponse = await res.json();
+
+      const escCsv = (v: string) => {
+        if (v.includes(",") || v.includes('"') || v.includes("\n"))
+          return `"${v.replace(/"/g, '""')}"`;
+        return v;
+      };
+      const fmtDate = (iso: string) => {
+        const d = new Date(iso);
+        return d.toLocaleString();
+      };
+
+      const rows = [
+        ["Location", "Details", "Start", "End", "Cost", "Multi-Day"].join(","),
+        ...data.schedule.map((item) =>
+          [
+            escCsv(item.location),
+            escCsv(item.details),
+            fmtDate(item.startTime),
+            fmtDate(item.endTime),
+            item.cost.toString(),
+            item.multiDay ? "Yes" : "No",
+          ].join(","),
+        ),
+      ];
+
+      const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${data.tripName || "schedule"}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      showToast("Failed to export schedule");
+    } finally {
+      setCsvExporting(false);
+    }
+  }, [tripId, token, csvExporting]);
   const aiChatOpenRef = useRef(aiChatOpen);
   aiChatOpenRef.current = aiChatOpen;
 
@@ -92,10 +139,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   useEffect(() => {
     if (!aiChatOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (
-        aiChatRef.current &&
-        !aiChatRef.current.contains(e.target as Node)
-      ) {
+      if (aiChatRef.current && !aiChatRef.current.contains(e.target as Node)) {
         setAiChatOpen(false);
       }
     };
@@ -246,9 +290,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           const scheduledNames = new Set<string>();
           if (scheduleRes.ok) {
             const scheduleData = await scheduleRes.json();
-            (scheduleData.schedule ?? []).forEach((item: { location: string }) => {
-              scheduledNames.add(item.location.toLowerCase().trim());
-            });
+            (scheduleData.schedule ?? []).forEach(
+              (item: { location: string }) => {
+                scheduledNames.add(item.location.toLowerCase().trim());
+              },
+            );
           }
 
           const listSourced: { item: AiItineraryItem; idx: number }[] = [];
@@ -293,11 +339,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       setAiResponse("Request failed. Please try again.");
     } finally {
       setAiLoading(false);
-      
+
       // Play sound when AI responds
       try {
         const audio = new Audio(aiResPopSound);
-        audio.play().catch(e => console.warn("Audio playback prevented:", e));
+        audio.play().catch((e) => console.warn("Audio playback prevented:", e));
       } catch (err) {
         console.warn("Failed to play AI response sound", err);
       }
@@ -364,9 +410,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ placeName: item.location }),
-          }).then(() => {
-            setSidebarRefreshKey((prev) => prev + 1);
-          }).catch(() => {});
+          })
+            .then(() => {
+              setSidebarRefreshKey((prev) => prev + 1);
+            })
+            .catch(() => {});
         } else if (mode === "list") {
           // Refresh the want-to-see list UI
           setListUpdateKey((prev) => prev + 1);
@@ -556,7 +604,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     >
                       <button
                         type="button"
-                        onClick={() => setAiMode((prev) => prev === "list" ? null : "list")}
+                        onClick={() =>
+                          setAiMode((prev) => (prev === "list" ? null : "list"))
+                        }
                         disabled={aiLoading}
                         style={{
                           flex: 1,
@@ -567,7 +617,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               ? "1px solid #2fe782"
                               : "1px solid #555",
                           background:
-                            aiMode === "list" ? "rgba(47,231,130,0.15)" : "#1e1e20",
+                            aiMode === "list"
+                              ? "rgba(47,231,130,0.15)"
+                              : "#1e1e20",
                           color: aiMode === "list" ? "#2fe782" : "#999",
                           cursor: aiLoading ? "not-allowed" : "pointer",
                           fontSize: "0.75rem",
@@ -590,7 +642,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setAiMode((prev) => prev === "schedule" ? null : "schedule")}
+                        onClick={() =>
+                          setAiMode((prev) =>
+                            prev === "schedule" ? null : "schedule",
+                          )
+                        }
                         disabled={aiLoading}
                         style={{
                           flex: 1,
@@ -786,7 +842,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               marginBottom: "0.25rem",
                             }}
                           >
-                            {addingAllRecs ? "Adding..." : `Add all ${aiMode === "schedule" ? "recommendations" : "items"}`}
+                            {addingAllRecs
+                              ? "Adding..."
+                              : `Add all ${aiMode === "schedule" ? "recommendations" : "items"}`}
                           </button>
                         )}
                         {aiMode === "schedule"
@@ -802,9 +860,13 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                 }
                               > = {};
                               aiItinerary.forEach((item, i) => {
-                                const d = item.startTime ? new Date(item.startTime) : null;
+                                const d = item.startTime
+                                  ? new Date(item.startTime)
+                                  : null;
                                 const isValid = d && !isNaN(d.getTime());
-                                const dateKey = isValid ? d.toISOString().slice(0, 10) : "Unscheduled";
+                                const dateKey = isValid
+                                  ? d.toISOString().slice(0, 10)
+                                  : "Unscheduled";
                                 if (!grouped[dateKey]) {
                                   if (isValid) {
                                     const day = d.toLocaleDateString("en-US", {
@@ -844,37 +906,31 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                         key={`${item.location}-${idx}`}
                                         className={`${styles.aiPlaceCard} ${addedItems.has(idx) ? styles.aiPlaceCardAdded : ""}`}
                                       >
-                                        <div
-                                          className={styles.aiPlaceInfo}
-                                        >
-                                          <span
-                                            className={styles.aiPlaceName}
-                                          >
+                                        <div className={styles.aiPlaceInfo}>
+                                          <span className={styles.aiPlaceName}>
                                             {item.location}
                                           </span>
                                           {item.startTime && item.endTime && (
-                                          <span
-                                            className={styles.aiPlaceTime}
-                                          >
-                                            {new Date(
-                                              item.startTime,
-                                            ).toLocaleTimeString("en-US", {
-                                              hour: "numeric",
-                                              minute: "2-digit",
-                                            })}
-                                            {" – "}
-                                            {new Date(
-                                              item.endTime,
-                                            ).toLocaleTimeString("en-US", {
-                                              hour: "numeric",
-                                              minute: "2-digit",
-                                            })}
-                                          </span>
+                                            <span
+                                              className={styles.aiPlaceTime}
+                                            >
+                                              {new Date(
+                                                item.startTime,
+                                              ).toLocaleTimeString("en-US", {
+                                                hour: "numeric",
+                                                minute: "2-digit",
+                                              })}
+                                              {" – "}
+                                              {new Date(
+                                                item.endTime,
+                                              ).toLocaleTimeString("en-US", {
+                                                hour: "numeric",
+                                                minute: "2-digit",
+                                              })}
+                                            </span>
                                           )}
                                           <span
-                                            className={
-                                              styles.aiPlaceDetails
-                                            }
+                                            className={styles.aiPlaceDetails}
                                           >
                                             {item.details}
                                           </span>
@@ -931,18 +987,12 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                         key={`${item.location}-${idx}`}
                                         className={`${styles.aiPlaceCard} ${addedItems.has(idx) ? styles.aiPlaceCardAdded : ""}`}
                                       >
-                                        <div
-                                          className={styles.aiPlaceInfo}
-                                        >
-                                          <span
-                                            className={styles.aiPlaceName}
-                                          >
+                                        <div className={styles.aiPlaceInfo}>
+                                          <span className={styles.aiPlaceName}>
                                             {item.location}
                                           </span>
                                           <span
-                                            className={
-                                              styles.aiPlaceDetails
-                                            }
+                                            className={styles.aiPlaceDetails}
                                           >
                                             {item.details}
                                           </span>
@@ -1038,6 +1088,46 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               )}
             </div>
           )}
+          <button
+            type="button"
+            title="Export schedule as CSV"
+            onClick={handleExportCsv}
+            disabled={csvExporting}
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: csvExporting ? "wait" : "pointer",
+              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              marginLeft: ".5rem",
+              opacity: csvExporting ? 0.5 : 1,
+            }}
+          >
+            <svg
+              viewBox="0 0 15 15"
+              width="1.2rem"
+              height="1.2rem"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
+              <g
+                id="SVGRepo_tracerCarrier"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></g>
+              <g id="SVGRepo_iconCarrier">
+                {" "}
+                <path
+                  fill-rule="evenodd"
+                  clip-rule="evenodd"
+                  d="M1 1.5C1 0.671573 1.67157 0 2.5 0H10.7071L14 3.29289V13.5C14 14.3284 13.3284 15 12.5 15H2.5C1.67157 15 1 14.3284 1 13.5V1.5ZM2 6H5V7H3V10H5V11H2V6ZM9 6H6V9H8V10H6V11H9V8H7V7H9V6ZM11 6H10V9.70711L11.5 11.2071L13 9.70711V6H12V9.29289L11.5 9.79289L11 9.29289V6Z"
+                  fill="#ffffff"
+                ></path>{" "}
+              </g>
+            </svg>
+          </button>
         </header>
       </div>
       <nav className={styles.navWrapper}>
