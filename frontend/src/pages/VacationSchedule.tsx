@@ -6,6 +6,7 @@ import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
 import type { AiItineraryItem } from "../types/ai";
 import ReactMarkdown from "react-markdown";
+import aiResPopSound from "../assets/sounds/aiResPop.mp3";
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -292,6 +293,15 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       setAiResponse("Request failed. Please try again.");
     } finally {
       setAiLoading(false);
+      
+      // Play sound when AI responds
+      try {
+        const audio = new Audio(aiResPopSound);
+        audio.play().catch(e => console.warn("Audio playback prevented:", e));
+      } catch (err) {
+        console.warn("Failed to play AI response sound", err);
+      }
+
       setAiPrompt("");
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";

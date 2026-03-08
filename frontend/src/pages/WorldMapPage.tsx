@@ -66,8 +66,8 @@ const geoNameMap: Record<string, string> = {
   "solomon is.": "solomon islands",
   "falkland is.": "falkland islands",
   "timor-leste": "east timor",
-  "czechia": "czech republic",
-  "eswatini": "eswatini",
+  czechia: "czech republic",
+  eswatini: "eswatini",
   "n. cyprus": "northern cyprus",
   "w. sahara": "western sahara",
   "fr. s. antarctic lands": "french southern territories",
@@ -302,7 +302,7 @@ const WorldMapPage = () => {
           <svg
             width="2.5rem"
             height="2.5rem"
-            viewBox="0 0 23 22"
+            viewBox="0 0 23 23"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
