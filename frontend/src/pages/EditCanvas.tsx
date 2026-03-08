@@ -408,10 +408,14 @@ const EditCanvas = ({
       if (initialListDrag.current) {
         intersections = pointerCollisions;
       } else {
-        intersections =
-          pointerCollisions.length > 0
-            ? pointerCollisions
-            : closestCorners(args);
+        if (dragFrom === "list") {
+          intersections = pointerCollisions;
+        } else {
+          intersections =
+            pointerCollisions.length > 0
+              ? pointerCollisions
+              : closestCorners(args);
+        }
       }
       let overId = getFirstCollision(intersections, "id");
       if (overId != null) {
@@ -433,13 +437,18 @@ const EditCanvas = ({
         return [{ id: overId }];
       }
 
+      if (dragFrom === "list") {
+        lastOverId.current = null;
+        return [];
+      }
+
       if (recentlyMovedToNewContainer.current) {
         lastOverId.current = activeId;
       }
 
       return lastOverId.current ? [{ id: lastOverId.current }] : [];
     },
-    [activeId, schedule],
+    [activeId, schedule, dragFrom],
   );
 
   function isDragData(data: DragData | DndData | undefined): data is DragData {
@@ -497,6 +506,20 @@ const EditCanvas = ({
   };
 
   const handleDragOver = ({ active, over }: DragOverEvent) => {
+    if (!over && dragFrom === "list" && !initialListDrag.current) {
+      const activeInfo = findContainerAndIndex(active.id);
+      if (activeInfo.container) {
+        setSchedule((prevSchedule) => ({
+          ...prevSchedule,
+          [activeInfo.container!]: prevSchedule[activeInfo.container!].filter(
+            (v) => v.id !== active.id,
+          ),
+        }));
+        initialListDrag.current = true;
+      }
+      return;
+    }
+
     if (!over) return;
     const activeInfo =
       tempScheduleItem.current && initialListDrag.current
