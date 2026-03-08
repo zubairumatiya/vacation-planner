@@ -346,7 +346,11 @@ const WorldMapPage = () => {
                 {({ geographies }) =>
                   (geographies as PreparedFeature[]).map((geo, idx) => {
                     const geoName =
-                      (geo.properties as Record<string, string>)?.name || "";
+                      (
+                        geo as PreparedFeature & {
+                          properties?: { name?: string };
+                        }
+                      ).properties?.name || "";
                     const normalized = normalizeGeoName(geoName);
 
                     let matchedCountry = visitedMap.get(normalized);
