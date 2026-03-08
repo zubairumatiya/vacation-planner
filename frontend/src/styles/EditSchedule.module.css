@@ -228,9 +228,16 @@
 
 .tableCaption {
   text-align: center;
-  font-weight: bold;
+  font-weight: 600;
   margin-top: 1rem;
-  font-size: large;
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.02em;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  width: fit-content;
+  align-self: center;
 }
 
 .dragHeader,
@@ -463,11 +470,11 @@ div .tableContainerDragging {
 .pageWrapper {
   scroll-behavior: auto;
   overflow: auto;
-  background-color: #242424;
+  background-color: transparent;
   position: relative;
   z-index: 2;
-  border: 1px solid white;
-  border-radius: 10px;
+  border: none;
+  border-radius: 0;
   padding: 1rem;
   height: 85vh;
   display: flex;

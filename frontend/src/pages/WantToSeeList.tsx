@@ -360,8 +360,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
       style={props.isDragging ? { overflow: "hidden" } : undefined}
       onClick={addingNewItem ? undefined : clickAwayToCancel}
     >
-      <h3 className={styles.title}>Want to See</h3>
-      <hr />
       <ul>
         {props.list.map((v, i) => {
           return v.id === editItemId ? (

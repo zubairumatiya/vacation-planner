@@ -1904,77 +1904,95 @@ const EditCanvas = ({
         >
           <div className={styles.pageWrapper}>
             <div className={styles.tableAndList}>
-              <EditScheduleProvider
-                utcStart={utcStart}
-                utcEnd={utcEnd}
-                setUtcStart={setUtcStart}
-                setUtcEnd={setUtcEnd}
-                individualAddition={individualAddition}
-                setIndividualAddition={setIndividualAddition}
-                editLineId={editLineId}
-                setEditLineId={setEditLineId}
-                addingItem={addingItem}
-                setAddingItem={setAddingItem}
-                setHoldOverwrite={setHoldOverwrite}
-              >
-                <ErrorBoundary
-                  fallbackRender={(fallbackProps) => (
-                    <ErrorFallback
-                      {...fallbackProps}
-                      retryCount={scheduleRetries}
-                    />
-                  )}
-                  onReset={() => {
-                    setScheduleRetries((prev) => prev + 1);
-                    console.log("Resetting state...");
-                  }}
+              <div className={`${styles.sectionPanel} ${styles.schedulePanel}`}>
+                <div className={styles.sectionHeader}>
+                  <span className={styles.sectionIcon}>&#128197;</span>
+                  <span className={styles.sectionTitle}>Schedule</span>
+                </div>
+                <EditScheduleProvider
+                  utcStart={utcStart}
+                  utcEnd={utcEnd}
+                  setUtcStart={setUtcStart}
+                  setUtcEnd={setUtcEnd}
+                  individualAddition={individualAddition}
+                  setIndividualAddition={setIndividualAddition}
+                  editLineId={editLineId}
+                  setEditLineId={setEditLineId}
+                  addingItem={addingItem}
+                  setAddingItem={setAddingItem}
+                  setHoldOverwrite={setHoldOverwrite}
                 >
-                  <EditVacationSchedule
-                    loadFirst={() => setLoading(false)}
-                    getMapValues={gValuesFn}
-                    schedule={schedule}
-                    setSchedule={setSchedule}
-                    activeItem={activeId}
-                    dragRow={dragRow}
-                    overlayWidthRef={overlayWidthRef.current}
-                    dragFrom={dragFrom}
-                  />
-                </ErrorBoundary>
-              </EditScheduleProvider>
+                  <ErrorBoundary
+                    fallbackRender={(fallbackProps) => (
+                      <ErrorFallback
+                        {...fallbackProps}
+                        retryCount={scheduleRetries}
+                      />
+                    )}
+                    onReset={() => {
+                      setScheduleRetries((prev) => prev + 1);
+                      console.log("Resetting state...");
+                    }}
+                  >
+                    <EditVacationSchedule
+                      loadFirst={() => setLoading(false)}
+                      getMapValues={gValuesFn}
+                      schedule={schedule}
+                      setSchedule={setSchedule}
+                      activeItem={activeId}
+                      dragRow={dragRow}
+                      overlayWidthRef={overlayWidthRef.current}
+                      dragFrom={dragFrom}
+                    />
+                  </ErrorBoundary>
+                </EditScheduleProvider>
+              </div>
               {!loading && (
-                <WantToSeeList
-                  loadSecond={() => setLoading2(false)}
-                  setList={setWishList}
-                  list={wishList}
-                  handleSubmitItem={handleSubmitItem}
-                  handleDeleteItem={handleDeleteItem}
-                  activeListId={activeListId}
-                  isMobile={isMobile}
-                  days={days}
-                  onMobileAddToSchedule={onMobileAddToSchedule}
-                  isDragging={!!activeId}
-                />
+                <div className={`${styles.sectionPanel} ${styles.listPanel}`}>
+                  <div className={styles.sectionHeader}>
+                    <span className={styles.sectionIcon}>&#128064;</span>
+                    <span className={styles.sectionTitle}>Want to See</span>
+                  </div>
+                  <WantToSeeList
+                    loadSecond={() => setLoading2(false)}
+                    setList={setWishList}
+                    list={wishList}
+                    handleSubmitItem={handleSubmitItem}
+                    handleDeleteItem={handleDeleteItem}
+                    activeListId={activeListId}
+                    isMobile={isMobile}
+                    days={days}
+                    onMobileAddToSchedule={onMobileAddToSchedule}
+                    isDragging={!!activeId}
+                  />
+                </div>
               )}
             </div>
-            <ErrorBoundary
-              fallbackRender={(fallbackProps) => (
-                <ErrorFallback {...fallbackProps} retryCount={mapRetries} />
-              )}
-              onReset={() => {
-                setMapRetries((prev) => prev + 1);
-                console.log("Resetting state...");
-              }}
-            >
-              {!loading2 && (
-                <MyMapComponent
-                  bounds={vp}
-                  startLocation={location}
-                  list={wishList}
-                  handleSubmitItem={handleSubmitItem}
-                  handleDeleteItem={handleDeleteItem}
-                />
-              )}
-            </ErrorBoundary>
+            <div className={`${styles.sectionPanel} ${styles.mapPanel}`}>
+              <div className={styles.sectionHeader}>
+                <span className={styles.sectionIcon}>&#127758;</span>
+                <span className={styles.sectionTitle}>Explore Map</span>
+              </div>
+              <ErrorBoundary
+                fallbackRender={(fallbackProps) => (
+                  <ErrorFallback {...fallbackProps} retryCount={mapRetries} />
+                )}
+                onReset={() => {
+                  setMapRetries((prev) => prev + 1);
+                  console.log("Resetting state...");
+                }}
+              >
+                {!loading2 && (
+                  <MyMapComponent
+                    bounds={vp}
+                    startLocation={location}
+                    list={wishList}
+                    handleSubmitItem={handleSubmitItem}
+                    handleDeleteItem={handleDeleteItem}
+                  />
+                )}
+              </ErrorBoundary>
+            </div>
           </div>
           {bannerMsg && (
             <Banner

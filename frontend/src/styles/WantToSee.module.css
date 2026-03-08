@@ -2,9 +2,9 @@
   /*height: 100vh;
   min-height: 33vh;  not sure if i will need this, but it looks clean when it fills the space*/
   width: 100%;
-  background-color: ivory;
-  border: 1px solid white;
-  border-radius: 10px;
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
   overflow-y: scroll;
   padding: 1rem;
   flex: 0.5;
@@ -25,7 +25,7 @@
   padding-left: 2rem;
 }
 .pageWrapper ul li {
-  color: rgb(60, 58, 58);
+  color: rgba(255, 255, 255, 0.8);
   list-style-position: outside;
   font-size: large;
   line-height: 1.5rem;
@@ -72,18 +72,6 @@
 
 .itemChecked {
   text-decoration: line-through;
-}
-
-.title {
-  color: rgb(60, 58, 58);
-  font-size: larger;
-  font-weight: bold;
-  padding: 2rem 0 1rem 0;
-}
-
-.pageWrapper hr {
-  border: 2px solid rgb(60, 58, 58);
-  margin-bottom: 0.5rem;
 }
 
 .editItemWrapper {
@@ -142,7 +130,7 @@
 
 .trashButton {
   padding: 5px;
-  border: 2px solid black;
+  border: 2px solid #666;
   margin-left: 5px;
   z-index: 10;
   position: absolute;
@@ -248,11 +236,11 @@
 }
 
 .detailsToggle:hover {
-  color: rgb(60, 58, 58);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .detailsContent {
-  color: rgb(100, 100, 100);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 0.75rem;
   padding: 0.15rem 0 0.25rem 0.75rem;
   font-style: italic;
@@ -278,7 +266,7 @@
 }
 
 .noteToggleBtn:hover {
-  color: rgb(60, 58, 58);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .noteInputWrapper {

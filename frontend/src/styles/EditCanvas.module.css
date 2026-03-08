@@ -11,6 +11,56 @@
   flex-wrap: wrap;
 }
 
+.sectionPanel {
+  display: flex;
+  flex-direction: column;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #202020;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sectionPanel:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(34, 197, 94, 0.06));
+  border-bottom: 1px solid rgba(79, 70, 229, 0.15);
+  user-select: none;
+}
+
+.sectionIcon {
+  font-size: 1rem;
+  opacity: 0.85;
+}
+
+.sectionTitle {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.schedulePanel {
+  flex: 1;
+  max-height: 85vh;
+}
+
+.listPanel {
+  flex: 0.5;
+}
+
+.mapPanel {
+  width: 100%;
+}
+
 .bannerAndOverwrite {
   display: flex;
   width: 30vw;
@@ -18,15 +68,16 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background-color: #000000e0;
+  background-color: #202020f0;
   gap: 10px 5px;
-  border: 4px solid #d23725;
-  border-radius: 8px;
+  border: 2px solid #d23725;
+  border-radius: 14px;
   z-index: 15;
   position: fixed;
   top: 20px;
   left: 35%;
   overflow: scroll;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 .overwrite {
