@@ -218,6 +218,7 @@ export const SearchBar = memo(function SearchBar({
       </div>
       <button
         type="button"
+        className={styles.submitButton}
         disabled={(searchDisabled && localSearchDisabled) || holdName === ""}
         onClick={() => {
           setSubmitButtonTrigger((prev) => !prev);

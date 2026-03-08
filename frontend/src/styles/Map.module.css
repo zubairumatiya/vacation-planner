@@ -47,8 +47,8 @@
 }
 
 .autocompleteContainer {
-  box-shadow: light-dark(rgba(60, 64, 67, 0.3), rgba(0, 0, 0, 0.3)) 0px 1px 2px
-      0px,
+  box-shadow:
+    light-dark(rgba(60, 64, 67, 0.3), rgba(0, 0, 0, 0.3)) 0px 1px 2px 0px,
     light-dark(rgba(60, 64, 67, 0.15), rgba(0, 0, 0, 0.15)) 0px 2px 6px 2px;
   border-radius: 8px;
   border-radius: 0 0 8px 8px;
@@ -161,7 +161,9 @@
   border-style: solid;
   border-color: #888;
   cursor: pointer;
-  transition: box-shadow 0.2s ease, transform 0.1s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.1s ease;
   position: relative;
 }
 
@@ -273,6 +275,7 @@
   display: flex;
   align-content: center;
   flex-wrap: wrap;
+  background: rgb(49, 49, 49);
 }
 
 .searchContainer.focusRing {
@@ -291,8 +294,9 @@
 
 .searchInput {
   outline: none;
-  color: black;
   caret-color: black;
+  color: white;
+  background: rgb(49, 49, 49);
 }
 
 .acIconContainer {
@@ -301,6 +305,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgb(49, 49, 49);
 }
 
 .acIcon {
@@ -331,7 +336,7 @@
 }
 
 .clearButton:hover {
-  background-color: #f0f0f0;
+  background-color: #3f3f3f;
 }
 
 .suggestionUl {
@@ -415,4 +420,8 @@
 
 .addedIcon {
   width: 1.5rem;
+}
+
+.submitButton {
+  background-color: #959393;
 }

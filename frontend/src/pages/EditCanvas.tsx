@@ -412,7 +412,7 @@ const EditCanvas = ({
           // If the pointer is completely outside, let's check horizontally
           if (pointerCollisions.length === 0 && args.pointerCoordinates) {
             const { x } = args.pointerCoordinates;
-            
+
             // Find schedule boundary limits
             let minLeft = Infinity;
             let maxRight = -Infinity;
@@ -422,7 +422,8 @@ const EditCanvas = ({
               if (container.id in schedule && container.rect.current) {
                 const rect = container.rect.current;
                 if (rect.left < minLeft) minLeft = rect.left;
-                if (rect.left + rect.width > maxRight) maxRight = rect.left + rect.width;
+                if (rect.left + rect.width > maxRight)
+                  maxRight = rect.left + rect.width;
               }
             }
 
@@ -1905,8 +1906,7 @@ const EditCanvas = ({
           <div className={styles.pageWrapper}>
             <div className={styles.tableAndList}>
               <div className={`${styles.sectionPanel} ${styles.schedulePanel}`}>
-                <div className={styles.sectionHeader}>
-                  <span className={styles.sectionIcon}>&#128197;</span>
+                <div className={styles.scheduleSectionHeader}>
                   <span className={styles.sectionTitle}>Schedule</span>
                 </div>
                 <EditScheduleProvider
@@ -1949,8 +1949,7 @@ const EditCanvas = ({
               </div>
               {!loading && (
                 <div className={`${styles.sectionPanel} ${styles.listPanel}`}>
-                  <div className={styles.sectionHeader}>
-                    <span className={styles.sectionIcon}>&#128064;</span>
+                  <div className={styles.listSectionHeader}>
                     <span className={styles.sectionTitle}>Want to See</span>
                   </div>
                   <WantToSeeList
@@ -1969,8 +1968,7 @@ const EditCanvas = ({
               )}
             </div>
             <div className={`${styles.sectionPanel} ${styles.mapPanel}`}>
-              <div className={styles.sectionHeader}>
-                <span className={styles.sectionIcon}>&#127758;</span>
+              <div className={styles.mapSectionHeader}>
                 <span className={styles.sectionTitle}>Explore Map</span>
               </div>
               <ErrorBoundary
