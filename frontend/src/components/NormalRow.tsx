@@ -74,7 +74,7 @@ const NormalRow = ({
       <td className={`${styles.locationTd}`}>{value.location}</td>
       <td className={styles.costTd}>{`$${value.cost}`}</td>
       <td className={styles.detailsTd}>
-        <div>{value.details}</div>
+        <div className={styles.detailsContent}>{value.details}</div>
       </td>
       <td>{value.multiDay ? "yes" : "no"}</td>
       {!viewMode && (
