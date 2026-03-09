@@ -13,6 +13,7 @@ import SendResetLinkToEmail from "./pages/SendResetLinkToEmail.tsx";
 import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 import VacationSchedule from "./pages/VacationSchedule.tsx";
+import VacationInfo from "./pages/VacationInfo.tsx";
 import EditCanvas from "./pages/EditCanvas.tsx";
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
@@ -46,6 +47,7 @@ function App() {
               }
             >
               <Route index element={<ViewVacationSchedule />} />
+              <Route path="info" element={<VacationInfo />} />
               <Route
                 path="edit"
                 element={

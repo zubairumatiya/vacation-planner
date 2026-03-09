@@ -1161,6 +1161,19 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </NavLink>
             </li>
           )}
+          <li className={styles.navItem}>
+            <NavLink
+              to={`/vacation/${tripId}/info`}
+              className={({ isActive }) =>
+                isActive
+                  ? `${styles.navLink} ${styles.navLinkActive} ${styles.infoPill}`
+                  : `${styles.navLink} ${styles.infoPill}`
+              }
+              data-toggle="pill"
+            >
+              {title ? `${title} Info` : "Info"}
+            </NavLink>
+          </li>
         </ul>
       </nav>
       <div className={styles.hiddenCard}></div>

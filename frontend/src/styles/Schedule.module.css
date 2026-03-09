@@ -31,7 +31,7 @@
   margin-left: 25px;
 }
 .navPills {
-  width: 200px;
+  width: 300px;
   display: flex;
 }
 .navItem {
@@ -60,7 +60,7 @@
 
 .hiddenCard {
   height: 90px;
-  width: 225px;
+  width: 350px;
   position: relative;
   z-index: 1;
   margin-top: -50px;
@@ -496,4 +496,16 @@
     overflow-y: auto;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   }
+}
+
+ul li .infoPill.navLink {
+  text-wrap: auto;
+  display: flex;
+  align-items: center;
+  line-height: 0.8;
+  padding-top: 0;
+  padding-bottom: 45px;
+  font-size: smaller;
+  padding-left: 9px;
+  padding-right: 9px;
 }

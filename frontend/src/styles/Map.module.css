@@ -423,10 +423,11 @@
 }
 
 .submitButton {
-  background-color: #959393;
+  background-color: #28d283;
   border: 1px solid #fff;
 }
 .submitButton:disabled {
-  color: #999;
-  border: 1px solid #2e2d2d;
+  color: #a7a5a5;
+  border: 1px solid #eae6e6;
+  background-color: #959393;
 }
