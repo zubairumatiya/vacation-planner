@@ -38,6 +38,7 @@ import {
   QuestionnaireRow,
   QuestionnaireBody,
   QuestionnaireResponse,
+  CountryInfoResponse,
 } from "../types/express.js";
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
@@ -49,6 +50,82 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const API_KEY = process.env.MAPS_API_KEY;
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  USA: "United States",
+  US: "United States",
+  "U.S.": "United States",
+  "U.S.A.": "United States",
+  "United States of America": "United States",
+  UK: "United Kingdom",
+  "U.K.": "United Kingdom",
+  "Great Britain": "United Kingdom",
+  England: "United Kingdom",
+  Scotland: "United Kingdom",
+  Wales: "United Kingdom",
+  "Northern Ireland": "United Kingdom",
+  "South Korea": "South Korea",
+  "Republic of Korea": "South Korea",
+  "North Korea": "North Korea",
+  "DPRK": "North Korea",
+  "Czech Republic": "Czech Republic",
+  Czechia: "Czech Republic",
+  "Ivory Coast": "Ivory Coast",
+  "Côte d'Ivoire": "Ivory Coast",
+  "Cote d'Ivoire": "Ivory Coast",
+  UAE: "United Arab Emirates",
+  "U.A.E.": "United Arab Emirates",
+  "DR Congo": "Democratic Republic of the Congo",
+  DRC: "Democratic Republic of the Congo",
+  "Cabo Verde": "Cabo Verde",
+  "Cape Verde": "Cabo Verde",
+  "Timor-Leste": "Timor-Leste",
+  "East Timor": "Timor-Leste",
+  Eswatini: "Eswatini",
+  Swaziland: "Eswatini",
+  Myanmar: "Myanmar",
+  Burma: "Myanmar",
+  "The Gambia": "Gambia",
+  "The Bahamas": "Bahamas",
+  Holland: "Netherlands",
+  "São Tomé and Príncipe": "São Tomé and Príncipe",
+  "Sao Tome and Principe": "São Tomé and Príncipe",
+};
+
+function extractCountryFromLocation(location: string): string {
+  const parts = location.split(",").map((p) => p.trim());
+  return parts[parts.length - 1];
+}
+
+async function resolveCountryName(
+  rawCountry: string,
+): Promise<string | null> {
+  // 1. Check alias map (case-insensitive)
+  const aliasKey = Object.keys(COUNTRY_ALIASES).find(
+    (k) => k.toLowerCase() === rawCountry.toLowerCase(),
+  );
+  const resolved = aliasKey ? COUNTRY_ALIASES[aliasKey] : rawCountry;
+
+  // 2. Try exact match
+  const exact = await db.query(
+    "SELECT name FROM countries WHERE LOWER(name) = LOWER($1)",
+    [resolved],
+  );
+  if (exact.rowCount && exact.rowCount > 0) {
+    return exact.rows[0].name as string;
+  }
+
+  // 3. Try pg_trgm similarity
+  const fuzzy = await db.query(
+    "SELECT name, similarity(LOWER(name), LOWER($1)) AS sim FROM countries WHERE similarity(LOWER(name), LOWER($1)) > 0.3 ORDER BY sim DESC LIMIT 1",
+    [resolved],
+  );
+  if (fuzzy.rowCount && fuzzy.rowCount > 0) {
+    return fuzzy.rows[0].name as string;
+  }
+
+  return null;
+}
 
 router.get(
   "/home",
@@ -266,14 +343,75 @@ router.get(
       const arrCargo =
         result3.rowCount !== null && result3.rowCount > 0 ? result3.rows : [];
 
+      const rawCountry = extractCountryFromLocation(
+        result2.rows[0].location,
+      );
+      const countryName = await resolveCountryName(rawCountry);
+
       const response: TripWithSchedule = {
         role,
         ...result2.rows[0],
         schedule: arrCargo,
+        countryName: countryName ?? undefined,
       };
 
       res.status(200).json(response);
       return;
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  "/country-info/:tripId",
+  ensureLoggedIn,
+  ensureTripAccess,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<CountryInfoResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const tripResult = await db.query<Trip>(
+        "SELECT location FROM trips WHERE id=$1",
+        [req.params.tripId],
+      );
+      if (!tripResult.rowCount || tripResult.rowCount < 1) {
+        res.sendStatus(404);
+        return;
+      }
+
+      const rawCountry = extractCountryFromLocation(
+        tripResult.rows[0].location,
+      );
+      const countryName = await resolveCountryName(rawCountry);
+
+      if (!countryName) {
+        res.sendStatus(404);
+        return;
+      }
+
+      const countryResult = await db.query(
+        "SELECT name, population, geography, info, language, currency, happiness_rank FROM countries WHERE name = $1",
+        [countryName],
+      );
+
+      if (!countryResult.rowCount || countryResult.rowCount < 1) {
+        res.sendStatus(404);
+        return;
+      }
+
+      const row = countryResult.rows[0];
+      res.status(200).json({
+        countryName: row.name as string,
+        population: row.population as number,
+        geography: row.geography as number,
+        info: row.info as string,
+        language: row.language as string,
+        currency: row.currency as string,
+        happinessRank: (row.happiness_rank as number) ?? null,
+      });
     } catch (err) {
       next(err);
     }

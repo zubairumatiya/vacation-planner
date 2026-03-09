@@ -209,6 +209,17 @@ export interface ScheduleBody {
 export interface TripWithSchedule extends Trip {
   role?: string;
   schedule: Schedule[];
+  countryName?: string;
+}
+
+export interface CountryInfoResponse {
+  countryName: string;
+  population: number;
+  geography: number;
+  info: string;
+  language: string;
+  currency: string;
+  happinessRank: number | null;
 }
 
 export interface ScheduleResponse {

@@ -46,6 +46,18 @@ declare global {
     gId: string;
     gVp: Vp;
     schedule: ScheduleFromApi[];
+    countryName?: string;
+  }
+
+  /** GET /country-info/:tripId */
+  interface CountryInfoResponse {
+    countryName: string;
+    population: number;
+    geography: number;
+    info: string;
+    language: string;
+    currency: string;
+    happinessRank: number | null;
   }
 
   /** POST /schedule/:tripId */
