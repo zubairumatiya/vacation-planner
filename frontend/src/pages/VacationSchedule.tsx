@@ -27,6 +27,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const [title, setTitle] = useState("");
+  const [tripLocation, setTripLocation] = useState<string>("");
   const [tripLength, setTripLength] = useState(0);
   const [role, setRole] = useState("");
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
@@ -497,6 +498,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             );
             setCostTotal(totalCost);
             setTitle(data.tripName);
+            setTripLocation(data.location);
             setRole(data.role ?? "");
             const UtcStart = convertStart.getTime();
             const UtcEnd = convertEnd.getTime();
@@ -529,6 +531,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         );
         setCostTotal(totalCost);
         setTitle(data.tripName);
+        setTripLocation(data.location);
         setRole(data.role ?? "");
         const UtcStart = convertStart.getTime();
         const UtcEnd = convertEnd.getTime();
@@ -1171,7 +1174,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               }
               data-toggle="pill"
             >
-              {title ? `${title} Info` : "Info"}
+              {tripLocation ? `${tripLocation} Info` : "Info"}
             </NavLink>
           </li>
         </ul>
