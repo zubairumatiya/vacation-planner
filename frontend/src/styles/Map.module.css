@@ -424,4 +424,9 @@
 
 .submitButton {
   background-color: #959393;
+  border: 1px solid #fff;
+}
+.submitButton:disabled {
+  color: #999;
+  border: 1px solid #2e2d2d;
 }
