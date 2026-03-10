@@ -11,10 +11,32 @@
   max-width: 400px;
 }
 
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 156deg;
+  inherits: false;
+}
+
 .title {
   font-size: 1.75rem;
   font-weight: 700;
   margin: 0 0 0.25rem;
+  --gradient-angle: 156deg;
+  background: linear-gradient(
+    var(--gradient-angle),
+    rgba(100, 108, 255, 1) 40%,
+    rgba(46, 223, 140, 1) 60%,
+    rgba(47, 231, 130, 1) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  transition: --gradient-angle 0.4s ease;
+}
+
+.card:has(.submitBtn:hover) .title {
+  --gradient-angle: 204deg;
 }
 
 .subtitle {
