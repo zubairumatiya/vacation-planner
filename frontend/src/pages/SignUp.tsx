@@ -4,10 +4,10 @@ import styles from "../styles/SignUp.module.css";
 import { isValidEmail } from "../../../shared/emailUtils.ts";
 import { isValidPassword } from "../../../shared/passwordUtils.ts";
 import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
-
 const apiUrl = import.meta.env.VITE_API_URL;
 
-const isValidUsername = (username: string) => /^[a-zA-Z0-9_]{3,30}$/.test(username);
+const isValidUsername = (username: string) =>
+  /^[a-zA-Z0-9_]{3,30}$/.test(username) && /[a-zA-Z0-9]/.test(username);
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -16,8 +16,10 @@ const SignUp = () => {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [usernameChecking, setUsernameChecking] = useState(false);
   const [usernameError, setUsernameError] = useState(false);
+  const [usernameServerError, setUsernameServerError] = useState("");
   const [usernameMicroing, setUsernameMicroing] = useState(false);
   const [disableSubmission, setDisableSubmission] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailMicroing, setEmailMicroing] = useState(false);
   const [passwordMicroing, setPasswordMicroing] = useState(false);
   const [emailError, setEmailError] = useState(false);
@@ -28,7 +30,7 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isValidPassword(password) && isValidEmail(email) && isValidUsername(username) && usernameAvailable === true) {
+    if (isValidPassword(password) && isValidEmail(email) && isValidUsername(username)) {
       setDisableSubmission(false);
     } else {
       setDisableSubmission(true);
@@ -36,7 +38,6 @@ const SignUp = () => {
 
     if (emailMicroing) {
       if (!isValidEmail(email)) {
-        // yes this is necessary to check criteria onBlur (onChange will not trigger onBlur)
         setEmailError(true);
       } else {
         setEmailError(false);
@@ -58,13 +59,11 @@ const SignUp = () => {
 
       if (!isValidPassword(password)) {
         setPasswordError(true);
-        // we are using password error messages from two different sources. The red border and ! symbol with this, and the criteria with the pch child.
-        //the setPasswordError is holding it together. I believe my regex is the same for both.
       } else {
         setPasswordError(false);
       }
     }
-  }, [password, email, emailMicroing, passwordMicroing, username, usernameMicroing, usernameAvailable]);
+  }, [password, email, emailMicroing, passwordMicroing, username, usernameMicroing]);
 
   const checkUsernameAvailability = async () => {
     if (!isValidUsername(username)) {
@@ -76,7 +75,11 @@ const SignUp = () => {
       const res = await fetch(`${apiUrl}/check-username?username=${encodeURIComponent(username)}`);
       if (res.ok) {
         const data = await res.json();
-        setUsernameAvailable(data.available);
+        if (data.profanity) {
+          setUsernameServerError("Username contains inappropriate language");
+        } else {
+          setUsernameAvailable(data.available);
+        }
       }
     } catch {
       // silent fail
@@ -91,30 +94,51 @@ const SignUp = () => {
     const dataObj = Object.fromEntries(formData.entries()) as Record<
       string,
       string
-    >; // this makes our form fields into an obj like: {email: "...", password: "...", username: "..."} AND the Record part is shortcut in ts to say: An object where every key is a string, and every value is also a string
+    >;
 
-    const res = await fetch(`${apiUrl}/signup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(dataObj),
-    });
-    if (res.status !== 200) {
-      if (res.status === 409) {
-        const data = (await res.json()) as SignupResponse;
-        setExistingUserError(`${data.message}`);
-      } else if (res.status === 302) {
-        const data = (await res.json()) as SignupResponse;
-        alert(data.message);
+    setIsSubmitting(true);
+    setExistingUserError("");
+    setUsernameServerError("");
+
+    try {
+      const res = await fetch(`${apiUrl}/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataObj),
+      });
+      if (res.status !== 200) {
+        if (res.status === 409) {
+          const data = (await res.json()) as SignupResponse;
+          if (data.message.toLowerCase().includes("username")) {
+            setUsernameServerError(data.message);
+          } else {
+            setExistingUserError(data.message);
+          }
+        } else if (res.status === 302) {
+          const data = (await res.json()) as SignupResponse;
+          alert(data.message);
+          localStorage.setItem("pendingEmail", dataObj.email);
+          navigate("/verify-email");
+        } else if (res.status === 400) {
+          const data = (await res.json()) as SignupResponse;
+          if (data.message.toLowerCase().includes("username")) {
+            setUsernameServerError(data.message);
+          } else {
+            alert(data.message || "error creating account - refresh and retry");
+          }
+        } else {
+          alert("error creating account - refresh and retry");
+        }
+      } else {
         localStorage.setItem("pendingEmail", dataObj.email);
         navigate("/verify-email");
-      } else {
-        alert("error creating account - refresh and retry");
       }
-    } else {
-      localStorage.setItem("pendingEmail", dataObj.email);
-      navigate("/verify-email");
+    } catch {
+      alert("Unable to connect. Check your internet and try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -123,14 +147,13 @@ const SignUp = () => {
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value); // does this need prev?
+    setEmail(e.target.value);
   };
 
   const handlePasswordBlur = () => {
     setPasswordMicroing(true);
     if (!isValidPassword(password)) {
       setPasswordError(true);
-      //micromanage tracking against password criteria and trigger/clear error
     }
   };
 
@@ -144,204 +167,185 @@ const SignUp = () => {
 
   return (
     <div className={styles.container}>
-      <div>
-        <h2>Let&apos;s get started!</h2>
-      </div>
-      <div>
+      <div className={styles.card}>
+        <h2 className={styles.title}>Let&apos;s get started!</h2>
+        <p className={styles.subtitle}>Create your account</p>
+
         {existingUserError !== "" && (
-          <p className={styles.errorMessage}>
-            An account with this email already exist. Please{" "}
-            <Link to="/login">log in</Link> or{" "}
-            <Link to="/reset-password">reset your password</Link>
-          </p>
+          <div className={styles.errorBanner}>
+            <svg
+              className={styles.errorIcon}
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM11.25 13.5V8.25H12.75V13.5H11.25ZM11.25 15.75V14.25H12.75V15.75H11.25Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span>
+              An account with this email already exists. Please{" "}
+              <Link to="/login">log in</Link> or{" "}
+              <Link to="/send-reset-link-to-email">reset your password</Link>
+            </span>
+          </div>
         )}
-      </div>
-      <form onSubmit={handleFormSubmission} className={styles.form}>
-        <div className={styles.formContainer}>
-          <div className={styles.flContainer}>
-            <div className={styles.fieldsContainer}>
-              <div>
-                <label htmlFor="firstName">First Name</label>
-              </div>
-              <div>
-                <input
-                  className={styles.field}
-                  type="text"
-                  name="firstName"
-                  id="firstName"
-                />
-              </div>
+
+        <form onSubmit={handleFormSubmission} noValidate>
+          <div className={styles.fieldRow}>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="firstName" className={styles.label}>
+                First Name
+              </label>
+              <input
+                className={styles.input}
+                type="text"
+                name="firstName"
+                id="firstName"
+                placeholder="John"
+                autoComplete="given-name"
+                disabled={isSubmitting}
+              />
             </div>
-            <div className={styles.fieldsContainer}>
-              <div>
-                <label htmlFor="lastname">Last Name</label>
-              </div>
-              <div>
-                <input
-                  className={styles.field}
-                  type="text"
-                  name="lastName"
-                  id="lastName"
-                />
-              </div>
+            <div className={styles.fieldGroup}>
+              <label htmlFor="lastName" className={styles.label}>
+                Last Name
+              </label>
+              <input
+                className={styles.input}
+                type="text"
+                name="lastName"
+                id="lastName"
+                placeholder="Doe"
+                autoComplete="family-name"
+                disabled={isSubmitting}
+              />
             </div>
           </div>
-          <div className={styles.peContainer}>
-            <div className={styles.fieldsContainer}>
-              <div>
-                <label htmlFor="username">Username</label>
-              </div>
-              <div className={styles.peDiv}>
-                <div className={styles.usernameDiv}>
-                  <input
-                    onChange={(e) => {
-                      setUsername(e.target.value);
-                      setUsernameAvailable(null);
-                    }}
-                    onBlur={() => setUsernameMicroing(true)}
-                    className={`${styles.field} ${usernameError || usernameAvailable === false ? styles.error : ""}`}
-                    type="text"
-                    name="username"
-                    id="username"
-                    value={username}
-                    placeholder="letters, numbers, underscores"
-                  />
-                  <button
-                    type="button"
-                    className={styles.checkBtn}
-                    onClick={checkUsernameAvailability}
-                    disabled={!isValidUsername(username) || usernameChecking}
-                  >
-                    {usernameChecking ? "..." : "Check"}
-                  </button>
-                </div>
-                <div>
-                  {usernameError && (
-                    <p className={styles.errorMessage}>
-                      3-30 characters: letters, numbers, underscores only
-                    </p>
-                  )}
-                  {usernameAvailable === true && (
-                    <p className={styles.successMessage}>Username is available!</p>
-                  )}
-                  {usernameAvailable === false && (
-                    <p className={styles.errorMessage}>Username is taken</p>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className={styles.fieldsContainer}>
-              <div>
-                <label htmlFor="email">Email</label>
-              </div>
-              <div className={styles.peDiv}>
-                <div className={styles.emailDiv}>
-                  <input
-                    onChange={handleEmailChange}
-                    onBlur={emailMicroing ? undefined : handleEmailBlur}
-                    className={`${styles.field} ${emailError && styles.error}`}
-                    type="email"
-                    name="email"
-                    id="email"
-                    value={email}
-                  />
-                  <div>
-                    {emailError && (
-                      <svg
-                        className={styles.emailErrIcon}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM11.25 13.5V8.25H12.75V13.5H11.25ZM11.25 15.75V14.25H12.75V15.75H11.25Z"
-                          fill="red"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
 
-                <div>
-                  {emailError && (
-                    <p className={styles.errorMessage}>
-                      Incorrect email format
-                    </p>
-                  )}
-                </div>
-              </div>
+          <div className={styles.fieldGroup}>
+            <label htmlFor="username" className={styles.label}>
+              Username
+            </label>
+            <div className={styles.usernameRow}>
+              <input
+                onChange={(e) => {
+                  setUsername(e.target.value);
+                  setUsernameAvailable(null);
+                  if (usernameServerError) setUsernameServerError("");
+                }}
+                onBlur={() => setUsernameMicroing(true)}
+                className={`${styles.input} ${usernameError || usernameServerError || usernameAvailable === false ? styles.inputError : ""}`}
+                type="text"
+                name="username"
+                id="username"
+                value={username}
+                placeholder="letters, numbers, underscores"
+                autoComplete="username"
+                disabled={isSubmitting}
+              />
+              <button
+                type="button"
+                className={styles.checkBtn}
+                onClick={checkUsernameAvailability}
+                disabled={!isValidUsername(username) || usernameChecking || isSubmitting}
+              >
+                {usernameChecking ? "..." : "Check"}
+              </button>
             </div>
-
-            <div className={styles.fieldsContainer}>
-              <div>
-                <label htmlFor="password">Password</label>
-              </div>
-              <div className={styles.peDiv}>
-                <div className={styles.passwordDiv}>
-                  <input
-                    onChange={handlePasswordChange}
-                    onBlur={passwordMicroing ? undefined : handlePasswordBlur}
-                    onFocus={() => {
-                      setShowCriteria(true);
-                    }}
-                    className={`${styles.field} ${
-                      passwordError ? styles.error : ""
-                    }`}
-                    type="password"
-                    name="password"
-                    id="password"
-                    value={password}
-                  />
-                  <div>
-                    {passwordError && (
-                      <svg
-                        className={styles.emailErrIcon}
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M19.5 12C19.5 16.1421 16.1421 19.5 12 19.5C7.85786 19.5 4.5 16.1421 4.5 12C4.5 7.85786 7.85786 4.5 12 4.5C16.1421 4.5 19.5 7.85786 19.5 12ZM21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12ZM11.25 13.5V8.25H12.75V13.5H11.25ZM11.25 15.75V14.25H12.75V15.75H11.25Z"
-                          fill="red"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  {passwordError && (
-                    <p className={styles.errorMessage}>
-                      {passwordErrorMessage}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {showCritera && (
-              <div className={styles.conditionsParent}>
-                <PasswordConditionsHelper
-                  errorCallback={specificPasswordError}
-                  updatedPassword={password}
-                />
-              </div>
+            {usernameError && (
+              <p className={styles.fieldError}>
+                3–30 characters: letters, numbers, underscores only
+              </p>
+            )}
+            {usernameAvailable === true && (
+              <p className={styles.fieldSuccess}>Username is available!</p>
+            )}
+            {usernameAvailable === false && (
+              <p className={styles.fieldError}>Username is taken</p>
+            )}
+            {usernameServerError && (
+              <p className={styles.fieldError}>{usernameServerError}</p>
             )}
           </div>
-          <div>
-            <button
-              type="submit"
-              disabled={disableSubmission}
-              className={styles.submitButton}
-            >
-              Sign Up!
-            </button>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="email" className={styles.label}>
+              Email
+            </label>
+            <input
+              onChange={handleEmailChange}
+              onBlur={emailMicroing ? undefined : handleEmailBlur}
+              className={`${styles.input} ${emailError ? styles.inputError : ""}`}
+              type="email"
+              name="email"
+              id="email"
+              value={email}
+              placeholder="you@example.com"
+              autoComplete="email"
+              disabled={isSubmitting}
+            />
+            {emailError && (
+              <p className={styles.fieldError}>Incorrect email format</p>
+            )}
           </div>
-        </div>
-      </form>
+
+          <div className={styles.fieldGroup}>
+            <label htmlFor="password" className={styles.label}>
+              Password
+            </label>
+            <input
+              onChange={handlePasswordChange}
+              onBlur={passwordMicroing ? undefined : handlePasswordBlur}
+              onFocus={() => {
+                setShowCriteria(true);
+              }}
+              className={`${styles.input} ${passwordError ? styles.inputError : ""}`}
+              type="password"
+              name="password"
+              id="password"
+              value={password}
+              placeholder="Create a password"
+              autoComplete="new-password"
+              disabled={isSubmitting}
+            />
+            {passwordError && passwordErrorMessage && (
+              <p className={styles.fieldError}>{passwordErrorMessage}</p>
+            )}
+          </div>
+
+          {showCritera && (
+            <div className={styles.conditionsParent}>
+              <PasswordConditionsHelper
+                errorCallback={specificPasswordError}
+                updatedPassword={password}
+              />
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={disableSubmission || isSubmitting}
+            className={styles.submitBtn}
+          >
+            {isSubmitting ? (
+              <span className={styles.spinner} />
+            ) : (
+              "Sign Up"
+            )}
+          </button>
+        </form>
+
+        <p className={styles.loginPrompt}>
+          Already have an account?{" "}
+          <Link to="/login" className={styles.loginLink}>
+            Sign in
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

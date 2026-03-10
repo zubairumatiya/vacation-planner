@@ -7,6 +7,31 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { isValidPassword } from "../../shared/passwordUtils.js";
 import { isValidEmail } from "../../shared/emailUtils.js";
+import { RegExpMatcher, englishDataset, englishRecommendedTransformers } from "obscenity";
+
+const profanityMatcher = new RegExpMatcher({
+  ...englishDataset.build(),
+  ...englishRecommendedTransformers,
+});
+
+const RESERVED_USERNAMES = new Set([
+  "admin", "administrator", "mod", "moderator", "support", "help",
+  "system", "root", "null", "undefined", "test", "user", "guest",
+]);
+
+function isSpamUsername(username: string): boolean {
+  const lower = username.toLowerCase();
+
+  if (RESERVED_USERNAMES.has(lower)) return true;
+
+  // All same character repeated (e.g. "aaa", "111", "___")
+  if (/^(.)\1+$/.test(lower)) return true;
+
+  // Only underscores and digits, no letters (e.g. "123_456", "1_2_3")
+  if (!/[a-zA-Z]/.test(username) && /^[0-9_]+$/.test(username)) return true;
+
+  return false;
+}
 import { emailSender } from "../helpers/emailSender.js";
 import createNewRefreshToken from "../helpers/createNewRefreshToken.js";
 import * as cookie from "cookie";
@@ -89,8 +114,18 @@ router.post(
       return;
     }
 
-    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username) || !/[a-zA-Z0-9]/.test(username)) {
       res.status(400).json({ message: "Username must be 3-30 characters (letters, numbers, underscores)" });
+      return;
+    }
+
+    if (isSpamUsername(username)) {
+      res.status(400).json({ message: "Username is not allowed" });
+      return;
+    }
+
+    if (profanityMatcher.hasMatch(username)) {
+      res.status(400).json({ message: "Username contains inappropriate language" });
       return;
     }
 
@@ -612,12 +647,20 @@ router.get(
   "/check-username",
   async (
     req: TypedRequest<unknown, UsernameQuery>,
-    res: TypedResponse<{ available: boolean }>,
+    res: TypedResponse<{ available: boolean; profanity?: boolean }>,
     next: NextFunction,
   ) => {
     const username = req.query.username;
-    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username)) {
+    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username) || !/[a-zA-Z0-9]/.test(username)) {
       res.status(400).json({ available: false });
+      return;
+    }
+    if (isSpamUsername(username)) {
+      res.status(200).json({ available: false });
+      return;
+    }
+    if (profanityMatcher.hasMatch(username)) {
+      res.status(200).json({ available: false, profanity: true });
       return;
     }
     try {
