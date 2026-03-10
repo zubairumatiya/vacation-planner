@@ -1,24 +1,244 @@
-.normalInput {
-  border: 0.1rem solid white;
-  border-radius: 0.25rem;
-}
-.invalid {
-  border: 0.1rem solid red;
-  border-radius: 0.25rem;
-}
-
-.errorMessage {
-  color: red;
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 2rem;
 }
 
-.button {
-  margin-top: 3vh;
-  transition: opacity 0.5s ease;
+.card {
+  width: 100%;
+  max-width: 400px;
 }
 
-.button:disabled {
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem;
+}
+
+.subtitle {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
+  margin: 0 0 2rem;
+}
+
+/* Error banner */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  color: #f87171;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.errorIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Field styles */
+.fieldGroup {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  color: #2edf8c;
+  font-size: 0.95rem;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.input:focus {
+  border-color: #646cff;
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.15);
+}
+
+.input:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
-  pointer-events: auto;
+}
+
+.inputError {
+  border-color: #ef4444;
+}
+
+.inputError:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.fieldError {
+  color: #f87171;
+  font-size: 0.8rem;
+  margin: 0.35rem 0 0;
+}
+
+/* Forgot password */
+.forgotRow {
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+
+.forgotLink {
+  font-size: 0.825rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.forgotLink:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Submit button */
+.submitBtn {
+  width: 100%;
+  padding: 0.7rem;
+  background: #646cff;
+  color: #fff;
   border: none;
-  opacity: 0.3;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    opacity 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: #44f478;
+  color: black;
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  color: #fff;
+  border: none;
+  background: #646cff;
+}
+
+/* Spinner */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Shake animation */
+.shake {
+  animation: shakeAnim 0.4s ease-in-out;
+}
+
+@keyframes shakeAnim {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+/* Sign up prompt */
+.signupPrompt {
+  text-align: center;
+  margin-top: 1.75rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.signupLink {
+  color: #646cff;
+  font-weight: 500;
+}
+
+.signupLink:hover {
+  color: #535bf2;
+}
+
+/* Light mode overrides */
+@media (prefers-color-scheme: light) {
+  .subtitle {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .label {
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .input {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.15);
+  }
+
+  .input::placeholder {
+    color: rgba(0, 0, 0, 0.3);
+  }
+
+  .forgotLink {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .forgotLink:hover {
+    color: rgba(0, 0, 0, 0.8);
+  }
+
+  .signupPrompt {
+    color: rgba(0, 0, 0, 0.5);
+  }
 }
