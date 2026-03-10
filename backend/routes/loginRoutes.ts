@@ -414,8 +414,7 @@ router.post(
       if (existingUnverifiedUser.rows.length > 0) {
         const now = new Date();
         const lastSent = existingUnverifiedUser.rows[0].last_email_sent_at;
-        if (now.getTime() - lastSent.getTime() >= 5 * 1000) {
-          // change this back in production to 5 minutes!! (just add * 60)
+        if (now.getTime() - lastSent.getTime() >= 5 * 60 * 1000) {
           const newToken = crypto.randomBytes(32).toString("hex");
           await db.query(
             "UPDATE unverified_users SET token=$1, last_email_sent_at=NOW() WHERE email=$2",

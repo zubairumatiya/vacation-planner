@@ -25,7 +25,7 @@ const RedirectPage = () => {
 
   return verificationMessage ? (
     <p>
-      <span className={styles.verifMessage}>Successfully verified!</span>
+      <span className={styles.verifMessage}>Successfully verified! </span>
       Redirecting to login...
     </p>
   ) : resetPasswordMessage ? (
