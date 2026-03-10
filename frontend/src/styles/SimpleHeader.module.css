@@ -2,3 +2,20 @@
   display: flex;
   justify-content: flex-start;
 }
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.logoLink:hover .logo {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 4px rgba(47, 231, 130, 0.4));
+}

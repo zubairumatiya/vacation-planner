@@ -14,7 +14,6 @@
 .logo {
   width: 2.5rem;
   height: 2.5rem;
-  fill: #2fe782;
   transition: transform 0.2s ease, filter 0.2s ease;
 }
 
