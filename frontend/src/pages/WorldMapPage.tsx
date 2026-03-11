@@ -91,7 +91,8 @@ const WorldMapPage = () => {
   const [hoveredCountry, setHoveredCountry] = useState<UserCountry | null>(
     null,
   );
-  const tooltipPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  // @ts-expect-error reserved for future tooltip positioning
+  const _tooltipPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   const [profileName, setProfileName] = useState("");

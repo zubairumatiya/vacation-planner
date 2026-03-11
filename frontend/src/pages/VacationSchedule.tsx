@@ -27,7 +27,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const [title, setTitle] = useState("");
-  const [tripLocation, setTripLocation] = useState<string>("");
+  const [_tripLocation, setTripLocation] = useState<string>("");
   const [countryName, setCountryName] = useState<string>("");
   const [tripLength, setTripLength] = useState(0);
   const [role, setRole] = useState("");

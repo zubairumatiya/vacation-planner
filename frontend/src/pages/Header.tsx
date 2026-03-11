@@ -1,11 +1,11 @@
 import styles from "../styles/Header.module.css";
 import { Link } from "react-router-dom";
-import addIcon from "../assets/icons/add-icon.svg";
+// import addIcon from "../assets/icons/add-icon.svg";
 import vacationPlannerLogo from "../assets/icons/vacation-planner.svg";
 import { AuthContext } from "../context/AuthContext";
 import { TripRefreshContext } from "../context/TripRefreshContext";
 import { useContext, useState, useRef, useEffect, useCallback } from "react";
-import profileIcon from "../assets/icons/profile.svg";
+// import profileIcon from "../assets/icons/profile.svg";
 import ProfileSideBar from "../components/ProfileSideBar";
 import InboxPanel from "../components/InboxPanel";
 

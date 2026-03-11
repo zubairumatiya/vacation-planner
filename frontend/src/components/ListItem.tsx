@@ -87,7 +87,7 @@ const ListItem = ({
 
   const mobileHandlers = isMobile
     ? {
-        onTouchStart: (e: React.TouchEvent) => {
+        onTouchStart: (_e: React.TouchEvent) => {
           startLongPress();
         },
         onTouchEnd: clearTimer,

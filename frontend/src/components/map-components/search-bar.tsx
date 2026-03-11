@@ -99,7 +99,7 @@ export const SearchBar = memo(function SearchBar({
   };
 
   const handleSubmitValues = useCallback(
-    (id: string, name: string, vp: Viewport) => {
+    (_id: string, name: string, vp: Viewport) => {
       setResetInput(true);
       setHoldName(name);
       const bounds = new google.maps.LatLngBounds(

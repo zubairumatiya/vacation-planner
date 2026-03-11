@@ -375,6 +375,7 @@ const EditableRow = ({
       sortIndex: 0,
       tripId: tripId ?? "",
       lastModified: "",
+      isLocked: false,
     };
     const tempArr = reSort(
       newTable
@@ -548,13 +549,14 @@ const EditableRow = ({
           scheduleItems
         );
         setSchedule(bucketizeItems);
-        const holdIntent = {
+        const holdIntent: Schedule = {
           ...sItem,
           id: itemID,
           sortIndex: calculateNewSortIndex(chunk),
           tripId: tripId ?? "",
           startTime: new Date(startDateAssembler),
           endTime: new Date(endDateAssembler),
+          isLocked: false,
         };
         setHoldOverwrite(holdIntent);
         setBannerMsg(
