@@ -55,13 +55,19 @@ if (app.get("env") === "development") {
 }
 console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
 
-const options = {
-  key: fs.readFileSync(
-    path.resolve(__dirname, "../../certs/localhost-key.pem"),
-  ),
-  cert: fs.readFileSync(path.resolve(__dirname, "../../certs/localhost.pem")),
-};
+const keyPath = path.resolve(__dirname, "../../certs/localhost-key.pem");
+const certPath = path.resolve(__dirname, "../../certs/localhost.pem");
 
-https.createServer(options, app).listen(port, () => {
-  console.log(`HTTPS backend running on port: ${port}`);
-});
+if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+  const options = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath),
+  };
+  https.createServer(options, app).listen(port, () => {
+    console.log(`HTTPS backend running on port: ${port}`);
+  });
+} else {
+  app.listen(port, () => {
+    console.log(`HTTP backend running on port: ${port}`);
+  });
+}
