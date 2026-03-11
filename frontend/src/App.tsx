@@ -60,7 +60,6 @@ function App() {
                     )}
                     onReset={() => {
                       setEditRetries((prev) => prev + 1);
-                      console.log("Resetting state...");
                     }}
                   >
                     <EditCanvas setCostTotal={setCostTotal} />

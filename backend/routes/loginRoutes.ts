@@ -186,7 +186,7 @@ router.post(
     } catch (err) {
       const pgErr = err as PgError;
       if (pgErr.code === "23505") {
-        console.log("email already exists");
+        // email already exists
       }
       next(err);
     }
@@ -300,7 +300,6 @@ router.post(
         }
       }
     } catch (err) {
-      console.log(err);
       next(err);
     }
   },
@@ -418,11 +417,9 @@ router.post(
       }
     } catch (err) {
       if (err instanceof Error && err.name === "TokenExpiredError") {
-        console.log("token expired --- logging");
         res.status(401).json({ error: "TokenExpired" });
         return;
       }
-      console.log(err);
       next(err);
     }
   },

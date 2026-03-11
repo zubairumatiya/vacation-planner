@@ -104,12 +104,6 @@ export const indexChunk = (
     return {};
   }
   const newIndex = newArray.findIndex((v) => v.id === id);
-  console.log(
-    "making our chunk - above:",
-    newArray[newIndex - 1]?.sortIndex,
-    "below:",
-    newArray[newIndex + 1]?.sortIndex,
-  );
   if (newIndex === newArray.length - 1) {
     // non-empty and at the bottom
     return {
@@ -146,15 +140,12 @@ export const calculateNewSortIndex = (chunk: Chunk): number => {
   if (above == null && below == null) {
     return 0;
   } else if (above == null) {
-    console.log("No above in chunk");
     if (below != null) {
       return below - 1000;
     }
   } else if (below == null) {
-    console.log("No below in chunk");
     return above + 1000;
   } else {
-    console.log("our middle spot:", Math.floor((above + below) / 2));
     return Math.floor((above + below) / 2);
   }
   return 0;

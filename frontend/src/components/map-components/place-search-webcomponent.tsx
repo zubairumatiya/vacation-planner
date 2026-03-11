@@ -193,7 +193,6 @@ const PlaceSearchWebComponent = ({
           }
         } else {
           const data = (await res.json()) as MapSearchResponse;
-          console.log(data.places);
           setRememberFilter({
             rating: ratingRef?.current?.value,
             reviews: reviewCountRef?.current?.value,

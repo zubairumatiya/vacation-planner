@@ -20,6 +20,5 @@ export default async function renumberIndexDb(
       RETURNING *;`,
     [tripId]
   );
-  console.log(`Updated rows: ${result.rows}`);
   return result.rows;
 }

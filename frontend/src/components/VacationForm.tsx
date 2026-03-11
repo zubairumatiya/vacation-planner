@@ -147,7 +147,6 @@ const VacationForm = (props?: Props) => {
     if (loggingOutRef?.current) return;
     const getGValues = async () => {
       try {
-        console.log("getting add vacation");
         const result = await fetch(
           `${apiUrl}/add-vacation/${props?.preFill?.id}`,
           {
@@ -214,13 +213,13 @@ const VacationForm = (props?: Props) => {
         } else if (result.status === 404) {
           alert("Error: Trip not found");
         }
-      } catch (err) {
-        console.log("Failed to fetch gValue:", err);
+      } catch {
+        // failed to fetch gValue
       }
     };
     if (props?.method === "PATCH") {
       if (!props.preFill?.location) {
-        console.log("no prefill location, falling back on db location");
+        // no prefill location, falling back on db location
       }
       getGValues();
     }
@@ -369,7 +368,6 @@ const VacationForm = (props?: Props) => {
             },
             body: JSON.stringify(bodyObject),
           });
-          console.log("bodyObject", bodyObject);
           if (res.status === 400) {
             setFieldError(true);
             setErrMessage("Invalid input");
@@ -462,7 +460,6 @@ const VacationForm = (props?: Props) => {
   const endDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEndDate(e.target.value);
     setEHtmlDateErr(e.target.validity.valid);
-    console.log(e.target.validity.valid);
   };
 
   const divs =

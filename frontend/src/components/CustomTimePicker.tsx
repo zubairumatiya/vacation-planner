@@ -151,7 +151,6 @@ const CustomTimePicker = (props: Props) => {
 
   const captureMinuteSelection = (e: React.MouseEvent) => {
     const li = e.target as HTMLLIElement;
-    console.log(li.innerText);
     setMinuteSelection(li.innerText);
     minuteLiRef.current = li;
     const toNumber = Number(li.innerText);
@@ -160,7 +159,6 @@ const CustomTimePicker = (props: Props) => {
 
   const captureHourSelection = (e: React.MouseEvent) => {
     const li = e.target as HTMLLIElement;
-    console.log(li.innerText);
     setHourSelection(li.innerText);
     hourLiRef.current = li;
     const toNumber = Number(li.innerText);
@@ -229,7 +227,6 @@ const CustomTimePicker = (props: Props) => {
       setMinuteSelection(toString);
     } else if (e.code === "Space") {
       e.preventDefault();
-      console.log("space");
       setHideMinutes((prev) => !prev);
     } else if (e.key === "Enter" && focusedMinuteIndex !== null) {
       e.preventDefault();
@@ -265,7 +262,6 @@ const CustomTimePicker = (props: Props) => {
         setHourSelection(String(toNumber));
         return;
       }
-      console.log(toNumber);
       setFocusedHourIndex(Number(e.target.value[2]) - 1);
       setHourSelection("0" + e.target.value[2]);
     }

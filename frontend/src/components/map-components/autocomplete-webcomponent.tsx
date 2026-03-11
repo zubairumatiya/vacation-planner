@@ -156,7 +156,6 @@ export const AutocompleteWebComponent = forwardRef(
             setSuggestions(data.suggestions);
           }
         } catch {
-          console.log("error making req to backend");
           return;
         }
       };

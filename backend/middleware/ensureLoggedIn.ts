@@ -38,7 +38,6 @@ export default function ensureLoggedIn(
   try {
     const token = extractBearerToken(req.headers.authorization);
     if (!token) {
-      console.log("malformed token/invalid auth!! ~~~~~ console logging");
       res.status(401).json({ message: "Token not found" });
       return;
     }
@@ -53,7 +52,6 @@ export default function ensureLoggedIn(
     next();
   } catch (err) {
     if (err instanceof Error && err.name === "TokenExpiredError") {
-      console.log("token expired --- console logging");
       res.status(401).json({ error: "TokenExpired" });
       return;
     }

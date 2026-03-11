@@ -424,8 +424,7 @@ const EditVacationSchedule = ({
           );
         }
         clearAdd();
-      } catch (err) {
-        console.log(err);
+      } catch {
         return;
       }
     } else {
@@ -745,8 +744,7 @@ const EditVacationSchedule = ({
           );
         }
       }
-    } catch (err) {
-      console.log(err);
+    } catch {
       setSchedule((prev) => ({
         ...prev,
         [dayContainer]: prev[dayContainer].filter((v) => v.id !== "temp-dup"),

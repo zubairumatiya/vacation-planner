@@ -10,7 +10,6 @@ export async function emailSender(
 ): Promise<void> {
   const resend = new Resend(process.env.RESEND_API_KEY);
   const domain = process.env.MY_DOMAIN_EMAIL;
-  console.log("from value:", domain);
 
   const link = `${BASE_URL}/${path}/?token=${token}`;
 
@@ -42,6 +41,6 @@ export async function emailSender(
   if (error) {
     console.error("Resend error:", error);
   } else {
-    console.log("Resend success:", data);
+    void data;
   }
 }

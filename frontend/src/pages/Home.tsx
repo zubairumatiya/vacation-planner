@@ -547,7 +547,6 @@ const Home = () => {
         return;
       }
     } else {
-      console.log("~~~~ error deleting item");
     }
   };
 
@@ -725,7 +724,6 @@ const Home = () => {
     const startFormat = formatDate(v.startDate);
     const endFormat = formatDate(v.endDate);
     const ownerName = `${v.ownerFirstName} ${v.ownerLastName}`;
-    console.log(v);
     return (
       <div
         id={v.id}

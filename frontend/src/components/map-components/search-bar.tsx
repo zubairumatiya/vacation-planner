@@ -112,7 +112,6 @@ export const SearchBar = memo(function SearchBar({
         map?.fitBounds(bounds);
         setPlaceType(placeTypeRef.current);
         setLocalSearchDisabled(true);
-        console.log("enter");
       };
 
       setClosure(() => holdValues);

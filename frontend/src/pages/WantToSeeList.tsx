@@ -130,7 +130,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
     const item: string = raw.trim();
     const details = noteText.trim() || null;
-    console.log(props.list[index]);
     const response = await fetch(`${apiURL}/list/${itemId}`, {
       method: "PATCH",
       headers: {
@@ -144,7 +143,6 @@ const WantToSeeList = (props: WantToSeeListProps) => {
         lastModified: props.list[index].lastModified,
       }),
     });
-    console.log("lastModified:", props.list[index].lastModified);
     if (response.status === 401) {
       const resData = (await response.json()) as ApiErrorResponse;
       if (resData.error === "JwtError") {

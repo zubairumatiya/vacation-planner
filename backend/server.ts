@@ -53,7 +53,6 @@ if (app.get("env") === "development") {
     return;
   });
 }
-console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
 
 const keyPath = path.resolve(__dirname, "../../certs/localhost-key.pem");
 const certPath = path.resolve(__dirname, "../../certs/localhost.pem");

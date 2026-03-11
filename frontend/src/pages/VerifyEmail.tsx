@@ -48,7 +48,6 @@ const VerifyEmail = () => {
 
   const clickResendLink = async () => {
     const email = localStorage.getItem("pendingEmail");
-    console.log(email);
     const uhOh = "Uh oh, cannot complete this action. Please sign up again";
     if (email === null) {
       alert(uhOh);

@@ -307,7 +307,6 @@ router.delete(
         return;
       }
     } catch (err) {
-      console.log(err);
       next(err);
     }
   },
@@ -529,7 +528,6 @@ router.post(
         return;
       }
     } catch (err) {
-      console.log(err);
       await client.query("ROLLBACK");
       next(err);
     } finally {

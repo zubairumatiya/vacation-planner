@@ -1931,7 +1931,6 @@ const EditCanvas = ({
                     )}
                     onReset={() => {
                       setScheduleRetries((prev) => prev + 1);
-                      console.log("Resetting state...");
                     }}
                   >
                     <EditVacationSchedule
@@ -1977,7 +1976,6 @@ const EditCanvas = ({
                 )}
                 onReset={() => {
                   setMapRetries((prev) => prev + 1);
-                  console.log("Resetting state...");
                 }}
               >
                 {!loading2 && (

@@ -57,7 +57,6 @@ export async function chat(
   });
 
   const text = response.text ?? "";
-  console.log("[AI] Raw response:", text);
   const question = parseQuestion(text);
   const itinerary = parseItinerary(text);
 
@@ -117,7 +116,6 @@ export async function scheduleListItems(
   });
 
   const text = response.text ?? "";
-  console.log("[AI] Raw response:", text);
   const question = parseQuestion(text);
   const itinerary = parseItinerary(text);
 
