@@ -14,6 +14,7 @@ export interface PgError extends Error {
 export interface CustomJwtPayload extends JwtPayload {
   jti?: string;
   sub?: string;
+  exp?: number;
 }
 
 export type TypedRequest<
