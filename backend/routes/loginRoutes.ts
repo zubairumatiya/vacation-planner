@@ -55,7 +55,7 @@ import {
   VerifyQuery,
   ResetPasswordQuery,
   UsernameQuery,
-} from "../types/express.js";
+} from "../types/app-types.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);

@@ -39,7 +39,7 @@ import {
   FeedTrip,
   FeedTravelLog,
   FriendsFeedResponse,
-} from "../types/express.js";
+} from "../types/app-types.js";
 
 // GET /profile - get current user's profile
 router.get(

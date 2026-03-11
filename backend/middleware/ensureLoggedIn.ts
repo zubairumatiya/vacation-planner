@@ -6,7 +6,7 @@ import {
   AuthResponse,
   TypedRequest,
   TypedResponse,
-} from "../types/express.js";
+} from "../types/app-types.js";
 import path from "path";
 import { fileURLToPath } from "url";
 

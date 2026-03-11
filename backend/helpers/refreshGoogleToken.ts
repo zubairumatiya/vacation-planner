@@ -1,5 +1,5 @@
 import db from "../db/db.js";
-import type { GoogleTokenRow } from "../types/express.js";
+import type { GoogleTokenRow } from "../types/app-types.js";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";

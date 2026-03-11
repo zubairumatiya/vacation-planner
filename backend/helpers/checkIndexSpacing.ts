@@ -1,6 +1,6 @@
 import { PoolClient } from "pg";
 import renumberIndexDb from "./renumberIndexDb.js";
-import { Schedule, ScheduleBody } from "../types/express.js";
+import { Schedule, ScheduleBody } from "../types/app-types.js";
 
 export default async function checkIndexSpacing(
   body: ScheduleBody,

@@ -39,7 +39,7 @@ import {
   QuestionnaireBody,
   QuestionnaireResponse,
   CountryInfoResponse,
-} from "../types/express.js";
+} from "../types/app-types.js";
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
 import path from "path";

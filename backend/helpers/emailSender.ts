@@ -11,7 +11,6 @@ export async function emailSender(
   const resend = new Resend(process.env.RESEND_API_KEY);
   const domain = process.env.MY_DOMAIN_EMAIL;
   console.log("from value:", domain);
-  userEmail = "zubair.umatiya@gmail.com";
 
   const link = `${BASE_URL}/${path}/?token=${token}`;
 

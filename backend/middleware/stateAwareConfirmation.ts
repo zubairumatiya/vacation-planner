@@ -1,7 +1,7 @@
 import { NextFunction } from "express";
 import db from "../db/db.js";
 import { snakeToCamel } from "../helpers/snakeToCamel.js";
-import { TypedRequest, TypedResponse, Schedule, TripList, ScheduleResponse, StateAwareBody, CamelCaseRow } from "../types/express.js";
+import { TypedRequest, TypedResponse, Schedule, TripList, ScheduleResponse, StateAwareBody, CamelCaseRow } from "../types/app-types.js";
 import { QueryResult } from "pg";
 
 export default async function stateAwareConfirmation(

@@ -1,6 +1,6 @@
 import db from "../db/db.js";
 import { NextFunction } from "express";
-import { TypedRequest, TypedResponse, MessageResponse, OwnershipBody } from "../types/express.js";
+import { TypedRequest, TypedResponse, MessageResponse, OwnershipBody } from "../types/app-types.js";
 import { QueryResult } from "pg";
 
 export default async function ensureOwnerOnly(

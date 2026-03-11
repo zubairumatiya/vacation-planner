@@ -1,5 +1,5 @@
 import { PoolClient } from "pg";
-import { Schedule } from "../types/express";
+import { Schedule } from "../types/app-types";
 
 export default async function renumberIndexDb(
   tripId: string,
