@@ -83,7 +83,7 @@
 
 .input {
   background-color: black;
-  width: 23vw;
+  width: 22.5vw;
   color: white;
   border-radius: 5px;
   padding-left: 0.25rem;
@@ -232,6 +232,11 @@
   display: flex;
   align-items: center;
   gap: 0.2rem;
+}
+
+.detailToggle:active {
+  background: transparent;
+  transition: none;
 }
 
 .detailsToggle:hover {

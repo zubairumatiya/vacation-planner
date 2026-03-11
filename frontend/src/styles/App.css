@@ -54,8 +54,13 @@ button {
   color: #222222;
   cursor: pointer;
   display: inline-block;
-  font-family: Circular, -apple-system, BlinkMacSystemFont, Roboto,
-    "Helvetica Neue", sans-serif;
+  font-family:
+    Circular,
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
+    "Helvetica Neue",
+    sans-serif;
   font-size: 1rem;
   font-weight: 600;
   line-height: 20px;
@@ -66,7 +71,10 @@ button {
   text-align: center;
   text-decoration: none;
   touch-action: manipulation;
-  transition: box-shadow 0.2s, -ms-transform 0.1s, -webkit-transform 0.1s,
+  transition:
+    box-shadow 0.2s,
+    -ms-transform 0.1s,
+    -webkit-transform 0.1s,
     transform 0.1s;
   user-select: none;
   -webkit-user-select: none;
@@ -74,14 +82,14 @@ button {
 }
 
 button:focus-visible {
-  box-shadow: #222222 0 0 0 2px, rgba(255, 255, 255, 0.8) 0 0 0 4px;
+  box-shadow:
+    #222222 0 0 0 2px,
+    rgba(255, 255, 255, 0.8) 0 0 0 4px;
   transition: box-shadow 0.2s;
 }
 
 button:active {
-  background-color: #f7f7f7;
   border-color: #000000;
-  transform: scale(0.96);
 }
 
 button:disabled {
