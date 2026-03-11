@@ -72,7 +72,7 @@ const ProfilePage = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profileUsername, setProfileUsername] = useState("");
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const [avatar, setAvatar] = useState<string | null>(auth?.userAvatar ?? null);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [avatarPage, setAvatarPage] = useState(0);
   const [friends, setFriends] = useState<FollowUser[]>([]);
@@ -244,6 +244,7 @@ const ProfilePage = () => {
 
   const handleAvatarSelect = async (filename: string) => {
     setAvatar(filename);
+    auth?.setUserAvatar(filename);
     try {
       await authFetch(`${apiUrl}/profile/avatar`, {
         method: "PATCH",

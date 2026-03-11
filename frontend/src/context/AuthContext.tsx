@@ -16,6 +16,7 @@ type AuthContextType = {
   userId: string | null;
   userUsername: string | null;
   userAvatar: string | null;
+  setUserAvatar: (avatar: string | null) => void;
 };
 
 type AuthProviderProps = {
@@ -141,6 +142,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userId,
         userUsername,
         userAvatar,
+        setUserAvatar,
       }}
     >
       {children}
