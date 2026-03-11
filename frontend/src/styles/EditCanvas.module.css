@@ -172,3 +172,43 @@
     transform: scaleX(0);
   }
 }
+
+.infoIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: help;
+  position: relative;
+  margin-left: auto;
+}
+
+.infoIcon:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  width: max-content;
+  max-width: 250px;
+  background: rgba(0, 0, 0, 0.9);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  z-index: 100;
+  pointer-events: none;
+  font-family: inherit;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  text-align: left;
+}

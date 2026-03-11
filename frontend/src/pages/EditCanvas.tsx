@@ -1908,6 +1908,12 @@ const EditCanvas = ({
               <div className={`${styles.sectionPanel} ${styles.schedulePanel}`}>
                 <div className={styles.scheduleSectionHeader}>
                   <span className={styles.sectionTitle}>Schedule</span>
+                  <span
+                    className={styles.infoIcon}
+                    data-tooltip="• Drag items to reorder them or move them between days&#10;• Double click an item to edit it&#10;• Press 'Enter' to save changes&#10;• Press 'Escape' to cancel editing or dragging"
+                  >
+                    ?
+                  </span>
                 </div>
                 <EditScheduleProvider
                   utcStart={utcStart}
@@ -1950,6 +1956,12 @@ const EditCanvas = ({
                 <div className={`${styles.sectionPanel} ${styles.listPanel}`}>
                   <div className={styles.listSectionHeader}>
                     <span className={styles.sectionTitle}>Want to See</span>
+                    <span
+                      className={styles.infoIcon}
+                      data-tooltip="• Drag items to the schedule&#10;• Double click an item to edit it&#10;• Click the note icon to add notes&#10;• Press 'Enter' to save changes"
+                    >
+                      ?
+                    </span>
                   </div>
                   <WantToSeeList
                     loadSecond={() => setLoading2(false)}
@@ -1969,6 +1981,12 @@ const EditCanvas = ({
             <div className={`${styles.sectionPanel} ${styles.mapPanel}`}>
               <div className={styles.mapSectionHeader}>
                 <span className={styles.sectionTitle}>Explore Map</span>
+                <span
+                  className={styles.infoIcon}
+                  data-tooltip="• Search and explore places on the map&#10;• Add items from the places list directly into your 'Want to See' list"
+                >
+                  ?
+                </span>
               </div>
               <ErrorBoundary
                 fallbackRender={(fallbackProps) => (
