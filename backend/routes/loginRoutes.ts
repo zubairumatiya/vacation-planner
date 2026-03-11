@@ -102,7 +102,7 @@ router.post(
     res: TypedResponse<AuthResponse>,
     next: NextFunction,
   ) => {
-    const { email, password, firstName, lastName, username } = req.body;
+    const { email, password, firstName, lastName, username, avatar } = req.body;
 
     if (!password || !isValidPassword(password)) {
       res.status(400).json({ message: "invalid password criteria" });
@@ -177,8 +177,8 @@ router.post(
         return;
       } else {
         await db.query(
-          "INSERT INTO unverified_users (email, password, first_name, last_name, username, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, $6, NOW()+ interval '1 hour', NOW())",
-          [email, hash, firstName, lastName, username, hashToken(token)],
+          "INSERT INTO unverified_users (email, password, first_name, last_name, username, avatar, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()+ interval '1 hour', NOW())",
+          [email, hash, firstName, lastName, username, avatar || null, hashToken(token)],
         );
         await sendRegistrationEmail(email, token);
         res.status(200).json({ message: "success" });
@@ -217,7 +217,7 @@ router.get(
           try {
             await client.query("BEGIN");
             await client.query(
-              "INSERT INTO users (email, password, first_name, last_name, username) SELECT email, password, first_name, last_name, username FROM unverified_users WHERE token=$1",
+              "INSERT INTO users (email, password, first_name, last_name, username, avatar) SELECT email, password, first_name, last_name, username, avatar FROM unverified_users WHERE token=$1",
               [hashedToken],
             );
             await client.query("DELETE FROM unverified_users WHERE token=$1", [

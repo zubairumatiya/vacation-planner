@@ -19,7 +19,7 @@
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  background-color: rgb(51, 51, 51);
+  background-color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,6 +30,36 @@
   width: 60px;
   height: 60px;
   opacity: 0.7;
+}
+
+.avatarClickable {
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.avatarClickable:hover {
+  border-color: #fff;
+  transform: scale(1.05);
+}
+
+.avatarEditHint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 0.65rem;
+  text-align: center;
+  padding: 2px 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatarClickable:hover .avatarEditHint {
+  opacity: 1;
 }
 
 .username {

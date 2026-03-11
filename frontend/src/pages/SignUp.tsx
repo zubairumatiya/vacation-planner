@@ -4,6 +4,8 @@ import styles from "../styles/SignUp.module.css";
 import { isValidEmail } from "../../../shared/emailUtils.ts";
 import { isValidPassword } from "../../../shared/passwordUtils.ts";
 import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
+import AvatarPicker from "../components/AvatarPicker.tsx";
+import { getAvatarSrc } from "../utils/avatarUtils.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const isValidUsername = (username: string) =>
@@ -27,6 +29,9 @@ const SignUp = () => {
   const [showCritera, setShowCriteria] = useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
   const [existingUserError, setExistingUserError] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [avatarPage, setAvatarPage] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,6 +100,7 @@ const SignUp = () => {
       string,
       string
     >;
+    if (avatar) dataObj.avatar = avatar;
 
     setIsSubmitting(true);
     setExistingUserError("");
@@ -195,6 +201,18 @@ const SignUp = () => {
         )}
 
         <form onSubmit={handleFormSubmission} noValidate>
+          <div className={styles.avatarPickerRow}>
+            <button
+              type="button"
+              className={styles.avatarCircle}
+              onClick={() => setShowAvatarPicker(true)}
+              disabled={isSubmitting}
+            >
+              <img src={getAvatarSrc(avatar)} alt="Avatar" />
+              <span className={styles.avatarEditHint}>Pick</span>
+            </button>
+          </div>
+
           <div className={styles.fieldRow}>
             <div className={styles.fieldGroup}>
               <label htmlFor="firstName" className={styles.label}>
@@ -346,6 +364,15 @@ const SignUp = () => {
           </Link>
         </p>
       </div>
+      {showAvatarPicker && (
+        <AvatarPicker
+          selected={avatar}
+          onSelect={setAvatar}
+          onClose={() => setShowAvatarPicker(false)}
+          page={avatarPage}
+          onPageChange={setAvatarPage}
+        />
+      )}
     </div>
   );
 };

@@ -2,9 +2,10 @@ import { useEffect, useState, useContext, useRef } from "react";
 import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
-import profileIcon from "../assets/icons/profile.svg";
 import styles from "../styles/ProfilePage.module.css";
 import TravelLog from "../components/TravelLog";
+import AvatarPicker from "../components/AvatarPicker";
+import { getAvatarSrc } from "../utils/avatarUtils";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -71,6 +72,9 @@ const ProfilePage = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [profileUsername, setProfileUsername] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [avatarPage, setAvatarPage] = useState(0);
   const [friends, setFriends] = useState<FollowUser[]>([]);
   const [travelLog, setTravelLog] = useState<UserCountry[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -114,6 +118,7 @@ const ProfilePage = () => {
         setFirstName((data.first_name as string) || "");
         setLastName((data.last_name as string) || "");
         setProfileUsername(data.username || "");
+        setAvatar(data.avatar || null);
       }
     } catch {
       // handled by authFetch
@@ -237,6 +242,18 @@ const ProfilePage = () => {
     }
   };
 
+  const handleAvatarSelect = async (filename: string) => {
+    setAvatar(filename);
+    try {
+      await authFetch(`${apiUrl}/profile/avatar`, {
+        method: "PATCH",
+        body: JSON.stringify({ avatar: filename }),
+      });
+    } catch {
+      // handled
+    }
+  };
+
   const isFriend = (userId: string) => friends.some((f) => f.id === userId);
 
   const isPending = (userId: string) => pendingFollows.has(userId);
@@ -244,8 +261,13 @@ const ProfilePage = () => {
   return (
     <div className={styles.container}>
       <div className={styles.profileHeader}>
-        <div className={styles.avatar}>
-          <img src={profileIcon} alt="Profile" />
+        <div
+          className={`${styles.avatar} ${styles.avatarClickable}`}
+          onClick={() => setShowAvatarPicker(true)}
+          title="Change avatar"
+        >
+          <img src={getAvatarSrc(avatar)} alt="Profile" />
+          <span className={styles.avatarEditHint}>Change</span>
         </div>
         {(firstName || lastName) && (
           <div className={styles.name}>
@@ -423,6 +445,15 @@ const ProfilePage = () => {
           </div>
         </div>
       </div>
+      {showAvatarPicker && (
+        <AvatarPicker
+          selected={avatar}
+          onSelect={handleAvatarSelect}
+          onClose={() => setShowAvatarPicker(false)}
+          page={avatarPage}
+          onPageChange={setAvatarPage}
+        />
+      )}
     </div>
   );
 };

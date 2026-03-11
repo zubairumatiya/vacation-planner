@@ -5,9 +5,9 @@
 }
 
 .navPills {
-  width: 250px;
+  width: 290px;
   display: flex;
-  gap: 0;
+  gap: 10px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -84,6 +84,8 @@
   min-width: 0;
   flex-shrink: 0;
   flex-direction: column;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .ownerInfo {
@@ -95,12 +97,15 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #444;
+  background-color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid #2fe782;
   flex-shrink: 0;
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
 }
 
 .avatarSmall img {
@@ -114,6 +119,7 @@
   font-size: 0.7rem;
   font-weight: 500;
   white-space: nowrap;
+  transition: color 0.2s;
 }
 
 .ownerLink {
@@ -123,7 +129,15 @@
   transition: color 0.2s;
 }
 
-.ownerLink:hover {
+.tripCardLeft:hover .avatarSmall {
+  border: 2px solid #818cf8;
+}
+
+.tripCardLeft:hover .ownerName {
+  color: #818cf8;
+}
+
+.tripCardLeft:hover .ownerLink {
   color: #818cf8;
 }
 
@@ -171,7 +185,7 @@
   color: #fff;
   font-size: 0.55rem;
   font-weight: 600;
-  padding: 0px 6px;
+  padding: 0px 6px 1px;
   border-radius: 9999px;
   white-space: nowrap;
   line-height: 1.4;

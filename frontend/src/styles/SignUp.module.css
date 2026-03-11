@@ -54,6 +54,57 @@
   flex-shrink: 0;
 }
 
+/* Avatar picker */
+.avatarPickerRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.avatarCircle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  padding: 0;
+}
+
+.avatarCircle:hover {
+  border-color: #2fe782;
+}
+
+.avatarCircle img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
+.avatarEditHint {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 0.65rem;
+  text-align: center;
+  padding: 2px 0;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.avatarCircle:hover .avatarEditHint {
+  opacity: 1;
+}
+
 /* Field styles */
 .fieldGroup {
   margin-bottom: 1.25rem;

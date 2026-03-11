@@ -2,9 +2,9 @@ import { useEffect, useState, useContext } from "react";
 import { useParams, Navigate, Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
-import profileIcon from "../assets/icons/profile.svg";
 import styles from "../styles/UserProfilePage.module.css";
 import TravelLog from "../components/TravelLog";
+import { getAvatarSrc } from "../utils/avatarUtils";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -31,6 +31,7 @@ interface UserProfile {
   firstName: string;
   lastName: string;
   username: string;
+  avatar: string | null;
   isFriend: boolean;
   isPending: boolean;
   upcomingTrips?: UserPublicTrip[];
@@ -60,6 +61,7 @@ const mapUserProfile = (raw: Record<string, unknown>): UserProfile => ({
   firstName: raw.first_name as string,
   lastName: raw.last_name as string,
   username: raw.username as string,
+  avatar: (raw.avatar as string) || null,
   isFriend: raw.is_friend as boolean,
   isPending: raw.is_pending as boolean,
   upcomingTrips: raw.upcoming_trips
@@ -180,7 +182,7 @@ const UserProfilePage = () => {
       <div className={styles.container}>
         <div className={styles.profileHeader}>
           <div className={styles.avatar}>
-            <img src={profileIcon} alt="Profile" />
+            <img src={getAvatarSrc(profile.avatar)} alt="Profile" />
           </div>
           <div className={styles.name}>{fullName}</div>
           <div className={styles.profileUsername}>@{profile.username}</div>
@@ -207,7 +209,7 @@ const UserProfilePage = () => {
     <div className={styles.container}>
       <div className={styles.profileHeader}>
         <div className={styles.avatar}>
-          <img src={profileIcon} alt="Profile" />
+          <img src={getAvatarSrc(profile.avatar)} alt="Profile" />
         </div>
         <div className={styles.name}>{fullName}</div>
         <div className={styles.profileUsername}>@{profile.username}</div>

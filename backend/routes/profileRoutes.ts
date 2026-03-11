@@ -53,7 +53,7 @@ router.get(
     try {
       const userId = req.user.id;
       const userResult: QueryResult<User> = await db.query(
-        "SELECT id, email, first_name, last_name, username FROM users WHERE id = $1",
+        "SELECT id, email, first_name, last_name, username, avatar FROM users WHERE id = $1",
         [userId],
       );
       if (userResult.rows.length === 0) {
@@ -73,8 +73,32 @@ router.get(
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
+        avatar: user.avatar,
         friends_count: parseInt(friendsCount.rows[0].count),
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /profile/avatar - update avatar
+router.patch(
+  "/profile/avatar",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<{ avatar: string | null }>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const { avatar } = req.body;
+      await db.query("UPDATE users SET avatar = $1 WHERE id = $2", [
+        avatar || null,
+        userId,
+      ]);
+      res.status(200).json({ message: "Avatar updated" });
     } catch (err) {
       next(err);
     }
@@ -117,7 +141,7 @@ router.get(
         return;
       }
       const result: QueryResult<UserSearchResult> = await db.query(
-        `SELECT id, first_name, last_name, username FROM users
+        `SELECT id, first_name, last_name, username, avatar FROM users
          WHERE (username ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1
                 OR (first_name || ' ' || last_name) ILIKE $1)
            AND id != $2
@@ -249,7 +273,7 @@ router.get(
     try {
       const userId = req.user.id;
       const result: QueryResult<FollowUser> = await db.query(
-        `SELECT u.id, u.first_name, u.last_name, u.username, f.id as follow_id, f.created_at
+        `SELECT u.id, u.first_name, u.last_name, u.username, u.avatar, f.id as follow_id, f.created_at
          FROM follows f
          JOIN users u ON (CASE WHEN f.requester_id = $1 THEN f.receiver_id ELSE f.requester_id END) = u.id
          WHERE (f.requester_id = $1 OR f.receiver_id = $1) AND f.status = 'accepted'
@@ -280,6 +304,7 @@ router.get(
                 t.id, t.trip_name, t.location, t.start_date, t.end_date, t.is_public, t.is_open_invite,
                 u.id as owner_id, u.first_name as owner_first_name, u.last_name as owner_last_name,
                 u.username as owner_username,
+                u.avatar as owner_avatar,
                 ut_me.role as my_role
          FROM trips t
          JOIN user_trips ut_owner ON ut_owner.trip_id = t.id AND ut_owner.role = 'owner'
@@ -301,6 +326,7 @@ router.get(
         `SELECT uc.id, c.name as country_name, uc.created_at, uc.visibility,
                 u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name,
                 u.username as user_username,
+                u.avatar as user_avatar,
                 EXTRACT(DAY FROM CURRENT_TIMESTAMP - uc.created_at)::int as days_ago
          FROM user_countries uc
          JOIN countries c ON c.id = uc.country_id
@@ -488,7 +514,7 @@ router.get(
 
       // Get basic user info
       const userResult = await db.query(
-        "SELECT id, first_name, last_name, username FROM users WHERE id = $1",
+        "SELECT id, first_name, last_name, username, avatar FROM users WHERE id = $1",
         [targetId],
       );
       if (userResult.rows.length === 0) {
@@ -514,6 +540,7 @@ router.get(
           first_name: user.first_name,
           last_name: user.last_name,
           username: user.username,
+          avatar: user.avatar,
           is_friend: false,
           is_pending: isPending,
         });
@@ -548,6 +575,7 @@ router.get(
         first_name: user.first_name,
         last_name: user.last_name,
         username: user.username,
+        avatar: user.avatar,
         is_friend: true,
         is_pending: false,
         upcoming_trips: tripsResult.rows,

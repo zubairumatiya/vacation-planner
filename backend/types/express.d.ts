@@ -71,6 +71,7 @@ export interface SignUpBody {
   firstName?: string;
   lastName?: string;
   username?: string;
+  avatar?: string;
 }
 
 export interface LoginBody {
@@ -113,6 +114,7 @@ export interface User {
   first_name: string;
   last_name: string;
   username: string;
+  avatar: string | null;
   created_at?: Date;
 }
 
@@ -173,6 +175,7 @@ export interface UserProfileResponse {
   first_name: string;
   last_name: string;
   username: string;
+  avatar: string | null;
   is_friend: boolean;
   is_pending: boolean;
   upcoming_trips?: UserPublicTrip[];
@@ -366,6 +369,7 @@ export interface ProfileResponse {
   first_name: string;
   last_name: string;
   username: string;
+  avatar: string | null;
   friends_count: number;
 }
 
@@ -374,6 +378,7 @@ export interface UserSearchResult {
   first_name: string;
   last_name: string;
   username: string;
+  avatar: string | null;
 }
 
 export interface FollowUser {
@@ -381,6 +386,7 @@ export interface FollowUser {
   first_name: string;
   last_name: string;
   username: string;
+  avatar: string | null;
   follow_id: string;
   created_at: Date;
 }
@@ -511,6 +517,7 @@ export interface FeedTrip {
   owner_first_name: string;
   owner_last_name: string;
   owner_username: string;
+  owner_avatar: string | null;
   my_role: string | null;
 }
 
@@ -523,6 +530,7 @@ export interface FeedTravelLog {
   user_first_name: string;
   user_last_name: string;
   user_username: string;
+  user_avatar: string | null;
   days_ago: number;
 }
 

@@ -15,6 +15,7 @@ type AuthContextType = {
   userEmail: string | null;
   userId: string | null;
   userUsername: string | null;
+  userAvatar: string | null;
 };
 
 type AuthProviderProps = {
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userUsername, setUserUsername] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
   const fetchProfile = async (t: string) => {
     try {
@@ -57,6 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setUserEmail(data.email);
         setUserId(data.id);
         setUserUsername(data.username);
+        setUserAvatar(data.avatar || null);
       }
     } catch {
       // silent fail
@@ -102,6 +105,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUserEmail(null);
       setUserId(null);
       setUserUsername(null);
+      setUserAvatar(null);
     }
   };
   useEffect(() => {
@@ -136,6 +140,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userEmail,
         userId,
         userUsername,
+        userAvatar,
       }}
     >
       {children}

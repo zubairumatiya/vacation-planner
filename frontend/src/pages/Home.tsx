@@ -9,7 +9,7 @@ import VacationForm from "../components/VacationForm";
 import refreshFn from "../utils/refreshFn";
 import dropDownIcon from "../assets/icons/arrow-drop-big.svg";
 import SharePanel from "../components/SharePanel";
-import profileIcon from "../assets/icons/profile.svg";
+import { getAvatarSrc } from "../utils/avatarUtils";
 
 interface FeedTrip {
   id: string;
@@ -23,6 +23,7 @@ interface FeedTrip {
   ownerFirstName: string;
   ownerLastName: string;
   ownerUsername: string;
+  ownerAvatar: string | null;
   myRole: string | null;
 }
 
@@ -35,6 +36,7 @@ interface FeedTravelLog {
   userFirstName: string;
   userLastName: string;
   userUsername: string;
+  userAvatar: string | null;
   daysAgo: number;
 }
 
@@ -917,22 +919,19 @@ const Home = () => {
                       return (
                         <div key={ft.id} className={homeTabsStyles.tripCard}>
                           <div className={homeTabsStyles.tripCardContent}>
-                            <div className={homeTabsStyles.tripCardLeft}>
+                            <Link to={`/user/${ft.ownerId}`} className={homeTabsStyles.tripCardLeft}>
                               <div className={homeTabsStyles.avatarSmall}>
-                                <img src={profileIcon} alt="" />
+                                <img src={getAvatarSrc(ft.ownerAvatar)} alt="" />
                               </div>
                               <div className={homeTabsStyles.ownerInfo}>
-                                <div className={homeTabsStyles.ownerName}>
+                                <span className={homeTabsStyles.ownerName}>
                                   {ft.ownerFirstName} {ft.ownerLastName}
-                                </div>
-                                <Link
-                                  to={`/user/${ft.ownerId}`}
-                                  className={homeTabsStyles.ownerLink}
-                                >
+                                </span>
+                                <span className={homeTabsStyles.ownerLink}>
                                   @{ft.ownerUsername}
-                                </Link>
+                                </span>
                               </div>
-                            </div>
+                            </Link>
                             <div className={homeTabsStyles.tripCardCenter}>
                               {isShared ? (
                                 <Link
@@ -1006,23 +1005,19 @@ const Home = () => {
                       return (
                         <div key={ft.id} className={homeTabsStyles.tripCard}>
                           <div className={homeTabsStyles.tripCardContent}>
-                            <div className={homeTabsStyles.tripCardLeft}>
+                            <Link to={`/user/${ft.ownerId}`} className={homeTabsStyles.tripCardLeft}>
                               <div className={homeTabsStyles.avatarSmall}>
-                                <img src={profileIcon} alt="" />
+                                <img src={getAvatarSrc(ft.ownerAvatar)} alt="" />
                               </div>
                               <div className={homeTabsStyles.ownerInfo}>
-                                <div className={homeTabsStyles.ownerName}>
+                                <span className={homeTabsStyles.ownerName}>
                                   {ft.ownerFirstName} {ft.ownerLastName}
-                                </div>
-                                <Link
-                                  to={`/user/${ft.ownerId}`}
-                                  className={homeTabsStyles.ownerLink}
-                                >
+                                </span>
+                                <span className={homeTabsStyles.ownerLink}>
                                   @{ft.ownerUsername}
-                                </Link>
+                                </span>
                               </div>
-                              <div></div>
-                            </div>
+                            </Link>
                             <div className={homeTabsStyles.tripCardCenter}>
                               {isShared ? (
                                 <Link
