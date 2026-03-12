@@ -2,6 +2,11 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 1.5rem 1rem;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  border-radius: 5px;
+  z-index: 2;
+  position: relative;
 }
 
 .header {
