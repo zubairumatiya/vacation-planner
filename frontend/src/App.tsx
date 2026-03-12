@@ -13,10 +13,9 @@ import SendResetLinkToEmail from "./pages/SendResetLinkToEmail.tsx";
 import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 const VacationSchedule = lazy(() => import("./pages/VacationSchedule.tsx"));
-import VacationInfo from "./pages/VacationInfo.tsx";
+const VacationInfo = lazy(() => import("./pages/VacationInfo.tsx"));
 const EditCanvas = lazy(() => import("./pages/EditCanvas.tsx"));
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
-import Test from "./components/Test.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import UserProfilePage from "./pages/UserProfilePage.tsx";
 import CountryDetailPage from "./pages/CountryDetailPage.tsx";
@@ -31,67 +30,89 @@ function App() {
   const [editRetries, setEditRetries] = useState(0);
   return (
     <BrowserRouter>
-      <Suspense fallback={<div className="loading-screen" style={{ width: "100%", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", color: "#2fe782", backgroundColor: "#242424" }}>Loading...</div>}>
+      <Suspense
+        fallback={
+          <div
+            className="loading-screen"
+            style={{
+              width: "100%",
+              height: "100vh",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              color: "#2fe782",
+              backgroundColor: "#242424",
+            }}
+          >
+            Loading...
+          </div>
+        }
+      >
         <Routes>
           <Route element={<RequireAuth />}>
-          <Route element={<LayoutWithHeader />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/add-vacation" element={<AddVacation />} />
-            <Route path="/world-map/:userId" element={<WorldMapPage />} />
-            <Route
-              path="/vacation/:tripId"
-              element={
-                <VacationSchedule
-                  setCostTotal={setCostTotal}
-                  costTotal={costTotal}
-                />
-              }
-            >
-              <Route index element={<ViewVacationSchedule />} />
-              <Route path="info" element={<VacationInfo />} />
+            <Route element={<LayoutWithHeader />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/add-vacation" element={<AddVacation />} />
+              <Route path="/world-map/:userId" element={<WorldMapPage />} />
               <Route
-                path="edit"
+                path="/vacation/:tripId"
                 element={
-                  <ErrorBoundary
-                    fallbackRender={(fallbackProps) => (
-                      <ErrorFallback
-                        {...fallbackProps}
-                        retryCount={editRetries}
-                      />
-                    )}
-                    onReset={() => {
-                      setEditRetries((prev) => prev + 1);
-                    }}
-                  >
-                    <EditCanvas setCostTotal={setCostTotal} />
-                  </ErrorBoundary>
+                  <VacationSchedule
+                    setCostTotal={setCostTotal}
+                    costTotal={costTotal}
+                  />
                 }
+              >
+                <Route index element={<ViewVacationSchedule />} />
+                <Route path="info" element={<VacationInfo />} />
+                <Route
+                  path="edit"
+                  element={
+                    <ErrorBoundary
+                      fallbackRender={(fallbackProps) => (
+                        <ErrorFallback
+                          {...fallbackProps}
+                          retryCount={editRetries}
+                        />
+                      )}
+                      onReset={() => {
+                        setEditRetries((prev) => prev + 1);
+                      }}
+                    >
+                      <EditCanvas setCostTotal={setCostTotal} />
+                    </ErrorBoundary>
+                  }
+                />
+              </Route>
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/user/:userId" element={<UserProfilePage />} />
+              <Route
+                path="/user/:userId/country/:userCountryId"
+                element={<CountryDetailPage />}
               />
             </Route>
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/user/:userId" element={<UserProfilePage />} />
-            <Route path="/user/:userId/country/:userCountryId" element={<CountryDetailPage />} />
-            <Route path="/test" element={<Test />} />
           </Route>
-        </Route>
 
-        <Route element={<LayoutWithoutHeader />}>
-          <Route path="verify-email" element={<VerifyEmail />} />
-          <Route path="/redirect" element={<RedirectPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route
-            path="/send-reset-link-to-email"
-            element={<SendResetLinkToEmail />}
-          />
-          <Route path="/reset-password-wait" element={<ResetPasswordWait />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route
-            path="/auth/google/callback"
-            element={<GoogleOAuthCallback />}
-          />
-        </Route>
-      </Routes>
+          <Route element={<LayoutWithoutHeader />}>
+            <Route path="verify-email" element={<VerifyEmail />} />
+            <Route path="/redirect" element={<RedirectPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route
+              path="/send-reset-link-to-email"
+              element={<SendResetLinkToEmail />}
+            />
+            <Route
+              path="/reset-password-wait"
+              element={<ResetPasswordWait />}
+            />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route
+              path="/auth/google/callback"
+              element={<GoogleOAuthCallback />}
+            />
+          </Route>
+        </Routes>
       </Suspense>
     </BrowserRouter>
   );

@@ -248,6 +248,12 @@ declare global {
     onToggleLock?: (item: Schedule) => void;
   };
 
+  type ViewTableComponentProps = {
+    dayObj: DayContainer;
+    schedule: DaySchedule;
+    viewMode: boolean;
+  };
+
   type TableRowProps = {
     scheduleItem: Schedule;
     index: number;

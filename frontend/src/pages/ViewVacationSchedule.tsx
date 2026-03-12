@@ -8,7 +8,7 @@ import {
   makeContainers,
   toScheduleList,
 } from "../utils/timeHelpers";
-import CustomTableComponent from "../components/CustomTableComponent";
+import CustomViewTableComponent from "../components/CustomViewTableComponent";
 import hideArrow from "../assets/icons/arrow-drop.svg";
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -27,7 +27,8 @@ const ViewVacationSchedule = () => {
   const [error, setError] = useState<string | null>("");
 
   const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
-  const [selectedCalendarDay, setSelectedCalendarDay] = useState<DayContainer | null>(null);
+  const [selectedCalendarDay, setSelectedCalendarDay] =
+    useState<DayContainer | null>(null);
 
   const loggingOutRef = auth?.loggingOutRef;
   useEffect(() => {
@@ -150,8 +151,19 @@ const ViewVacationSchedule = () => {
           onClick={() => setViewMode("list")}
           title="List View"
         >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "20px", height: "20px" }}>
-            <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ width: "20px", height: "20px" }}
+          >
+            <path
+              d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
         <button
@@ -163,11 +175,25 @@ const ViewVacationSchedule = () => {
           }}
           title="Calendar View"
         >
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "20px", height: "20px" }}>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            style={{ width: "20px", height: "20px" }}
+          >
             <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-            <g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g>
-            <g id="SVGRepo_iconCarrier"> 
-              <path d="M3 9H21M7 3V5M17 3V5M6 12H8M11 12H13M16 12H18M6 15H8M11 15H13M16 15H18M6 18H8M11 18H13M16 18H18M6.2 21H17.8C18.9201 21 19.4802 21 19.908 20.782C20.2843 20.5903 20.5903 20.2843 20.782 19.908C21 19.4802 21 18.9201 21 17.8V8.2C21 7.07989 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V17.8C3 18.9201 3 19.4802 3.21799 19.908C3.40973 20.2843 3.71569 20.5903 4.09202 20.782C4.51984 21 5.07989 21 6.2 21Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round"></path> 
+            <g
+              id="SVGRepo_tracerCarrier"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            ></g>
+            <g id="SVGRepo_iconCarrier">
+              <path
+                d="M3 9H21M7 3V5M17 3V5M6 12H8M11 12H13M16 12H18M6 15H8M11 15H13M16 15H18M6 18H8M11 18H13M16 18H18M6.2 21H17.8C18.9201 21 19.4802 21 19.908 20.782C20.2843 20.5903 20.5903 20.2843 20.782 19.908C21 19.4802 21 18.9201 21 17.8V8.2C21 7.07989 21 6.51984 20.782 6.09202C20.5903 5.71569 20.2843 5.40973 19.908 5.21799C19.4802 5 18.9201 5 17.8 5H6.2C5.0799 5 4.51984 5 4.09202 5.21799C3.71569 5.40973 3.40973 5.71569 3.21799 6.09202C3 6.51984 3 7.07989 3 8.2V17.8C3 18.9201 3 19.4802 3.21799 19.908C3.40973 20.2843 3.71569 20.5903 4.09202 20.782C4.51984 21 5.07989 21 6.2 21Z"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              ></path>
             </g>
           </svg>
         </button>
@@ -233,13 +259,11 @@ const ViewVacationSchedule = () => {
                   tabIndex={-1}
                 >
                   {!hideDay[dayObj.day] && (
-                    <CustomTableComponent
+                    <CustomViewTableComponent
                       key={dayObj.day}
                       dayObj={dayObj}
                       schedule={schedule}
-                      setSchedule={setSchedule}
                       viewMode={true}
-                      activeId={undefined}
                     />
                   )}
                 </div>
@@ -252,29 +276,61 @@ const ViewVacationSchedule = () => {
           <div className={styles.dayNav}>
             <button
               className={styles.navButton}
-              disabled={days.findIndex((d) => d.day === selectedCalendarDay.day) === 0}
+              disabled={
+                days.findIndex((d) => d.day === selectedCalendarDay.day) === 0
+              }
               onClick={() => {
-                const idx = days.findIndex((d) => d.day === selectedCalendarDay.day);
+                const idx = days.findIndex(
+                  (d) => d.day === selectedCalendarDay.day,
+                );
                 if (idx > 0) setSelectedCalendarDay(days[idx - 1]);
               }}
               title="Previous Day"
             >
-              <svg viewBox="1 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "24px", height: "24px" }}>
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                viewBox="1 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ width: "24px", height: "24px" }}
+              >
+                <path
+                  d="M15 18L9 12L15 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
             <h3>{selectedCalendarDay.label}</h3>
             <button
               className={styles.navButton}
-              disabled={days.findIndex((d) => d.day === selectedCalendarDay.day) === days.length - 1}
+              disabled={
+                days.findIndex((d) => d.day === selectedCalendarDay.day) ===
+                days.length - 1
+              }
               onClick={() => {
-                const idx = days.findIndex((d) => d.day === selectedCalendarDay.day);
-                if (idx < days.length - 1) setSelectedCalendarDay(days[idx + 1]);
+                const idx = days.findIndex(
+                  (d) => d.day === selectedCalendarDay.day,
+                );
+                if (idx < days.length - 1)
+                  setSelectedCalendarDay(days[idx + 1]);
               }}
               title="Next Day"
             >
-              <svg viewBox="0 0 22 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "24px", height: "24px" }}>
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                viewBox="0 0 22 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                style={{ width: "24px", height: "24px" }}
+              >
+                <path
+                  d="M9 18L15 12L9 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -284,14 +340,15 @@ const ViewVacationSchedule = () => {
           >
             Back to Calendar
           </button>
-          <div className={styles.tableNCaption} style={{ width: "100%", maxWidth: "800px" }}>
+          <div
+            className={styles.tableNCaption}
+            style={{ width: "100%", maxWidth: "800px" }}
+          >
             <div className={styles.tableContainer}>
-              <CustomTableComponent
+              <CustomViewTableComponent
                 dayObj={selectedCalendarDay}
                 schedule={schedule}
-                setSchedule={setSchedule}
                 viewMode={true}
-                activeId={undefined}
               />
             </div>
           </div>
