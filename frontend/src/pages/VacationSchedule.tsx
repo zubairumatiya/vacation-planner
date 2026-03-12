@@ -1177,7 +1177,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               }
               data-toggle="pill"
             >
-              {countryName ? `${countryName} Info` : "Info"}
+              {countryName ? `${countryName} Info` : "\u00A0"}
             </NavLink>
           </li>
         </ul>
