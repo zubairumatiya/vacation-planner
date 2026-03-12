@@ -257,8 +257,11 @@ const ViewVacationSchedule = () => {
                 const idx = days.findIndex((d) => d.day === selectedCalendarDay.day);
                 if (idx > 0) setSelectedCalendarDay(days[idx - 1]);
               }}
+              title="Previous Day"
             >
-              &larr; Prev
+              <svg viewBox="1 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "24px", height: "24px" }}>
+                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
             <h3>{selectedCalendarDay.label}</h3>
             <button
@@ -268,8 +271,11 @@ const ViewVacationSchedule = () => {
                 const idx = days.findIndex((d) => d.day === selectedCalendarDay.day);
                 if (idx < days.length - 1) setSelectedCalendarDay(days[idx + 1]);
               }}
+              title="Next Day"
             >
-              Next &rarr;
+              <svg viewBox="0 0 22 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: "24px", height: "24px" }}>
+                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
           </div>
           <button

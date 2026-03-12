@@ -127,13 +127,21 @@
 
 .navButton {
   background-color: transparent;
-  border: 1px solid #2fe782;
+  border: 2px solid #2fe782;
   color: #2fe782;
-  padding: 0.5rem 1rem;
-  border-radius: 5px;
+  padding: 0.35rem;
+  border-radius: 50%;
   cursor: pointer;
   font-weight: bold;
-  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.navButton:hover:not(:disabled) {
+  background-color: #2fe782;
+  color: #242424;
 }
 
 .navButton:disabled {
