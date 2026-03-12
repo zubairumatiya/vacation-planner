@@ -18,6 +18,7 @@ import { useParams } from "react-router-dom";
 import { EditScheduleContext } from "../context/EditScheduleContext";
 import { BannerContext } from "../context/BannerContext";
 import refreshFn from "../utils/refreshFn";
+import { updateGuestScheduleItem } from "../utils/guestStorage";
 
 const EditableRow = ({
   value,
@@ -69,10 +70,10 @@ const EditableRow = ({
   const { setBannerMsg } = useContext(BannerContext);
   const { tripId } = useParams();
   const [editStartTimeObject, setEditStartTimeObject] = useState<TimeObj>(
-    {} as TimeObj
+    {} as TimeObj,
   );
   const [editEndTimeObject, setEditEndTimeObject] = useState<TimeObj>(
-    {} as TimeObj
+    {} as TimeObj,
   );
   const startDateEditRef = useRef<HTMLInputElement>(null);
   const endDateEditRef = useRef<HTMLInputElement>(null);
@@ -93,6 +94,7 @@ const EditableRow = ({
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
+  const isGuest = !token && tripId === "guest";
 
   useEffect(() => {
     deleteButtonRef?.current?.focus();
@@ -116,7 +118,7 @@ const EditableRow = ({
       const endD: Date = new Date(holdEndTime);
       let oneProblemAtATime = 0;
       const differenceInHours: number = Math.floor(
-        (endD.getTime() - startD.getTime()) / (1000 * 60 * 60)
+        (endD.getTime() - startD.getTime()) / (1000 * 60 * 60),
       );
       if (endD.getTime() < startD.getTime()) {
         setEndError(true);
@@ -136,7 +138,7 @@ const EditableRow = ({
             setEndError(true);
             setStartError(true);
             setErrMessage(
-              "Error, event greater than 24 hours, please select multi-day"
+              "Error, event greater than 24 hours, please select multi-day",
             );
             setMultiDayStyle(true);
           }
@@ -212,7 +214,7 @@ const EditableRow = ({
     e: React.MouseEvent,
     itemID: UniqueIdentifier,
     index: number,
-    dateAdded: string
+    dateAdded: string,
   ) => {
     e.preventDefault();
     try {
@@ -303,22 +305,22 @@ const EditableRow = ({
         const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
         const dayContainers: DayContainer[] = makeContainers(
           length,
-          new Date(utcStart)
+          new Date(utcStart),
         );
         const bucketizeItems: DaySchedule = bucketizeSchedule(
           dayContainers,
-          scheduleItems
+          scheduleItems,
         );
         setSchedule(bucketizeItems);
 
         setBannerMsg(
-          "Another user has updated this resource, your change was not applied"
+          "Another user has updated this resource, your change was not applied",
         );
       } else if (response.status >= 500) {
         setEditLineId(null);
         setAddingItem(false);
         setBannerMsg(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
+          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
         );
       } else {
         console.error("error deleting item");
@@ -336,7 +338,7 @@ const EditableRow = ({
     });
     arr.sort(
       (a: Schedule, b: Schedule) =>
-        a.startTime.getTime() - b.startTime.getTime()
+        a.startTime.getTime() - b.startTime.getTime(),
     );
     return arr;
   };
@@ -344,7 +346,7 @@ const EditableRow = ({
   const submitEdit = async (
     dateAdded: string,
     itemID: UniqueIdentifier,
-    e?: React.MouseEvent | React.KeyboardEvent
+    e?: React.MouseEvent | React.KeyboardEvent,
   ) => {
     e?.preventDefault();
 
@@ -380,7 +382,7 @@ const EditableRow = ({
     const tempArr = reSort(
       newTable
         ? [...schedule[postEditDate], tempItem]
-        : schedule[postEditDate].map((v) => (v.id === itemID ? tempItem : v))
+        : schedule[postEditDate].map((v) => (v.id === itemID ? tempItem : v)),
     );
 
     const chunk: Chunk = indexChunk(itemID, tempArr);
@@ -395,184 +397,210 @@ const EditableRow = ({
           schedule[dateAdded].findIndex((v) => v.id === itemID)
         ].lastModified,
     };
-
-    try {
-      const response = await fetch(`${apiURL}/schedule/${itemID}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...sItem,
-          chunk,
-          tripId,
-          start: startDateAssembler,
-          end: endDateAssembler,
-        }),
+    if (isGuest) {
+      const data = updateGuestScheduleItem(String(itemID), {
+        ...sItem,
+        startTime: startDateAssembler,
+        endTime: endDateAssembler,
       });
-      if (response.ok) {
-        const data = (await response.json()) as ScheduleUpdateResponse;
-        setEditLineId(null);
-        setAddingItem(false);
-        if (data.newlyIndexedSchedule != null) {
-          const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
+      setEditLineId(null);
+      setAddingItem(false);
+      if (data.updatedData != null) {
+        const updated = toSchedule(data.updatedData);
+        setSchedule((prev) =>
+          newTable
+            ? {
+                ...prev,
+                [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
+                [postEditDate]: tempArr.map((v) =>
+                  v.id === itemID ? updated : v,
+                ),
+              }
+            : {
+                ...prev,
+                [postEditDate]: tempArr.map((v) =>
+                  v.id === itemID ? updated : v,
+                ),
+              },
+        );
+      }
+    } else {
+      try {
+        const response = await fetch(`${apiURL}/schedule/${itemID}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            ...sItem,
+            chunk,
+            tripId,
+            start: startDateAssembler,
+            end: endDateAssembler,
+          }),
+        });
+        if (response.ok) {
+          const data = (await response.json()) as ScheduleUpdateResponse;
+          setEditLineId(null);
+          setAddingItem(false);
+          if (data.newlyIndexedSchedule != null) {
+            const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
+            const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+            const dayContainers: DayContainer[] = makeContainers(
+              length,
+              new Date(utcStart),
+            );
+            const bucketizeItems: DaySchedule = bucketizeSchedule(
+              dayContainers,
+              scheduleItems,
+            );
+            setSchedule(bucketizeItems);
+          } else if (data.updatedData != null) {
+            const updated = toSchedule(data.updatedData);
+            setSchedule((prev) =>
+              newTable
+                ? {
+                    ...prev,
+                    [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
+                    [postEditDate]: tempArr.map((v) =>
+                      v.id === itemID ? updated : v,
+                    ),
+                  }
+                : {
+                    ...prev,
+                    [postEditDate]: tempArr.map((v) =>
+                      v.id === itemID ? updated : v,
+                    ),
+                  },
+            );
+          }
+        } else if (response.status === 401) {
+          const resData = (await response.json()) as ApiErrorResponse;
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiURL, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
+            const retryReq = await fetch(`${apiURL}/schedule/${itemID}`, {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${continueReq.token}`,
+              },
+              body: JSON.stringify({
+                ...sItem,
+                chunk,
+                tripId,
+                start: startDateAssembler,
+                end: endDateAssembler,
+              }),
+            });
+            if (!retryReq.ok) {
+              alert("Trouble completing request, please try again");
+            } else if (retryReq.ok) {
+              const data = (await retryReq.json()) as ScheduleUpdateResponse;
+              setEditLineId(null);
+              setAddingItem(false);
+              if (data.newlyIndexedSchedule != null) {
+                const scheduleItems = toScheduleList(data.newlyIndexedSchedule);
+                const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
+                const dayContainers: DayContainer[] = makeContainers(
+                  length,
+                  new Date(utcStart),
+                );
+                const bucketizeItems: DaySchedule = bucketizeSchedule(
+                  dayContainers,
+                  scheduleItems,
+                );
+                setSchedule(bucketizeItems);
+              } else if (data.updatedData != null) {
+                const updated = toSchedule(data.updatedData);
+                setSchedule((prev) =>
+                  newTable
+                    ? {
+                        ...prev,
+                        [dateAdded]: prev[dateAdded].filter(
+                          (v) => v.id !== itemID,
+                        ),
+                        [postEditDate]: tempArr.map((v) =>
+                          v.id === itemID ? updated : v,
+                        ),
+                      }
+                    : {
+                        ...prev,
+                        [postEditDate]: tempArr.map((v) =>
+                          v.id === itemID ? updated : v,
+                        ),
+                      },
+                );
+              }
+            }
+          } else if (continueReq.err) {
+            if (logout) {
+              await logout();
+            }
+            return;
+          }
+        } else if (response.status === 403) {
+          setEditLineId(null);
+          setAddingItem(false);
+          setBannerMsg("You do not have permission to access this resource");
+        } else if (response.status === 404) {
+          setEditLineId(null);
+          setAddingItem(false);
+          setBannerMsg("Error: Trip not found");
+        } else if (response.status === 409) {
+          const data = (await response.json()) as ScheduleConflictResponse;
+          setEditLineId(null);
+          setAddingItem(false);
+          const scheduleItems = toScheduleList(data.newData);
           const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
           const dayContainers: DayContainer[] = makeContainers(
             length,
-            new Date(utcStart)
+            new Date(utcStart),
           );
           const bucketizeItems: DaySchedule = bucketizeSchedule(
             dayContainers,
-            scheduleItems
+            scheduleItems,
           );
           setSchedule(bucketizeItems);
-        } else if (data.updatedData != null) {
-          const updated = toSchedule(data.updatedData);
-          setSchedule((prev) =>
-            newTable
-              ? {
-                  ...prev,
-                  [dateAdded]: prev[dateAdded].filter((v) => v.id !== itemID),
-                  [postEditDate]: tempArr.map((v) =>
-                    v.id === itemID ? updated : v
-                  ),
-                }
-              : {
-                  ...prev,
-                  [postEditDate]: tempArr.map((v) =>
-                    v.id === itemID ? updated : v
-                  ),
-                }
+          const holdIntent: Schedule = {
+            ...sItem,
+            id: itemID,
+            sortIndex: calculateNewSortIndex(chunk),
+            tripId: tripId ?? "",
+            startTime: new Date(startDateAssembler),
+            endTime: new Date(endDateAssembler),
+            isLocked: false,
+          };
+          setHoldOverwrite(holdIntent);
+          setBannerMsg(
+            "Another user has updated this resource, your change was not applied",
           );
+        } else if (response.status >= 500) {
+          setEditLineId(null);
+          setAddingItem(false);
+          setBannerMsg(
+            "Uh oh. Something went wrong. Please try again, or try refreshing and then try again",
+          );
+        } else {
+          console.error("something went wrong editing");
         }
-      } else if (response.status === 401) {
-        const resData = (await response.json()) as ApiErrorResponse;
-        if (resData.error === "JwtError") {
-          if (logout) {
-            await logout();
-          }
-          return;
-        }
-        if (refreshInFlightRef == null) {
-          console.error("Auth flight ref not set");
-          return;
-        }
-        const continueReq: { token: string | null; err: boolean } =
-          await refreshFn(apiURL, refreshInFlightRef);
-        if (!continueReq.err) {
-          if (login && continueReq.token) {
-            login(String(continueReq.token));
-          }
-          const retryReq = await fetch(`${apiURL}/schedule/${itemID}`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${continueReq.token}`,
-            },
-            body: JSON.stringify({
-              ...sItem,
-              chunk,
-              tripId,
-              start: startDateAssembler,
-              end: endDateAssembler,
-            }),
-          });
-          if (!retryReq.ok) {
-            alert("Trouble completing request, please try again");
-          } else if (retryReq.ok) {
-            const data = (await retryReq.json()) as ScheduleUpdateResponse;
-            setEditLineId(null);
-            setAddingItem(false);
-            if (data.newlyIndexedSchedule != null) {
-              const scheduleItems = toScheduleList(
-                data.newlyIndexedSchedule
-              );
-              const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
-              const dayContainers: DayContainer[] = makeContainers(
-                length,
-                new Date(utcStart)
-              );
-              const bucketizeItems: DaySchedule = bucketizeSchedule(
-                dayContainers,
-                scheduleItems
-              );
-              setSchedule(bucketizeItems);
-            } else if (data.updatedData != null) {
-              const updated = toSchedule(data.updatedData);
-              setSchedule((prev) =>
-                newTable
-                  ? {
-                      ...prev,
-                      [dateAdded]: prev[dateAdded].filter(
-                        (v) => v.id !== itemID
-                      ),
-                      [postEditDate]: tempArr.map((v) =>
-                        v.id === itemID ? updated : v
-                      ),
-                    }
-                  : {
-                      ...prev,
-                      [postEditDate]: tempArr.map((v) =>
-                        v.id === itemID ? updated : v
-                      ),
-                    }
-              );
-            }
-          }
-        } else if (continueReq.err) {
-          if (logout) {
-            await logout();
-          }
-          return;
-        }
-      } else if (response.status === 403) {
-        setEditLineId(null);
-        setAddingItem(false);
-        setBannerMsg("You do not have permission to access this resource");
-      } else if (response.status === 404) {
-        setEditLineId(null);
-        setAddingItem(false);
-        setBannerMsg("Error: Trip not found");
-      } else if (response.status === 409) {
-        const data = (await response.json()) as ScheduleConflictResponse;
-        setEditLineId(null);
-        setAddingItem(false);
-        const scheduleItems = toScheduleList(data.newData);
-        const length = (utcEnd - utcStart) / (1000 * 60 * 60 * 24);
-        const dayContainers: DayContainer[] = makeContainers(
-          length,
-          new Date(utcStart)
-        );
-        const bucketizeItems: DaySchedule = bucketizeSchedule(
-          dayContainers,
-          scheduleItems
-        );
-        setSchedule(bucketizeItems);
-        const holdIntent: Schedule = {
-          ...sItem,
-          id: itemID,
-          sortIndex: calculateNewSortIndex(chunk),
-          tripId: tripId ?? "",
-          startTime: new Date(startDateAssembler),
-          endTime: new Date(endDateAssembler),
-          isLocked: false,
-        };
-        setHoldOverwrite(holdIntent);
-        setBannerMsg(
-          "Another user has updated this resource, your change was not applied"
-        );
-      } else if (response.status >= 500) {
-        setEditLineId(null);
-        setAddingItem(false);
-        setBannerMsg(
-          "Uh oh. Something went wrong. Please try again, or try refreshing and then try again"
-        );
-      } else {
-        console.error("something went wrong editing");
+      } catch (err) {
+        console.error("failed to update item", err);
       }
-    } catch (err) {
-      console.error("failed to update item", err);
     }
   };
 
@@ -610,7 +638,7 @@ const EditableRow = ({
                   ...editStartTimeObject,
                 },
                 setHoldStartTime,
-                setHoldEndTime
+                setHoldEndTime,
               );
             }}
             ref={startDateEditRef}
@@ -634,7 +662,7 @@ const EditableRow = ({
                 meridiem,
               },
               setHoldStartTime,
-              setHoldEndTime
+              setHoldEndTime,
             );
           }}
           preTime={() => addMeridiem(fourDigitTime(value.startTime))}
@@ -662,7 +690,7 @@ const EditableRow = ({
                   ...editEndTimeObject,
                 },
                 setHoldStartTime,
-                setHoldEndTime
+                setHoldEndTime,
               );
             }}
             ref={endDateEditRef}
@@ -686,7 +714,7 @@ const EditableRow = ({
                 meridiem,
               },
               setHoldStartTime,
-              setHoldEndTime
+              setHoldEndTime,
             );
           }}
           preTime={() => addMeridiem(fourDigitTime(value.endTime))}

@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import Markdown from "react-markdown";
-import rehypeSanitize from "rehype-sanitize";
 import styles from "../styles/VacationInfo.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -126,7 +125,7 @@ export default function VacationInfo() {
 
       <div className={styles.infoBody}>
         <h1>Things to Know Before Traveling</h1>
-        <Markdown rehypePlugins={[rehypeSanitize]}>
+        <Markdown>
           {countryInfo.info.replace(/^#\s+.+\n*/m, "")}
         </Markdown>
       </div>

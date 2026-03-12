@@ -61,7 +61,6 @@ import {
   addGuestListItem,
   deleteGuestListItem,
   addGuestScheduleItem,
-  updateGuestScheduleItem,
   checkGuestListItem,
   reorderGuestSchedule,
 } from "../utils/guestStorage";
@@ -1007,7 +1006,7 @@ const EditCanvas = ({
       // Guest mode: persist to localStorage instead of API
       if (refIdSnapshot) {
         // List item dragged to schedule
-        const item = previous[overContainer][activeIndex];
+        const item = schedule[overContainer][activeIndex]; // will be using schedule instead of previous, because previous is updated async and this is synchronous
         addGuestScheduleItem({
           start: String(item.startTime),
           end: String(item.endTime),
@@ -1028,15 +1027,22 @@ const EditCanvas = ({
       } else {
         // Schedule item reordered — save all schedule items to localStorage
         const allItems: ScheduleFromApi[] = [];
-        for (const day in previous) {
-          for (const item of previous[day]) {
+        for (const day in schedule) {
+          // schedule instead of previous here and line below as well (since previous is async and this is synchronous)
+          for (const item of schedule[day]) {
             allItems.push({
               id: String(item.id),
               tripId: "guest",
               location: item.location,
               details: item.details,
-              startTime: item.startTime instanceof Date ? item.startTime.toISOString() : String(item.startTime),
-              endTime: item.endTime instanceof Date ? item.endTime.toISOString() : String(item.endTime),
+              startTime:
+                item.startTime instanceof Date
+                  ? item.startTime.toISOString()
+                  : String(item.startTime),
+              endTime:
+                item.endTime instanceof Date
+                  ? item.endTime.toISOString()
+                  : String(item.endTime),
               cost: item.cost,
               multiDay: item.multiDay,
               sortIndex: item.sortIndex,
@@ -1334,7 +1340,11 @@ const EditCanvas = ({
   const handleSubmitItem = useCallback(
     async (value: string, id?: UniqueIdentifier, details?: string | null) => {
       if (isGuest) {
-        const result = addGuestListItem(value, id ? String(id) : undefined, details);
+        const result = addGuestListItem(
+          value,
+          id ? String(id) : undefined,
+          details,
+        );
         setWishList((prev) => [...prev, result.data]);
         return 200;
       }

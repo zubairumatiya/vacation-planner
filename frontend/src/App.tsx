@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LayoutWithHeader from "./layouts/LayoutWithHeader.tsx";
 import LayoutWithoutHeader from "./layouts/LayoutWithoutHeader.tsx";
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Home from "./pages/Home.tsx";
 import AddVacation from "./pages/AddVacation.tsx";
 import "./styles/App.css";
@@ -12,15 +12,15 @@ import SignUp from "./pages/SignUp.tsx";
 import SendResetLinkToEmail from "./pages/SendResetLinkToEmail.tsx";
 import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
-import VacationSchedule from "./pages/VacationSchedule.tsx";
+const VacationSchedule = lazy(() => import("./pages/VacationSchedule.tsx"));
 import VacationInfo from "./pages/VacationInfo.tsx";
-import EditCanvas from "./pages/EditCanvas.tsx";
+const EditCanvas = lazy(() => import("./pages/EditCanvas.tsx"));
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import Test from "./components/Test.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import UserProfilePage from "./pages/UserProfilePage.tsx";
 import CountryDetailPage from "./pages/CountryDetailPage.tsx";
-import WorldMapPage from "./pages/WorldMapPage.tsx";
+const WorldMapPage = lazy(() => import("./pages/WorldMapPage.tsx"));
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "./components/ErrorFallback.tsx";
 import RequireAuth from "./pages/RequireAuth.tsx";
@@ -31,8 +31,9 @@ function App() {
   const [editRetries, setEditRetries] = useState(0);
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<RequireAuth />}>
+      <Suspense fallback={<div className="loading-screen" style={{ width: "100%", height: "100vh", display: "flex", justifyContent: "center", alignItems: "center", color: "#2fe782", backgroundColor: "#242424" }}>Loading...</div>}>
+        <Routes>
+          <Route element={<RequireAuth />}>
           <Route element={<LayoutWithHeader />}>
             <Route path="/" element={<Home />} />
             <Route path="/add-vacation" element={<AddVacation />} />
@@ -91,6 +92,7 @@ function App() {
           />
         </Route>
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
