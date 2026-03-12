@@ -2,6 +2,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext.tsx";
 import styles from "../styles/Login.module.css";
+import { getGuestTrip, hasGuestTrip, clearGuestTrip } from "../utils/guestStorage.ts";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -71,6 +72,43 @@ const LoginPage = () => {
         const data = (await res.json()) as LoginResponse;
         if (data.token) {
           auth?.login(data.token);
+
+          // Migrate guest trip to DB if signup migration flag is set
+          if (
+            localStorage.getItem("migrateGuestTrip") === "true" &&
+            hasGuestTrip()
+          ) {
+            try {
+              const guest = getGuestTrip()!;
+              const migrateRes = await fetch(`${apiUrl}/migrate-guest-trip`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${data.token}`,
+                },
+                body: JSON.stringify({
+                  tripName: guest.trip.tripName,
+                  location: guest.trip.location,
+                  startDate: guest.trip.startDate,
+                  endDate: guest.trip.endDate,
+                  gId: guest.trip.gId,
+                  gVp: guest.trip.gVp,
+                  isPublic: guest.trip.isPublic,
+                  isOpenInvite: guest.trip.isOpenInvite,
+                  schedule: guest.schedule,
+                  list: guest.list,
+                }),
+              });
+              if (migrateRes.ok) {
+                clearGuestTrip();
+              }
+            } catch {
+              // Migration failed silently — guest data stays in localStorage
+            } finally {
+              localStorage.removeItem("migrateGuestTrip");
+            }
+          }
+
           navigate("/");
           return;
         } else {

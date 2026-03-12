@@ -28,16 +28,9 @@
   position: relative;
 }
 
-.signIn {
+.signInWrapper {
   display: flex;
   margin-left: 1vw;
-  border: 3px solid #00bf55;
-  border-radius: 12px;
-  cursor: pointer;
-}
-
-.signIn:hover {
-  border-color: #747bff;
 }
 
 .loggedIn {
@@ -139,16 +132,23 @@
   background: rgba(47, 231, 130, 0.05);
 }
 
-.linkColor {
-  color: #00bf55;
-  width: 100%;
-  height: 100%;
-  padding: 1vh;
+.signInButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 18px;
+  background: #2fe782;
+  color: #111;
+  font-weight: 600;
+  font-size: 0.85rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.1s ease;
 }
 
-.linkColorHoverBorder {
-  color: #535bf2;
-  width: 100%;
-  height: 100%;
-  padding: 1vh;
+.signInButton:hover {
+  background: #28c770;
+}
+
+.signInButton:active {
+  transform: scale(0.97);
 }

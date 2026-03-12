@@ -8,6 +8,7 @@ import { type UniqueIdentifier } from "@dnd-kit/core";
 import ListItem from "../components/ListItem";
 import { BannerContext } from "../context/BannerContext";
 import refreshFn from "../utils/refreshFn";
+import { getGuestList, updateGuestListItem, checkGuestListItem } from "../utils/guestStorage";
 
 const apiURL = import.meta.env.VITE_API_URL;
 
@@ -30,6 +31,12 @@ const WantToSeeList = (props: WantToSeeListProps) => {
 
   useEffect(() => {
     if (loggingOutRef?.current) return;
+    if (tripId === "guest") {
+      const res = getGuestList();
+      props.setList(res.data);
+      props.loadSecond();
+      return;
+    }
     const getTripList = async () => {
       const response = await fetch(`${apiURL}/list/${tripId}`, {
         headers: {
@@ -130,6 +137,22 @@ const WantToSeeList = (props: WantToSeeListProps) => {
     }
     const item: string = raw.trim();
     const details = noteText.trim() || null;
+    if (tripId === "guest") {
+      const res = updateGuestListItem(String(itemId), item, details);
+      if (res.data.length > 0) {
+        props.setList((prev) => [
+          ...prev.slice(0, index),
+          { ...res.data[0] },
+          ...prev.slice(index + 1),
+        ]);
+      }
+      setEditItemId("-1");
+      setNewItem("");
+      setNoteText("");
+      setShowNoteInput(false);
+      setAddingNewItem(true);
+      return;
+    }
     const response = await fetch(`${apiURL}/list/${itemId}`, {
       method: "PATCH",
       headers: {
@@ -275,6 +298,18 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   ) => {
     e.preventDefault();
     e.stopPropagation();
+    if (tripId === "guest") {
+      const newValue = !currentState;
+      const res = checkGuestListItem(String(itemId), newValue);
+      if (res.data.length > 0) {
+        props.setList((prev) => [
+          ...prev.slice(0, index),
+          { ...res.data[0] },
+          ...prev.slice(index + 1),
+        ]);
+      }
+      return;
+    }
     const newValue = !currentState;
     const result = await fetch(`${apiURL}/check-list-item/${itemId}`, {
       method: "PATCH",

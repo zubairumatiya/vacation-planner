@@ -226,6 +226,84 @@ router.post(
   },
 );
 
+router.post(
+  "/migrate-guest-trip",
+  ensureLoggedIn,
+  async (req: TypedRequest<{
+    tripName: string;
+    location: string;
+    startDate: string;
+    endDate: string;
+    gId: string;
+    gVp: unknown;
+    isPublic: boolean;
+    isOpenInvite: boolean;
+    schedule: Array<{
+      startTime: string;
+      endTime: string;
+      location: string;
+      details: string;
+      cost: number;
+      multiDay: boolean;
+      sortIndex: number;
+    }>;
+    list: Array<{
+      value: string;
+      fromGoogle: string | null;
+      details: string | null;
+      itemAdded: boolean;
+    }>;
+  }>, res: TypedResponse<{ tripId?: string; message?: string }>, next: NextFunction) => {
+    const { tripName, location, startDate, endDate, gId, gVp, isPublic, isOpenInvite, schedule, list } = req.body;
+    if (!tripName || !location || !startDate || !endDate || !gId || !gVp) {
+      res.status(400).json({ message: "Invalid input" });
+      return;
+    }
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      const tripResult: QueryResult<{ id: string }> = await client.query(
+        "INSERT INTO trips (trip_name, location, start_date, end_date, g_id, g_vp, is_public, is_open_invite) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
+        [tripName, location, startDate, endDate, gId, gVp, isPublic ?? false, isOpenInvite ?? false],
+      );
+      const tripId = tripResult.rows[0].id;
+
+      await client.query(
+        "INSERT INTO user_trips (user_id, trip_id, role) VALUES ($1, $2, 'owner')",
+        [req.user.id, tripId],
+      );
+
+      if (Array.isArray(schedule)) {
+        for (const item of schedule) {
+          await client.query(
+            "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+            [tripId, item.startTime, item.endTime, item.location, item.cost ?? 0, item.details ?? "", item.multiDay ?? false, item.sortIndex ?? 0],
+          );
+        }
+      }
+
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          await client.query(
+            "INSERT INTO trip_list (trip_id, value, from_google, details) VALUES ($1, $2, $3, $4)",
+            [tripId, item.value, item.fromGoogle ?? null, item.details ?? null],
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      res.status(200).json({ tripId });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      next(err);
+    } finally {
+      client.release();
+    }
+  },
+);
+
 router.patch(
   "/add-vacation/:tripId",
   ensureLoggedIn,

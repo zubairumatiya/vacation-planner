@@ -22,6 +22,11 @@ import NormalRow from "../components/NormalRow";
 import addToSchedule from "../assets/icons/add-to-schedule.svg";
 import { BannerContext } from "../context/BannerContext";
 import refreshFn from "../utils/refreshFn";
+import {
+  getGuestSchedule,
+  addGuestScheduleItem,
+  updateGuestScheduleItem,
+} from "../utils/guestStorage";
 
 polyfill({
   dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
@@ -95,6 +100,25 @@ const EditVacationSchedule = ({
   const loggingOutRef = auth?.loggingOutRef;
   useEffect(() => {
     if (loggingOutRef?.current) return;
+    if (tripId === "guest") {
+      const data = getGuestSchedule();
+      props.getMapValues(data.gVp, data.location, data.gId);
+      const convertStart = new Date(data.startDate);
+      const convertEnd = new Date(data.endDate);
+      const scheduleItems = toScheduleList(data.schedule);
+      const UtcStart = convertStart.getTime();
+      const UtcEnd = convertEnd.getTime();
+      setUtcEnd(UtcEnd);
+      setUtcStart(UtcStart);
+      const length = (UtcEnd - UtcStart) / (1000 * 60 * 60 * 24);
+      const dayContainers: DayContainer[] = makeContainers(length, convertStart);
+      const bucketizeItems: DaySchedule = bucketizeSchedule(dayContainers, scheduleItems);
+      setDays(dayContainers);
+      setSchedule(bucketizeItems);
+      setLoading(false);
+      props.loadFirst();
+      return;
+    }
     const getTrip = async () => {
       const response = await fetch(`${apiURL}/schedule/${tripId}`, {
         headers: {
@@ -276,6 +300,48 @@ const EditVacationSchedule = ({
   ) => {
     e.preventDefault();
     setAddingItem(false);
+    if (tripId === "guest") {
+      const formData = new FormData(e.currentTarget);
+      const location = formData.get("location");
+      if (testSubmission(dateAdded) !== true) {
+        setItemError(true);
+        moniterInputRef.current = true;
+        return;
+      }
+      const startDateAssembler = customISOTime(dateAdded, startTimePick!);
+      const endDateAssembler = customISOTime(dateAdded, endTimePick!);
+      const result = addGuestScheduleItem({
+        start: startDateAssembler,
+        end: endDateAssembler,
+        location: String(location ?? ""),
+        details: String(formData.get("details") ?? ""),
+        cost: Number(formData.get("cost") ?? 0),
+        multiDay: formData.get("multiday") === "on",
+      });
+      if (result.addedItem) {
+        const addedSchedule = toSchedule(result.addedItem);
+        const tempItem: Schedule = {
+          startTime: new Date(startDateAssembler),
+          id: "temp",
+          endTime: new Date(endDateAssembler),
+          location: "",
+          details: "",
+          cost: 0,
+          multiDay: false,
+          sortIndex: 0,
+          tripId: tripId ?? "",
+          lastModified: "",
+          isLocked: false,
+        };
+        const tempArr = reSort([...schedule[dateAdded].slice(), tempItem]);
+        setSchedule((prev) => ({
+          ...prev,
+          [dateAdded]: tempArr.map((v) => (v.id === "temp" ? addedSchedule : v)),
+        }));
+      }
+      clearAdd();
+      return;
+    }
     if (token) {
       const formData = new FormData(e.currentTarget);
       const location = formData.get("location");
@@ -545,6 +611,25 @@ const EditVacationSchedule = ({
   };
 
   const handleToggleLock = async (item: Schedule) => {
+    if (tripId === "guest") {
+      const res = updateGuestScheduleItem(String(item.id), {
+        isLocked: !item.isLocked,
+      });
+      if (res.updatedData) {
+        setSchedule((prev) => {
+          const updated = { ...prev };
+          for (const day in updated) {
+            updated[day] = updated[day].map((s) =>
+              s.id === item.id
+                ? { ...s, isLocked: !item.isLocked, lastModified: res.updatedData!.lastModified }
+                : s,
+            );
+          }
+          return updated;
+        });
+      }
+      return;
+    }
     if (!token) {
       navigate("/redirect", {
         state: { message: "Session expired, redirecting to log in..." },
@@ -587,6 +672,28 @@ const EditVacationSchedule = ({
   };
 
   const duplicateItem = async (item: Schedule, dayContainer: string) => {
+    if (tripId === "guest") {
+      const result = addGuestScheduleItem({
+        start: item.startTime.toISOString(),
+        end: item.endTime.toISOString(),
+        location: item.location,
+        details: item.details,
+        cost: item.cost,
+        multiDay: item.multiDay || false,
+      });
+      if (result.addedItem) {
+        const addedSchedule = toSchedule(result.addedItem);
+        const currentDayItems = schedule[dayContainer] ?? [];
+        const originalIndex = currentDayItems.findIndex((v) => v.id === item.id);
+        const newArr = [
+          ...currentDayItems.slice(0, originalIndex + 1),
+          addedSchedule,
+          ...currentDayItems.slice(originalIndex + 1),
+        ];
+        setSchedule((prev) => ({ ...prev, [dayContainer]: newArr }));
+      }
+      return;
+    }
     if (!token) {
       navigate("/redirect", {
         state: { message: "Session expired, redirecting to log in..." },

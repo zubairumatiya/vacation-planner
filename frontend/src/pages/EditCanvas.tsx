@@ -15,6 +15,7 @@ import {
   useOutletContext,
   Navigate,
   useSearchParams,
+  Link,
 } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { EditScheduleProvider } from "../context/EditScheduleContext";
@@ -56,6 +57,14 @@ import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
 import SuggestionsSidebar from "../components/SuggestionsSidebar";
 import type { AiRecommendedPlace } from "../types/ai";
+import {
+  addGuestListItem,
+  deleteGuestListItem,
+  addGuestScheduleItem,
+  updateGuestScheduleItem,
+  checkGuestListItem,
+  reorderGuestSchedule,
+} from "../utils/guestStorage";
 
 /** Mutate ScheduleFromApi items in-place, converting date strings → Date objects and id → string. Returns the array typed as Schedule[]. */
 function hydrateSchedule(items: ScheduleFromApi[]): Schedule[] {
@@ -118,6 +127,7 @@ const EditCanvas = ({
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
+  const isGuest = !token && tripId === "guest";
   const tempScheduleItem = useRef<Schedule | null>(null);
   const initialListDrag = useRef<boolean>(true);
   const overlayWidthRef = useRef<OverlayWidths | null>(null);
@@ -993,6 +1003,54 @@ const EditCanvas = ({
         setSchedule(clonedSchedule);
       }
     };
+    if (isGuest) {
+      // Guest mode: persist to localStorage instead of API
+      if (refIdSnapshot) {
+        // List item dragged to schedule
+        const item = previous[overContainer][activeIndex];
+        addGuestScheduleItem({
+          start: String(item.startTime),
+          end: String(item.endTime),
+          location: item.location,
+          details: item.details,
+          cost: item.cost,
+          multiDay: item.multiDay,
+        });
+        checkGuestListItem(String(refIdSnapshot), true);
+        // Update schedule state with the real item from localStorage
+        setSchedule((prev) => {
+          const updated = { ...prev };
+          updated[overContainer] = updated[overContainer].map((v) =>
+            v.id === refIdSnapshot ? { ...v, id: v.id } : v,
+          );
+          return updated;
+        });
+      } else {
+        // Schedule item reordered — save all schedule items to localStorage
+        const allItems: ScheduleFromApi[] = [];
+        for (const day in previous) {
+          for (const item of previous[day]) {
+            allItems.push({
+              id: String(item.id),
+              tripId: "guest",
+              location: item.location,
+              details: item.details,
+              startTime: item.startTime instanceof Date ? item.startTime.toISOString() : String(item.startTime),
+              endTime: item.endTime instanceof Date ? item.endTime.toISOString() : String(item.endTime),
+              cost: item.cost,
+              multiDay: item.multiDay,
+              sortIndex: item.sortIndex,
+              lastModified: item.lastModified,
+              isLocked: item.isLocked,
+            });
+          }
+        }
+        reorderGuestSchedule(allItems);
+      }
+      setActiveListId(null);
+      handleDragCancel(true);
+      return;
+    }
     sendScheduleToDb();
     handleDragCancel(true);
   };
@@ -1275,6 +1333,11 @@ const EditCanvas = ({
 
   const handleSubmitItem = useCallback(
     async (value: string, id?: UniqueIdentifier, details?: string | null) => {
+      if (isGuest) {
+        const result = addGuestListItem(value, id ? String(id) : undefined, details);
+        setWishList((prev) => [...prev, result.data]);
+        return 200;
+      }
       const val = value;
       const response = await fetch(`${apiURL}/list/${tripId}`, {
         method: "POST",
@@ -1353,6 +1416,15 @@ const EditCanvas = ({
 
   const handleDeleteItem = useCallback(
     async (itemId: UniqueIdentifier, isGoogleId: boolean) => {
+      if (isGuest) {
+        const result = deleteGuestListItem(String(itemId));
+        if (result.deletedData.length > 0) {
+          setWishList((prev) =>
+            prev.filter((v) => v.id !== result.deletedData[0].id),
+          );
+        }
+        return 200;
+      }
       const response = await fetch(`${apiURL}/list/${itemId}`, {
         method: "DELETE",
         headers: {
@@ -1988,24 +2060,48 @@ const EditCanvas = ({
                   ?
                 </span>
               </div>
-              <ErrorBoundary
-                fallbackRender={(fallbackProps) => (
-                  <ErrorFallback {...fallbackProps} retryCount={mapRetries} />
-                )}
-                onReset={() => {
-                  setMapRetries((prev) => prev + 1);
-                }}
-              >
-                {!loading2 && (
-                  <MyMapComponent
-                    bounds={vp}
-                    startLocation={location}
-                    list={wishList}
-                    handleSubmitItem={handleSubmitItem}
-                    handleDeleteItem={handleDeleteItem}
-                  />
-                )}
-              </ErrorBoundary>
+              {isGuest ? (
+                <div className={styles.lockedFeature}>
+                  <svg
+                    width="32"
+                    height="32"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                  </svg>
+                  <p className={styles.lockedText}>
+                    Sign up or log in to use Maps
+                  </p>
+                  <Link to="/signup" className={styles.lockedCta}>
+                    Sign Up
+                  </Link>
+                </div>
+              ) : (
+                <ErrorBoundary
+                  fallbackRender={(fallbackProps) => (
+                    <ErrorFallback {...fallbackProps} retryCount={mapRetries} />
+                  )}
+                  onReset={() => {
+                    setMapRetries((prev) => prev + 1);
+                  }}
+                >
+                  {!loading2 && (
+                    <MyMapComponent
+                      bounds={vp}
+                      startLocation={location}
+                      list={wishList}
+                      handleSubmitItem={handleSubmitItem}
+                      handleDeleteItem={handleDeleteItem}
+                    />
+                  )}
+                </ErrorBoundary>
+              )}
             </div>
           </div>
           {bannerMsg && (

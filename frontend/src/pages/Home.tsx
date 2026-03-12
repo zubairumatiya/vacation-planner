@@ -10,6 +10,7 @@ import refreshFn from "../utils/refreshFn";
 import dropDownIcon from "../assets/icons/arrow-drop-big.svg";
 import SharePanel from "../components/SharePanel";
 import { getAvatarSrc } from "../utils/avatarUtils";
+import { getGuestTrip, hasGuestTrip, clearGuestTrip } from "../utils/guestStorage";
 
 interface FeedTrip {
   id: string;
@@ -257,6 +258,10 @@ const Home = () => {
 
   useEffect(() => {
     if (loggingOutRef?.current) return;
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     const getTrips = async () => {
       try {
         const res = await fetch(`${apiUrl}/home`, {
@@ -827,7 +832,65 @@ const Home = () => {
               <h2 className="text-2xl font-bold">My Trips</h2>
             </div>
             <div>
-              {myTrips.length === 0 ? (
+              {!token && hasGuestTrip() && (() => {
+                const gt = getGuestTrip()!;
+                return (
+                  <div key="guest" className={styles.wrapper}>
+                    <div className={styles.titleNEdit}>
+                      <div className="flex items-start gap-2 flex-1">
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center justify-center w-fit relative px-8">
+                            <Link
+                              to="/vacation/guest/edit"
+                              className={styles.title}
+                              style={{ flex: 1 }}
+                            >
+                              <h2 className="text-xl font-semibold text-indigo-500 hover:text-indigo-600">
+                                {gt.trip.tripName}
+                              </h2>
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                clearGuestTrip();
+                                setUpdateList((prev) => !prev);
+                              }}
+                              title="Delete guest trip"
+                              style={{
+                                background: "none",
+                                border: "none",
+                                color: "#888",
+                                cursor: "pointer",
+                                fontSize: "1.1rem",
+                                padding: "4px 8px",
+                              }}
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        backgroundColor: "#f59e0b",
+                        color: "#111",
+                        fontSize: "0.65rem",
+                        fontWeight: 600,
+                        padding: "1px 8px",
+                        borderRadius: "9999px",
+                        whiteSpace: "nowrap",
+                        lineHeight: "1.4",
+                      }}
+                    >
+                      Guest
+                    </span>
+                    <p>{`Start date: ${formatDate(gt.trip.startDate)}`}</p>
+                    <p>{`End date: ${formatDate(gt.trip.endDate)}`}</p>
+                  </div>
+                );
+              })()}
+              {myTrips.length === 0 && !((!token) && hasGuestTrip()) ? (
                 <p className={styles.emptyText}>no trips to display...</p>
               ) : (
                 myTrips.map((v) => renderTripCard(v))
@@ -881,7 +944,28 @@ const Home = () => {
 
       {activeTab === "friends" && (
         <div className={styles.content}>
-          {loadingFeed ? (
+          {!token ? (
+            <div style={{ textAlign: "center", padding: "3rem 1rem" }}>
+              <p style={{ color: "#999", fontSize: "1rem", marginBottom: "1rem" }}>
+                Sign in to add friends
+              </p>
+              <Link
+                to="/login"
+                style={{
+                  display: "inline-block",
+                  padding: "8px 24px",
+                  background: "#2fe782",
+                  color: "#111",
+                  fontWeight: 600,
+                  borderRadius: "9999px",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                }}
+              >
+                Sign In
+              </Link>
+            </div>
+          ) : loadingFeed ? (
             <p className={homeTabsStyles.emptyText}>Loading friends feed...</p>
           ) : (
             <>

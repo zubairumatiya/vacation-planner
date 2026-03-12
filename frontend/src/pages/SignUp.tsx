@@ -6,6 +6,7 @@ import { isValidPassword } from "../../../shared/passwordUtils.ts";
 import PasswordConditionsHelper from "../components/PasswordConditionsHelper.tsx";
 import AvatarPicker from "../components/AvatarPicker.tsx";
 import { getAvatarSrc } from "../utils/avatarUtils.ts";
+import { hasGuestTrip } from "../utils/guestStorage.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const isValidUsername = (username: string) =>
@@ -125,6 +126,7 @@ const SignUp = () => {
         } else if (res.status === 302) {
           const data = (await res.json()) as SignupResponse;
           alert(data.message);
+          if (hasGuestTrip()) localStorage.setItem("migrateGuestTrip", "true");
           localStorage.setItem("pendingEmail", dataObj.email);
           navigate("/verify-email");
         } else if (res.status === 400) {
@@ -138,6 +140,7 @@ const SignUp = () => {
           alert("error creating account - refresh and retry");
         }
       } else {
+        if (hasGuestTrip()) localStorage.setItem("migrateGuestTrip", "true");
         localStorage.setItem("pendingEmail", dataObj.email);
         navigate("/verify-email");
       }

@@ -19,7 +19,7 @@ const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const [hover, setHover] = useState(false);
+
 
   const fetchUnreadCount = useCallback(async () => {
     if (!auth?.token) return;
@@ -112,11 +112,7 @@ const Header = () => {
             </svg>
           </Link>
         </div>
-        <div
-          className={auth?.token ? styles.loggedIn : styles.signIn}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
-        >
+        <div className={auth?.token ? styles.loggedIn : styles.signInWrapper}>
           {auth?.token ? (
             <div className={styles.profileBtnWrapper}>
               <button
@@ -144,10 +140,7 @@ const Header = () => {
               {unreadCount > 0 && <span className={styles.notificationDot} />}
             </div>
           ) : (
-            <Link
-              to="login"
-              className={hover ? styles.linkColorHoverBorder : styles.linkColor}
-            >
+            <Link to="/login" className={styles.signInButton}>
               Sign in
             </Link>
           )}

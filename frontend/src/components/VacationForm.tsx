@@ -5,6 +5,7 @@ import { AuthContext } from "../context/AuthContext.tsx";
 import clsx from "clsx";
 import { AutocompleteWebComponent } from "../components/map-components/autocomplete-webcomponent.tsx";
 import refreshFn from "../utils/refreshFn.ts";
+import { saveGuestTrip } from "../utils/guestStorage.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const QuestionMarkIcon = ({
@@ -427,7 +428,17 @@ const VacationForm = (props?: Props) => {
             }
           }
         } else {
-          alert("you are not logged in - your trip will not be saved");
+          saveGuestTrip({
+            tripName,
+            location,
+            startDate,
+            endDate,
+            gId: gValues.id,
+            gVp: gValues.vp,
+            isPublic,
+            isOpenInvite,
+          });
+          navigate("/vacation/guest/edit");
         }
       };
       formSubmit();
