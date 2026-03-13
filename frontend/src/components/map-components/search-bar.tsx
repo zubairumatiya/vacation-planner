@@ -6,7 +6,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { AutocompleteWebComponent } from "./autocomplete-webcomponent";
+import AutocompleteWebComponent from "./autocomplete-webcomponent";
 import styles from "../../styles/Map.module.css";
 import autocompleteIcon from "../../assets/icons/autocomplete-icon.svg";
 import clearIcon from "../../assets/icons/clear-icon.svg";

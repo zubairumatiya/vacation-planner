@@ -1,3 +1,7 @@
+# Logo
+
+H2D2 Design
+
 # Avatar Icon Credits
 
 All avatar icons are from [Flaticon](https://www.flaticon.com/).

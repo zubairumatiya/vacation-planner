@@ -23,7 +23,7 @@ interface Props {
 
 const apiURL = import.meta.env.VITE_API_URL;
 
-export const AutocompleteWebComponent = forwardRef(
+const AutocompleteWebComponent = forwardRef(
   (
     {
       inputValue,
@@ -33,7 +33,7 @@ export const AutocompleteWebComponent = forwardRef(
       tripIdProp,
       skipEO,
     }: Props,
-    ref
+    ref,
   ) => {
     const auth = useContext(AuthContext);
     const token = auth?.token;
@@ -163,7 +163,7 @@ export const AutocompleteWebComponent = forwardRef(
     }, [inputValue]);
     const handlePlaceClick = async (
       e?: React.MouseEvent<HTMLUListElement>,
-      keyboardSelection?: number
+      keyboardSelection?: number,
     ) => {
       // will have to make a call to place details to get place viewport
       // will have to get rid of suggestions on blur but still hold the text value in the search bar
@@ -186,7 +186,7 @@ export const AutocompleteWebComponent = forwardRef(
             tripId,
             skipEO: sEO,
           }),
-        }
+        },
       );
       if (!result.ok) {
         if (result.status === 401) {
@@ -219,7 +219,7 @@ export const AutocompleteWebComponent = forwardRef(
                   tripId,
                   skipEO: sEO,
                 }),
-              }
+              },
             );
             if (!retryReq.ok) {
               alert("Trouble completing request, please try again");
@@ -229,7 +229,7 @@ export const AutocompleteWebComponent = forwardRef(
                 storeValues(
                   element.placePrediction!.placeId,
                   element.placePrediction?.text.text ?? "",
-                  data.viewport
+                  data.viewport,
                 );
               }
               setInputVal(element.placePrediction?.text.text ?? "");
@@ -252,7 +252,7 @@ export const AutocompleteWebComponent = forwardRef(
           storeValues(
             element.placePrediction!.placeId,
             element.placePrediction?.text.text ?? "",
-            data.viewport
+            data.viewport,
           );
         }
         setInputVal(element.placePrediction?.text.text ?? "");
@@ -294,7 +294,8 @@ export const AutocompleteWebComponent = forwardRef(
         )}
       </div>
     );
-  }
+  },
 );
 
 AutocompleteWebComponent.displayName = "AutocompleteWebComponent";
+export default AutocompleteWebComponent;

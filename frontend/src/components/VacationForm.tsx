@@ -1,9 +1,11 @@
-import { useState, useContext, useEffect, useRef } from "react";
+import { useState, useContext, useEffect, useRef, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/AddVacationForm.module.css";
 import { AuthContext } from "../context/AuthContext.tsx";
 import clsx from "clsx";
-import { AutocompleteWebComponent } from "../components/map-components/autocomplete-webcomponent.tsx";
+const AutocompleteWebComponent = lazy(
+  () => import("../components/map-components/autocomplete-webcomponent.tsx"),
+);
 import refreshFn from "../utils/refreshFn.ts";
 import { saveGuestTrip } from "../utils/guestStorage.ts";
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -559,15 +561,17 @@ const VacationForm = (props?: Props) => {
                 />
                 {!hideSuggestions && (
                   <div className="absolute top-full left-0 w-full z-10 mt-1">
-                    <AutocompleteWebComponent
-                      ref={autocompleteRef}
-                      inputValue={location}
-                      setInputVal={setLocation}
-                      setHideSuggestions={setHideSuggestions}
-                      storeValues={storeValues}
-                      tripIdProp={props?.preFill?.id}
-                      skipEO={skipEORef.current}
-                    />
+                    <Suspense fallback={<div></div>}>
+                      <AutocompleteWebComponent
+                        ref={autocompleteRef}
+                        inputValue={location}
+                        setInputVal={setLocation}
+                        setHideSuggestions={setHideSuggestions}
+                        storeValues={storeValues}
+                        tripIdProp={props?.preFill?.id}
+                        skipEO={skipEORef.current}
+                      />
+                    </Suspense>
                   </div>
                 )}
               </div>

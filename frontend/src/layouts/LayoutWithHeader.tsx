@@ -3,7 +3,10 @@ import { Outlet, Link } from "react-router-dom";
 import styles from "../styles/LayoutWithHeader.module.css";
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext.tsx";
-import { TripRefreshContext, useTripRefreshProvider } from "../context/TripRefreshContext.tsx";
+import {
+  TripRefreshContext,
+  useTripRefreshProvider,
+} from "../context/TripRefreshContext.tsx";
 
 const LayoutWithHeader = () => {
   const auth = useContext(AuthContext);
@@ -43,8 +46,9 @@ const LayoutWithHeader = () => {
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               <span className={styles.warningText}>
-                You're browsing as a guest. Your data is saved locally on this
-                device.
+                Heads up: Trips created without an account are stored only in
+                your browser and won’t be available on other devices. Data may
+                be lost if you clear your browser cache.
               </span>
               <div className={styles.warningActions}>
                 <Link to="/signup" className={styles.warningSignUp}>
