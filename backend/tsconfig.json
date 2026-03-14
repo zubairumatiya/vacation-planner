@@ -11,5 +11,11 @@
     "skipLibCheck": true
   },
   "include": ["."],
-  "exclude": ["dist", "node_modules"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ]
 }
