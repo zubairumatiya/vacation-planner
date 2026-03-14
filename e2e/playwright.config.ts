@@ -22,22 +22,4 @@ export default defineConfig({
   // Start your dev servers manually before running E2E tests:
   //   backend:  npx nodemon (or however you start it)
   //   frontend: npm run dev
-  webServer: [
-    {
-      command: "npx nodemon",
-      cwd: "../backend",
-      url: "https://localhost:5000",
-      reuseExistingServer: true,
-      ignoreHTTPSErrors: true,
-      timeout: 30_000,
-    },
-    {
-      command: "npm run dev",
-      cwd: "../frontend",
-      url: "https://localhost:5173",
-      reuseExistingServer: true,
-      ignoreHTTPSErrors: true,
-      timeout: 30_000,
-    },
-  ],
 });
