@@ -9,11 +9,11 @@ const jwt = await import("jsonwebtoken");
 const { default: ensureLoggedIn } = await import("../ensureLoggedIn.js");
 
 vi.mock("jsonwebtoken", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("jsonwebtoken")>();
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     default: {
-      ...actual.default,
+      ...(actual.default as object),
       verify: vi.fn(),
     },
   };

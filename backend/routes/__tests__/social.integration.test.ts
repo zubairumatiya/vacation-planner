@@ -22,11 +22,11 @@ vi.mock("../../db/db.js", () => ({
 
 // Mock jwt to return user-1 by default
 vi.mock("jsonwebtoken", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("jsonwebtoken")>();
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     default: {
-      ...actual.default,
+      ...(actual.default as object),
       verify: vi.fn(() => ({ id: "user-1" })),
     },
   };
