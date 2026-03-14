@@ -7,9 +7,10 @@ test.describe("Guest to Authenticated User Flow", () => {
     await page.evaluate(() => localStorage.clear());
   });
 
-  test("unauthenticated user is redirected to login", async ({ page }) => {
+  test("unauthenticated user can access home page", async ({ page }) => {
+    // RequireAuth doesn't redirect unauthenticated users (only on loggingOut)
     await page.goto("/");
-    await expect(page).toHaveURL(/\/login/);
+    await expect(page).toHaveURL("/");
   });
 
   test("login page renders with correct elements", async ({ page }) => {
@@ -82,16 +83,13 @@ test.describe("Guest to Authenticated User Flow", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("guest trip creation saves to localStorage", async ({ page }) => {
-    // Navigate to add-vacation as guest (should still be accessible)
+  test("guest trip creation page renders", async ({ page }) => {
     await page.goto("/add-vacation");
 
-    // The page should render the vacation form
     await expect(
       page.getByRole("heading", { name: /plan a new vacation/i }),
     ).toBeVisible();
 
-    // Create Vacation button should be disabled initially
     const createBtn = page.getByRole("button", { name: /create vacation/i });
     await expect(createBtn).toBeDisabled();
   });
