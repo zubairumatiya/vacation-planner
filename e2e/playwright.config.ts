@@ -19,12 +19,15 @@ export default defineConfig({
       use: { browserName: "chromium" },
     },
   ],
+  // Start your dev servers manually before running E2E tests:
+  //   backend:  npx nodemon (or however you start it)
+  //   frontend: npm run dev
   webServer: [
     {
-      command: "npm run dev",
+      command: "npx nodemon",
       cwd: "../backend",
       url: "https://localhost:5000",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       ignoreHTTPSErrors: true,
       timeout: 30_000,
     },
@@ -32,7 +35,7 @@ export default defineConfig({
       command: "npm run dev",
       cwd: "../frontend",
       url: "https://localhost:5173",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       ignoreHTTPSErrors: true,
       timeout: 30_000,
     },
