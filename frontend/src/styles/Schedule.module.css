@@ -508,4 +508,16 @@ ul li .infoPill.navLink {
   font-size: smaller;
   padding-left: 9px;
   padding-right: 9px;
+  justify-content: center;
+}
+
+.topTitleRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.locationTitle {
+  font-style: italic;
+  color: #9e9e9e;
 }

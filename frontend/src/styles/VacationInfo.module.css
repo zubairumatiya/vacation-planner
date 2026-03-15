@@ -37,6 +37,7 @@
   border: 1px solid #333;
   z-index: 1;
   position: relative;
+  justify-content: space-evenly;
 }
 
 .stat {

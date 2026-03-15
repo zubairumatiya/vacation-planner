@@ -27,7 +27,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const [title, setTitle] = useState("");
-  const [_tripLocation, setTripLocation] = useState<string>("");
+  const [tripLocation, setTripLocation] = useState<string>("");
   const [countryName, setCountryName] = useState<string>("");
   const [tripLength, setTripLength] = useState(0);
   const [role, setRole] = useState("");
@@ -1043,12 +1043,18 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           </div>
         </div>
         <header className={styles.header}>
-          <h2 className={styles.title}>{title}&nbsp;</h2>
-          <h3 className={styles.length}>- {tripLength} days</h3>
+          <div className={styles.titleWrapper}>
+            <div className={styles.topTitleRow}>
+              <h2 className={styles.title}>{title}&nbsp;</h2>
+              <h3 className={styles.length}>- {tripLength} days</h3>
+            </div>
+            <h5 className={styles.locationTitle}>{tripLocation}</h5>
+          </div>
           {role === "owner" && (
             <div style={{ position: "relative", marginLeft: "1rem" }}>
               <button
                 type="button"
+                title="Share"
                 onClick={() => setSharePanelOpen((prev) => !prev)}
                 style={{
                   background: "transparent",
