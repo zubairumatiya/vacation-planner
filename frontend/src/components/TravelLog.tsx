@@ -599,6 +599,22 @@ const TravelLog = ({
                       ) : (
                         <span>{c.countryName}</span>
                       )}
+                      {(c.visitDate || c.numDays) && (
+                        <span className={styles.countryMeta}>
+                          {c.visitDate &&
+                            new Date(
+                              c.visitDate.length === 7
+                                ? c.visitDate + "-01"
+                                : c.visitDate,
+                            ).toLocaleDateString("en-US", {
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          {c.visitDate && c.numDays && " · "}
+                          {c.numDays &&
+                            `${c.numDays} day${c.numDays !== 1 ? "s" : ""}`}
+                        </span>
+                      )}
                       {!readOnly && (
                         <button
                           type="button"

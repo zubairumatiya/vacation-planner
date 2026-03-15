@@ -993,7 +993,7 @@ router.post(
   },
 );
 
-// PATCH /travel-log/:countryId - update visibility
+// PATCH /travel-log/:countryId - update visibility, visit date, or num days
 router.patch(
   "/travel-log/:countryId",
   ensureLoggedIn,
@@ -1004,22 +1004,49 @@ router.patch(
   ) => {
     try {
       const userId = req.user.id;
-      const { visibility } = req.body;
+      const { visibility, visitDate, numDays } = req.body;
 
-      if (!["public", "friends", "private"].includes(visibility)) {
-        res.status(400).json({ message: "Invalid visibility" });
+      const sets: string[] = [];
+      const vals: unknown[] = [];
+      let idx = 1;
+
+      if (visibility !== undefined) {
+        if (!["public", "friends", "private"].includes(visibility)) {
+          res.status(400).json({ message: "Invalid visibility" });
+          return;
+        }
+        sets.push(`visibility = $${idx++}`);
+        vals.push(visibility);
+      }
+
+      if (visitDate !== undefined) {
+        sets.push(`visit_date = $${idx++}`);
+        const normalizedDate = visitDate
+          ? visitDate.length === 7 ? `${visitDate}-01` : visitDate
+          : null;
+        vals.push(normalizedDate);
+      }
+
+      if (numDays !== undefined) {
+        sets.push(`num_days = $${idx++}`);
+        vals.push(numDays);
+      }
+
+      if (sets.length === 0) {
+        res.status(400).json({ message: "No fields to update" });
         return;
       }
 
+      vals.push(req.params.countryId, userId);
       const result = await db.query(
-        "UPDATE user_countries SET visibility = $1 WHERE id = $2 AND user_id = $3 RETURNING *",
-        [visibility, req.params.countryId, userId],
+        `UPDATE user_countries SET ${sets.join(", ")} WHERE id = $${idx++} AND user_id = $${idx} RETURNING *`,
+        vals,
       );
       if (result.rowCount === 0) {
         res.sendStatus(404);
         return;
       }
-      res.status(200).json({ message: "Visibility updated" });
+      res.status(200).json({ message: "Updated" });
     } catch (err) {
       next(err);
     }

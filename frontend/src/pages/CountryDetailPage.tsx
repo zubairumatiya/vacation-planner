@@ -27,6 +27,8 @@ interface UserCountryDetail {
   visibility: string;
   firstName: string;
   lastName: string;
+  visitDate: string | null;
+  numDays: number | null;
 }
 
 const mapPlace = (raw: Record<string, unknown>): CountryPlace => ({
@@ -49,6 +51,8 @@ const mapUserCountry = (raw: Record<string, unknown>): UserCountryDetail => ({
   visibility: raw.visibility as string,
   firstName: raw.first_name as string,
   lastName: raw.last_name as string,
+  visitDate: (raw.visit_date as string) || null,
+  numDays: (raw.num_days as number) ?? null,
 });
 
 const CATEGORIES = [
@@ -83,10 +87,14 @@ const CountryDetailPage = () => {
   const [layout, setLayout] = useState<"rows" | "columns">("rows");
   const [addToTripPlaceId, setAddToTripPlaceId] = useState<string | null>(null);
   const [viewerTrips, setViewerTrips] = useState<
-    { id: string; tripName: string }[]
+    { id: string; tripName: string; endDate: string }[]
   >([]);
   const [loadingViewerTrips, setLoadingViewerTrips] = useState(false);
   const [addingToTrip, setAddingToTrip] = useState(false);
+  const [editingMeta, setEditingMeta] = useState(false);
+  const [editVisitMonth, setEditVisitMonth] = useState("");
+  const [editVisitYear, setEditVisitYear] = useState("");
+  const [editNumDays, setEditNumDays] = useState("");
   const [addedPlaces, setAddedPlaces] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem("addedPlaces");
@@ -101,7 +109,10 @@ const CountryDetailPage = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    localStorage.setItem("addedPlaces", JSON.stringify(Array.from(addedPlaces)));
+    localStorage.setItem(
+      "addedPlaces",
+      JSON.stringify(Array.from(addedPlaces)),
+    );
   }, [addedPlaces]);
 
   const authFetch = useCallback(
@@ -325,11 +336,14 @@ const CountryDetailPage = () => {
       const res = await authFetch(`${apiUrl}/home`);
       if (res.ok) {
         const data = (await res.json()) as Record<string, unknown>[];
+        const today = new Date();
         const trips = data
           .filter((t) => t.role === "owner" || t.role === "editor")
+          .filter((t) => !t.endDate || new Date(t.endDate as string) >= today)
           .map((t) => ({
             id: t.id as string,
             tripName: t.tripName as string,
+            endDate: t.endDate as string,
           }));
         setViewerTrips(trips);
       }
@@ -365,6 +379,42 @@ const CountryDetailPage = () => {
     }
   };
 
+  const openMetaEditor = () => {
+    if (country) {
+      const dateStr = country.visitDate
+        ? country.visitDate.length > 7
+          ? country.visitDate.slice(0, 7)
+          : country.visitDate
+        : "";
+      const parts = dateStr ? dateStr.split("-") : [];
+      setEditVisitYear(parts[0] || "");
+      setEditVisitMonth(parts[1] || "");
+      setEditNumDays(country.numDays != null ? String(country.numDays) : "");
+    }
+    setEditingMeta(true);
+  };
+
+  const saveMetaEdits = async () => {
+    if (!country) return;
+    const visitDate =
+      editVisitMonth && editVisitYear
+        ? `${editVisitYear}-${editVisitMonth}`
+        : null;
+    const numDays = editNumDays ? parseInt(editNumDays) : null;
+    try {
+      const res = await authFetch(`${apiUrl}/travel-log/${country.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ visitDate, numDays }),
+      });
+      if (res.ok) {
+        setCountry({ ...country, visitDate, numDays });
+        setEditingMeta(false);
+      }
+    } catch {
+      // handled
+    }
+  };
+
   if (loading || !country) return null;
 
   const fullName = `${country.firstName} ${country.lastName}`;
@@ -392,6 +442,117 @@ const CountryDetailPage = () => {
         </Link>
         <span className={styles.separator}>&gt;</span>
         <span className={styles.countryTitle}>{country.countryName} Log</span>
+        {(country.visitDate || country.numDays) && !editingMeta && (
+          <span className={styles.countryMeta}>
+            {country.visitDate &&
+              new Date(
+                country.visitDate.length === 7
+                  ? country.visitDate + "-01"
+                  : country.visitDate,
+              ).toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              })}
+            {country.visitDate && country.numDays && " · "}
+            {country.numDays &&
+              `${country.numDays} day${country.numDays !== 1 ? "s" : ""}`}
+          </span>
+        )}
+        {isOwner && !editingMeta && (
+          <button
+            type="button"
+            className={styles.editMetaBtn}
+            onClick={openMetaEditor}
+            aria-label="Edit date and days"
+            title="Edit date and days"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+            </svg>
+          </button>
+        )}
+        {editingMeta && (
+          <div className={styles.metaEditForm}>
+            <div className={styles.metaEditFields}>
+              <select
+                className={styles.metaEditInput}
+                value={editVisitMonth}
+                onChange={(e) => setEditVisitMonth(e.target.value)}
+              >
+                <option value="">Month</option>
+                {[
+                  "Jan",
+                  "Feb",
+                  "Mar",
+                  "Apr",
+                  "May",
+                  "Jun",
+                  "Jul",
+                  "Aug",
+                  "Sep",
+                  "Oct",
+                  "Nov",
+                  "Dec",
+                ].map((name, i) => {
+                  const val = String(i + 1).padStart(2, "0");
+                  return (
+                    <option key={val} value={val}>
+                      {name}
+                    </option>
+                  );
+                })}
+              </select>
+              <select
+                className={styles.metaEditInput}
+                value={editVisitYear}
+                onChange={(e) => setEditVisitYear(e.target.value)}
+              >
+                <option value="">YYYY</option>
+                {Array.from({ length: 50 }, (_, i) => {
+                  const yr = String(new Date().getFullYear() - i);
+                  return (
+                    <option key={yr} value={yr}>
+                      {yr}
+                    </option>
+                  );
+                })}
+              </select>
+              <input
+                type="number"
+                className={styles.metaEditInput}
+                placeholder="Days"
+                min="1"
+                value={editNumDays}
+                onChange={(e) => setEditNumDays(e.target.value)}
+                style={{ width: "4rem" }}
+              />
+            </div>
+            <button
+              type="button"
+              className={styles.metaEditSave}
+              onClick={saveMetaEdits}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className={styles.metaEditCancel}
+              onClick={() => setEditingMeta(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
         <div className={styles.headerRight}>
           <button
             type="button"
@@ -563,7 +724,7 @@ const CountryDetailPage = () => {
               <ul className={styles.placeList}>
                 {items.map((place) => (
                   <li key={place.id} className={styles.placeItem}>
-                    {!isOwner && addedPlaces.has(place.id) && (
+                    {addedPlaces.has(place.id) ? (
                       <div className={styles.addedBadgeWrapper}>
                         <button
                           type="button"
@@ -576,9 +737,58 @@ const CountryDetailPage = () => {
                             });
                           }}
                         >
-                          <span className={styles.addedBadgeCheck}>✓ item added</span>
-                          <span className={styles.addedBadgeDismiss}>✗ dismiss</span>
+                          <span className={styles.addedBadgeCheck}>
+                            ✓ item added
+                          </span>
+                          <span className={styles.addedBadgeDismiss}>
+                            ✗ dismiss
+                          </span>
                         </button>
+                      </div>
+                    ) : (
+                      <div
+                        className={styles.addToTripWrapper}
+                        ref={
+                          addToTripPlaceId === place.id
+                            ? dropdownRef
+                            : undefined
+                        }
+                      >
+                        <button
+                          type="button"
+                          className={styles.addToTripBtn}
+                          onClick={() => handleAddToTripClick(place.id)}
+                          aria-label="Add to trip"
+                        >
+                          +
+                        </button>
+                        {addToTripPlaceId === place.id && (
+                          <div className={styles.addToTripDropdown}>
+                            {loadingViewerTrips ? (
+                              <p className={styles.dropdownLoading}>
+                                Loading...
+                              </p>
+                            ) : viewerTrips.length === 0 ? (
+                              <p className={styles.dropdownLoading}>
+                                No editable trips
+                              </p>
+                            ) : (
+                              viewerTrips.map((trip) => (
+                                <button
+                                  key={trip.id}
+                                  type="button"
+                                  className={styles.tripOption}
+                                  onClick={() =>
+                                    handleAddPlaceToTrip(trip.id, place)
+                                  }
+                                  disabled={addingToTrip}
+                                >
+                                  {trip.tripName}
+                                </button>
+                              ))
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                     <div className={styles.placeRow}>
@@ -683,52 +893,6 @@ const CountryDetailPage = () => {
                       )}
                     </div>
                     <div className={styles.placeActions}>
-                      {!isOwner && (
-                        <div
-                          className={styles.addToTripWrapper}
-                          ref={
-                            addToTripPlaceId === place.id
-                              ? dropdownRef
-                              : undefined
-                          }
-                        >
-                          <button
-                            type="button"
-                            className={styles.addToTripBtn}
-                            onClick={() => handleAddToTripClick(place.id)}
-                            aria-label="Add to trip"
-                          >
-                            +
-                          </button>
-                          {addToTripPlaceId === place.id && (
-                            <div className={styles.addToTripDropdown}>
-                              {loadingViewerTrips ? (
-                                <p className={styles.dropdownLoading}>
-                                  Loading...
-                                </p>
-                              ) : viewerTrips.length === 0 ? (
-                                <p className={styles.dropdownLoading}>
-                                  No editable trips
-                                </p>
-                              ) : (
-                                viewerTrips.map((trip) => (
-                                  <button
-                                    key={trip.id}
-                                    type="button"
-                                    className={styles.tripOption}
-                                    onClick={() =>
-                                      handleAddPlaceToTrip(trip.id, place)
-                                    }
-                                    disabled={addingToTrip}
-                                  >
-                                    {trip.tripName}
-                                  </button>
-                                ))
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
                       {isOwner ? (
                         <button
                           type="button"

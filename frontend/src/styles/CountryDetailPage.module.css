@@ -36,6 +36,86 @@
   font-weight: 600;
 }
 
+.countryMeta {
+  color: #888;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  margin-left: 0.25rem;
+}
+
+.editMetaBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  color: #888;
+  transition: color 0.15s;
+  margin-left: 0.15rem;
+}
+
+.editMetaBtn:hover {
+  color: #2fe782;
+}
+
+.metaEditForm {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.25rem;
+}
+
+.metaEditFields {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.metaEditInput {
+  padding: 3px 6px;
+  border-radius: 4px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.75rem;
+  outline: none;
+}
+
+.metaEditInput:focus {
+  border-color: #2fe782;
+}
+
+.metaEditSave {
+  background-color: #2fe782;
+  border: none;
+  color: #222;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.metaEditSave:hover {
+  background-color: #00bf55;
+}
+
+.metaEditCancel {
+  background: transparent;
+  border: 1px solid #888;
+  color: #888;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.metaEditCancel:hover {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
 .headerRight {
   display: flex;
   align-items: center;
@@ -275,35 +355,36 @@
 .addedBadgeWrapper {
   display: flex;
   align-items: center;
-  margin-right: 0.5rem;
-  margin-top: 0.15rem;
-  position: absolute;
-  left: 0;
+  flex-shrink: 0;
+  width: 1.2rem;
+  justify-content: center;
+  position: relative;
 }
 
 .addedBadgeBtn {
+  position: absolute;
+  left: 0;
   background: rgba(186, 187, 187, 0.1);
   border: 1px solid rgba(0, 0, 0, 0.3);
   color: #9b9b9b;
   border-radius: 4px;
   font-size: 0.6rem;
-  padding: 2px 6px;
+  padding: 6px 6px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 75px;
-  height: 20px;
-  white-space: nowrap; /* prevent wrapping */
-  overflow: hidden; /* hide overflow */
-  text-overflow: ellipsis;
+  white-space: nowrap;
+  z-index: 1;
+  top: 2px;
 }
 
 .addedBadgeBtn:hover {
   background: rgba(186, 187, 187, 0.1);
   border-color: rgba(0, 0, 0, 0.3);
   color: #9b9b9b;
+  padding: 3px 6px;
 }
 
 .addedBadgeCheck {
@@ -589,7 +670,7 @@
 .addToTripDropdown {
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0;
   z-index: 50;
   background-color: #2a2a2a;
   border: 1px solid #444;

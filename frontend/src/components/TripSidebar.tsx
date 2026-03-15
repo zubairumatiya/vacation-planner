@@ -36,7 +36,7 @@ const CATEGORIES = [
 
 const mapTrip = (raw: Record<string, unknown>): SidebarTrip => ({
   id: raw.id as string,
-  tripName: raw.trip_name as string,
+  tripName: (raw.tripName ?? raw.trip_name) as string,
   role: raw.role as "owner" | "editor" | "reader",
 });
 

@@ -167,6 +167,12 @@
   border-bottom: none;
 }
 
+.countryMeta {
+  color: #888;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
 .eyeBtn {
   background: transparent;
   border: none;

@@ -458,7 +458,9 @@ export interface AddCountryBody {
 }
 
 export interface UpdateVisibilityBody {
-  visibility: "public" | "friends" | "private";
+  visibility?: "public" | "friends" | "private";
+  visitDate?: string | null;
+  numDays?: number | null;
 }
 
 export interface CountryIdParam extends ParamsDictionary {
