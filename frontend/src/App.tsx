@@ -14,20 +14,16 @@ import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 const VacationSchedule = lazy(() => import("./pages/VacationSchedule.tsx"));
 const VacationInfo = lazy(() => import("./pages/VacationInfo.tsx"));
-const EditCanvas = lazy(() => import("./pages/EditCanvas.tsx"));
 import ViewVacationSchedule from "./pages/ViewVacationSchedule.tsx";
 import ProfilePage from "./pages/ProfilePage.tsx";
 import UserProfilePage from "./pages/UserProfilePage.tsx";
 import CountryDetailPage from "./pages/CountryDetailPage.tsx";
 const WorldMapPage = lazy(() => import("./pages/WorldMapPage.tsx"));
-import { ErrorBoundary } from "react-error-boundary";
-import ErrorFallback from "./components/ErrorFallback.tsx";
 import RequireAuth from "./pages/RequireAuth.tsx";
 import GoogleOAuthCallback from "./pages/GoogleOAuthCallback.tsx";
 
 function App() {
   const [costTotal, setCostTotal] = useState(0);
-  const [editRetries, setEditRetries] = useState(0);
   return (
     <BrowserRouter>
       <Suspense
@@ -64,25 +60,9 @@ function App() {
                 }
               >
                 <Route index element={<ViewVacationSchedule />} />
+                <Route path="friends" element={null} />
                 <Route path="info" element={<VacationInfo />} />
-                <Route
-                  path="edit"
-                  element={
-                    <ErrorBoundary
-                      fallbackRender={(fallbackProps) => (
-                        <ErrorFallback
-                          {...fallbackProps}
-                          retryCount={editRetries}
-                        />
-                      )}
-                      onReset={() => {
-                        setEditRetries((prev) => prev + 1);
-                      }}
-                    >
-                      <EditCanvas setCostTotal={setCostTotal} />
-                    </ErrorBoundary>
-                  }
-                />
+                <Route path="edit" element={null} />
               </Route>
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/user/:userId" element={<UserProfilePage />} />

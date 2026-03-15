@@ -540,6 +540,26 @@ export interface FriendsFeedResponse {
   travelLogs: FeedTravelLog[];
 }
 
+export interface FriendCountryLog {
+  user_country_id: string;
+  visit_date: string | null;
+  num_days: number | null;
+  user_id: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  avatar: string | null;
+  places_count: number;
+}
+
+export interface FriendCountryLogsResponse {
+  friends: FriendCountryLog[];
+}
+
+export interface CountryNameParam extends ParamsDictionary {
+  countryName: string;
+}
+
 export interface QuestionnaireRow {
   id: string;
   trip_id: string;

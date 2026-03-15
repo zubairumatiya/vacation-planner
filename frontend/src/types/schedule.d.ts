@@ -336,4 +336,16 @@ declare global {
     container: number;
     table: number;
   };
+
+  interface FriendCountryLog {
+    userCountryId: string;
+    visitDate: string | null;
+    numDays: number | null;
+    userId: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+    avatar: string | null;
+    placesCount: number;
+  }
 }

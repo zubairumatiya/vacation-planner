@@ -39,6 +39,9 @@ import {
   FeedTrip,
   FeedTravelLog,
   FriendsFeedResponse,
+  FriendCountryLog,
+  FriendCountryLogsResponse,
+  CountryNameParam,
 } from "../types/app-types.js";
 
 // GET /profile - get current user's profile
@@ -348,6 +351,56 @@ router.get(
         trips,
         travelLogs,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /friends/country-logs/:countryName - get friends' travel logs for a specific country
+router.get(
+  "/friends/country-logs/:countryName",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, CountryNameParam>,
+    res: TypedResponse<FriendCountryLogsResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const countryName = decodeURIComponent(req.params.countryName);
+
+      const result: QueryResult<FriendCountryLog> = await db.query(
+        `SELECT
+          uc.id AS user_country_id,
+          uc.visit_date,
+          uc.num_days,
+          u.id AS user_id,
+          u.username,
+          u.first_name,
+          u.last_name,
+          u.avatar,
+          COUNT(cp.id)::int AS places_count
+        FROM user_countries uc
+        JOIN countries c ON c.id = uc.country_id
+        JOIN users u ON u.id = uc.user_id
+        JOIN follows f ON (
+          (f.requester_id = $1 AND f.receiver_id = u.id)
+          OR (f.receiver_id = $1 AND f.requester_id = u.id)
+        ) AND f.status = 'accepted'
+        LEFT JOIN country_places cp ON cp.user_country_id = uc.id
+        WHERE LOWER(c.name) = LOWER($2)
+          AND uc.visibility IN ('public', 'friends')
+          AND uc.user_id != $1
+        GROUP BY uc.id, u.id
+        ORDER BY uc.visit_date DESC NULLS LAST, uc.created_at DESC`,
+        [userId, countryName],
+      );
+
+      const friends = result.rows;
+      snakeToCamel(friends);
+
+      res.status(200).json({ friends });
     } catch (err) {
       next(err);
     }
@@ -1030,7 +1083,7 @@ router.get(
 
       // If not owner, check friendship and visibility
       if (!isOwner) {
-        if (uc.visibility !== "public") {
+        if (uc.visibility === "private") {
           res.status(403).json({ message: "Access denied" });
           return;
         }

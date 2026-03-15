@@ -12,7 +12,6 @@ import {
 } from "react";
 import {
   useParams,
-  useOutletContext,
   Navigate,
   useSearchParams,
   Link,
@@ -87,27 +86,24 @@ const apiURL = import.meta.env.VITE_API_URL;
 
 const EditCanvas = ({
   setCostTotal,
+  role,
+  showQuestionnaire,
+  setShowQuestionnaire,
+  sidebarRefreshKey: parentRefreshKey,
+  scheduleUpdateKey,
+  listUpdateKey,
+  onQuestionnaireSubmitted,
 }: {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
+  role: string;
+  showQuestionnaire: boolean;
+  setShowQuestionnaire: (v: boolean) => void;
+  sidebarRefreshKey: number;
+  scheduleUpdateKey: number;
+  listUpdateKey: number;
+  onQuestionnaireSubmitted: () => void;
 }) => {
   const { tripId } = useParams();
-  const {
-    role,
-    showQuestionnaire,
-    setShowQuestionnaire,
-    sidebarRefreshKey: parentRefreshKey,
-    scheduleUpdateKey,
-    listUpdateKey,
-    onQuestionnaireSubmitted,
-  } = useOutletContext<{
-    role: string;
-    showQuestionnaire: boolean;
-    setShowQuestionnaire: (v: boolean) => void;
-    sidebarRefreshKey: number;
-    scheduleUpdateKey: number;
-    listUpdateKey: number;
-    onQuestionnaireSubmitted: () => void;
-  }>();
   const [loading, setLoading] = useState<boolean>(true);
   const [loading2, setLoading2] = useState<boolean>(true);
   const [vp, setVp] = useState<null | Vp>(null);

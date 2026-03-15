@@ -31,7 +31,7 @@
   margin-left: 25px;
 }
 .navPills {
-  width: 300px;
+  width: 350px;
   display: flex;
 }
 .navItem {
@@ -60,7 +60,7 @@
 
 .hiddenCard {
   height: 90px;
-  width: 350px;
+  width: 500px;
   position: relative;
   z-index: 1;
   margin-top: -50px;

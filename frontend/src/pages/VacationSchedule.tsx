@@ -1,5 +1,5 @@
 import { useParams, NavLink, Outlet, useLocation } from "react-router-dom";
-import { useState, useEffect, useContext, useRef, useCallback } from "react";
+import { useState, useEffect, useContext, useRef, useCallback, lazy } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
@@ -7,6 +7,10 @@ import SharePanel from "../components/SharePanel";
 import type { AiItineraryItem } from "../types/ai";
 import ReactMarkdown from "react-markdown";
 import aiResPopSound from "../assets/sounds/aiResPop.mp3";
+import { ErrorBoundary } from "react-error-boundary";
+import ErrorFallback from "../components/ErrorFallback";
+const EditCanvas = lazy(() => import("./EditCanvas"));
+const FriendsCountryLogs = lazy(() => import("./FriendsCountryLogs"));
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -26,6 +30,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
+  const [editRetries, setEditRetries] = useState(0);
   const [title, setTitle] = useState("");
   const [tripLocation, setTripLocation] = useState<string>("");
   const [countryName, setCountryName] = useState<string>("");
@@ -47,6 +52,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditPage = location.pathname.endsWith("/edit");
+  const isFriendsPage = location.pathname.endsWith("/friends");
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [aiMode, setAiMode] = useState<AiMode>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
@@ -1173,6 +1179,21 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </NavLink>
             </li>
           )}
+          {countryName && role !== "reader" && (
+            <li className={styles.navItem}>
+              <NavLink
+                to={`/vacation/${tripId}/friends`}
+                className={({ isActive }) =>
+                  isActive
+                    ? `${styles.navLink} ${styles.navLinkActive}`
+                    : `${styles.navLink}`
+                }
+                data-toggle="pill"
+              >
+                Friends
+              </NavLink>
+            </li>
+          )}
           <li className={styles.navItem}>
             <NavLink
               to={`/vacation/${tripId}/info`}
@@ -1189,17 +1210,49 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         </ul>
       </nav>
       <div className={styles.hiddenCard}></div>
-      <Outlet
-        context={{
-          role,
-          showQuestionnaire,
-          setShowQuestionnaire,
-          sidebarRefreshKey,
-          scheduleUpdateKey,
-          listUpdateKey,
-          onQuestionnaireSubmitted: handleQuestionnaireSubmitted,
-        }}
-      />
+      {role !== "reader" && (
+        <>
+          <div style={{ display: isEditPage ? undefined : "none" }}>
+            <ErrorBoundary
+              fallbackRender={(fallbackProps) => (
+                <ErrorFallback {...fallbackProps} retryCount={editRetries} />
+              )}
+              onReset={() => setEditRetries((prev) => prev + 1)}
+            >
+              <EditCanvas
+                setCostTotal={setCostTotal}
+                role={role}
+                showQuestionnaire={showQuestionnaire}
+                setShowQuestionnaire={setShowQuestionnaire}
+                sidebarRefreshKey={sidebarRefreshKey}
+                scheduleUpdateKey={scheduleUpdateKey}
+                listUpdateKey={listUpdateKey}
+                onQuestionnaireSubmitted={handleQuestionnaireSubmitted}
+              />
+            </ErrorBoundary>
+          </div>
+          <div style={{ display: isFriendsPage ? undefined : "none" }}>
+            <FriendsCountryLogs
+              countryName={countryName}
+              onItemAdded={() => setListUpdateKey((prev) => prev + 1)}
+            />
+          </div>
+        </>
+      )}
+      {!isEditPage && !isFriendsPage && (
+        <Outlet
+          context={{
+            role,
+            countryName,
+            showQuestionnaire,
+            setShowQuestionnaire,
+            sidebarRefreshKey,
+            scheduleUpdateKey,
+            listUpdateKey,
+            onQuestionnaireSubmitted: handleQuestionnaireSubmitted,
+          }}
+        />
+      )}
     </div>
   );
 };
