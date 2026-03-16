@@ -27,44 +27,107 @@
 .addButton {
   line-height: 0;
   width: fit-content;
-  padding: 10px 12px;
+  padding: 10px 16px;
+  background: transparent;
+  border: 1px dashed #555;
+  color: #999;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.addButton:hover:not(:disabled) {
+  border-color: #2fe782;
+  color: #2fe782;
+}
+
+.addButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 .xButton {
-  background-color: red;
-  padding: 7px;
+  background-color: transparent;
+  border: 1px solid #555;
+  color: #999;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.xButton:hover {
+  border-color: #f55;
+  color: #f55;
 }
 
 .submitEditButton {
-  background-color: lightgreen;
+  background: transparent;
+  border: 1px solid #2fe782;
+  color: #2fe782;
+}
+
+.submitEditButton:hover:not(:disabled) {
+  background: rgba(47, 231, 130, 0.1);
 }
 
 .cancelButton {
   font-weight: 400;
+  background: transparent;
+  border: 1px solid #555;
+  color: #999;
+}
+
+.cancelButton:hover {
+  border-color: #888;
+  color: #ccc;
 }
 
 .buttonsWhileEditing {
-  padding: 0.25rem 0.5rem;
-  flex: 1;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.buttonsWhileEditing:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .editButtonCluster {
   width: 100%;
-  height: 5rem;
   display: flex;
+  gap: 0.4rem;
   flex-wrap: wrap;
 }
 
 .input {
-  border: 0.1rem solid white;
-  border-radius: 5px;
+  border: 1px solid #444;
+  border-radius: 6px;
   margin-left: 0.25rem;
-  padding-left: 0.5rem;
+  padding: 0.3rem 0.5rem;
   width: 5rem;
-  min-width: 3rem; /* don’t get too tiny */
-  max-width: 90%; /* don’t exceed the td */
+  min-width: 3rem;
+  max-width: 90%;
   box-sizing: border-box;
   overflow-wrap: anywhere;
+  background: #1e1e20;
+  color: #ddd;
+  font-size: 0.85rem;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  border-color: #2fe782;
+  outline: none;
 }
 
 .costEditInput {
@@ -80,6 +143,11 @@
   justify-content: end;
   width: 60vw;
   flex-direction: column;
+  background: #1a1a1c;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-top: 0.25rem;
 }
 
 .form {
@@ -103,7 +171,9 @@
 }
 
 .checkBoxHighlight {
-  outline: 3px solid yellow;
+  outline: 2px solid #f5c542;
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 .fakeContainer {
@@ -120,9 +190,18 @@
   resize: none;
   width: 95%;
   box-sizing: border-box;
-  border: 1px solid white;
-  border-radius: 5px;
+  border: 1px solid #444;
+  border-radius: 6px;
   padding: 5px;
+  background: #1e1e20;
+  color: #ddd;
+  font-size: 0.85rem;
+  transition: border-color 0.15s;
+}
+
+.textArea:focus {
+  border-color: #2fe782;
+  outline: none;
 }
 
 .addTextArea {
@@ -171,8 +250,17 @@
 }
 
 .dateEditInput {
-  border: 1px solid white;
-  border-radius: 5px;
+  border: 1px solid #444;
+  border-radius: 6px;
+  background: #1e1e20;
+  color: #ddd;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.dateEditInput:focus {
+  border-color: #2fe782;
+  outline: none;
 }
 
 .detailsLabel {
@@ -180,7 +268,7 @@
 }
 
 .dragHeader {
-  background-color: #202020;
+  background-color: #242424;
 }
 
 .dragButton {
@@ -409,10 +497,11 @@ div .tableContainerDragging {
   justify-content: center;
   flex-direction: column;
   align-items: center;
-  width: 100;
-  border: 1.5px solid #a2a2a2;
-  border-radius: 7px;
-  padding-bottom: 0.5rem;
+  width: 100%;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .dragButton {
@@ -420,9 +509,19 @@ div .tableContainerDragging {
   height: 2rem;
   padding: 0;
   min-width: 3rem;
-  border: 1px solid white;
-  border-radius: 5px;
+  border: 1px solid #444;
+  border-radius: 6px;
   touch-action: none;
+  background: #2a2a2c;
+  color: #888;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.dragButton:hover {
+  border-color: #666;
+  color: #ccc;
 }
 
 .dragButton:hover {
@@ -445,14 +544,24 @@ div .tableContainerDragging {
   flex-direction: column;
 }
 .editIcon {
-  border: 1px solid white;
+  border: 1px solid #444;
   border-radius: 5px;
   min-width: 1rem;
   margin-left: 1rem;
+  transition: border-color 0.15s;
 }
 
 .editIcon:hover {
   cursor: pointer;
+  border-color: #888;
+}
+
+.rightActionsCol .editIcon {
+  border: 1px solid #444;
+  border-radius: 5px;
+  min-width: 1rem;
+  margin-left: 0.5rem;
+  transition: border-color 0.15s;
 }
 
 .lockActive {
@@ -494,7 +603,9 @@ div .tableContainerDragging {
 }
 
 .addingErrMessage {
-  color: red;
+  color: #f55;
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
 }
 
 .addItemFirstGroup {
@@ -527,5 +638,6 @@ div .tableContainerDragging {
 }
 
 .errFormBorder {
-  border: 3px solid red;
+  border: 1px solid #f55;
+  border-radius: 8px;
 }
