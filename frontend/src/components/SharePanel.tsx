@@ -58,6 +58,7 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
   const [pendingInvites, setPendingInvites] = useState<Set<string>>(new Set());
   const [hoveredCircleId, setHoveredCircleId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const authFetch = useCallback(
     async (url: string, options: RequestInit = {}) => {
@@ -124,6 +125,8 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
         setSelectedUsers(initial);
       } catch {
         // handled
+      } finally {
+        setLoading(false);
       }
     };
     load();
@@ -283,7 +286,9 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
           &#10132;
         </button>
       </div>
-      {friends.length === 0 ? (
+      {loading ? (
+        <p className={styles.emptyText}>Loading...</p>
+      ) : friends.length === 0 ? (
         <p className={styles.emptyText}>No friends to share with</p>
       ) : (
         <div>

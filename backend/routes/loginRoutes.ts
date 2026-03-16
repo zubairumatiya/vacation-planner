@@ -7,7 +7,11 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import { isValidPassword } from "../../shared/passwordUtils.js";
 import { isValidEmail } from "../../shared/emailUtils.js";
-import { RegExpMatcher, englishDataset, englishRecommendedTransformers } from "obscenity";
+import {
+  RegExpMatcher,
+  englishDataset,
+  englishRecommendedTransformers,
+} from "obscenity";
 
 const profanityMatcher = new RegExpMatcher({
   ...englishDataset.build(),
@@ -15,8 +19,19 @@ const profanityMatcher = new RegExpMatcher({
 });
 
 const RESERVED_USERNAMES = new Set([
-  "admin", "administrator", "mod", "moderator", "support", "help",
-  "system", "root", "null", "undefined", "test", "user", "guest",
+  "admin",
+  "administrator",
+  "mod",
+  "moderator",
+  "support",
+  "help",
+  "system",
+  "root",
+  "null",
+  "undefined",
+  "test",
+  "user",
+  "guest",
 ]);
 
 function isSpamUsername(username: string): boolean {
@@ -114,8 +129,15 @@ router.post(
       return;
     }
 
-    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username) || !/[a-zA-Z0-9]/.test(username)) {
-      res.status(400).json({ message: "Username must be 3-30 characters (letters, numbers, underscores)" });
+    if (
+      !username ||
+      !/^[a-zA-Z0-9_]{3,30}$/.test(username) ||
+      !/[a-zA-Z0-9]/.test(username)
+    ) {
+      res.status(400).json({
+        message:
+          "Username must be 3-30 characters (letters, numbers, underscores)",
+      });
       return;
     }
 
@@ -125,7 +147,9 @@ router.post(
     }
 
     if (profanityMatcher.hasMatch(username)) {
-      res.status(400).json({ message: "Username contains inappropriate language" });
+      res
+        .status(400)
+        .json({ message: "Username contains inappropriate language" });
       return;
     }
 
@@ -178,7 +202,15 @@ router.post(
       } else {
         await db.query(
           "INSERT INTO unverified_users (email, password, first_name, last_name, username, avatar, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()+ interval '1 hour', NOW())",
-          [email, hash, firstName, lastName, username, avatar || null, hashToken(token)],
+          [
+            email,
+            hash,
+            firstName,
+            lastName,
+            username,
+            avatar || null,
+            hashToken(token),
+          ],
         );
         await sendRegistrationEmail(email, token);
         res.status(200).json({ message: "success" });
@@ -290,7 +322,7 @@ router.post(
             .cookie("refreshToken", refToken, {
               httpOnly: true,
               secure: true, //process.env.NODE_ENV === "production",
-              sameSite: "lax",
+              sameSite: "none",
               path: "/auth",
               maxAge: 7 * 24 * 60 * 60 * 1000,
             })
@@ -330,7 +362,7 @@ router.post(
           .clearCookie("refreshToken", {
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: "none",
             path: "/auth",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           })
@@ -342,7 +374,7 @@ router.post(
           .clearCookie("refreshToken", {
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: "none",
             path: "/auth",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           })
@@ -405,7 +437,7 @@ router.post(
           .cookie("refreshToken", newRefToken, {
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === "production",
-            sameSite: "lax",
+            sameSite: "none",
             path: "/auth",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           })
@@ -648,7 +680,11 @@ router.get(
     next: NextFunction,
   ) => {
     const username = req.query.username;
-    if (!username || !/^[a-zA-Z0-9_]{3,30}$/.test(username) || !/[a-zA-Z0-9]/.test(username)) {
+    if (
+      !username ||
+      !/^[a-zA-Z0-9_]{3,30}$/.test(username) ||
+      !/[a-zA-Z0-9]/.test(username)
+    ) {
       res.status(400).json({ available: false });
       return;
     }
@@ -669,7 +705,8 @@ router.get(
         "SELECT id FROM unverified_users WHERE username = $1 AND expires_at > NOW()",
         [username],
       );
-      const available = result.rows.length === 0 && unverifiedResult.rows.length === 0;
+      const available =
+        result.rows.length === 0 && unverifiedResult.rows.length === 0;
       res.status(200).json({ available });
     } catch (err) {
       next(err);

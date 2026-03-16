@@ -577,7 +577,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         <div className={styles.backAndTotal}>
           <div className={styles.backWrapper}>
             <NavLink to="/" className={styles.backButton}>
-              &#60;
+              &#8592;
             </NavLink>
           </div>
           <div className={styles.costAndAiWrapper}>
@@ -1044,7 +1044,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </div>
             )}
             <div className={styles.costWrapper}>
-              <h3 className="font-bold">Total Cost: ${costTotal}</h3>
+              <h3>Total: <span className={styles.costAmount}>${costTotal}</span></h3>
             </div>
           </div>
         </div>
@@ -1179,19 +1179,25 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </NavLink>
             </li>
           )}
-          {countryName && role !== "reader" && (
+          {role !== "reader" && (
             <li className={styles.navItem}>
-              <NavLink
-                to={`/vacation/${tripId}/friends`}
-                className={({ isActive }) =>
-                  isActive
-                    ? `${styles.navLink} ${styles.navLinkActive}`
-                    : `${styles.navLink}`
-                }
-                data-toggle="pill"
-              >
-                Friends
-              </NavLink>
+              {countryName ? (
+                <NavLink
+                  to={`/vacation/${tripId}/friends`}
+                  className={({ isActive }) =>
+                    isActive
+                      ? `${styles.navLink} ${styles.navLinkActive}`
+                      : `${styles.navLink}`
+                  }
+                  data-toggle="pill"
+                >
+                  Friends
+                </NavLink>
+              ) : (
+                <span className={`${styles.navLink} ${styles.navLinkDisabled}`}>
+                  Friends
+                </span>
+              )}
             </li>
           )}
           <li className={styles.navItem}>
