@@ -94,7 +94,10 @@
   font-size: 0.8rem;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
 }
 
 .buttonsWhileEditing:disabled {
@@ -537,40 +540,60 @@ div .tableContainerDragging {
 .actionsTd {
   display: flex;
   justify-content: start;
+  gap: 0.25rem;
 }
-.rightActionCol {
+.rightActionsCol {
   display: flex;
   flex-direction: column;
 }
-.leftActionCol {
+.leftActionsCol {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 .editIcon {
   border: 1px solid #444;
-  border-radius: 5px;
-  min-width: 1rem;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 0.2rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  background: transparent;
   margin-left: 1rem;
-  transition: border-color 0.15s;
+  overflow: hidden;
+}
+
+.leftActionsCol > .editIcon:first-child {
+  padding: 0.05rem;
 }
 
 .editIcon:hover {
-  cursor: pointer;
-  border-color: #888;
+  border-color: #2fe782;
+  background: rgba(47, 231, 130, 0.08);
 }
 
 .rightActionsCol .editIcon {
-  border: 1px solid #444;
-  border-radius: 5px;
-  min-width: 1rem;
-  margin-left: 0.5rem;
-  transition: border-color 0.15s;
+  margin-left: 0;
+}
+
+.duplicateIcon {
+  composes: editIcon;
+  object-position: center -1px;
+}
+
+.duplicateIcon:hover {
+  border-color: #747bff;
+  background: rgba(116, 123, 255, 0.08);
 }
 
 .lockActive {
   opacity: 1;
   filter: brightness(0) saturate(100%) invert(55%) sepia(81%) saturate(400%)
     hue-rotate(90deg) brightness(95%) contrast(90%);
+  border-color: rgba(47, 231, 130, 0.3);
 }
 
 .dragging {

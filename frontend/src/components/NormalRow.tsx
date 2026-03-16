@@ -100,7 +100,7 @@ const NormalRow = ({
               }
             />
             <img
-              className={styles.editIcon}
+              className={styles.duplicateIcon}
               src={duplicateIcon}
               alt="duplicate-icon"
               title="Duplicate"
