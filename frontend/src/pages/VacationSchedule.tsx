@@ -11,6 +11,7 @@ import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
 const EditCanvas = lazy(() => import("./EditCanvas"));
 const FriendsCountryLogs = lazy(() => import("./FriendsCountryLogs"));
+const ViewVacationSchedule = lazy(() => import("./ViewVacationSchedule"));
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -53,6 +54,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditPage = location.pathname.endsWith("/edit");
   const isFriendsPage = location.pathname.endsWith("/friends");
+  const isInfoPage = location.pathname.endsWith("/info");
+  const isViewPage = !isEditPage && !isFriendsPage && !isInfoPage;
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [aiMode, setAiMode] = useState<AiMode>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
@@ -64,7 +67,22 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
   const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
   const [listUpdateKey, setListUpdateKey] = useState(0);
+  const [viewRefreshKey, setViewRefreshKey] = useState(0);
+  const prevIsViewPage = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isViewPage && !prevIsViewPage.current) {
+      setViewRefreshKey((prev) => prev + 1);
+    }
+    prevIsViewPage.current = isViewPage;
+  }, [isViewPage]);
+
+  useEffect(() => {
+    if (isViewPage && scheduleUpdateKey > 0) {
+      setViewRefreshKey((prev) => prev + 1);
+    }
+  }, [scheduleUpdateKey]);
   const [hasUnreadAiResponse, setHasUnreadAiResponse] = useState(false);
   const [csvExporting, setCsvExporting] = useState(false);
 
@@ -1245,7 +1263,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           </div>
         </>
       )}
-      {!isEditPage && !isFriendsPage && (
+      <div style={{ display: isViewPage ? undefined : "none" }}>
+        <ViewVacationSchedule refreshKey={viewRefreshKey} />
+      </div>
+      {isInfoPage && (
         <Outlet
           context={{
             role,

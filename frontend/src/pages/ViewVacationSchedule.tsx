@@ -12,7 +12,7 @@ import CustomViewTableComponent from "../components/CustomViewTableComponent";
 import hideArrow from "../assets/icons/arrow-drop.svg";
 const apiURL = import.meta.env.VITE_API_URL;
 
-const ViewVacationSchedule = () => {
+const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
   const { tripId } = useParams();
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -139,7 +139,7 @@ const ViewVacationSchedule = () => {
     };
 
     getTrip();
-  }, []);
+  }, [refreshKey]);
   return error != null ? (
     <p>{error}</p>
   ) : (
