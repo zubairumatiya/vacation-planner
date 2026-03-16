@@ -359,12 +359,17 @@
   min-width: 120px;
 }
 
+.table td {
+  font-size: 0.9rem;
+  color: #ccc;
+}
+
 .table th {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #777;
+  color: #939393;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid #333;
 }

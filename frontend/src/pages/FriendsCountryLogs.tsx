@@ -71,7 +71,10 @@ export default function FriendsCountryLogs({
   });
 
   useEffect(() => {
-    localStorage.setItem("addedPlaces", JSON.stringify(Array.from(addedPlaces)));
+    localStorage.setItem(
+      "addedPlaces",
+      JSON.stringify(Array.from(addedPlaces)),
+    );
   }, [addedPlaces]);
 
   const authFetch = useCallback(
@@ -187,7 +190,9 @@ export default function FriendsCountryLogs({
   }
 
   if (!countryName) {
-    return <div className={styles.empty}>No country detected for this trip.</div>;
+    return (
+      <div className={styles.empty}>No country detected for this trip.</div>
+    );
   }
 
   if (friendLogs.length === 0) {
@@ -265,7 +270,9 @@ export default function FriendsCountryLogs({
             <button
               className={styles.navButton}
               disabled={selectedFriendIndex === 0}
-              onClick={() => setSelectedFriendIndex(selectedFriendIndex - 1)}
+              onClick={() =>
+                setSelectedFriendIndex(selectedFriendIndex ?? 0 - 1)
+              }
               title="Previous Friend"
             >
               <svg
@@ -301,7 +308,9 @@ export default function FriendsCountryLogs({
             <button
               className={styles.navButton}
               disabled={selectedFriendIndex === friendLogs.length - 1}
-              onClick={() => setSelectedFriendIndex(selectedFriendIndex + 1)}
+              onClick={() =>
+                setSelectedFriendIndex(selectedFriendIndex ?? 0 + 1)
+              }
               title="Next Friend"
             >
               <svg
