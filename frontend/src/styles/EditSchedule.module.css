@@ -359,6 +359,16 @@
   min-width: 120px;
 }
 
+.table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #777;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #333;
+}
+
 .tableRow {
   height: 3rem;
   align-items: center;
