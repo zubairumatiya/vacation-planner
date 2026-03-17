@@ -55,21 +55,31 @@
 }
 
 .label {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 0.85rem;
+  color: #999;
+  font-size: 0.8rem;
+  font-weight: 500;
 }
 
 .select {
   color-scheme: dark;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ddd;
+  border: 1px solid #444;
   border-radius: 6px;
-  background-color: rgba(255, 255, 255, 0.08);
-  padding: 6px 8px;
+  background-color: #1e1e20;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.select:focus {
+  border-color: #2fe782;
+  outline: none;
 }
 
 .span {
-  color: rgba(255, 255, 255, 0.7);
+  color: #777;
+  font-size: 0.8rem;
 }
 
 .gPlaces .placeListContainer {
@@ -206,22 +216,37 @@
 }
 
 .filterContainer {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 0.5rem;
-  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+  padding: 0.6rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+
+.filterHeaderInnerContainer {
+  display: flex;
+  justify-content: baseline;
 }
 
 .filterHeader {
-  margin-bottom: 0.5rem;
-  font-weight: bold;
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #959595;
 }
 
 .filterLabel {
-  margin-right: 0.25rem;
+  margin-right: 0.2rem;
+  font-size: 0.75rem;
+  color: #999;
 }
 
 .filterContainer :nth-child(4) {
-  margin-left: 0.5rem;
+  margin-left: 0;
 }
 
 .applyButton {
@@ -233,22 +258,52 @@
   display: flex;
   justify-content: space-evenly;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid #333;
   padding: 0.5rem;
+  font-size: 0.8rem;
+  color: #999;
 }
 
 .nextButtonContainer {
   width: 44.5px;
 }
 .nextButton {
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #ccc;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+.nextButton:hover:not(:disabled) {
+  border-color: #2fe782;
+  color: #2fe782;
+}
+.nextButton:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .prevButtonContainer {
   width: 44.5px;
 }
 .prevButton {
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.75rem;
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: #ccc;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+.prevButton:hover {
+  border-color: #2fe782;
+  color: #2fe782;
 }
 
 .listParentContainer {
@@ -270,12 +325,12 @@
 }
 
 .searchContainer {
-  border: 1px solid black;
-  border-radius: 3px;
+  border: 1px solid #444;
+  border-radius: 6px;
   display: flex;
   align-content: center;
   flex-wrap: wrap;
-  background: rgb(49, 49, 49);
+  background: #1e1e20;
 }
 
 .searchContainer.focusRing {
@@ -285,43 +340,45 @@
 .searchContainer.focusRing::after {
   content: "";
   position: absolute;
-  inset: 0; /* fill parent */
-  border-radius: 3px; /* match parent border-radius */
-  box-shadow: inset 0 0 0 2px rgb(26, 115, 232);
-  pointer-events: none; /* don’t block clicks */
-  z-index: 2; /* sit above children */
+  inset: 0;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 2px #2fe782;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .searchInput {
   outline: none;
-  caret-color: black;
-  color: white;
-  background: rgb(49, 49, 49);
+  caret-color: white;
+  color: #ddd;
+  background: #1e1e20;
+  font-size: 0.85rem;
 }
 
 .acIconContainer {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgb(49, 49, 49);
+  background: #1e1e20;
+  margin-left: 4px;
+  border-radius: 10px;
 }
 
 .acIcon {
-  width: 1.15rem;
+  width: 0.9rem;
 }
 
 .clearButton {
-  all: unset; /* removes default styles safely */
+  all: unset;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  height: 48px;
-  width: 48px;
-  border-color: white;
+  height: 32px;
+  width: 32px;
   transition: background-color 0.2s ease;
   transform: none !important;
   outline: none;
@@ -332,17 +389,19 @@
 }
 
 .clearButtonIcon {
-  width: 1.33rem;
+  width: 1rem;
+  filter: brightness(2);
 }
 
 .clearButton:hover {
-  background-color: #3f3f3f;
+  background-color: #3a3a3c;
 }
 
 .suggestionUl {
   list-style: none;
-  background-color: white;
-  border-width: 0 1px 1px;
+  background-color: #1e1e20;
+  border: 1px solid #444;
+  border-top: none;
   border-radius: 0 0 8px 8px;
   display: flex;
   flex-flow: column;
@@ -350,9 +409,9 @@
 }
 
 .suggestionUl li {
-  color: black;
+  color: #ddd;
   cursor: pointer;
-  border-bottom: 1px solid rgb(217, 217, 217);
+  border-bottom: 1px solid #333;
   height: 40px;
   display: flex;
   justify-content: center;
@@ -367,17 +426,17 @@
 }
 
 .mainSuggestionText {
-  color: rgb(31, 31, 31);
-  font-size: 16px;
+  color: #eee;
+  font-size: 14px;
   font-weight: 500;
   line-height: 20px;
 }
 
 .secondarySuggestionText {
-  color: rgb(94, 94, 94);
+  color: #777;
   font-weight: 400;
   line-height: 16px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .suggestionUl li:last-of-type {
@@ -385,7 +444,7 @@
 }
 
 .suggestionUl li:hover {
-  background-color: #dedede;
+  background-color: rgba(47, 231, 130, 0.08);
 }
 
 .searchAndAutoContainer {
@@ -398,7 +457,7 @@
 }
 
 .focusedSuggestion {
-  background-color: #dedede;
+  background-color: rgba(47, 231, 130, 0.1);
 }
 
 .reviewsFilterContainer {
@@ -423,11 +482,26 @@
 }
 
 .submitButton {
-  background-color: #28d283;
-  border: 1px solid #fff;
+  background: transparent;
+  border: 1px solid #2fe782;
+  color: #2fe782;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+.submitButton:hover:not(:disabled) {
+  background: rgba(47, 231, 130, 0.1);
 }
 .submitButton:disabled {
-  color: #a7a5a5;
-  border: 1px solid #eae6e6;
-  background-color: #959393;
+  color: #555;
+  border-color: #555;
+  background: transparent;
+  cursor: not-allowed;
+  opacity: 0.5;
 }

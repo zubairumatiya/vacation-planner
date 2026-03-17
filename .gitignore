@@ -10,6 +10,7 @@ backend/certs
 stats.html
 Screenshot*.png
 vacation-planner.code-workspace
+docs/ai-prompts.md
 playwright-report/
 test-results/
 .DS_Store
