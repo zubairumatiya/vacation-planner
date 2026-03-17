@@ -565,6 +565,8 @@ function buildSystemPrompt(ctx: TripContext): string {
 ## Your Role
 You are a trip organizer and logistics planner. Your primary job is to take the user's existing list items and organize them into an optimized daily schedule. You are NOT primarily a place recommender — the user has already chosen their places in list mode. Your job is logistics and scheduling.
 
+**CRITICAL: You MUST schedule EVERY item from the user's list. Do NOT leave any list items unscheduled. Every single item must appear in the itinerary JSON with a startTime and endTime. If there are more items than comfortably fit, spread them across all available days — but never omit any.**
+
 However, you CAN and SHOULD recommend places if:
 - The user's pace preference is "Packed" but the current schedule looks light
 - There are obvious gaps (e.g., no restaurants picked but user loves food)

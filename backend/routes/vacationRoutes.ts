@@ -39,6 +39,7 @@ import {
   QuestionnaireBody,
   QuestionnaireResponse,
   CountryInfoResponse,
+  MessageResponse,
 } from "../types/app-types.js";
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
@@ -798,6 +799,30 @@ router.patch(
 );
 
 router.delete(
+  "/schedule/clear/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const result = await db.query(
+        "DELETE FROM trip_schedule WHERE trip_id=$1",
+        [req.params.tripId],
+      );
+      res
+        .status(200)
+        .json({ message: `Deleted ${result.rowCount} schedule items` });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.delete(
   "/schedule/:id",
   ensureLoggedIn,
   ensureOwnership,
@@ -932,6 +957,30 @@ router.patch(
       );
       snakeToCamel<TripList>(result.rows);
       res.status(200).json({ data: result.rows });
+      return;
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.delete(
+  "/list/clear/:tripId",
+  ensureLoggedIn,
+  ensureOwnership,
+  async (
+    req: TypedRequest<unknown, unknown, TripIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const result = await db.query(
+        "DELETE FROM trip_list WHERE trip_id=$1",
+        [req.params.tripId],
+      );
+      res
+        .status(200)
+        .json({ message: `Deleted ${result.rowCount} list items` });
       return;
     } catch (err) {
       next(err);

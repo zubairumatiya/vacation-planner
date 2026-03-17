@@ -101,7 +101,9 @@ const WantToSeeList = (props: WantToSeeListProps) => {
   }, []);
 
   useEffect(() => {
-    inputRef.current?.focus();
+    if (addingNewItem || editItemId) {
+      inputRef.current?.focus();
+    }
   }, [addingNewItem, editItemId]);
 
   const handleSubmitItem = async (e: React.FormEvent<HTMLFormElement>) => {

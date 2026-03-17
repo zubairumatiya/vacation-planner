@@ -1503,6 +1503,48 @@ const EditCanvas = ({
     [],
   );
 
+  const handleClearSchedule = useCallback(async () => {
+    if (!window.confirm("Are you sure you want to clear all schedule items? This cannot be undone.")) return;
+    if (isGuest) {
+      setSchedule((prev) => {
+        const cleared: DaySchedule = {};
+        for (const key of Object.keys(prev)) cleared[key] = [];
+        return cleared;
+      });
+      setCostTotal(0);
+      return;
+    }
+    if (!token || !tripId) return;
+    const res = await fetch(`${apiURL}/schedule/clear/${tripId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setSchedule((prev) => {
+        const cleared: DaySchedule = {};
+        for (const key of Object.keys(prev)) cleared[key] = [];
+        return cleared;
+      });
+      setCostTotal(0);
+    }
+  }, [isGuest, token, tripId]);
+
+  const handleClearList = useCallback(async () => {
+    if (!window.confirm("Are you sure you want to clear all list items? This cannot be undone.")) return;
+    if (isGuest) {
+      setWishList([]);
+      return;
+    }
+    if (!token || !tripId) return;
+    const res = await fetch(`${apiURL}/list/clear/${tripId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setWishList([]);
+    }
+  }, [isGuest, token, tripId]);
+
   const onMobileAddToSchedule = useCallback(
     async (itemId: UniqueIdentifier, dayKey: string, timeString: string) => {
       if (!token) return;
@@ -1986,6 +2028,13 @@ const EditCanvas = ({
               <div className={`${styles.sectionPanel} ${styles.schedulePanel}`}>
                 <div className={styles.scheduleSectionHeader}>
                   <span className={styles.sectionTitle}>Schedule</span>
+                  <button
+                    type="button"
+                    className={styles.clearSectionButton}
+                    onClick={handleClearSchedule}
+                  >
+                    Clear all
+                  </button>
                   <span
                     className={styles.infoIcon}
                     data-tooltip="• Drag items to reorder them or move them between days&#10;• Double click an item to edit it&#10;• Press 'Enter' to save changes&#10;• Press 'Escape' to cancel editing or dragging"
@@ -2034,6 +2083,13 @@ const EditCanvas = ({
                 <div className={`${styles.sectionPanel} ${styles.listPanel}`}>
                   <div className={styles.listSectionHeader}>
                     <span className={styles.sectionTitle}>Want to See</span>
+                    <button
+                      type="button"
+                      className={styles.clearSectionButton}
+                      onClick={handleClearList}
+                    >
+                      Clear all
+                    </button>
                     <span
                       className={styles.infoIcon}
                       data-tooltip="• Drag items to the schedule&#10;• Double click an item to edit it&#10;• Click the note icon to add notes&#10;• Press 'Enter' to save changes"
