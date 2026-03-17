@@ -1,5 +1,12 @@
 import { useParams, NavLink, useLocation } from "react-router-dom";
-import { useState, useEffect, useContext, useRef, useCallback, lazy } from "react";
+import {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+  lazy,
+} from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
@@ -1072,7 +1079,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </div>
             )}
             <div className={styles.costWrapper}>
-              <h3>Total: <span className={styles.costAmount}>${costTotal}</span></h3>
+              <h3>
+                Total: <span className={styles.costAmount}>${costTotal}</span>
+              </h3>
             </div>
           </div>
         </div>
@@ -1080,7 +1089,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           <div className={styles.titleWrapper}>
             <div className={styles.topTitleRow}>
               <h2 className={styles.title}>{title}&nbsp;</h2>
-              <h3 className={styles.length}>- {tripLength} days</h3>
+              <h3 className={styles.length}>{tripLength} days</h3>
             </div>
             <h5 className={styles.locationTitle}>{tripLocation}</h5>
           </div>
@@ -1090,14 +1099,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                 type="button"
                 title="Share"
                 onClick={() => setSharePanelOpen((prev) => !prev)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                }}
+                className={styles.headerIcon}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -1139,15 +1141,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             title="Export schedule as CSV"
             onClick={handleExportCsv}
             disabled={csvExporting}
+            className={styles.headerIcon}
             style={{
-              background: "transparent",
-              border: "none",
-              cursor: csvExporting ? "wait" : "pointer",
-              padding: 0,
-              display: "flex",
-              alignItems: "center",
               marginLeft: ".5rem",
-              opacity: csvExporting ? 0.5 : 1,
+              cursor: csvExporting ? "wait" : undefined,
+              opacity: csvExporting ? 0.3 : undefined,
             }}
           >
             <svg
