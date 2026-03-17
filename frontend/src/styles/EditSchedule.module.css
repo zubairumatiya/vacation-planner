@@ -147,13 +147,23 @@
 .formWrapper {
   display: flex;
   justify-content: end;
-  width: 60vw;
+  width: 100%;
   flex-direction: column;
   background: #1a1a1c;
   border: 1px solid #333;
   border-radius: 8px;
   padding: 0.75rem;
   margin-top: 0.25rem;
+}
+
+.formHeader {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #666;
+  margin-bottom: 0.5rem;
+  padding-left: 0.25rem;
 }
 
 .form {
@@ -170,6 +180,20 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+}
+
+.itemElement label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #999;
+  letter-spacing: 0.02em;
+}
+
+.itemElement span {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #999;
+  letter-spacing: 0.02em;
 }
 
 .multiDay {
@@ -676,6 +700,56 @@ div .tableContainerDragging {
 .addItemFirstGroup > div:nth-child(3),
 .addItemFirstGroup > div:nth-child(4) {
   margin-bottom: 1rem;
+}
+
+.addItemSubmit {
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #2fe782;
+  color: #2fe782;
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+
+.addItemSubmit:hover:not(:disabled) {
+  background: rgba(47, 231, 130, 0.1);
+}
+
+.addItemSubmit:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #555;
+  color: #555;
+  background: transparent;
+}
+
+.addItemCancel {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid #555;
+  color: #999;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.addItemCancel:hover {
+  border-color: #f55;
+  color: #f55;
+}
+
+.multiDayCheckbox {
+  accent-color: #2fe782;
 }
 
 .errFormBorder {

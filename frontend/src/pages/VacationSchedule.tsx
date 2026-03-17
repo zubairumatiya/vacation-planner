@@ -1,4 +1,4 @@
-import { useParams, NavLink, Outlet, useLocation } from "react-router-dom";
+import { useParams, NavLink, useLocation } from "react-router-dom";
 import { useState, useEffect, useContext, useRef, useCallback, lazy } from "react";
 import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
@@ -12,6 +12,7 @@ import ErrorFallback from "../components/ErrorFallback";
 const EditCanvas = lazy(() => import("./EditCanvas"));
 const FriendsCountryLogs = lazy(() => import("./FriendsCountryLogs"));
 const ViewVacationSchedule = lazy(() => import("./ViewVacationSchedule"));
+const VacationInfo = lazy(() => import("./VacationInfo"));
 
 type VacationProps = {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
@@ -68,7 +69,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
   const [listUpdateKey, setListUpdateKey] = useState(0);
   const [viewRefreshKey, setViewRefreshKey] = useState(0);
+  const [infoRefreshKey, setInfoRefreshKey] = useState(0);
   const prevIsViewPage = useRef(false);
+  const prevIsInfoPage = useRef(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -83,6 +86,13 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       setViewRefreshKey((prev) => prev + 1);
     }
   }, [scheduleUpdateKey]);
+
+  useEffect(() => {
+    if (isInfoPage && !prevIsInfoPage.current) {
+      setInfoRefreshKey((prev) => prev + 1);
+    }
+    prevIsInfoPage.current = isInfoPage;
+  }, [isInfoPage]);
   const [hasUnreadAiResponse, setHasUnreadAiResponse] = useState(false);
   const [csvExporting, setCsvExporting] = useState(false);
 
@@ -1266,20 +1276,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       <div style={{ display: isViewPage ? undefined : "none" }}>
         <ViewVacationSchedule refreshKey={viewRefreshKey} />
       </div>
-      {isInfoPage && (
-        <Outlet
-          context={{
-            role,
-            countryName,
-            showQuestionnaire,
-            setShowQuestionnaire,
-            sidebarRefreshKey,
-            scheduleUpdateKey,
-            listUpdateKey,
-            onQuestionnaireSubmitted: handleQuestionnaireSubmitted,
-          }}
-        />
-      )}
+      <div style={{ display: isInfoPage ? undefined : "none" }}>
+        <VacationInfo refreshKey={infoRefreshKey} />
+      </div>
     </div>
   );
 };

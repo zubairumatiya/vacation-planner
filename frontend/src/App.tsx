@@ -13,7 +13,7 @@ import SendResetLinkToEmail from "./pages/SendResetLinkToEmail.tsx";
 import ResetPasswordWait from "./pages/ResetPasswordWait.tsx";
 import ResetPassword from "./pages/ResetPassword.tsx";
 const VacationSchedule = lazy(() => import("./pages/VacationSchedule.tsx"));
-const VacationInfo = lazy(() => import("./pages/VacationInfo.tsx"));
+
 import ProfilePage from "./pages/ProfilePage.tsx";
 import UserProfilePage from "./pages/UserProfilePage.tsx";
 import CountryDetailPage from "./pages/CountryDetailPage.tsx";
@@ -60,7 +60,7 @@ function App() {
               >
                 <Route index element={null} />
                 <Route path="friends" element={null} />
-                <Route path="info" element={<VacationInfo />} />
+                <Route path="info" element={null} />
                 <Route path="edit" element={null} />
               </Route>
               <Route path="/profile" element={<ProfilePage />} />

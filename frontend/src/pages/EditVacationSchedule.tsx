@@ -898,6 +898,7 @@ const EditVacationSchedule = ({
               //                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Adding item divider: below~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
               <div className={styles.formWrapper}>
+                <div className={styles.formHeader}>New Item</div>
                 <div className={itemError ? styles.errFormBorder : undefined}>
                   <form
                     className={styles.form}
@@ -997,7 +998,7 @@ const EditVacationSchedule = ({
                       <input
                         type="checkbox"
                         tabIndex={0}
-                        className={`${styles.input} ${styles.multiDay}`}
+                        className={`${styles.input} ${styles.multiDay} ${styles.multiDayCheckbox}`}
                         name="multiday"
                         checked={multiDay}
                         onChange={() => setMultiDay((prev) => !prev)}
@@ -1008,7 +1009,7 @@ const EditVacationSchedule = ({
                       <button
                         type="submit"
                         tabIndex={0}
-                        className={`btnPrimary`}
+                        className={styles.addItemSubmit}
                         disabled={itemError}
                       >
                         Add item
@@ -1016,11 +1017,11 @@ const EditVacationSchedule = ({
                     </div>
                     <div className={`${styles.itemElement}`}>
                       <button
-                        className={`btnPrimary ${styles.xButton}`}
+                        className={styles.addItemCancel}
                         type="button"
                         onClick={() => addItemHelper(dayObj.day, "cancel")}
                       >
-                        X
+                        Cancel
                       </button>
                     </div>
                   </form>

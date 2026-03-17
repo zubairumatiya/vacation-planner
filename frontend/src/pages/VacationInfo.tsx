@@ -7,7 +7,7 @@ import styles from "../styles/VacationInfo.module.css";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
-export default function VacationInfo() {
+export default function VacationInfo({ refreshKey }: { refreshKey: number }) {
   const { tripId } = useParams<{ tripId: string }>();
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -70,7 +70,7 @@ export default function VacationInfo() {
     };
 
     fetchCountryInfo();
-  }, [tripId, token]);
+  }, [tripId, token, refreshKey]);
 
   if (loading) {
     return <div className={styles.loading}>Loading country info...</div>;
