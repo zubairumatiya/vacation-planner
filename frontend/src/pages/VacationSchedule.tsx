@@ -11,7 +11,7 @@ import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
-import type { AiItineraryItem } from "../types/ai";
+import type { AiItineraryItem, AiChatResponse } from "../types/ai";
 import ReactMarkdown from "react-markdown";
 import aiResPopSound from "../assets/sounds/aiResPop.mp3";
 import { ErrorBoundary } from "react-error-boundary";
@@ -28,7 +28,7 @@ type VacationProps = {
 
 type AiMode = "list" | "schedule" | null;
 
-const LIST_CATEGORIES = ["Accommodation", "Food", "Activities"];
+const LIST_CATEGORIES = ["Museums", "Nature", "Shopping", "Current Events", "History", "Nightlife", "Food", "Accommodations", "Art", "Attractions"];
 
 const apiURL = import.meta.env.VITE_API_URL;
 const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
@@ -53,8 +53,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiConnected, setAiConnected] = useState(false);
   const [aiResponse, setAiResponse] = useState<string | null>(null);
-  const [aiQuestion, setAiQuestion] = useState<string | null>(null);
   const [aiItinerary, setAiItinerary] = useState<AiItineraryItem[]>([]);
+  const [lastAiResponse, setLastAiResponse] = useState<string | null>(null);
+  const [fillInTheRest, setFillInTheRest] = useState(false);
+  const [exhaustedCategories, setExhaustedCategories] = useState<string[]>([]);
   const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
   const [addingItem, setAddingItem] = useState<number | null>(null);
   const loggingOutRef = auth?.loggingOutRef;
@@ -66,12 +68,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const isViewPage = !isEditPage && !isFriendsPage && !isInfoPage;
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [aiMode, setAiMode] = useState<AiMode>(null);
+  const [lastAiMode, setLastAiMode] = useState<AiMode>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    ...LIST_CATEGORIES,
+    "Food", "Accommodations", "Current Events",
   ]);
-  const [hasQuestionnaire, setHasQuestionnaire] = useState<boolean | null>(
-    null,
-  );
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
   const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
   const [listUpdateKey, setListUpdateKey] = useState(0);
@@ -208,44 +208,15 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     checkAiStatus();
   }, [token]);
 
-  // Check if questionnaire exists
-  useEffect(() => {
-    if (!token || !tripId) return;
-    const checkQuestionnaire = async () => {
-      try {
-        const res = await fetch(`${apiURL}/questionnaire/${tripId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setHasQuestionnaire(!!data.questionnaire);
-        }
-      } catch {
-        // silent
-      }
-    };
-    checkQuestionnaire();
-  }, [token, tripId]);
-
   const handleAiButtonClick = () => {
-    if (hasQuestionnaire === false) {
-      setShowQuestionnaire(true);
-    } else {
-      setAiChatOpen((prev) => {
-        if (!prev) setHasUnreadAiResponse(false);
-        return !prev;
-      });
-    }
+    setAiChatOpen((prev) => {
+      if (!prev) setHasUnreadAiResponse(false);
+      return !prev;
+    });
   };
 
-  // After questionnaire is submitted, mark it as filled and open chat
   const handleQuestionnaireSubmitted = () => {
-    setHasQuestionnaire(true);
     setShowQuestionnaire(false);
-    setAiChatOpen(true);
   };
 
   const toggleCategory = (cat: string) => {
@@ -263,10 +234,13 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
 
     setAiLoading(true);
     setAiResponse(null);
-    setAiQuestion(null);
     setAiItinerary([]);
+    setLastAiMode(aiMode);
     setAddedItems(new Set());
     try {
+      // Only send previousResponse if user typed a custom prompt (not a bare mode request)
+      const sendPreviousResponse = hasPrompt ? lastAiResponse : undefined;
+
       const response = await fetch(`${apiURL}/ai/chat`, {
         method: "POST",
         headers: {
@@ -278,6 +252,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           prompt: aiPrompt.trim() || undefined,
           mode: aiMode,
           categories: aiMode === "list" ? selectedCategories : undefined,
+          previousResponse: sendPreviousResponse || undefined,
+          fillInTheRest: aiMode === "schedule" ? fillInTheRest : undefined,
         }),
       });
 
@@ -286,15 +262,25 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         return;
       }
 
-      const data = await response.json();
+      const data: AiChatResponse = await response.json();
+
+      // Store raw model response for conversation continuity
+      if (data.rawModelResponse) {
+        setLastAiResponse(data.rawModelResponse);
+      }
+
       if (data.text) {
         setAiResponse(data.text);
       }
-      if (data.question) {
-        setAiQuestion(data.question);
+
+      // Handle exhausted categories
+      if (data.exhaustedCategories && data.exhaustedCategories.length > 0) {
+        setExhaustedCategories((prev) => [
+          ...new Set([...prev, ...data.exhaustedCategories!]),
+        ]);
       }
 
-      // If the AI modified the schedule (general mode actions), refresh it
+      // If the AI modified the schedule (actions executed), refresh it
       if (data.scheduleUpdated) {
         setScheduleUpdateKey((prev) => prev + 1);
       }
@@ -305,76 +291,52 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           setAiItinerary(data.itinerary);
           setSidebarRefreshKey((prev) => prev + 1);
         } else if (aiMode === "schedule") {
-          // Fetch user's list and current schedule to identify what needs adding
-          const [listRes, scheduleRes] = await Promise.all([
-            fetch(`${apiURL}/list/${tripId}`, {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }),
-            fetch(`${apiURL}/schedule/${tripId}`, {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }),
-          ]);
+          // +ADD items are already committed to DB by backend, just refresh
+          setScheduleUpdateKey((prev) => prev + 1);
 
-          const listNames = new Set<string>();
-          if (listRes.ok) {
-            const listData = await listRes.json();
-            (listData.data ?? []).forEach((item: { value: string }) => {
-              listNames.add(item.value.toLowerCase().trim());
-            });
-          }
-
-          // Build set of already-scheduled location names to avoid duplicates
-          const scheduledNames = new Set<string>();
-          if (scheduleRes.ok) {
-            const scheduleData = await scheduleRes.json();
-            (scheduleData.schedule ?? []).forEach(
-              (item: { location: string }) => {
-                scheduledNames.add(item.location.toLowerCase().trim());
-              },
-            );
-          }
-
-          const listSourced: { item: AiItineraryItem; idx: number }[] = [];
-          const recommendations: AiItineraryItem[] = [];
-
-          data.itinerary.forEach((item: AiItineraryItem, i: number) => {
-            const name = item.location.toLowerCase().trim();
-            if (listNames.has(name) && !scheduledNames.has(name)) {
-              // On user's list but not yet in schedule — auto-add
-              listSourced.push({ item, idx: i });
-            } else if (!listNames.has(name)) {
-              // Not on user's list — it's a recommendation
-              recommendations.push(item);
+          // Mark each +ADD item in the recommendation sidebar as added
+          const addedActions = (data.actions ?? []).filter(
+            (a) => a.symbol === "+ADD",
+          );
+          for (const action of addedActions) {
+            const placeName = action.data.location as string;
+            if (placeName) {
+              fetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ placeName }),
+              }).catch(() => {});
             }
-            // If it's on the list AND already scheduled, skip it
-          });
-
-          // Auto-add list-sourced items to schedule
-          for (const { item, idx } of listSourced) {
-            await handleAddToSchedule(item, idx, "schedule");
+          }
+          if (addedActions.length > 0) {
+            setSidebarRefreshKey((prev) => prev + 1);
+            setListUpdateKey((prev) => prev + 1);
           }
 
-          // Signal EditCanvas to re-fetch schedule with the newly added items
-          if (listSourced.length > 0) {
-            setScheduleUpdateKey((prev) => prev + 1);
-          }
+          // ?SUGGEST items show as recommendation cards
+          const suggestions = (data.actions ?? [])
+            .filter((a) => a.symbol === "?SUGGEST")
+            .map((a) => ({
+              location: (a.data.location as string) ?? "",
+              details: (a.data.details as string) ?? "",
+              category: (a.data.category as string) ?? "",
+              startTime: (a.data.startTime as string) ?? "",
+              endTime: (a.data.endTime as string) ?? "",
+              cost: Number(a.data.cost) || 0,
+              multiDay: Boolean(a.data.multiDay),
+            }));
 
-          // Only show recommendations as cards in chat
-          if (recommendations.length > 0) {
-            setAiItinerary(recommendations);
+          if (suggestions.length > 0) {
+            setAiItinerary(suggestions);
             setSidebarRefreshKey((prev) => prev + 1);
           }
         } else {
+          // List mode
           setAiItinerary(data.itinerary);
-          if (!data.question) {
-            setSidebarRefreshKey((prev) => prev + 1);
-          }
+          setSidebarRefreshKey((prev) => prev + 1);
         }
       }
     } catch (err) {
@@ -392,6 +354,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       }
 
       setAiPrompt("");
+      setSelectedCategories([]);
+      setAiMode(null);
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -404,7 +368,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const handleAddToSchedule = async (
     item: AiItineraryItem,
     index: number,
-    mode: AiMode = aiMode,
+    mode: AiMode = lastAiMode,
   ) => {
     if (!token || !tripId || addedItems.has(index)) return;
     setAddingItem(index);
@@ -461,6 +425,19 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         } else if (mode === "list") {
           // Refresh the want-to-see list UI
           setListUpdateKey((prev) => prev + 1);
+          // Mark the corresponding sidebar recommendation as added
+          fetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ placeName: item.location }),
+          })
+            .then(() => {
+              setSidebarRefreshKey((prev) => prev + 1);
+            })
+            .catch(() => {});
         }
       }
     } catch (err) {
@@ -739,30 +716,65 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           flexWrap: "wrap",
                         }}
                       >
-                        {LIST_CATEGORIES.map((cat) => (
-                          <label
-                            key={cat}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "0.25rem",
-                              fontSize: "0.75rem",
-                              color: selectedCategories.includes(cat)
-                                ? "#2fe782"
-                                : "#999",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedCategories.includes(cat)}
-                              onChange={() => toggleCategory(cat)}
-                              disabled={aiLoading}
-                              style={{ accentColor: "#2fe782" }}
-                            />
-                            {cat}
-                          </label>
-                        ))}
+                        {LIST_CATEGORIES.map((cat) => {
+                          const isExhausted = exhaustedCategories.includes(cat);
+                          return (
+                            <label
+                              key={cat}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.25rem",
+                                fontSize: "0.75rem",
+                                color: isExhausted
+                                  ? "#555"
+                                  : selectedCategories.includes(cat)
+                                    ? "#2fe782"
+                                    : "#999",
+                                cursor: isExhausted ? "not-allowed" : "pointer",
+                                opacity: isExhausted ? 0.5 : 1,
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedCategories.includes(cat) && !isExhausted}
+                                onChange={() => toggleCategory(cat)}
+                                disabled={aiLoading || isExhausted}
+                                style={{ accentColor: "#2fe782" }}
+                              />
+                              {cat}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Fill in the rest checkbox for schedule mode */}
+                    {aiMode === "schedule" && (
+                      <div
+                        style={{
+                          padding: "0.4rem 0.6rem 0",
+                        }}
+                      >
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.25rem",
+                            fontSize: "0.75rem",
+                            color: fillInTheRest ? "#2fe782" : "#999",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={fillInTheRest}
+                            onChange={() => setFillInTheRest((prev) => !prev)}
+                            disabled={aiLoading}
+                            style={{ accentColor: "#2fe782" }}
+                          />
+                          Fill in the rest (AI adds suggestions for empty slots)
+                        </label>
                       </div>
                     )}
 
@@ -774,21 +786,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           setShowQuestionnaire(true);
                           setAiChatOpen(false);
                         }}
-                        title="Edit questionnaire"
+                        title="Trip Notes"
+                        style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", color: "#ccc" }}
                       >
-                        <svg
-                          viewBox="0 0 24 24"
-                          width="16"
-                          height="16"
-                          fill="none"
-                          stroke="white"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
+                        Notes
                       </button>
                       <textarea
                         ref={textareaRef}
@@ -804,6 +805,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                         className={styles.aiChatInput}
                         disabled={aiLoading}
                         rows={1}
+                        maxLength={2000}
                         style={{
                           resize: "none",
                           overflow: "auto",
@@ -826,39 +828,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     {aiLoading && (
                       <div className={styles.aiResponseArea}>
                         <p className={styles.aiThinking}>Thinking...</p>
-                      </div>
-                    )}
-                    {/* Question from AI */}
-                    {aiQuestion && (
-                      <div
-                        style={{
-                          margin: "0.5rem 0.6rem",
-                          padding: "0.6rem 0.75rem",
-                          background: "rgba(99,102,241,0.12)",
-                          border: "1px solid rgba(99,102,241,0.3)",
-                          borderRadius: "8px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontSize: "0.7rem",
-                            color: "#6366f1",
-                            fontWeight: 600,
-                            marginBottom: "0.3rem",
-                          }}
-                        >
-                          AI has a question:
-                        </div>
-                        <p
-                          style={{
-                            fontSize: "0.85rem",
-                            color: "white",
-                            margin: 0,
-                            whiteSpace: "pre-wrap",
-                          }}
-                        >
-                          {aiQuestion}
-                        </p>
                       </div>
                     )}
                     {aiResponse && (

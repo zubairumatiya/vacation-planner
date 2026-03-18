@@ -8,12 +8,20 @@ export interface AiItineraryItem {
   multiDay: boolean;
 }
 
+export interface AiAction {
+  symbol: "+ADD" | "~REPLACE" | "-REMOVE" | "?SUGGEST" | ">TEXT";
+  data: Record<string, unknown>;
+}
+
 export interface AiChatResponse {
   text: string;
   itinerary?: AiItineraryItem[];
-  question?: string;
+  actions?: AiAction[];
+  rawModelResponse?: string;
+  exhaustedCategories?: string[];
   error?: string;
   message?: string;
+  scheduleUpdated?: boolean;
 }
 
 export interface AiRecommendedPlace {

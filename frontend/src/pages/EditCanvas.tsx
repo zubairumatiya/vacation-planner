@@ -238,17 +238,7 @@ const EditCanvas = ({
           if (data.questionnaire) {
             const q = data.questionnaire;
             setSavedAnswers({
-              budget: q.budget ?? "",
-              interests: q.interests ? q.interests.split(",") : [],
-              dietaryRestrictions: q.dietaryRestrictions ?? "",
-              pace: q.pace ?? "",
-              travelingWithKidsOrElderly: q.travelingWithKidsOrElderly ?? "",
-              accessibilityNeeds: q.accessibilityNeeds ?? "",
-              tourPreference: q.tourPreference ?? "",
-              accommodationType: q.accommodationType ?? "",
-              mustSeeExperiences: q.mustSeeExperiences ?? "",
-              startTimePreference: q.startTimePreference ?? "",
-              transportMode: q.transportMode ?? "",
+              notes: q.notes ?? "",
             });
           }
         }
@@ -289,17 +279,7 @@ const EditCanvas = ({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          budget: answers.budget,
-          interests: answers.interests.join(","),
-          dietaryRestrictions: answers.dietaryRestrictions,
-          pace: answers.pace,
-          travelingWithKidsOrElderly: answers.travelingWithKidsOrElderly,
-          accessibilityNeeds: answers.accessibilityNeeds,
-          tourPreference: answers.tourPreference,
-          accommodationType: answers.accommodationType,
-          mustSeeExperiences: answers.mustSeeExperiences,
-          startTimePreference: answers.startTimePreference,
-          transportMode: answers.transportMode,
+          notes: answers.notes,
         }),
       });
       onQuestionnaireSubmitted();

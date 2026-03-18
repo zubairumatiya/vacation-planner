@@ -3,7 +3,6 @@ import db from "../db/db.js";
 import ensureLoggedIn from "../middleware/ensureLoggedIn.js";
 import {
   chat,
-  scheduleListItems,
   getRecommendedPlaces,
   getListPlaces,
   clearRecommendedPlaces,
@@ -124,7 +123,7 @@ router.post(
     res: TypedResponse<AiChatResponse>,
     next: NextFunction
   ) => {
-    const { tripId, prompt, mode, categories } = req.body;
+    const { tripId, prompt, mode, categories, previousResponse, fillInTheRest } = req.body;
     const hasPrompt = prompt && prompt.trim();
     const hasMode = mode === "list" || mode === "schedule";
     if (!hasPrompt && !hasMode) {
@@ -135,53 +134,28 @@ router.post(
       res.status(400).json({ text: "", message: "tripId is required" });
       return;
     }
+    if (prompt && prompt.length > 2000) {
+      res.status(400).json({ text: "", message: "Prompt must be 2000 characters or less" });
+      return;
+    }
+    if (previousResponse && previousResponse.length > 10000) {
+      res.status(400).json({ text: "", message: "Previous response too large" });
+      return;
+    }
 
     try {
-      const result = await chat(tripId, prompt?.trim() || "", mode ?? null, categories);
+      const result = await chat(
+        tripId,
+        prompt?.trim() || "",
+        mode ?? null,
+        categories,
+        previousResponse,
+        fillInTheRest,
+      );
       res.status(200).json(result);
       return;
     } catch (err) {
       console.error("[AI] Chat error:", err);
-      next(err);
-    }
-  }
-);
-
-// POST /ai/schedule-list
-router.post(
-  "/ai/schedule-list",
-  ensureLoggedIn,
-  async (
-    req: TypedRequest<{ tripId: string; prompt: string }>,
-    res: TypedResponse<{
-      text: string;
-      recommendations?: AiChatResponse["itinerary"];
-      schedule?: unknown[];
-      question?: string;
-    }>,
-    next: NextFunction
-  ) => {
-    const { tripId, prompt } = req.body;
-    if (!prompt || !prompt.trim()) {
-      res.status(400).json({ text: "Prompt is required" });
-      return;
-    }
-    if (!tripId) {
-      res.status(400).json({ text: "tripId is required" });
-      return;
-    }
-
-    try {
-      const result = await scheduleListItems(tripId, prompt);
-      res.status(200).json({
-        text: result.text,
-        recommendations: result.recommendations.length > 0 ? result.recommendations : undefined,
-        schedule: result.schedule,
-        question: result.question,
-      });
-      return;
-    } catch (err) {
-      console.error("[AI] Schedule list error:", err);
       next(err);
     }
   }

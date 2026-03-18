@@ -1202,55 +1202,22 @@ router.post(
     res: TypedResponse<QuestionnaireResponse>,
     next: NextFunction,
   ) => {
-    const {
-      budget,
-      interests,
-      dietaryRestrictions,
-      pace,
-      travelingWithKidsOrElderly,
-      accessibilityNeeds,
-      tourPreference,
-      accommodationType,
-      mustSeeExperiences,
-      startTimePreference,
-      transportMode,
-    } = req.body;
+    const { notes } = req.body;
+
+    if (notes && notes.length > 500) {
+      res.status(400).json({ message: "Notes must be 500 characters or less" });
+      return;
+    }
 
     try {
       const result: QueryResult<QuestionnaireRow> = await db.query(
-        `INSERT INTO trip_questionnaire (
-          trip_id, budget, interests, dietary_restrictions, pace,
-          traveling_with_kids_or_elderly, accessibility_needs, tour_preference,
-          accommodation_type, must_see_experiences, start_time_preference, transport_mode
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        ON CONFLICT (trip_id) DO UPDATE SET
-          budget = EXCLUDED.budget,
-          interests = EXCLUDED.interests,
-          dietary_restrictions = EXCLUDED.dietary_restrictions,
-          pace = EXCLUDED.pace,
-          traveling_with_kids_or_elderly = EXCLUDED.traveling_with_kids_or_elderly,
-          accessibility_needs = EXCLUDED.accessibility_needs,
-          tour_preference = EXCLUDED.tour_preference,
-          accommodation_type = EXCLUDED.accommodation_type,
-          must_see_experiences = EXCLUDED.must_see_experiences,
-          start_time_preference = EXCLUDED.start_time_preference,
-          transport_mode = EXCLUDED.transport_mode,
-          last_modified = NOW()
-        RETURNING *`,
-        [
-          req.params.tripId,
-          budget ?? null,
-          interests ?? null,
-          dietaryRestrictions ?? null,
-          pace ?? null,
-          travelingWithKidsOrElderly ?? null,
-          accessibilityNeeds ?? null,
-          tourPreference ?? null,
-          accommodationType ?? null,
-          mustSeeExperiences ?? null,
-          startTimePreference ?? null,
-          transportMode ?? null,
-        ],
+        `INSERT INTO trip_questionnaire (trip_id, notes)
+         VALUES ($1, $2)
+         ON CONFLICT (trip_id) DO UPDATE SET
+           notes = EXCLUDED.notes,
+           last_modified = NOW()
+         RETURNING *`,
+        [req.params.tripId, notes ?? null],
       );
       snakeToCamel<QuestionnaireRow>(result.rows);
       res.status(200).json({ questionnaire: result.rows[0] });

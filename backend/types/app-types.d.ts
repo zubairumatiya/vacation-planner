@@ -565,17 +565,7 @@ export interface CountryNameParam extends ParamsDictionary {
 export interface QuestionnaireRow {
   id: string;
   trip_id: string;
-  budget: string | null;
-  interests: string | null;
-  dietary_restrictions: string | null;
-  pace: string | null;
-  traveling_with_kids_or_elderly: string | null;
-  accessibility_needs: string | null;
-  tour_preference: string | null;
-  accommodation_type: string | null;
-  must_see_experiences: string | null;
-  start_time_preference: string | null;
-  transport_mode: string | null;
+  notes: string | null;
   created_at: Date;
   last_modified: Date;
 }
@@ -601,12 +591,21 @@ export interface AiChatBody {
   prompt?: string;
   mode?: "schedule" | "list" | null;
   categories?: string[];
+  previousResponse?: string;
+  fillInTheRest?: boolean;
+}
+
+export interface AiAction {
+  symbol: "+ADD" | "~REPLACE" | "-REMOVE" | "?SUGGEST" | ">TEXT";
+  data: Record<string, unknown>;
 }
 
 export interface AiChatResponse {
   text: string;
   itinerary?: AiItineraryItem[];
-  question?: string;
+  actions?: AiAction[];
+  rawModelResponse?: string;
+  exhaustedCategories?: string[];
   error?: string;
   message?: string;
   scheduleUpdated?: boolean;
@@ -651,17 +650,7 @@ export interface AiStatusResponse {
 }
 
 export interface QuestionnaireBody {
-  budget?: string;
-  interests?: string;
-  dietaryRestrictions?: string;
-  pace?: string;
-  travelingWithKidsOrElderly?: string;
-  accessibilityNeeds?: string;
-  tourPreference?: string;
-  accommodationType?: string;
-  mustSeeExperiences?: string;
-  startTimePreference?: string;
-  transportMode?: string;
+  notes?: string;
 }
 
 export interface QuestionnaireResponse {
