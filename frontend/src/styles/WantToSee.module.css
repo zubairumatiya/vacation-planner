@@ -1,6 +1,4 @@
 .pageWrapper {
-  /*height: 100vh;
-  min-height: 33vh;  not sure if i will need this, but it looks clean when it fills the space*/
   width: 100%;
   background-color: transparent;
   border: none;
@@ -14,44 +12,51 @@
 
 @media (max-width: 700px) {
   .pageWrapper {
-    flex: none; /* full width on smaller screens */
+    flex: none;
   }
 }
 
 .pageWrapper ul {
-  list-style: disc;
+  list-style: none;
   text-align: left;
-  padding-left: 2rem;
+  padding-left: 0;
+  margin: 0;
 }
+
 .pageWrapper ul li {
-  color: rgba(255, 255, 255, 0.8);
-  list-style-position: outside;
-  font-size: large;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.9rem;
   line-height: 1.5rem;
-  margin-bottom: 0.6rem;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid #2a2a2c;
   width: 100%;
-  /*display: flex;
-  align-items: end;*/
+  transition: background 0.15s;
+}
+
+.pageWrapper ul li:last-child {
+  border-bottom: none;
+}
+
+.pageWrapper ul li:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .listItem {
   display: flex;
   align-items: start;
-  margin-left: -1.7rem;
 }
 
 .editListItem {
   display: flex;
-  margin-left: -1.7rem;
 }
 
 .newItem {
-  list-style: disc;
+  list-style: none;
 }
 
 .checkBubbleWrapper {
-  margin-right: 0.3rem;
-  margin-top: 0.25rem;
+  margin-right: 0.5rem;
+  margin-top: 0.15rem;
 }
 
 .checkBubbleWrapper:hover {
@@ -63,6 +68,9 @@
   display: flex;
   margin-bottom: 1px;
   cursor: grab;
+  color: #ccc;
+  font-weight: 400;
+  letter-spacing: 0.01em;
 }
 
 .grabbing {
@@ -71,6 +79,7 @@
 
 .itemChecked {
   text-decoration: line-through;
+  opacity: 0.4;
 }
 
 .editItemWrapper {
@@ -82,41 +91,53 @@
 }
 
 .input {
-  background-color: black;
+  background: #1e1e20;
   width: 22.5vw;
-  color: white;
-  border-radius: 5px;
-  padding-left: 0.25rem;
+  color: #ddd;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
   height: 2.33rem;
+  font-size: 0.85rem;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  border-color: #2fe782;
+  outline: none;
 }
 
 .noEditingInput {
   pointer-events: all;
   cursor: help;
-  background-color: darkgrey;
-  color: gainsboro;
+  background-color: #2a2a2c;
+  color: #777;
+  border-color: #333;
 }
 
 .hiddenMessage {
   position: absolute;
   z-index: 10;
   visibility: hidden;
-  background-color: rgb(134, 168, 134);
-  border: 3px dashed rgb(81, 80, 80);
-  font-size: small;
-  color: black;
+  background: #2a2a2c;
+  border: 1px solid #444;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: #999;
   margin: 0.25rem;
-  padding: 0.1rem 0.25rem;
+  padding: 0.25rem 0.5rem;
   width: 8rem;
   right: 60px;
   opacity: 0;
   cursor: help;
   transition:
-    opacity 0.2s ease-in-out,
-    visibility 0.2s ease-in-out;
+    opacity 0.15s ease-in-out,
+    visibility 0.15s ease-in-out;
 }
+
 .showMessage {
 }
+
 .showMessage:hover + .hiddenMessage {
   visibility: visible;
   opacity: 1;
@@ -129,12 +150,23 @@
 
 .trashButton {
   padding: 5px;
-  border: 2px solid #666;
+  background: transparent;
+  border: 1px solid #444;
+  border-radius: 6px;
   margin-left: 5px;
   z-index: 10;
   position: absolute;
   right: 20px;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
+
+.trashButton:hover {
+  border-color: #f55;
+  background: rgba(255, 85, 85, 0.08);
+}
+
 .editItemTopRow {
   display: flex;
   flex-direction: row;
@@ -158,12 +190,12 @@
   top: 100%;
   left: 0;
   z-index: 20;
-  background-color: #1a1a1a;
-  border: 2px solid #444;
+  background-color: #1e1e20;
+  border: 1px solid #444;
   border-radius: 8px;
   padding: 0.75rem;
   min-width: 220px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -176,18 +208,20 @@
 }
 
 .dropdownField label {
-  color: #ccc;
-  font-size: small;
+  color: #999;
+  font-size: 0.75rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .dropdownSelect {
-  background-color: #2a2a2a;
-  color: white;
-  border: 1px solid #555;
-  border-radius: 4px;
+  background-color: #2a2a2c;
+  color: #ddd;
+  border: 1px solid #444;
+  border-radius: 6px;
   padding: 0.35rem 0.4rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .dropdownActions {
@@ -204,16 +238,20 @@
 
 .dropdownCancel {
   background-color: transparent;
-  border: 1px solid #666;
-  color: #ccc;
-  border-radius: 4px;
+  border: 1px solid #555;
+  color: #999;
+  border-radius: 6px;
   padding: 0.35rem 0.5rem;
   font-size: 0.85rem;
   cursor: pointer;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .dropdownCancel:hover {
-  background-color: #333;
+  border-color: #888;
+  color: #ccc;
 }
 
 /* List item details */
@@ -225,13 +263,14 @@
 .detailsToggle {
   background: transparent;
   border: none;
-  color: #888;
+  color: #666;
   font-size: 0.7rem;
   cursor: pointer;
   padding: 2px 0;
   display: flex;
   align-items: center;
   gap: 0.2rem;
+  transition: color 0.15s;
 }
 
 .detailToggle:active {
@@ -240,16 +279,18 @@
 }
 
 .detailsToggle:hover {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .detailsContent {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.45);
   font-size: 0.75rem;
-  padding: 0.15rem 0 0.25rem 0.75rem;
+  padding: 0.2rem 0 0.25rem 0.75rem;
   font-style: italic;
-  line-height: 1.3;
+  line-height: 1.4;
   white-space: pre-wrap;
+  border-left: 2px solid #333;
+  margin-left: 0.1rem;
 }
 
 /* Note add/edit section */
@@ -260,17 +301,18 @@
 .noteToggleBtn {
   background: transparent;
   border: none;
-  color: #888;
+  color: #666;
   font-size: 0.7rem;
   cursor: pointer;
   padding: 2px 0;
   display: flex;
   align-items: center;
   gap: 0.2rem;
+  transition: color 0.15s;
 }
 
 .noteToggleBtn:hover {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .noteInputWrapper {
@@ -279,13 +321,19 @@
 
 .noteTextarea {
   width: 100%;
-  background-color: #1a1a1a;
-  color: white;
-  border: 1px solid #555;
-  border-radius: 4px;
-  padding: 0.25rem;
+  background: #1e1e20;
+  color: #ddd;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 0.3rem 0.5rem;
   font-size: 0.75rem;
   resize: vertical;
   min-height: 2.5rem;
   font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.noteTextarea:focus {
+  border-color: #2fe782;
+  outline: none;
 }

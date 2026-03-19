@@ -291,7 +291,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       }
 
       const data: AiChatResponse = await response.json();
-      console.log("[AI] Response:", data);
 
       // Store raw model response for conversation continuity
       if (data.rawModelResponse) {
