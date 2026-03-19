@@ -231,7 +231,7 @@ router.patch(
     next: NextFunction
   ) => {
     try {
-      const added = req.body.added ?? true;
+      const added = req.body?.added ?? true;
       await markPlaceAdded(req.params.id, added);
       res.status(200).json({ message: added ? "Marked as added" : "Unmarked" });
       return;
@@ -317,7 +317,7 @@ router.patch(
     next: NextFunction
   ) => {
     try {
-      const added = req.body.added ?? true;
+      const added = req.body?.added ?? true;
       await markListPlaceAdded(req.params.id, added);
       res.status(200).json({ message: added ? "Marked as added" : "Unmarked" });
       return;

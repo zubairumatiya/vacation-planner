@@ -37,6 +37,21 @@ const formatDateBucket = (dateStr: string): string => {
   return `${mm}/${dd} - ${dayNames[d.getDay()]}`;
 };
 
+const toSingular = (s: string) => s.toLowerCase().trim().replace(/s$/, "");
+
+const CATEGORY_HEADERS: Record<string, string> = {
+  museum: "Museums",
+  nature: "Nature",
+  shopping: "Shopping",
+  "current event": "Current Events",
+  history: "History",
+  nightlife: "Nightlife",
+  food: "Food",
+  accommodation: "Accommodations",
+  art: "Art",
+  attraction: "Attractions",
+};
+
 const SuggestionsSidebar = ({
   tripId,
   refreshKey,
@@ -298,7 +313,7 @@ const SuggestionsSidebar = ({
               textTransform: "capitalize",
             }}
           >
-            {place.place_category}
+            {toSingular(place.place_category)}
           </span>
         )}
         {place.details && (
@@ -596,7 +611,7 @@ const SuggestionsSidebar = ({
                       textTransform: "capitalize",
                     }}
                   >
-                    {cat}
+                    {CATEGORY_HEADERS[cat] ?? cat}
                   </div>
                   {listByCategory[cat].map(renderPlace)}
                 </div>
