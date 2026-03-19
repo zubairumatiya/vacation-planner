@@ -14,6 +14,7 @@ export default function VacationInfo({ refreshKey }: { refreshKey: number }) {
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
+  const loggingOutRef = auth?.loggingOutRef;
 
   const [countryInfo, setCountryInfo] = useState<CountryInfoResponse | null>(
     null,
@@ -22,6 +23,7 @@ export default function VacationInfo({ refreshKey }: { refreshKey: number }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (loggingOutRef?.current) return;
     if (!tripId || !token) return;
 
     const fetchCountryInfo = async () => {
@@ -33,19 +35,26 @@ export default function VacationInfo({ refreshKey }: { refreshKey: number }) {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (response.status === 401 && refreshInFlightRef) {
-          const { token: newToken, err } = await refreshFn(
-            apiUrl,
-            refreshInFlightRef,
-          );
-          if (err) {
-            if (logout) await logout();
+        if (response.status === 401) {
+          const resData = (await response.json()) as ApiErrorResponse;
+          if (resData.error === "JwtError") {
+            if (logout) {
+              await logout();
+            }
             return;
           }
-          if (newToken && login) {
-            login(newToken);
+          if (refreshInFlightRef == null) {
+            console.error("Auth flight ref not set");
+            return;
+          }
+          const continueReq: { token: string | null; err: boolean } =
+            await refreshFn(apiUrl, refreshInFlightRef);
+          if (!continueReq.err) {
+            if (login && continueReq.token) {
+              login(String(continueReq.token));
+            }
             const retryRes = await fetch(`${apiUrl}/country-info/${tripId}`, {
-              headers: { Authorization: `Bearer ${newToken}` },
+              headers: { Authorization: `Bearer ${continueReq.token}` },
             });
             if (retryRes.ok) {
               const data = (await retryRes.json()) as CountryInfoResponse;
@@ -53,6 +62,11 @@ export default function VacationInfo({ refreshKey }: { refreshKey: number }) {
             } else {
               setError("Could not load country information.");
             }
+          } else if (continueReq.err) {
+            if (logout) {
+              await logout();
+            }
+            return;
           }
         } else if (response.ok) {
           const data = (await response.json()) as CountryInfoResponse;

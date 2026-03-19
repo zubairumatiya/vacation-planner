@@ -28,7 +28,18 @@ type VacationProps = {
 
 type AiMode = "list" | "schedule" | null;
 
-const LIST_CATEGORIES = ["Museums", "Nature", "Shopping", "Current Events", "History", "Nightlife", "Food", "Accommodations", "Art", "Attractions"];
+const LIST_CATEGORIES = [
+  "Museums",
+  "Nature",
+  "Shopping",
+  "Current Events",
+  "History",
+  "Nightlife",
+  "Food",
+  "Accommodations",
+  "Art",
+  "Attractions",
+];
 
 const apiURL = import.meta.env.VITE_API_URL;
 const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
@@ -70,7 +81,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [aiMode, setAiMode] = useState<AiMode>(null);
   const [lastAiMode, setLastAiMode] = useState<AiMode>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    "Food", "Accommodations", "Current Events",
+    "Food",
+    "Accommodations",
+    "Current Events",
   ]);
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
   const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
@@ -103,13 +116,37 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [hasUnreadAiResponse, setHasUnreadAiResponse] = useState(false);
   const [csvExporting, setCsvExporting] = useState(false);
 
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const headers = {
+      ...(options.headers as Record<string, string>),
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+    let res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+      const body = await res.json().catch(() => ({}));
+      if (body.error === "JwtError") {
+        await logout?.();
+        throw new Error("Invalid token");
+      }
+      if (loggingOutRef?.current) throw new Error("Logging out");
+      const result = await refreshFn(apiURL, refreshInFlightRef!);
+      if (result.err || !result.token) {
+        await logout?.();
+        throw new Error("Refresh failed");
+      }
+      login?.(result.token);
+      headers.Authorization = `Bearer ${result.token}`;
+      res = await fetch(url, { ...options, headers });
+    }
+    return res;
+  };
+
   const handleExportCsv = useCallback(async () => {
     if (!tripId || !token || csvExporting) return;
     setCsvExporting(true);
     try {
-      const res = await fetch(`${apiURL}/schedule/${tripId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await authFetch(`${apiURL}/schedule/${tripId}`);
       if (!res.ok) throw new Error("Failed to fetch schedule");
       const data: TripScheduleResponse = await res.json();
 
@@ -194,9 +231,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     if (!token) return;
     const checkAiStatus = async () => {
       try {
-        const res = await fetch(`${apiURL}/ai/status`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await authFetch(`${apiURL}/ai/status`);
         if (res.ok) {
           const data = await res.json();
           setAiConnected(data.connected);
@@ -207,6 +242,23 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     };
     checkAiStatus();
   }, [token]);
+
+  // Check if questionnaire exists
+  useEffect(() => {
+    if (!token || !tripId) return;
+    const checkQuestionnaire = async () => {
+      try {
+        const res = await authFetch(`${apiURL}/questionnaire/${tripId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setHasQuestionnaire(!!data.questionnaire);
+        }
+      } catch {
+        // silent
+      }
+    };
+    checkQuestionnaire();
+  }, [token, tripId]);
 
   const handleAiButtonClick = () => {
     setAiChatOpen((prev) => {
@@ -238,15 +290,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     setLastAiMode(aiMode);
     setAddedItems(new Set());
     try {
-      // Only send previousResponse if user typed a custom prompt (not a bare mode request)
-      const sendPreviousResponse = hasPrompt ? lastAiResponse : undefined;
-
-      const response = await fetch(`${apiURL}/ai/chat`, {
+      const response = await authFetch(`${apiURL}/ai/chat`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           tripId,
           prompt: aiPrompt.trim() || undefined,
@@ -292,8 +337,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           setAiItinerary(data.itinerary);
           setSidebarRefreshKey((prev) => prev + 1);
         } else if (aiMode === "schedule") {
-          // +ADD items are already committed to DB by backend, just refresh
-          setScheduleUpdateKey((prev) => prev + 1);
+          // Fetch user's list and current schedule to identify what needs adding
+          const [listRes, scheduleRes] = await Promise.all([
+            authFetch(`${apiURL}/list/${tripId}`),
+            authFetch(`${apiURL}/schedule/${tripId}`),
+          ]);
 
           // Mark each +ADD item in the recommendation sidebar as added
           const addedActions = (data.actions ?? []).filter(
@@ -376,24 +424,16 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     try {
       let response: Response;
       if (mode === "list") {
-        response = await fetch(`${apiURL}/list/${tripId}`, {
+        response = await authFetch(`${apiURL}/list/${tripId}`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify({
             value: item.location,
             details: item.details ?? null,
           }),
         });
       } else {
-        response = await fetch(`${apiURL}/schedule/${tripId}`, {
+        response = await authFetch(`${apiURL}/schedule/${tripId}`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
           body: JSON.stringify({
             location: item.location,
             details: item.details,
@@ -411,12 +451,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           // Refresh schedule UI immediately when adding to schedule
           setScheduleUpdateKey((prev) => prev + 1);
           // Mark the corresponding recommendation as added
-          fetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
+          authFetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
             method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
             body: JSON.stringify({ placeName: item.location }),
           })
             .then(() => {
@@ -738,7 +774,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                             >
                               <input
                                 type="checkbox"
-                                checked={selectedCategories.includes(cat) && !isExhausted}
+                                checked={
+                                  selectedCategories.includes(cat) &&
+                                  !isExhausted
+                                }
                                 onChange={() => toggleCategory(cat)}
                                 disabled={aiLoading || isExhausted}
                                 style={{ accentColor: "#2fe782" }}
@@ -788,7 +827,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           setAiChatOpen(false);
                         }}
                         title="Trip Notes"
-                        style={{ fontSize: "0.65rem", padding: "0.2rem 0.4rem", color: "#ccc" }}
+                        style={{
+                          fontSize: "0.65rem",
+                          padding: "0.2rem 0.4rem",
+                          color: "#ccc",
+                        }}
                       >
                         Notes
                       </button>

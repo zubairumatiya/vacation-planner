@@ -122,6 +122,7 @@ const EditCanvas = ({
   const login = auth?.login;
   const logout = auth?.logout;
   const refreshInFlightRef = auth?.refreshInFlightRef;
+  const loggingOutRef = auth?.loggingOutRef;
   const isGuest = !token && tripId === "guest";
   const tempScheduleItem = useRef<Schedule | null>(null);
   const initialListDrag = useRef<boolean>(true);
@@ -152,15 +153,37 @@ const EditCanvas = ({
     null,
   );
   const [answersLoaded, setAnswersLoaded] = useState(false);
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const headers = {
+      ...(options.headers as Record<string, string>),
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    };
+    let res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+      const body = await res.json().catch(() => ({}));
+      if (body.error === "JwtError") {
+        await logout?.();
+        throw new Error("Invalid token");
+      }
+      if (loggingOutRef?.current) throw new Error("Logging out");
+      const result = await refreshFn(apiURL, refreshInFlightRef!);
+      if (result.err || !result.token) {
+        await logout?.();
+        throw new Error("Refresh failed");
+      }
+      login?.(result.token);
+      headers.Authorization = `Bearer ${result.token}`;
+      res = await fetch(url, { ...options, headers });
+    }
+    return res;
+  };
+
   const handleSidebarAddToSchedule = useCallback(
     async (place: AiRecommendedPlace) => {
       if (!token || !tripId) return;
-      const res = await fetch(`${apiURL}/schedule/${tripId}`, {
+      const res = await authFetch(`${apiURL}/schedule/${tripId}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           location: place.place_name,
           details: place.details ?? "",
@@ -198,12 +221,8 @@ const EditCanvas = ({
   const handleSidebarAddToList = useCallback(
     async (placeName: string, details: string | null) => {
       if (!token || !tripId) return;
-      const res = await fetch(`${apiURL}/list/${tripId}`, {
+      const res = await authFetch(`${apiURL}/list/${tripId}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           value: placeName,
           details: details ?? null,
@@ -227,12 +246,7 @@ const EditCanvas = ({
   useEffect(() => {
     const fetchQuestionnaire = async () => {
       try {
-        const response = await fetch(`${apiURL}/questionnaire/${tripId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await authFetch(`${apiURL}/questionnaire/${tripId}`);
         if (response.ok) {
           const data = await response.json();
           if (data.questionnaire) {
@@ -272,12 +286,8 @@ const EditCanvas = ({
     setShowAiQuestionnaire(false);
     setSavedAnswers(answers);
     try {
-      await fetch(`${apiURL}/questionnaire/${tripId}`, {
+      await authFetch(`${apiURL}/questionnaire/${tripId}`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           notes: answers.notes,
         }),
@@ -300,12 +310,7 @@ const EditCanvas = ({
       return;
     const refetchSchedule = async () => {
       try {
-        const res = await fetch(`${apiURL}/schedule/${tripId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await authFetch(`${apiURL}/schedule/${tripId}`);
         if (res.ok) {
           const data = await res.json();
           if (data.schedule) {
@@ -315,12 +320,7 @@ const EditCanvas = ({
             setSchedule(bucketizeSchedule(dayContainers, hydrated));
             setCostTotal(hydrated.reduce((sum, i) => sum + Number(i.cost), 0));
           }
-          const listRes = await fetch(`${apiURL}/list/${tripId}`, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          const listRes = await authFetch(`${apiURL}/list/${tripId}`);
           if (listRes.ok) {
             const listData = await listRes.json();
             setWishList(listData.data ?? []);
@@ -338,12 +338,7 @@ const EditCanvas = ({
     if (listUpdateKey === 0 || !token || !tripId) return;
     const refetchList = async () => {
       try {
-        const res = await fetch(`${apiURL}/list/${tripId}`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await authFetch(`${apiURL}/list/${tripId}`);
         if (res.ok) {
           const data = await res.json();
           setWishList(data.data ?? []);

@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
+import refreshFn from "../utils/refreshFn";
 import type { AiRecommendedPlace, AiListPlace } from "../types/ai";
 import styles from "../styles/SuggestionsSidebar.module.css";
 
@@ -44,6 +45,10 @@ const SuggestionsSidebar = ({
 }: SuggestionsSidebarProps) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
+  const login = auth?.login;
+  const logout = auth?.logout;
+  const refreshInFlightRef = auth?.refreshInFlightRef;
+  const loggingOutRef = auth?.loggingOutRef;
   const [open, setOpen] = useState(false);
   const [schedulePlaces, setSchedulePlaces] = useState<AiRecommendedPlace[]>([]);
   const [listPlaces, setListPlaces] = useState<AiListPlace[]>([]);
@@ -51,16 +56,41 @@ const SuggestionsSidebar = ({
   const [choiceId, setChoiceId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
 
+  const authFetch = useCallback(
+    async (url: string, options: RequestInit = {}) => {
+      const headers = {
+        ...(options.headers as Record<string, string>),
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+      let res = await fetch(url, { ...options, headers });
+      if (res.status === 401) {
+        const body = await res.json().catch(() => ({}));
+        if (body.error === "JwtError") {
+          await logout?.();
+          throw new Error("Invalid token");
+        }
+        if (loggingOutRef?.current) throw new Error("Logging out");
+        const result = await refreshFn(apiURL, refreshInFlightRef!);
+        if (result.err || !result.token) {
+          await logout?.();
+          throw new Error("Refresh failed");
+        }
+        login?.(result.token);
+        headers.Authorization = `Bearer ${result.token}`;
+        res = await fetch(url, { ...options, headers });
+      }
+      return res;
+    },
+    [token, login, logout, refreshInFlightRef, loggingOutRef],
+  );
+
   const fetchPlaces = useCallback(async () => {
     if (!token) return;
     try {
       const [schedRes, listRes] = await Promise.all([
-        fetch(`${apiURL}/ai/recommended-places/${tripId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`${apiURL}/ai/list-places/${tripId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
+        authFetch(`${apiURL}/ai/recommended-places/${tripId}`),
+        authFetch(`${apiURL}/ai/list-places/${tripId}`),
       ]);
       if (schedRes.ok) {
         const data = await schedRes.json();
@@ -73,7 +103,7 @@ const SuggestionsSidebar = ({
     } catch {
       // silent
     }
-  }, [token, tripId]);
+  }, [token, tripId, authFetch]);
 
   useEffect(() => {
     fetchPlaces();
@@ -127,9 +157,8 @@ const SuggestionsSidebar = ({
             p.id === place.id ? { ...p, added_to_schedule: true } : p,
           ),
         );
-        await fetch(`${apiURL}/ai/recommended-places/${place.id}/added`, {
+        await authFetch(`${apiURL}/ai/recommended-places/${place.id}/added`, {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
         });
       }
     } finally {
@@ -150,9 +179,8 @@ const SuggestionsSidebar = ({
             p.id === place.id ? { ...p, added_to_schedule: true } : p,
           ),
         );
-        await fetch(`${apiURL}/ai/list-places/${place.id}/added`, {
+        await authFetch(`${apiURL}/ai/list-places/${place.id}/added`, {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
         });
       } else {
         setSchedulePlaces((prev) =>
@@ -160,9 +188,8 @@ const SuggestionsSidebar = ({
             p.id === place.id ? { ...p, added_to_schedule: true } : p,
           ),
         );
-        await fetch(`${apiURL}/ai/recommended-places/${place.id}/added`, {
+        await authFetch(`${apiURL}/ai/recommended-places/${place.id}/added`, {
           method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
         });
       }
     } finally {
@@ -177,12 +204,8 @@ const SuggestionsSidebar = ({
         ? `${apiURL}/ai/recommended-places/${place.id}/added`
         : `${apiURL}/ai/list-places/${place.id}/added`;
     try {
-      await fetch(endpoint, {
+      await authFetch(endpoint, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ added: false }),
       });
       if (place.source === "schedule") {
@@ -220,13 +243,11 @@ const SuggestionsSidebar = ({
     setClearing(true);
     try {
       await Promise.all([
-        fetch(`${apiURL}/ai/recommended-places/${tripId}`, {
+        authFetch(`${apiURL}/ai/recommended-places/${tripId}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch(`${apiURL}/ai/list-places/${tripId}`, {
+        authFetch(`${apiURL}/ai/list-places/${tripId}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
       setSchedulePlaces([]);

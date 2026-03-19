@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 // import addIcon from "../assets/icons/add-icon.svg";
 import vacationPlannerLogo from "../assets/icons/vacation-planner.svg";
 import { AuthContext } from "../context/AuthContext";
+import refreshFn from "../utils/refreshFn";
 import { TripRefreshContext } from "../context/TripRefreshContext";
 import { useContext, useState, useRef, useEffect, useCallback } from "react";
 // import profileIcon from "../assets/icons/profile.svg";
@@ -13,6 +14,7 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 const Header = () => {
   const auth = useContext(AuthContext);
+  const { login, logout, refreshInFlightRef, loggingOutRef } = auth ?? {};
   const tripRefreshContext = useContext(TripRefreshContext);
   const [isSideBarOpen, setSideBarOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
@@ -30,11 +32,31 @@ const Header = () => {
       if (res.ok) {
         const data = await res.json();
         setUnreadCount(data.count);
+      } else if (res.status === 401) {
+        const body = await res.json().catch(() => ({}));
+        if (body.error === "JwtError") {
+          await logout?.();
+          return;
+        }
+        if (loggingOutRef?.current) return;
+        const result = await refreshFn(apiUrl, refreshInFlightRef!);
+        if (result.err || !result.token) {
+          await logout?.();
+          return;
+        }
+        login?.(result.token);
+        const retryRes = await fetch(`${apiUrl}/notifications/unread-count`, {
+          headers: { Authorization: `Bearer ${result.token}` },
+        });
+        if (retryRes.ok) {
+          const data = await retryRes.json();
+          setUnreadCount(data.count);
+        }
       }
     } catch {
       // silent
     }
-  }, [auth?.token]);
+  }, [auth?.token, login, logout, refreshInFlightRef, loggingOutRef]);
 
   useEffect(() => {
     fetchUnreadCount();
