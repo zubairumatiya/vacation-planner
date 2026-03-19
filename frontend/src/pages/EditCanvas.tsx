@@ -432,7 +432,7 @@ const EditCanvas = ({
           const containerItems = schedule[overId];
 
           if (containerItems.length > 0) {
-            overId = closestCorners({
+            const closestItemId = closestCorners({
               ...args,
               droppableContainers: args.droppableContainers.filter(
                 (container) =>
@@ -440,6 +440,9 @@ const EditCanvas = ({
                   containerItems.find((v) => container.id === v.id),
               ),
             })[0]?.id;
+            if (closestItemId) {
+              overId = closestItemId;
+            }
           }
         }
         lastOverId.current = overId;
