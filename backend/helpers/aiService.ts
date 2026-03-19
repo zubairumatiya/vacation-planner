@@ -43,7 +43,12 @@ export async function chat(
   scheduleUpdated?: boolean;
 }> {
   const context = await fetchTripContext(tripId);
-  const systemPrompt = buildSystemPrompt(context, mode, categories, fillInTheRest);
+  const systemPrompt = buildSystemPrompt(
+    context,
+    mode,
+    categories,
+    fillInTheRest,
+  );
 
   let effectiveMessage = userMessage;
   if (mode === "list" && !effectiveMessage) {
@@ -79,7 +84,10 @@ export async function chat(
   let scheduleUpdated = false;
   if (mode !== "list") {
     const dbActions = parsed.actions.filter(
-      (a) => a.symbol === "+ADD" || a.symbol === "~REPLACE" || a.symbol === "-REMOVE",
+      (a) =>
+        a.symbol === "+ADD" ||
+        a.symbol === "~REPLACE" ||
+        a.symbol === "-REMOVE",
     );
     if (dbActions.length > 0) {
       await executeActions(tripId, dbActions);
@@ -216,16 +224,40 @@ ${allPrevPlaces.join(", ")}`);
 
   // ── Mode-specific instruction ──
   if (mode === "list") {
-    const cats = categories && categories.length > 0 ? categories : ["Museums", "Nature", "Shopping", "Current Events", "History", "Nightlife", "Food", "Accommodations", "Art", "Attractions"];
+    const cats =
+      categories && categories.length > 0
+        ? categories
+        : [
+            "Museums",
+            "Nature",
+            "Shopping",
+            "Current Events",
+            "History",
+            "Nightlife",
+            "Food",
+            "Accommodations",
+            "Art",
+            "Attractions",
+          ];
     const catCounts: Record<string, number> = {
-      Museums: 5, Nature: 5, Shopping: 5, "Current Events": 5,
-      History: 5, Nightlife: 5, Food: 10, Accommodations: 5,
-      Art: 5, Attractions: 5,
+      Museums: 5,
+      Nature: 5,
+      Shopping: 5,
+      "Current Events": 5,
+      History: 5,
+      Nightlife: 5,
+      Food: 10,
+      Accommodations: 5,
+      Art: 5,
+      Attractions: 5,
     };
-    const catList = cats.map((c) => `${c} (${catCounts[c] ?? 5})`).join(", ");
+    const catList = cats
+      .map((c) => `${c} - ${catCounts[c] ?? 5} items`)
+      .join(", ");
     sections.push(`## Mode: List Recommendations
 Recommend items per selected category: ${catList}.
-If you have exhausted all quality recommendations for a category, respond with \`!NULL category_name\` for that category instead of forcing low-quality suggestions.`);
+If you reach a point where the "already recommended" places cover all high-quality options for a category, respond with \`!NULL category_name\` instead of forcing low-quality suggestions.
+`);
   } else if (mode === "schedule") {
     let scheduleInstruction = `## Mode: Schedule
 Organize the user's list items into a daily schedule. Schedule EVERY item from the user's list. Items marked 🔒 LOCKED must stay where they are.`;
@@ -289,7 +321,8 @@ function formatScheduleWithIds(schedule: Schedule[], trip?: Trip): string {
     allDays.push(...byDate.keys());
   }
 
-  if (allDays.length === 0 && schedule.length === 0) return "No activities scheduled yet.";
+  if (allDays.length === 0 && schedule.length === 0)
+    return "No activities scheduled yet.";
 
   const lines: string[] = [];
   for (const dateKey of allDays) {
@@ -302,7 +335,9 @@ function formatScheduleWithIds(schedule: Schedule[], trip?: Trip): string {
     });
     const items = byDate.get(dateKey);
     if (!items || items.length === 0) {
-      lines.push(`### ${dayLabel} (${dateKey})\n  (No activities scheduled — available for planning)`);
+      lines.push(
+        `### ${dayLabel} (${dateKey})\n  (No activities scheduled — available for planning)`,
+      );
     } else {
       lines.push(`### ${dayLabel} (${dateKey})`);
       for (const s of items) {
@@ -317,7 +352,9 @@ function formatScheduleWithIds(schedule: Schedule[], trip?: Trip): string {
           timeZone: "UTC",
         });
         const lockTag = s.is_locked ? " LOCKED" : "";
-        lines.push(`  - [id:${s.id}] ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}${lockTag}`);
+        lines.push(
+          `  - [id:${s.id}] ${startTime}–${endTime}: ${s.location}${s.details ? ` (${s.details})` : ""}${lockTag}`,
+        );
       }
     }
   }
@@ -344,7 +381,9 @@ function formatListItems(ctx: TripContext): string {
     const entry = countMap.get(key)!;
     if (entry.count === -1) continue;
     const countNote = entry.count > 1 ? ` (×${entry.count})` : "";
-    items.push(`- ${w.value}${entry.details ? ` — ${entry.details}` : ""}${countNote}`);
+    items.push(
+      `- ${w.value}${entry.details ? ` — ${entry.details}` : ""}${countNote}`,
+    );
     countMap.set(key, { ...entry, count: -1 });
   }
   return items.join("\n");
@@ -382,7 +421,9 @@ export function parseActionResponse(rawText: string): ParsedResponse {
     }
 
     // Check for action symbols
-    const symbolMatch = line.match(/^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT)$/);
+    const symbolMatch = line.match(
+      /^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT)$/,
+    );
     if (symbolMatch) {
       const symbol = symbolMatch[1] as AiAction["symbol"];
 
@@ -392,7 +433,8 @@ export function parseActionResponse(rawText: string): ParsedResponse {
         const textLines: string[] = [];
         while (i < lines.length) {
           const nextLine = lines[i].trim();
-          if (/^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT|!NULL)/.test(nextLine)) break;
+          if (/^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT|!NULL)/.test(nextLine))
+            break;
           textLines.push(lines[i]);
           i++;
         }
@@ -409,7 +451,8 @@ export function parseActionResponse(rawText: string): ParsedResponse {
       const jsonLines: string[] = [];
       while (i < lines.length) {
         const nextLine = lines[i].trim();
-        if (/^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT|!NULL)/.test(nextLine)) break;
+        if (/^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT|!NULL)/.test(nextLine))
+          break;
         if (nextLine) jsonLines.push(nextLine);
         i++;
       }
@@ -458,7 +501,10 @@ export function parseActionResponse(rawText: string): ParsedResponse {
 // Execute DB actions
 // ──────────────────────────────────────────────
 
-async function executeActions(tripId: string, actions: AiAction[]): Promise<void> {
+async function executeActions(
+  tripId: string,
+  actions: AiAction[],
+): Promise<void> {
   const client = await db.connect();
   try {
     await client.query("BEGIN");
@@ -490,12 +536,30 @@ async function executeActions(tripId: string, actions: AiAction[]): Promise<void
           const values: unknown[] = [];
           let idx = 1;
 
-          if (d.location !== undefined) { fields.push(`location = $${idx++}`); values.push(d.location); }
-          if (d.details !== undefined) { fields.push(`details = $${idx++}`); values.push(d.details); }
-          if (d.startTime !== undefined) { fields.push(`start_time = $${idx++}`); values.push(d.startTime); }
-          if (d.endTime !== undefined) { fields.push(`end_time = $${idx++}`); values.push(d.endTime); }
-          if (d.cost !== undefined) { fields.push(`cost = $${idx++}`); values.push(Number(d.cost) || 0); }
-          if (d.multiDay !== undefined) { fields.push(`multi_day = $${idx++}`); values.push(Boolean(d.multiDay)); }
+          if (d.location !== undefined) {
+            fields.push(`location = $${idx++}`);
+            values.push(d.location);
+          }
+          if (d.details !== undefined) {
+            fields.push(`details = $${idx++}`);
+            values.push(d.details);
+          }
+          if (d.startTime !== undefined) {
+            fields.push(`start_time = $${idx++}`);
+            values.push(d.startTime);
+          }
+          if (d.endTime !== undefined) {
+            fields.push(`end_time = $${idx++}`);
+            values.push(d.endTime);
+          }
+          if (d.cost !== undefined) {
+            fields.push(`cost = $${idx++}`);
+            values.push(Number(d.cost) || 0);
+          }
+          if (d.multiDay !== undefined) {
+            fields.push(`multi_day = $${idx++}`);
+            values.push(Boolean(d.multiDay));
+          }
 
           if (fields.length === 0) break;
           fields.push("last_modified = NOW()");
@@ -636,9 +700,7 @@ export async function getRecommendedPlaces(
   return result.rows;
 }
 
-export async function getListPlaces(
-  tripId: string,
-): Promise<AiListPlace[]> {
+export async function getListPlaces(tripId: string): Promise<AiListPlace[]> {
   const result = await db.query<AiListPlace>(
     "SELECT * FROM ai_list_places WHERE trip_id = $1 ORDER BY recommended_at DESC",
     [tripId],
@@ -652,14 +714,20 @@ export async function clearRecommendedPlaces(tripId: string): Promise<void> {
   ]);
 }
 
-export async function markPlaceAdded(placeId: string, added = true): Promise<void> {
+export async function markPlaceAdded(
+  placeId: string,
+  added = true,
+): Promise<void> {
   await db.query(
     "UPDATE ai_recommended_places SET added_to_schedule = $2 WHERE id = $1",
     [placeId, added],
   );
 }
 
-export async function markPlaceAddedByName(tripId: string, placeName: string): Promise<void> {
+export async function markPlaceAddedByName(
+  tripId: string,
+  placeName: string,
+): Promise<void> {
   await db.query(
     "UPDATE ai_recommended_places SET added_to_schedule = true WHERE trip_id = $1 AND place_name = $2",
     [tripId, placeName],
@@ -674,7 +742,10 @@ export async function clearListPlaces(tripId: string): Promise<void> {
   await db.query("DELETE FROM ai_list_places WHERE trip_id = $1", [tripId]);
 }
 
-export async function markListPlaceAdded(placeId: string, added = true): Promise<void> {
+export async function markListPlaceAdded(
+  placeId: string,
+  added = true,
+): Promise<void> {
   await db.query(
     "UPDATE ai_list_places SET added_to_schedule = $2 WHERE id = $1",
     [placeId, added],

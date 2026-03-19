@@ -553,7 +553,7 @@ const SuggestionsSidebar = ({
             {(() => {
               const listByCategory: Record<string, UnifiedPlace[]> = {};
               for (const place of listItems) {
-                const cat = place.place_category || "Other";
+                const cat = (place.place_category || "Other").toLowerCase().trim().replace(/s$/, "");
                 if (!listByCategory[cat]) listByCategory[cat] = [];
                 listByCategory[cat].push(place);
               }
