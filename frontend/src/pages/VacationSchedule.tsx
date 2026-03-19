@@ -243,23 +243,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     checkAiStatus();
   }, [token]);
 
-  // Check if questionnaire exists
-  useEffect(() => {
-    if (!token || !tripId) return;
-    const checkQuestionnaire = async () => {
-      try {
-        const res = await authFetch(`${apiURL}/questionnaire/${tripId}`);
-        if (res.ok) {
-          const data = await res.json();
-          setHasQuestionnaire(!!data.questionnaire);
-        }
-      } catch {
-        // silent
-      }
-    };
-    checkQuestionnaire();
-  }, [token, tripId]);
-
   const handleAiButtonClick = () => {
     setAiChatOpen((prev) => {
       if (!prev) setHasUnreadAiResponse(false);
@@ -297,7 +280,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           prompt: aiPrompt.trim() || undefined,
           mode: aiMode,
           categories: aiMode === "list" ? selectedCategories : undefined,
-          previousResponse: sendPreviousResponse || undefined,
+          previousResponse: lastAiResponse || undefined,
           fillInTheRest: aiMode === "schedule" ? fillInTheRest : undefined,
         }),
       });
@@ -337,12 +320,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           setAiItinerary(data.itinerary);
           setSidebarRefreshKey((prev) => prev + 1);
         } else if (aiMode === "schedule") {
-          // Fetch user's list and current schedule to identify what needs adding
-          const [listRes, scheduleRes] = await Promise.all([
-            authFetch(`${apiURL}/list/${tripId}`),
-            authFetch(`${apiURL}/schedule/${tripId}`),
-          ]);
-
           // Mark each +ADD item in the recommendation sidebar as added
           const addedActions = (data.actions ?? []).filter(
             (a) => a.symbol === "+ADD",
@@ -350,12 +327,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           for (const action of addedActions) {
             const placeName = action.data.location as string;
             if (placeName) {
-              fetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
+              authFetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
                 method: "PATCH",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
                 body: JSON.stringify({ placeName }),
               }).catch(() => {});
             }
@@ -463,12 +436,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           // Refresh the want-to-see list UI
           setListUpdateKey((prev) => prev + 1);
           // Mark the corresponding sidebar recommendation as added
-          fetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
+          authFetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
             method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
             body: JSON.stringify({ placeName: item.location }),
           })
             .then(() => {
