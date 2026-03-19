@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, useCallback } from "react";
+import HotkeyTooltip from "./HotkeyTooltip";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import type { AiRecommendedPlace, AiListPlace } from "../types/ai";
@@ -123,6 +124,28 @@ const SuggestionsSidebar = ({
   useEffect(() => {
     fetchPlaces();
   }, [fetchPlaces, refreshKey]);
+
+  const totalCount = schedulePlaces.length + listPlaces.length;
+
+  // Reset open state when suggestions are cleared so the sidebar
+  // doesn't auto-open when new suggestions arrive later.
+  useEffect(() => {
+    if (totalCount === 0) {
+      setOpen(false);
+    }
+  }, [totalCount]);
+
+  useEffect(() => {
+    const handleHotkey = (e: KeyboardEvent) => {
+      if (e.metaKey && e.shiftKey && !e.altKey && !e.ctrlKey && e.key.toLowerCase() === "s") {
+        if (totalCount === 0) return;
+        e.preventDefault();
+        setOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleHotkey);
+    return () => document.removeEventListener("keydown", handleHotkey);
+  }, [totalCount]);
 
   // Group schedule places by date bucket, list places separate
   const scheduleBuckets: Record<string, UnifiedPlace[]> = {};
@@ -272,7 +295,6 @@ const SuggestionsSidebar = ({
     }
   };
 
-  const totalCount = schedulePlaces.length + listPlaces.length;
   if (totalCount === 0) return null;
 
   const accentColor = (source: "schedule" | "list") =>
@@ -449,16 +471,17 @@ const SuggestionsSidebar = ({
 
   return (
     <>
-      <button
-        type="button"
-        className={`${styles.sidebarTab} ${open ? styles.sidebarTabOpen : ""}`}
-        onClick={() => setOpen((prev) => !prev)}
-        aria-label={
-          open
-            ? "Close recommendations sidebar"
-            : "Open recommendations sidebar"
-        }
-      >
+      <HotkeyTooltip label="Toggle Sidebar" shortcut="⌘⇧S" position="top">
+        <button
+          type="button"
+          className={`${styles.sidebarTab} ${open ? styles.sidebarTabOpen : ""}`}
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label={
+            open
+              ? "Close recommendations sidebar"
+              : "Open recommendations sidebar"
+          }
+        >
         {!open ? (
           <svg
             fill="#2fe782"
@@ -481,7 +504,8 @@ const SuggestionsSidebar = ({
             <path d="M8.29289 2.29289C8.68342 1.90237 9.31658 1.90237 9.70711 2.29289L14.2071 6.79289C14.5976 7.18342 14.5976 7.81658 14.2071 8.20711L9.70711 12.7071C9.31658 13.0976 8.68342 13.0976 8.29289 12.7071C7.90237 12.3166 7.90237 11.6834 8.29289 11.2929L11 8.5H1.5C0.947715 8.5 0.5 8.05228 0.5 7.5C0.5 6.94772 0.947715 6.5 1.5 6.5H11L8.29289 3.70711C7.90237 3.31658 7.90237 2.68342 8.29289 2.29289Z" />
           </svg>
         )}
-      </button>
+        </button>
+      </HotkeyTooltip>
       {open && (
         <div className={styles.sidebar}>
           <div className={styles.sidebarHeader}>

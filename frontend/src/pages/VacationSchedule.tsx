@@ -1,4 +1,4 @@
-import { useParams, NavLink, useLocation } from "react-router-dom";
+import { useParams, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   useState,
   useEffect,
@@ -16,6 +16,7 @@ import ReactMarkdown from "react-markdown";
 import aiResPopSound from "../assets/sounds/aiResPop.mp3";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
+import HotkeyTooltip from "../components/HotkeyTooltip";
 const EditCanvas = lazy(() => import("./EditCanvas"));
 const FriendsCountryLogs = lazy(() => import("./FriendsCountryLogs"));
 const ViewVacationSchedule = lazy(() => import("./ViewVacationSchedule"));
@@ -45,6 +46,7 @@ const apiURL = import.meta.env.VITE_API_URL;
 const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const { tripId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const auth = useContext(AuthContext);
   const token = auth?.token;
   const login = auth?.login;
@@ -226,6 +228,40 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [aiChatOpen]);
+
+  useEffect(() => {
+    const handleHotkeys = (e: KeyboardEvent) => {
+      if (!e.metaKey || !e.shiftKey || e.altKey || e.ctrlKey) return;
+      if (!tripId) return;
+      switch (e.key.toLowerCase()) {
+        case "a":
+          e.preventDefault();
+          setAiChatOpen((prev) => {
+            if (!prev) setHasUnreadAiResponse(false);
+            return !prev;
+          });
+          break;
+        case "f":
+          e.preventDefault();
+          navigate(`/vacation/${tripId}/friends`);
+          break;
+        case "v":
+          e.preventDefault();
+          navigate(`/vacation/${tripId}`);
+          break;
+        case "e":
+          e.preventDefault();
+          navigate(`/vacation/${tripId}/edit`);
+          break;
+        case "i":
+          e.preventDefault();
+          navigate(`/vacation/${tripId}/info`);
+          break;
+      }
+    };
+    document.addEventListener("keydown", handleHotkeys);
+    return () => document.removeEventListener("keydown", handleHotkeys);
+  }, [tripId, navigate]);
 
   useEffect(() => {
     if (!token) return;
@@ -600,27 +636,29 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           <div className={styles.costAndAiWrapper}>
             {isEditPage && aiConnected && (
               <div ref={aiChatRef} className={styles.aiButtonWrapper}>
-                <button
-                  type="button"
-                  className={styles.aiButton}
-                  onClick={handleAiButtonClick}
-                  style={{ position: "relative" }}
-                >
-                  Ask AI
-                  {hasUnreadAiResponse && !aiChatOpen && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        top: "-3px",
-                        right: "-3px",
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        backgroundColor: "#ef4444",
-                      }}
-                    />
-                  )}
-                </button>
+                <HotkeyTooltip label="Toggle AI" shortcut="⌘⇧A">
+                  <button
+                    type="button"
+                    className={styles.aiButton}
+                    onClick={handleAiButtonClick}
+                    style={{ position: "relative" }}
+                  >
+                    Ask AI
+                    {hasUnreadAiResponse && !aiChatOpen && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "-3px",
+                          right: "-3px",
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: "#ef4444",
+                        }}
+                      />
+                    )}
+                  </button>
+                </HotkeyTooltip>
                 {aiChatOpen && (
                   <div className={styles.aiChatDropdown}>
                     {/* Mode toggle */}
@@ -1158,23 +1196,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       <nav className={styles.navWrapper}>
         <ul className={`${styles.nav} ${styles.navPills}`} role="tablist">
           <li className={styles.navItem}>
-            <NavLink
-              to={`/vacation/${tripId}`}
-              end
-              className={({ isActive }) =>
-                isActive
-                  ? `${styles.navLink} ${styles.navLinkActive}`
-                  : `${styles.navLink}`
-              }
-              data-toggle="pill"
-            >
-              View
-            </NavLink>
-          </li>
-          {role !== "reader" && (
-            <li className={styles.navItem}>
+            <HotkeyTooltip label="View" shortcut="⌘⇧V">
               <NavLink
-                to={`/vacation/${tripId}/edit`}
+                to={`/vacation/${tripId}`}
+                end
                 className={({ isActive }) =>
                   isActive
                     ? `${styles.navLink} ${styles.navLinkActive}`
@@ -1182,15 +1207,15 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                 }
                 data-toggle="pill"
               >
-                Edit
+                View
               </NavLink>
-            </li>
-          )}
+            </HotkeyTooltip>
+          </li>
           {role !== "reader" && (
             <li className={styles.navItem}>
-              {countryName ? (
+              <HotkeyTooltip label="Edit" shortcut="⌘⇧E">
                 <NavLink
-                  to={`/vacation/${tripId}/friends`}
+                  to={`/vacation/${tripId}/edit`}
                   className={({ isActive }) =>
                     isActive
                       ? `${styles.navLink} ${styles.navLinkActive}`
@@ -1198,27 +1223,48 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                   }
                   data-toggle="pill"
                 >
-                  Friends
+                  Edit
                 </NavLink>
-              ) : (
-                <span className={`${styles.navLink} ${styles.navLinkDisabled}`}>
-                  Friends
-                </span>
-              )}
+              </HotkeyTooltip>
+            </li>
+          )}
+          {role !== "reader" && (
+            <li className={styles.navItem}>
+              <HotkeyTooltip label="Friends" shortcut="⌘⇧F">
+                {countryName ? (
+                  <NavLink
+                    to={`/vacation/${tripId}/friends`}
+                    className={({ isActive }) =>
+                      isActive
+                        ? `${styles.navLink} ${styles.navLinkActive}`
+                        : `${styles.navLink}`
+                    }
+                    data-toggle="pill"
+                  >
+                    Friends
+                  </NavLink>
+                ) : (
+                  <span className={`${styles.navLink} ${styles.navLinkDisabled}`}>
+                    Friends
+                  </span>
+                )}
+              </HotkeyTooltip>
             </li>
           )}
           <li className={styles.navItem}>
-            <NavLink
-              to={`/vacation/${tripId}/info`}
-              className={({ isActive }) =>
-                isActive
-                  ? `${styles.navLink} ${styles.navLinkActive} ${styles.infoPill}`
-                  : `${styles.navLink} ${styles.infoPill}`
-              }
-              data-toggle="pill"
-            >
-              {countryName ? `${countryName} Info` : "\u00A0"}
-            </NavLink>
+            <HotkeyTooltip label="Country Info" shortcut="⌘⇧I">
+              <NavLink
+                to={`/vacation/${tripId}/info`}
+                className={({ isActive }) =>
+                  isActive
+                    ? `${styles.navLink} ${styles.navLinkActive} ${styles.infoPill}`
+                    : `${styles.navLink} ${styles.infoPill}`
+                }
+                data-toggle="pill"
+              >
+                {countryName ? `${countryName} Info` : "\u00A0"}
+              </NavLink>
+            </HotkeyTooltip>
           </li>
         </ul>
       </nav>
