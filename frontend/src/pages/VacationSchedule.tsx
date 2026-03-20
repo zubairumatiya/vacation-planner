@@ -161,7 +161,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       };
       const fmtDate = (iso: string) => {
         const d = new Date(iso);
-        return d.toLocaleString();
+        return d.toLocaleString("en-US", { timeZone: "UTC" });
       };
 
       const rows = [
@@ -995,6 +995,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                               ).toLocaleTimeString("en-US", {
                                                 hour: "numeric",
                                                 minute: "2-digit",
+                                                timeZone: "UTC",
                                               })}
                                               {" – "}
                                               {new Date(
@@ -1002,6 +1003,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                               ).toLocaleTimeString("en-US", {
                                                 hour: "numeric",
                                                 minute: "2-digit",
+                                                timeZone: "UTC",
                                               })}
                                             </span>
                                           )}

@@ -197,8 +197,11 @@ const EditableRow = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        editSubmitButtonRef?.current?.focus();
+      if (e.key === "Enter" && !textAreaFocus) {
+        e.preventDefault();
+        if (!(endError || startError || errMessage !== null || disabled)) {
+          submitEdit(dayContainer, value.id);
+        }
       }
       if (e.key === "Escape") {
         e.preventDefault();
@@ -208,7 +211,7 @@ const EditableRow = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [editLineId, textAreaFocus, dayOfTripRef, endError, startError]);
+  }, [editLineId, textAreaFocus, dayOfTripRef, endError, startError, errMessage, disabled, dayContainer, value.id]);
 
   const submitDelete = async (
     e: React.MouseEvent,

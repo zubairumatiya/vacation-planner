@@ -35,10 +35,10 @@ type UnifiedPlace = {
 
 const formatDateBucket = (dateStr: string): string => {
   const d = new Date(dateStr);
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(d.getUTCDate()).padStart(2, "0");
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  return `${mm}/${dd} - ${dayNames[d.getDay()]}`;
+  return `${mm}/${dd} - ${dayNames[d.getUTCDay()]}`;
 };
 
 const toSingular = (s: string) => s.toLowerCase().trim().replace(/s$/, "");
@@ -327,12 +327,13 @@ const SuggestionsSidebar = ({
             <span style={{ fontSize: "0.7rem", color: GREEN }}>
               {new Date(place.start_time).toLocaleTimeString(
                 "en-US",
-                { hour: "numeric", minute: "2-digit" },
+                { hour: "numeric", minute: "2-digit", timeZone: "UTC" },
               )}
               {" – "}
               {new Date(place.end_time).toLocaleTimeString("en-US", {
                 hour: "numeric",
                 minute: "2-digit",
+                timeZone: "UTC",
               })}
             </span>
           )}

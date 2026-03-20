@@ -93,15 +93,18 @@ export async function chat(
       await executeActions(tripId, dbActions);
       scheduleUpdated = true;
 
-      // Mark matching trip_list items as added
+      // Mark matching trip_list items as added (fuzzy: either name contains the other)
       const addedNames = dbActions
         .filter((a) => a.symbol === "+ADD" && a.data.location)
-        .map((a) => (a.data.location as string).toLowerCase());
+        .map((a) => (a.data.location as string).toLowerCase().trim());
       if (addedNames.length > 0) {
+        const conditions = addedNames
+          .map((_, i) => `LOWER(value) LIKE '%' || $${i + 2} || '%' OR $${i + 2} LIKE '%' || LOWER(value) || '%'`)
+          .join(" OR ");
         await db.query(
           `UPDATE trip_list SET item_added = true
-           WHERE trip_id = $1 AND LOWER(value) = ANY($2)`,
-          [tripId, addedNames],
+           WHERE trip_id = $1 AND (${conditions})`,
+          [tripId, ...addedNames],
         );
       }
     }
@@ -526,6 +529,22 @@ export function parseActionResponse(rawText: string): ParsedResponse {
 }
 
 // ──────────────────────────────────────────────
+// Sanitize AI-generated timestamps
+// ──────────────────────────────────────────────
+
+function sanitizeTimestamp(value: unknown): string | null {
+  if (typeof value !== "string" || !value) return null;
+  // Fix extra colon-separated segment e.g. "T13:00:00:00Z" → "T13:00:00Z"
+  const fixed = value.replace(
+    /T(\d{2}:\d{2}:\d{2}):\d{2}(Z|[+-]\d{2}:\d{2})?$/,
+    "T$1$2",
+  );
+  const d = new Date(fixed);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+// ──────────────────────────────────────────────
 // Execute DB actions
 // ──────────────────────────────────────────────
 
@@ -542,14 +561,16 @@ async function executeActions(
 
       switch (action.symbol) {
         case "+ADD": {
-          if (!d.location || !d.startTime || !d.endTime) break;
+          const addStart = sanitizeTimestamp(d.startTime);
+          const addEnd = sanitizeTimestamp(d.endTime);
+          if (!d.location || !addStart || !addEnd) break;
           await client.query(
             `INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index)
              VALUES ($1, $2, $3, $4, $5, $6, $7, 0)`,
             [
               tripId,
-              d.startTime,
-              d.endTime,
+              addStart,
+              addEnd,
               d.location,
               Number(d.cost) || 0,
               (d.details as string) || "",
@@ -573,12 +594,12 @@ async function executeActions(
             values.push(d.details);
           }
           if (d.startTime !== undefined) {
-            fields.push(`start_time = $${idx++}`);
-            values.push(d.startTime);
+            const ts = sanitizeTimestamp(d.startTime);
+            if (ts) { fields.push(`start_time = $${idx++}`); values.push(ts); }
           }
           if (d.endTime !== undefined) {
-            fields.push(`end_time = $${idx++}`);
-            values.push(d.endTime);
+            const ts = sanitizeTimestamp(d.endTime);
+            if (ts) { fields.push(`end_time = $${idx++}`); values.push(ts); }
           }
           if (d.cost !== undefined) {
             fields.push(`cost = $${idx++}`);
@@ -661,8 +682,8 @@ async function storeRecommendedPlaces(
       tripId,
       item.location,
       item.category || null,
-      item.startTime || null,
-      item.endTime || null,
+      sanitizeTimestamp(item.startTime) || null,
+      sanitizeTimestamp(item.endTime) || null,
       item.cost || 0,
       item.details || null,
     );
