@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useCallback } from "react";
 import HotkeyTooltip from "./HotkeyTooltip";
+import Tooltip from "./Tooltip";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import type { AiRecommendedPlace, AiListPlace } from "../types/ai";
@@ -362,18 +363,18 @@ const SuggestionsSidebar = ({
           position: "relative",
         }}
       >
-        <button
-          type="button"
-          className={styles.sidebarAddButton}
-          onClick={() => handleAddClick(place)}
-          disabled={addingId === place.id}
-          title={
+        <Tooltip label={
             place.added_to_schedule
               ? "Click to unmark"
               : place.source === "list"
                 ? "Add to list"
                 : "Add"
-          }
+          }>
+        <button
+          type="button"
+          className={styles.sidebarAddButton}
+          onClick={() => handleAddClick(place)}
+          disabled={addingId === place.id}
         >
           {place.added_to_schedule
             ? "✓"
@@ -381,6 +382,7 @@ const SuggestionsSidebar = ({
               ? "..."
               : "+"}
         </button>
+        </Tooltip>
         {choiceId === place.id && (
           <div
             style={{
@@ -471,7 +473,7 @@ const SuggestionsSidebar = ({
 
   return (
     <>
-      <HotkeyTooltip label="Toggle Sidebar" shortcut="⌘⇧S" position="top">
+      <HotkeyTooltip label="Toggle Sidebar" shortcut="⌘⇧S" position="top" wrapperStyle={{ position: "fixed", right: open ? 300 : 0, top: "41%", zIndex: 90 }}>
         <button
           type="button"
           className={`${styles.sidebarTab} ${open ? styles.sidebarTabOpen : ""}`}
@@ -562,6 +564,7 @@ const SuggestionsSidebar = ({
                   <span style={{ color: "#aaa" }}>List</span>
                 </span>
               </div>
+              <Tooltip label="Clear all recommendations">
               <button
                 type="button"
                 onClick={handleClear}
@@ -584,10 +587,10 @@ const SuggestionsSidebar = ({
                   e.currentTarget.style.color = "#888";
                   e.currentTarget.style.borderColor = "#555";
                 }}
-                title="Clear all recommendations"
               >
                 {clearing ? "..." : "Clear"}
               </button>
+              </Tooltip>
             </div>
           </div>
           <div className={styles.sidebarList}>

@@ -1,8 +1,4 @@
 .sidebarTab {
-  position: fixed;
-  right: 0;
-  top: 50%;
-  z-index: 90;
   width: 2rem;
   height: 56px;
   background-color: #2a2a2a;
@@ -19,10 +15,6 @@
 
 .sidebarTab:hover {
   background-color: #333;
-}
-
-.sidebarTabOpen {
-  right: 300px;
 }
 
 .sidebar {

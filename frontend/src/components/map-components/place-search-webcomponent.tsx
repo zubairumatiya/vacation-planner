@@ -7,6 +7,7 @@ import type { UniqueIdentifier } from "@dnd-kit/core";
 import { AuthContext } from "../../context/AuthContext";
 import { useParams } from "react-router-dom";
 import refreshFn from "../../utils/refreshFn";
+import Tooltip from "../Tooltip";
 
 const apiURL = import.meta.env.VITE_API_URL;
 const envValue = import.meta.env.VITE_ENVIRONMENT_VALUE;
@@ -389,9 +390,9 @@ const PlaceSearchWebComponent = ({
                         />
                       </button>
                     ) : (
+                      <Tooltip label="Add to Want to See List">
                       <button
                         className={styles.addToListButton}
-                        title={"Add to Want to See List"}
                         onClick={(e) =>
                           handleListAdd(
                             e,
@@ -406,6 +407,7 @@ const PlaceSearchWebComponent = ({
                           className={styles.addToListIcon}
                         />
                       </button>
+                      </Tooltip>
                     )}
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import { getAvatarSrc } from "../utils/avatarUtils";
 import styles from "../styles/FriendsCountryLogs.module.css";
+import Tooltip from "../components/Tooltip";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -267,13 +268,13 @@ export default function FriendsCountryLogs({
       ) : (
         <div className={styles.detailView}>
           <div className={styles.detailNav}>
+            <Tooltip label="Previous Friend">
             <button
               className={styles.navButton}
               disabled={selectedFriendIndex === 0}
               onClick={() =>
                 setSelectedFriendIndex(selectedFriendIndex ?? 0 - 1)
               }
-              title="Previous Friend"
             >
               <svg
                 viewBox="1 0 24 24"
@@ -290,6 +291,7 @@ export default function FriendsCountryLogs({
                 />
               </svg>
             </button>
+            </Tooltip>
             <div className={styles.detailHeader}>
               <Link
                 to={`/user/${selectedFriend.userId}`}
@@ -305,13 +307,13 @@ export default function FriendsCountryLogs({
                 {selectedFriend.firstName} {selectedFriend.lastName}
               </span>
             </div>
+            <Tooltip label="Next Friend">
             <button
               className={styles.navButton}
               disabled={selectedFriendIndex === friendLogs.length - 1}
               onClick={() =>
                 setSelectedFriendIndex(selectedFriendIndex ?? 0 + 1)
               }
-              title="Next Friend"
             >
               <svg
                 viewBox="0 0 22 24"
@@ -328,6 +330,7 @@ export default function FriendsCountryLogs({
                 />
               </svg>
             </button>
+            </Tooltip>
           </div>
           <button
             className={styles.backButton}

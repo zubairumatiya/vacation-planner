@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import styles from "../styles/InboxPanel.module.css";
+import Tooltip from "./Tooltip";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -168,22 +169,24 @@ const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelP
               </span>
               {n.status === "pending" ? (
                 <span className={styles.actions}>
+                  <Tooltip label="Accept">
                   <button
                     type="button"
                     className={styles.acceptBtn}
                     onClick={() => handleAction(n.id, "accepted")}
-                    title="Accept"
                   >
                     ✓
                   </button>
+                  </Tooltip>
+                  <Tooltip label="Decline">
                   <button
                     type="button"
                     className={styles.declineBtn}
                     onClick={() => handleAction(n.id, "declined")}
-                    title="Decline"
                   >
                     ✕
                   </button>
+                  </Tooltip>
                 </span>
               ) : (
                 <span className={styles.resolvedText}>

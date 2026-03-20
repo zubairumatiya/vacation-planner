@@ -9,6 +9,7 @@ import { useContext, useState, useRef, useEffect, useCallback } from "react";
 // import profileIcon from "../assets/icons/profile.svg";
 import ProfileSideBar from "../components/ProfileSideBar";
 import InboxPanel from "../components/InboxPanel";
+import Tooltip from "../components/Tooltip";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -108,15 +109,17 @@ const Header = () => {
 
   return (
     <header className={styles.header}>
-      <Link to="/" title="Home" className={styles.logoLink}>
+      <Tooltip label="Home">
+      <Link to="/" className={styles.logoLink}>
         <img src={vacationPlannerLogo} alt="Vacation Planner" className={styles.logo} />
       </Link>
+      </Tooltip>
       <div className={styles.rightItems}>
         <div className={styles.addTrip}>
+          <Tooltip label="Add a trip">
           <Link
             to="/add-vacation"
             className={styles.iconLink}
-            title="Add a trip"
             aria-label="Add a trip"
           >
             <svg
@@ -133,16 +136,17 @@ const Header = () => {
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </Link>
+          </Tooltip>
         </div>
         <div className={auth?.token ? styles.loggedIn : styles.signInWrapper}>
           {auth?.token ? (
             <div className={styles.profileBtnWrapper}>
+              <Tooltip label="Profile and settings">
               <button
                 ref={buttonRef}
                 className={styles.profileButton}
                 type="button"
                 onClick={handleProfileButtonClick}
-                title="Profile and settings"
                 aria-label="Profile and settings"
               >
                 <svg
@@ -159,6 +163,7 @@ const Header = () => {
                   <circle cx="12" cy="7" r="4" />
                 </svg>
               </button>
+              </Tooltip>
               {unreadCount > 0 && <span className={styles.notificationDot} />}
             </div>
           ) : (

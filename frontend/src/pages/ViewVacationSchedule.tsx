@@ -10,6 +10,7 @@ import {
 } from "../utils/timeHelpers";
 import CustomViewTableComponent from "../components/CustomViewTableComponent";
 import hideArrow from "../assets/icons/arrow-drop.svg";
+import Tooltip from "../components/Tooltip";
 const apiURL = import.meta.env.VITE_API_URL;
 
 const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
@@ -143,13 +144,13 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
   return error != null ? (
     <p>{error}</p>
   ) : (
-    <div className={styles.pageWrapper} tabIndex={-1}>
+    <div className={styles.outerWrapper}>
       <div className={styles.viewToggleContainer}>
+        <Tooltip label="List View">
         <button
           className={`${styles.toggleButton} ${viewMode === "list" ? styles.active : ""}`}
           style={{ display: "flex", alignItems: "center" }}
           onClick={() => setViewMode("list")}
-          title="List View"
         >
           <svg
             viewBox="0 0 24 24"
@@ -166,6 +167,8 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
             />
           </svg>
         </button>
+        </Tooltip>
+        <Tooltip label="Calendar View">
         <button
           className={`${styles.toggleButton} ${viewMode === "calendar" ? styles.active : ""}`}
           style={{ display: "flex", alignItems: "center" }}
@@ -173,7 +176,6 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
             setViewMode("calendar");
             setSelectedCalendarDay(null);
           }}
-          title="Calendar View"
         >
           <svg
             viewBox="0 0 24 24"
@@ -197,8 +199,9 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
             </g>
           </svg>
         </button>
+        </Tooltip>
       </div>
-
+      <div className={styles.pageWrapper} tabIndex={-1}>
       {viewMode === "list" ? (
         days.map((dayObj: DayContainer) => {
           return (
@@ -274,6 +277,7 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
       ) : selectedCalendarDay ? (
         <div className={styles.calendarDayView}>
           <div className={styles.dayNav}>
+            <Tooltip label="Previous Day">
             <button
               className={styles.navButton}
               disabled={
@@ -285,7 +289,6 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
                 );
                 if (idx > 0) setSelectedCalendarDay(days[idx - 1]);
               }}
-              title="Previous Day"
             >
               <svg
                 viewBox="1 0 24 24"
@@ -302,7 +305,9 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
                 />
               </svg>
             </button>
+            </Tooltip>
             <h3>{selectedCalendarDay.label}</h3>
+            <Tooltip label="Next Day">
             <button
               className={styles.navButton}
               disabled={
@@ -316,7 +321,6 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
                 if (idx < days.length - 1)
                   setSelectedCalendarDay(days[idx + 1]);
               }}
-              title="Next Day"
             >
               <svg
                 viewBox="0 0 22 24"
@@ -333,6 +337,7 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
                 />
               </svg>
             </button>
+            </Tooltip>
           </div>
           <button
             className={styles.backButton}
@@ -375,6 +380,7 @@ const ViewVacationSchedule = ({ refreshKey }: { refreshKey: number }) => {
           })}
         </div>
       )}
+      </div>
     </div>
   );
 };

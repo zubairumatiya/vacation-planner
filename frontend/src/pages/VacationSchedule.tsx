@@ -17,6 +17,7 @@ import aiResPopSound from "../assets/sounds/aiResPop.mp3";
 import { ErrorBoundary } from "react-error-boundary";
 import ErrorFallback from "../components/ErrorFallback";
 import HotkeyTooltip from "../components/HotkeyTooltip";
+import Tooltip from "../components/Tooltip";
 const EditCanvas = lazy(() => import("./EditCanvas"));
 const FriendsCountryLogs = lazy(() => import("./FriendsCountryLogs"));
 const ViewVacationSchedule = lazy(() => import("./ViewVacationSchedule"));
@@ -825,6 +826,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     )}
 
                     <div className={styles.aiChatInputRow}>
+                      <Tooltip label="Trip Notes">
                       <button
                         type="button"
                         className={styles.editQuestionnaireButton}
@@ -832,7 +834,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           setShowQuestionnaire(true);
                           setAiChatOpen(false);
                         }}
-                        title="Trip Notes"
                         style={{
                           fontSize: "0.65rem",
                           padding: "0.2rem 0.4rem",
@@ -841,6 +842,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                       >
                         Notes
                       </button>
+                      </Tooltip>
                       <textarea
                         ref={textareaRef}
                         placeholder="Ask AI something..."
@@ -1001,6 +1003,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             {item.details}
                                           </span>
                                         </div>
+                                        <Tooltip label={addedItems.has(idx) ? "Added" : "Add to schedule"}>
                                         <button
                                           type="button"
                                           className={styles.aiAddButton}
@@ -1011,11 +1014,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             addedItems.has(idx) ||
                                             addingItem === idx
                                           }
-                                          title={
-                                            addedItems.has(idx)
-                                              ? "Added"
-                                              : "Add to schedule"
-                                          }
                                         >
                                           {addedItems.has(idx)
                                             ? "✓"
@@ -1023,6 +1021,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                               ? "..."
                                               : "+"}
                                         </button>
+                                        </Tooltip>
                                       </div>
                                     ))}
                                   </div>
@@ -1063,6 +1062,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             {item.details}
                                           </span>
                                         </div>
+                                        <Tooltip label={addedItems.has(idx) ? "Added" : "Add to list"}>
                                         <button
                                           type="button"
                                           className={styles.aiAddButton}
@@ -1073,11 +1073,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             addedItems.has(idx) ||
                                             addingItem === idx
                                           }
-                                          title={
-                                            addedItems.has(idx)
-                                              ? "Added"
-                                              : "Add to list"
-                                          }
                                         >
                                           {addedItems.has(idx)
                                             ? "✓"
@@ -1085,6 +1080,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                               ? "..."
                                               : "+"}
                                         </button>
+                                        </Tooltip>
                                       </div>
                                     ))}
                                   </div>
@@ -1114,9 +1110,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           </div>
           {role === "owner" && (
             <div style={{ position: "relative", marginLeft: "1rem" }}>
+              <Tooltip label="Share">
               <button
                 type="button"
-                title="Share"
                 onClick={() => setSharePanelOpen((prev) => !prev)}
                 className={styles.headerIcon}
               >
@@ -1135,6 +1131,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                   <line x1="12" y1="2" x2="12" y2="15" />
                 </svg>
               </button>
+              </Tooltip>
               {sharePanelOpen && (
                 <div
                   ref={sharePanelRef}
@@ -1155,9 +1152,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               )}
             </div>
           )}
+          <Tooltip label="Export schedule as CSV">
           <button
             type="button"
-            title="Export schedule as CSV"
             onClick={handleExportCsv}
             disabled={csvExporting}
             className={styles.headerIcon}
@@ -1191,12 +1188,13 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </g>
             </svg>
           </button>
+          </Tooltip>
         </header>
       </div>
       <nav className={styles.navWrapper}>
         <ul className={`${styles.nav} ${styles.navPills}`} role="tablist">
           <li className={styles.navItem}>
-            <HotkeyTooltip label="View" shortcut="⌘⇧V">
+            <HotkeyTooltip label="View" shortcut="⌘⇧V" wrapperStyle={{ width: "100%" }} topOffset="43%">
               <NavLink
                 to={`/vacation/${tripId}`}
                 end
@@ -1213,7 +1211,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           </li>
           {role !== "reader" && (
             <li className={styles.navItem}>
-              <HotkeyTooltip label="Edit" shortcut="⌘⇧E">
+              <HotkeyTooltip label="Edit" shortcut="⌘⇧E" wrapperStyle={{ width: "100%" }} topOffset="43%">
                 <NavLink
                   to={`/vacation/${tripId}/edit`}
                   className={({ isActive }) =>
@@ -1230,7 +1228,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           )}
           {role !== "reader" && (
             <li className={styles.navItem}>
-              <HotkeyTooltip label="Friends" shortcut="⌘⇧F">
+              <HotkeyTooltip label="Friends" shortcut="⌘⇧F" wrapperStyle={{ width: "100%" }} topOffset="43%">
                 {countryName ? (
                   <NavLink
                     to={`/vacation/${tripId}/friends`}
@@ -1252,7 +1250,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             </li>
           )}
           <li className={styles.navItem}>
-            <HotkeyTooltip label="Country Info" shortcut="⌘⇧I">
+            <HotkeyTooltip label="Country Info" shortcut="⌘⇧I" wrapperStyle={{ width: "100%" }} topOffset="43%">
               <NavLink
                 to={`/vacation/${tripId}/info`}
                 className={({ isActive }) =>

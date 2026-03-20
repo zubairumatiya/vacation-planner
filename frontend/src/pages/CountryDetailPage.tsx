@@ -4,6 +4,7 @@ import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import styles from "../styles/CountryDetailPage.module.css";
 import TripSidebar from "../components/TripSidebar";
+import Tooltip from "../components/Tooltip";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -459,12 +460,12 @@ const CountryDetailPage = () => {
           </span>
         )}
         {isOwner && !editingMeta && (
+          <Tooltip label="Edit date and days">
           <button
             type="button"
             className={styles.editMetaBtn}
             onClick={openMetaEditor}
             aria-label="Edit date and days"
-            title="Edit date and days"
           >
             <svg
               width="14"
@@ -480,6 +481,7 @@ const CountryDetailPage = () => {
               <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
             </svg>
           </button>
+          </Tooltip>
         )}
         {editingMeta && (
           <div className={styles.metaEditForm}>
@@ -554,12 +556,12 @@ const CountryDetailPage = () => {
           </div>
         )}
         <div className={styles.headerRight}>
+          <Tooltip label="Horizontal layout">
           <button
             type="button"
             className={`${styles.layoutBtn} ${layout === "rows" ? styles.layoutBtnActive : ""}`}
             onClick={() => setLayout("rows")}
             aria-label="Horizontal layout"
-            title="Horizontal layout"
           >
             <svg
               width="16"
@@ -575,12 +577,13 @@ const CountryDetailPage = () => {
               <line x1="1" y1="13" x2="15" y2="13" />
             </svg>
           </button>
+          </Tooltip>
+          <Tooltip label="Column layout">
           <button
             type="button"
             className={`${styles.layoutBtn} ${layout === "columns" ? styles.layoutBtnActive : ""}`}
             onClick={() => setLayout("columns")}
             aria-label="Column layout"
-            title="Column layout"
           >
             <svg
               width="16"
@@ -596,6 +599,7 @@ const CountryDetailPage = () => {
               <line x1="13" y1="1" x2="13" y2="15" />
             </svg>
           </button>
+          </Tooltip>
           {isOwner && (
             <button
               type="button"
@@ -873,7 +877,6 @@ const CountryDetailPage = () => {
                               setNoteText("");
                             }}
                             aria-label="Cancel"
-                            title={"cancel"}
                           >
                             <svg
                               width="18"

@@ -2,6 +2,7 @@ import { useEffect, useState, useContext, useCallback } from "react";
 import { AuthContext } from "../context/AuthContext";
 import refreshFn from "../utils/refreshFn";
 import styles from "../styles/SharePanel.module.css";
+import Tooltip from "./Tooltip";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -276,15 +277,16 @@ const SharePanel = ({ tripId, onClose, onToast }: SharePanelProps) => {
     <div className={styles.container} onClick={(e) => e.stopPropagation()}>
       <div className={styles.header}>
         <span className={styles.title}>Share Trip</span>
+        <Tooltip label="Send/update invitations">
         <button
           type="button"
           className={`${styles.sendBtn} ${!hasChanges || sending ? styles.sendBtnDisabled : ""}`}
           onClick={handleSend}
           disabled={!hasChanges || sending}
-          title="Send/update invitations"
         >
           &#10132;
         </button>
+        </Tooltip>
       </div>
       {loading ? (
         <p className={styles.emptyText}>Loading...</p>

@@ -265,7 +265,6 @@ const ProfilePage = () => {
         <div
           className={`${styles.avatar} ${styles.avatarClickable}`}
           onClick={() => setShowAvatarPicker(true)}
-          title="Change avatar"
         >
           <img src={getAvatarSrc(avatar)} alt="Profile" />
           <span className={styles.avatarEditHint}>Change</span>

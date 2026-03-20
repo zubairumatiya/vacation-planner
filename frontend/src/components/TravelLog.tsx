@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import styles from "../styles/TravelLog.module.css";
+import Tooltip from "./Tooltip";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -414,14 +415,19 @@ const TravelLog = ({
           </div>
         )}
         {!readOnly && (
+          <div style={{ marginLeft: "auto" }}>
+          <Tooltip label="Add country">
           <button
             type="button"
             className={styles.addBtn}
+            style={{ marginLeft: 0 }}
             onClick={() => setShowSearch((prev) => !prev)}
             aria-label="Add country"
           >
             +
           </button>
+          </Tooltip>
+          </div>
         )}
       </div>
 

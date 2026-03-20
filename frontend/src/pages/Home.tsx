@@ -11,6 +11,7 @@ import dropDownIcon from "../assets/icons/arrow-drop-big.svg";
 import SharePanel from "../components/SharePanel";
 import { getAvatarSrc } from "../utils/avatarUtils";
 import { getGuestTrip, hasGuestTrip, clearGuestTrip } from "../utils/guestStorage";
+import Tooltip from "../components/Tooltip";
 
 interface FeedTrip {
   id: string;
@@ -849,13 +850,13 @@ const Home = () => {
                                 {gt.trip.tripName}
                               </h2>
                             </Link>
+                            <Tooltip label="Delete guest trip">
                             <button
                               type="button"
                               onClick={() => {
                                 clearGuestTrip();
                                 setUpdateList((prev) => !prev);
                               }}
-                              title="Delete guest trip"
                               style={{
                                 background: "none",
                                 border: "none",
@@ -867,6 +868,7 @@ const Home = () => {
                             >
                               &times;
                             </button>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
