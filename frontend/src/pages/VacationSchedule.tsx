@@ -89,6 +89,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     "Current Events",
   ]);
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const closeSidebarRef = useRef<(() => void) | null>(null);
   const [scheduleUpdateKey, setScheduleUpdateKey] = useState(0);
   const [listUpdateKey, setListUpdateKey] = useState(0);
   const [viewRefreshKey, setViewRefreshKey] = useState(0);
@@ -238,7 +239,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         case "a":
           e.preventDefault();
           setAiChatOpen((prev) => {
-            if (!prev) setHasUnreadAiResponse(false);
+            if (!prev) {
+              setHasUnreadAiResponse(false);
+              closeSidebarRef.current?.();
+            }
             return !prev;
           });
           break;
@@ -282,7 +286,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
 
   const handleAiButtonClick = () => {
     setAiChatOpen((prev) => {
-      if (!prev) setHasUnreadAiResponse(false);
+      if (!prev) {
+        setHasUnreadAiResponse(false);
+        closeSidebarRef.current?.();
+      }
       return !prev;
     });
   };
@@ -317,7 +324,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           prompt: aiPrompt.trim() || undefined,
           mode: aiMode,
           categories: aiMode === "list" ? selectedCategories : undefined,
-          previousResponse: lastAiResponse || undefined,
+          previousResponse: hasPrompt ? (lastAiResponse || undefined) : undefined,
           fillInTheRest: aiMode === "schedule" ? fillInTheRest : undefined,
         }),
       });
@@ -328,6 +335,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       }
 
       const data: AiChatResponse = await response.json();
+      console.log("[AI] response:", data);
 
       // Store raw model response for conversation continuity
       if (data.rawModelResponse) {
@@ -827,21 +835,21 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
 
                     <div className={styles.aiChatInputRow}>
                       <Tooltip label="Trip Notes">
-                      <button
-                        type="button"
-                        className={styles.editQuestionnaireButton}
-                        onClick={() => {
-                          setShowQuestionnaire(true);
-                          setAiChatOpen(false);
-                        }}
-                        style={{
-                          fontSize: "0.65rem",
-                          padding: "0.2rem 0.4rem",
-                          color: "#ccc",
-                        }}
-                      >
-                        Notes
-                      </button>
+                        <button
+                          type="button"
+                          className={styles.editQuestionnaireButton}
+                          onClick={() => {
+                            setShowQuestionnaire(true);
+                            setAiChatOpen(false);
+                          }}
+                          style={{
+                            fontSize: "0.65rem",
+                            padding: "0.2rem 0.4rem",
+                            color: "#ccc",
+                          }}
+                        >
+                          Notes
+                        </button>
                       </Tooltip>
                       <textarea
                         ref={textareaRef}
@@ -915,7 +923,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               : `Add all ${aiMode === "schedule" ? "recommendations" : "items"}`}
                           </button>
                         )}
-                        {aiMode === "schedule"
+                        {lastAiMode === "schedule"
                           ? (() => {
                               const grouped: Record<
                                 string,
@@ -1003,24 +1011,30 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             {item.details}
                                           </span>
                                         </div>
-                                        <Tooltip label={addedItems.has(idx) ? "Added" : "Add to schedule"}>
-                                        <button
-                                          type="button"
-                                          className={styles.aiAddButton}
-                                          onClick={() =>
-                                            handleAddToSchedule(item, idx)
-                                          }
-                                          disabled={
-                                            addedItems.has(idx) ||
-                                            addingItem === idx
+                                        <Tooltip
+                                          label={
+                                            addedItems.has(idx)
+                                              ? "Added"
+                                              : "Add to schedule"
                                           }
                                         >
-                                          {addedItems.has(idx)
-                                            ? "✓"
-                                            : addingItem === idx
-                                              ? "..."
-                                              : "+"}
-                                        </button>
+                                          <button
+                                            type="button"
+                                            className={styles.aiAddButton}
+                                            onClick={() =>
+                                              handleAddToSchedule(item, idx)
+                                            }
+                                            disabled={
+                                              addedItems.has(idx) ||
+                                              addingItem === idx
+                                            }
+                                          >
+                                            {addedItems.has(idx)
+                                              ? "✓"
+                                              : addingItem === idx
+                                                ? "..."
+                                                : "+"}
+                                          </button>
                                         </Tooltip>
                                       </div>
                                     ))}
@@ -1062,24 +1076,30 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             {item.details}
                                           </span>
                                         </div>
-                                        <Tooltip label={addedItems.has(idx) ? "Added" : "Add to list"}>
-                                        <button
-                                          type="button"
-                                          className={styles.aiAddButton}
-                                          onClick={() =>
-                                            handleAddToSchedule(item, idx)
-                                          }
-                                          disabled={
-                                            addedItems.has(idx) ||
-                                            addingItem === idx
+                                        <Tooltip
+                                          label={
+                                            addedItems.has(idx)
+                                              ? "Added"
+                                              : "Add to list"
                                           }
                                         >
-                                          {addedItems.has(idx)
-                                            ? "✓"
-                                            : addingItem === idx
-                                              ? "..."
-                                              : "+"}
-                                        </button>
+                                          <button
+                                            type="button"
+                                            className={styles.aiAddButton}
+                                            onClick={() =>
+                                              handleAddToSchedule(item, idx)
+                                            }
+                                            disabled={
+                                              addedItems.has(idx) ||
+                                              addingItem === idx
+                                            }
+                                          >
+                                            {addedItems.has(idx)
+                                              ? "✓"
+                                              : addingItem === idx
+                                                ? "..."
+                                                : "+"}
+                                          </button>
                                         </Tooltip>
                                       </div>
                                     ))}
@@ -1108,93 +1128,106 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             </div>
             <h5 className={styles.locationTitle}>{tripLocation}</h5>
           </div>
-          {role === "owner" && (
-            <div style={{ position: "relative", marginLeft: "1rem" }}>
-              <Tooltip label="Share">
+          <div className={styles.headerIcons}>
+            {role === "owner" && (
+              <div
+                style={{
+                  position: "relative",
+                  marginLeft: "1rem",
+                  paddingTop: "6px",
+                }}
+              >
+                <Tooltip label="Share" topOffset="100%">
+                  <button
+                    type="button"
+                    onClick={() => setSharePanelOpen((prev) => !prev)}
+                    className={styles.headerIcon}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="1.3rem"
+                      height="1.3rem"
+                      fill="none"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
+                      <polyline points="16 6 12 2 8 6" />
+                      <line x1="12" y1="2" x2="12" y2="15" />
+                    </svg>
+                  </button>
+                </Tooltip>
+                {sharePanelOpen && (
+                  <div
+                    ref={sharePanelRef}
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      top: "100%",
+                      marginTop: "0.5rem",
+                      zIndex: 100,
+                    }}
+                  >
+                    <SharePanel
+                      tripId={tripId!}
+                      onClose={() => setSharePanelOpen(false)}
+                      onToast={showToast}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            <Tooltip label="Export schedule as CSV" topOffset="80%">
               <button
                 type="button"
-                onClick={() => setSharePanelOpen((prev) => !prev)}
+                onClick={handleExportCsv}
+                disabled={csvExporting}
                 className={styles.headerIcon}
+                style={{
+                  marginLeft: ".5rem",
+                  cursor: csvExporting ? "wait" : undefined,
+                  opacity: csvExporting ? 0.3 : undefined,
+                }}
               >
                 <svg
-                  viewBox="0 0 24 24"
+                  viewBox="0 0 15 15"
                   width="1.2rem"
                   height="1.2rem"
                   fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" y1="2" x2="12" y2="15" />
+                  <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
+                  <g
+                    id="SVGRepo_tracerCarrier"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  ></g>
+                  <g id="SVGRepo_iconCarrier">
+                    {" "}
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M1 1.5C1 0.671573 1.67157 0 2.5 0H10.7071L14 3.29289V13.5C14 14.3284 13.3284 15 12.5 15H2.5C1.67157 15 1 14.3284 1 13.5V1.5ZM2 6H5V7H3V10H5V11H2V6ZM9 6H6V9H8V10H6V11H9V8H7V7H9V6ZM11 6H10V9.70711L11.5 11.2071L13 9.70711V6H12V9.29289L11.5 9.79289L11 9.29289V6Z"
+                      fill="#ffffff"
+                    ></path>{" "}
+                  </g>
                 </svg>
               </button>
-              </Tooltip>
-              {sharePanelOpen && (
-                <div
-                  ref={sharePanelRef}
-                  style={{
-                    position: "absolute",
-                    right: 0,
-                    top: "100%",
-                    marginTop: "0.5rem",
-                    zIndex: 100,
-                  }}
-                >
-                  <SharePanel
-                    tripId={tripId!}
-                    onClose={() => setSharePanelOpen(false)}
-                    onToast={showToast}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-          <Tooltip label="Export schedule as CSV">
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={csvExporting}
-            className={styles.headerIcon}
-            style={{
-              marginLeft: ".5rem",
-              cursor: csvExporting ? "wait" : undefined,
-              opacity: csvExporting ? 0.3 : undefined,
-            }}
-          >
-            <svg
-              viewBox="0 0 15 15"
-              width="1.2rem"
-              height="1.2rem"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g id="SVGRepo_bgCarrier" strokeWidth="0"></g>
-              <g
-                id="SVGRepo_tracerCarrier"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              ></g>
-              <g id="SVGRepo_iconCarrier">
-                {" "}
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M1 1.5C1 0.671573 1.67157 0 2.5 0H10.7071L14 3.29289V13.5C14 14.3284 13.3284 15 12.5 15H2.5C1.67157 15 1 14.3284 1 13.5V1.5ZM2 6H5V7H3V10H5V11H2V6ZM9 6H6V9H8V10H6V11H9V8H7V7H9V6ZM11 6H10V9.70711L11.5 11.2071L13 9.70711V6H12V9.29289L11.5 9.79289L11 9.29289V6Z"
-                  fill="#ffffff"
-                ></path>{" "}
-              </g>
-            </svg>
-          </button>
-          </Tooltip>
+            </Tooltip>
+          </div>
         </header>
       </div>
       <nav className={styles.navWrapper}>
         <ul className={`${styles.nav} ${styles.navPills}`} role="tablist">
           <li className={styles.navItem}>
-            <HotkeyTooltip label="View" shortcut="⌘⇧V" wrapperStyle={{ width: "100%" }} topOffset="43%">
+            <HotkeyTooltip
+              label="View"
+              shortcut="⌘⇧V"
+              wrapperStyle={{ width: "100%" }}
+              topOffset="43%"
+            >
               <NavLink
                 to={`/vacation/${tripId}`}
                 end
@@ -1211,7 +1244,12 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           </li>
           {role !== "reader" && (
             <li className={styles.navItem}>
-              <HotkeyTooltip label="Edit" shortcut="⌘⇧E" wrapperStyle={{ width: "100%" }} topOffset="43%">
+              <HotkeyTooltip
+                label="Edit"
+                shortcut="⌘⇧E"
+                wrapperStyle={{ width: "100%" }}
+                topOffset="43%"
+              >
                 <NavLink
                   to={`/vacation/${tripId}/edit`}
                   className={({ isActive }) =>
@@ -1228,7 +1266,12 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           )}
           {role !== "reader" && (
             <li className={styles.navItem}>
-              <HotkeyTooltip label="Friends" shortcut="⌘⇧F" wrapperStyle={{ width: "100%" }} topOffset="43%">
+              <HotkeyTooltip
+                label="Friends"
+                shortcut="⌘⇧F"
+                wrapperStyle={{ width: "100%" }}
+                topOffset="43%"
+              >
                 {countryName ? (
                   <NavLink
                     to={`/vacation/${tripId}/friends`}
@@ -1242,7 +1285,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     Friends
                   </NavLink>
                 ) : (
-                  <span className={`${styles.navLink} ${styles.navLinkDisabled}`}>
+                  <span
+                    className={`${styles.navLink} ${styles.navLinkDisabled}`}
+                  >
                     Friends
                   </span>
                 )}
@@ -1250,7 +1295,12 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             </li>
           )}
           <li className={styles.navItem}>
-            <HotkeyTooltip label="Country Info" shortcut="⌘⇧I" wrapperStyle={{ width: "100%" }} topOffset="43%">
+            <HotkeyTooltip
+              label="Country Info"
+              shortcut="⌘⇧I"
+              wrapperStyle={{ width: "100%" }}
+              topOffset="43%"
+            >
               <NavLink
                 to={`/vacation/${tripId}/info`}
                 className={({ isActive }) =>
@@ -1282,6 +1332,8 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                 showQuestionnaire={showQuestionnaire}
                 setShowQuestionnaire={setShowQuestionnaire}
                 sidebarRefreshKey={sidebarRefreshKey}
+                closeSidebarRef={closeSidebarRef}
+                onSidebarOpen={() => setAiChatOpen(false)}
                 scheduleUpdateKey={scheduleUpdateKey}
                 listUpdateKey={listUpdateKey}
                 onQuestionnaireSubmitted={handleQuestionnaireSubmitted}

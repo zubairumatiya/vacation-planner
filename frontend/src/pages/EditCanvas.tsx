@@ -93,6 +93,8 @@ const EditCanvas = ({
   scheduleUpdateKey,
   listUpdateKey,
   onQuestionnaireSubmitted,
+  closeSidebarRef,
+  onSidebarOpen,
 }: {
   setCostTotal: React.Dispatch<React.SetStateAction<number>>;
   role: string;
@@ -102,6 +104,8 @@ const EditCanvas = ({
   scheduleUpdateKey: number;
   listUpdateKey: number;
   onQuestionnaireSubmitted: () => void;
+  closeSidebarRef: React.MutableRefObject<(() => void) | null>;
+  onSidebarOpen: () => void;
 }) => {
   const { tripId } = useParams();
   const [loading, setLoading] = useState<boolean>(true);
@@ -2161,6 +2165,8 @@ const EditCanvas = ({
           refreshKey={parentRefreshKey}
           onAddToSchedule={handleSidebarAddToSchedule}
           onAddToList={handleSidebarAddToList}
+          closeSidebarRef={closeSidebarRef}
+          onSidebarOpen={onSidebarOpen}
         />
       )}
     </>

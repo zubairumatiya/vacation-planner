@@ -92,15 +92,43 @@ export async function chat(
     if (dbActions.length > 0) {
       await executeActions(tripId, dbActions);
       scheduleUpdated = true;
+
+      // Mark matching trip_list items as added
+      const addedNames = dbActions
+        .filter((a) => a.symbol === "+ADD" && a.data.location)
+        .map((a) => (a.data.location as string).toLowerCase());
+      if (addedNames.length > 0) {
+        await db.query(
+          `UPDATE trip_list SET item_added = true
+           WHERE trip_id = $1 AND LOWER(value) = ANY($2)`,
+          [tripId, addedNames],
+        );
+      }
     }
   }
 
   // Store itinerary items for dedup tracking
-  if (parsed.itinerary.length > 0) {
+  // In schedule mode, only store ?SUGGEST items (not +ADD, which come from the user's list)
+  const itemsToStore =
+    mode === "schedule"
+      ? parsed.actions
+          .filter((a) => a.symbol === "?SUGGEST")
+          .map((a) => ({
+            location: (a.data.location as string) ?? "",
+            details: (a.data.details as string) ?? "",
+            category: (a.data.category as string) ?? "",
+            startTime: (a.data.startTime as string) ?? "",
+            endTime: (a.data.endTime as string) ?? "",
+            cost: Number(a.data.cost) || 0,
+            multiDay: Boolean(a.data.multiDay),
+          }))
+      : parsed.itinerary;
+
+  if (itemsToStore.length > 0) {
     if (mode === "list") {
-      await storeListPlaces(tripId, parsed.itinerary);
+      await storeListPlaces(tripId, itemsToStore);
     } else {
-      await storeRecommendedPlaces(tripId, parsed.itinerary);
+      await storeRecommendedPlaces(tripId, itemsToStore);
     }
   }
 

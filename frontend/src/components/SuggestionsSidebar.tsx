@@ -16,6 +16,8 @@ type SuggestionsSidebarProps = {
   refreshKey: number;
   onAddToSchedule: (place: AiRecommendedPlace) => Promise<void>;
   onAddToList: (placeName: string, details: string | null) => Promise<void>;
+  closeSidebarRef: React.MutableRefObject<(() => void) | null>;
+  onSidebarOpen: () => void;
 };
 
 type UnifiedPlace = {
@@ -59,6 +61,8 @@ const SuggestionsSidebar = ({
   refreshKey,
   onAddToSchedule,
   onAddToList,
+  closeSidebarRef,
+  onSidebarOpen,
 }: SuggestionsSidebarProps) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -67,6 +71,7 @@ const SuggestionsSidebar = ({
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const loggingOutRef = auth?.loggingOutRef;
   const [open, setOpen] = useState(false);
+  closeSidebarRef.current = () => setOpen(false);
   const [schedulePlaces, setSchedulePlaces] = useState<AiRecommendedPlace[]>([]);
   const [listPlaces, setListPlaces] = useState<AiListPlace[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -141,7 +146,10 @@ const SuggestionsSidebar = ({
       if (e.metaKey && e.shiftKey && !e.altKey && !e.ctrlKey && e.key.toLowerCase() === "s") {
         if (totalCount === 0) return;
         e.preventDefault();
-        setOpen((prev) => !prev);
+        setOpen((prev) => {
+          if (!prev) onSidebarOpen();
+          return !prev;
+        });
       }
     };
     document.addEventListener("keydown", handleHotkey);
@@ -477,7 +485,12 @@ const SuggestionsSidebar = ({
         <button
           type="button"
           className={`${styles.sidebarTab} ${open ? styles.sidebarTabOpen : ""}`}
-          onClick={() => setOpen((prev) => !prev)}
+          onClick={() =>
+            setOpen((prev) => {
+              if (!prev) onSidebarOpen();
+              return !prev;
+            })
+          }
           aria-label={
             open
               ? "Close recommendations sidebar"

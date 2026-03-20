@@ -72,6 +72,9 @@
     color 0.15s,
     border-color 0.15s;
 }
+.headerIcons {
+  display: flex;
+}
 .navPills .navLink:hover {
   color: #ddd;
   border-color: #666;
