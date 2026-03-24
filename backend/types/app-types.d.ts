@@ -445,6 +445,17 @@ export interface UserCountry {
   visibility: "public" | "friends" | "private";
   visit_date: string | null;
   num_days: number | null;
+  times_visited: number;
+  is_native: boolean;
+}
+
+export interface UserCountryTrip {
+  id: string;
+  user_country_id: string;
+  trip_number: number;
+  visit_date: string | null;
+  num_days: number | null;
+  created_at: Date;
 }
 
 export interface TravelLogResponse {
@@ -455,12 +466,30 @@ export interface AddCountryBody {
   countryId: number;
   visitDate?: string;
   numDays?: number;
+  isNative?: boolean;
+  timesVisited?: number;
+  trips?: { visitDate?: string; numDays?: number }[];
 }
 
 export interface UpdateVisibilityBody {
   visibility?: "public" | "friends" | "private";
   visitDate?: string | null;
   numDays?: number | null;
+  isNative?: boolean;
+}
+
+export interface AddTripBody {
+  visitDate?: string;
+  numDays?: number;
+}
+
+export interface UpdateTripBody {
+  visitDate?: string | null;
+  numDays?: number | null;
+}
+
+export interface CountryTripIdParam extends ParamsDictionary {
+  tripId: string;
 }
 
 export interface CountryIdParam extends ParamsDictionary {
@@ -501,6 +530,7 @@ export interface UpdatePlaceBody {
 export interface CountryDetailResponse {
   userCountry: UserCountry & { user_id: string; first_name: string; last_name: string };
   places: CountryPlace[];
+  trips: UserCountryTrip[];
   isOwner: boolean;
 }
 
@@ -546,6 +576,8 @@ export interface FriendCountryLog {
   user_country_id: string;
   visit_date: string | null;
   num_days: number | null;
+  times_visited: number;
+  is_native: boolean;
   user_id: string;
   username: string;
   first_name: string;

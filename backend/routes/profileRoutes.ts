@@ -42,6 +42,10 @@ import {
   FriendCountryLog,
   FriendCountryLogsResponse,
   CountryNameParam,
+  UserCountryTrip,
+  AddTripBody,
+  UpdateTripBody,
+  CountryTripIdParam,
 } from "../types/app-types.js";
 
 // GET /profile - get current user's profile
@@ -375,6 +379,8 @@ router.get(
           uc.id AS user_country_id,
           uc.visit_date,
           uc.num_days,
+          uc.times_visited,
+          uc.is_native,
           u.id AS user_id,
           u.username,
           u.first_name,
@@ -614,7 +620,7 @@ router.get(
           [targetId],
         ),
         db.query<UserCountry>(
-          `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days
+          `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days, uc.times_visited, uc.is_native
            FROM user_countries uc
            JOIN countries c ON c.id = uc.country_id
            WHERE uc.user_id = $1 AND uc.visibility IN ('public', 'friends')
@@ -878,7 +884,7 @@ router.get(
     try {
       const userId = req.user.id;
       const result: QueryResult<UserCountry> = await db.query(
-        `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days
+        `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days, uc.times_visited, uc.is_native
          FROM user_countries uc
          JOIN countries c ON c.id = uc.country_id
          WHERE uc.user_id = $1
@@ -916,7 +922,7 @@ router.get(
       if (isFriend) {
         // Friends can see public and friends-only countries
         result = await db.query(
-          `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days
+          `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days, uc.times_visited, uc.is_native
            FROM user_countries uc
            JOIN countries c ON c.id = uc.country_id
            WHERE uc.user_id = $1 AND uc.visibility IN ('public', 'friends')
@@ -945,9 +951,8 @@ router.post(
   ) => {
     try {
       const userId = req.user.id;
-      const { countryId, visitDate, numDays } = req.body;
+      const { countryId, visitDate, numDays, isNative, timesVisited, trips } = req.body;
 
-      // Normalize month-only date (YYYY-MM) to first of month
       const normalizedDate = visitDate
         ? visitDate.length === 7 ? `${visitDate}-01` : visitDate
         : null;
@@ -962,31 +967,110 @@ router.post(
         return;
       }
 
-      const result = await db.query(
-        `INSERT INTO user_countries (user_id, country_id, visit_date, num_days)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (user_id, country_id) DO NOTHING
-         RETURNING id, country_id, visibility, visit_date, num_days`,
-        [userId, countryId, normalizedDate, numDays || null],
+      // Check if user already has this country
+      const existing = await db.query(
+        "SELECT id, times_visited FROM user_countries WHERE user_id = $1 AND country_id = $2",
+        [userId, countryId],
       );
 
-      if (result.rows.length === 0) {
-        res.status(409).json({ message: "Country already in travel log" });
-        return;
-      }
-
       const country = countryCheck.rows[0];
-      res.status(201).json({
-        country: {
-          id: result.rows[0].id,
-          country_id: country.id,
-          country_name: country.name,
-          continent: country.continent,
-          visibility: result.rows[0].visibility,
-          visit_date: result.rows[0].visit_date,
-          num_days: result.rows[0].num_days,
-        },
-      });
+
+      if (existing.rows.length > 0) {
+        // Country already exists — add another trip
+        const uc = existing.rows[0];
+        const newTripNumber = uc.times_visited + 1;
+
+        const client = await db.connect();
+        try {
+          await client.query("BEGIN");
+          await client.query(
+            "UPDATE user_countries SET times_visited = times_visited + 1, visit_date = COALESCE($1, visit_date), num_days = COALESCE($2, num_days) WHERE id = $3",
+            [normalizedDate, numDays || null, uc.id],
+          );
+          await client.query(
+            "INSERT INTO user_country_trips (user_country_id, trip_number, visit_date, num_days) VALUES ($1, $2, $3, $4)",
+            [uc.id, newTripNumber, normalizedDate, numDays || null],
+          );
+          await client.query("COMMIT");
+        } catch (err) {
+          await client.query("ROLLBACK");
+          throw err;
+        } finally {
+          client.release();
+        }
+
+        const updated = await db.query(
+          `SELECT uc.id, uc.country_id, c.name AS country_name, c.continent, uc.visibility, uc.visit_date, uc.num_days, uc.times_visited, uc.is_native
+           FROM user_countries uc JOIN countries c ON c.id = uc.country_id WHERE uc.id = $1`,
+          [uc.id],
+        );
+        res.status(200).json({ country: updated.rows[0] });
+      } else {
+        // New country
+        const tv = timesVisited || 1;
+        const native = isNative || false;
+
+        const client = await db.connect();
+        try {
+          await client.query("BEGIN");
+          const result = await client.query(
+            `INSERT INTO user_countries (user_id, country_id, visit_date, num_days, times_visited, is_native)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id, country_id, visibility, visit_date, num_days, times_visited, is_native`,
+            [userId, countryId, normalizedDate, numDays || null, tv, native],
+          );
+          const ucId = result.rows[0].id;
+
+          if (trips && trips.length > 0) {
+            for (let i = 0; i < trips.length; i++) {
+              const trip = trips[i];
+              const tripDate = trip.visitDate
+                ? trip.visitDate.length === 7 ? `${trip.visitDate}-01` : trip.visitDate
+                : null;
+              await client.query(
+                "INSERT INTO user_country_trips (user_country_id, trip_number, visit_date, num_days) VALUES ($1, $2, $3, $4)",
+                [ucId, i + 1, tripDate, trip.numDays || null],
+              );
+            }
+            // Update denormalized cache from newest trip
+            const newest = trips[trips.length - 1];
+            const newestDate = newest.visitDate
+              ? newest.visitDate.length === 7 ? `${newest.visitDate}-01` : newest.visitDate
+              : null;
+            await client.query(
+              "UPDATE user_countries SET visit_date = $1, num_days = $2 WHERE id = $3",
+              [newestDate || normalizedDate, newest.numDays || numDays || null, ucId],
+            );
+          } else {
+            // Single trip (trip 1)
+            await client.query(
+              "INSERT INTO user_country_trips (user_country_id, trip_number, visit_date, num_days) VALUES ($1, 1, $2, $3)",
+              [ucId, normalizedDate, numDays || null],
+            );
+          }
+
+          await client.query("COMMIT");
+
+          res.status(201).json({
+            country: {
+              id: result.rows[0].id,
+              country_id: country.id,
+              country_name: country.name,
+              continent: country.continent,
+              visibility: result.rows[0].visibility,
+              visit_date: result.rows[0].visit_date,
+              num_days: result.rows[0].num_days,
+              times_visited: result.rows[0].times_visited,
+              is_native: result.rows[0].is_native,
+            },
+          });
+        } catch (err) {
+          await client.query("ROLLBACK");
+          throw err;
+        } finally {
+          client.release();
+        }
+      }
     } catch (err) {
       next(err);
     }
@@ -1030,6 +1114,11 @@ router.patch(
       if (numDays !== undefined) {
         sets.push(`num_days = $${idx++}`);
         vals.push(numDays);
+      }
+
+      if (req.body.isNative !== undefined) {
+        sets.push(`is_native = $${idx++}`);
+        vals.push(req.body.isNative);
       }
 
       if (sets.length === 0) {
@@ -1091,7 +1180,7 @@ router.get(
       // Get the user_country with user info and country name
       const ucResult = await db.query(
         `SELECT uc.id, uc.user_id, uc.country_id, c.name AS country_name, c.continent,
-                uc.visibility, uc.visit_date, uc.num_days,
+                uc.visibility, uc.visit_date, uc.num_days, uc.times_visited, uc.is_native,
                 u.first_name, u.last_name
          FROM user_countries uc
          JOIN countries c ON c.id = uc.country_id
@@ -1130,11 +1219,213 @@ router.get(
         [userCountryId],
       );
 
+      // Get trips
+      const tripsResult: QueryResult<UserCountryTrip> = await db.query(
+        `SELECT id, user_country_id, trip_number, visit_date, num_days, created_at
+         FROM user_country_trips WHERE user_country_id = $1
+         ORDER BY trip_number DESC`,
+        [userCountryId],
+      );
+
       res.status(200).json({
         userCountry: uc,
         places: placesResult.rows,
+        trips: tripsResult.rows,
         isOwner,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /travel-log/:countryId/trips - add a new trip to an existing country
+router.post(
+  "/travel-log/:countryId/trips",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<AddTripBody, unknown, CountryIdParam>,
+    res: TypedResponse<{ trip: UserCountryTrip } | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const { visitDate, numDays } = req.body;
+      const normalizedDate = visitDate
+        ? visitDate.length === 7 ? `${visitDate}-01` : visitDate
+        : null;
+
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        const ucCheck = await client.query(
+          "SELECT id, times_visited FROM user_countries WHERE id = $1 AND user_id = $2 FOR UPDATE",
+          [req.params.countryId, userId],
+        );
+        if (ucCheck.rows.length === 0) {
+          await client.query("ROLLBACK");
+          res.status(404).json({ message: "Country not found" });
+          return;
+        }
+        const uc = ucCheck.rows[0];
+        const newTripNumber = uc.times_visited + 1;
+
+        const tripResult = await client.query<UserCountryTrip>(
+          "INSERT INTO user_country_trips (user_country_id, trip_number, visit_date, num_days) VALUES ($1, $2, $3, $4) RETURNING *",
+          [uc.id, newTripNumber, normalizedDate, numDays || null],
+        );
+
+        await client.query(
+          "UPDATE user_countries SET times_visited = $1, visit_date = COALESCE($2, visit_date), num_days = COALESCE($3, num_days) WHERE id = $4",
+          [newTripNumber, normalizedDate, numDays || null, uc.id],
+        );
+        await client.query("COMMIT");
+        res.status(201).json({ trip: tripResult.rows[0] });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /travel-log/trips/:tripId - update a specific trip
+router.patch(
+  "/travel-log/trips/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<UpdateTripBody, unknown, CountryTripIdParam>,
+    res: TypedResponse<{ trip: UserCountryTrip } | MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+      const { visitDate, numDays } = req.body;
+
+      // Verify ownership
+      const ownerCheck = await db.query(
+        `SELECT t.id, t.user_country_id, t.trip_number FROM user_country_trips t
+         JOIN user_countries uc ON uc.id = t.user_country_id
+         WHERE t.id = $1 AND uc.user_id = $2`,
+        [req.params.tripId, userId],
+      );
+      if (ownerCheck.rows.length === 0) {
+        res.status(403).json({ message: "Not authorized" });
+        return;
+      }
+
+      const sets: string[] = [];
+      const vals: unknown[] = [];
+      let idx = 1;
+
+      if (visitDate !== undefined) {
+        const normalizedDate = visitDate
+          ? visitDate.length === 7 ? `${visitDate}-01` : visitDate
+          : null;
+        sets.push(`visit_date = $${idx++}`);
+        vals.push(normalizedDate);
+      }
+      if (numDays !== undefined) {
+        sets.push(`num_days = $${idx++}`);
+        vals.push(numDays);
+      }
+
+      if (sets.length === 0) {
+        res.status(400).json({ message: "No fields to update" });
+        return;
+      }
+
+      vals.push(req.params.tripId);
+      const result = await db.query<UserCountryTrip>(
+        `UPDATE user_country_trips SET ${sets.join(", ")} WHERE id = $${idx} RETURNING *`,
+        vals,
+      );
+
+      // Update denormalized cache on user_countries from newest trip
+      const ucId = ownerCheck.rows[0].user_country_id;
+      const newest = await db.query(
+        "SELECT visit_date, num_days FROM user_country_trips WHERE user_country_id = $1 ORDER BY trip_number DESC LIMIT 1",
+        [ucId],
+      );
+      if (newest.rows.length > 0) {
+        await db.query(
+          "UPDATE user_countries SET visit_date = $1, num_days = $2 WHERE id = $3",
+          [newest.rows[0].visit_date, newest.rows[0].num_days, ucId],
+        );
+      }
+
+      res.status(200).json({ trip: result.rows[0] });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// DELETE /travel-log/:countryId/trips/:tripId - delete a specific trip
+router.delete(
+  "/travel-log/:countryId/trips/:tripId",
+  ensureLoggedIn,
+  async (
+    req: TypedRequest<unknown, unknown, CountryIdParam & CountryTripIdParam>,
+    res: TypedResponse<MessageResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const userId = req.user.id;
+
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        const ucCheck = await client.query(
+          "SELECT id, times_visited FROM user_countries WHERE id = $1 AND user_id = $2 FOR UPDATE",
+          [req.params.countryId, userId],
+        );
+        if (ucCheck.rows.length === 0) {
+          await client.query("ROLLBACK");
+          res.status(404).json({ message: "Country not found" });
+          return;
+        }
+
+        await client.query(
+          "DELETE FROM user_country_trips WHERE id = $1 AND user_country_id = $2",
+          [req.params.tripId, req.params.countryId],
+        );
+
+        const remaining = await client.query(
+          "SELECT COUNT(*)::int as cnt FROM user_country_trips WHERE user_country_id = $1",
+          [req.params.countryId],
+        );
+
+        if (remaining.rows[0].cnt === 0) {
+          // No trips left — delete the entire country entry
+          await client.query("DELETE FROM user_countries WHERE id = $1", [req.params.countryId]);
+          await client.query("COMMIT");
+          res.status(200).json({ message: "Country removed (no trips left)" });
+          return;
+        }
+
+        // Update times_visited and denormalized cache
+        const newest = await client.query(
+          "SELECT visit_date, num_days FROM user_country_trips WHERE user_country_id = $1 ORDER BY trip_number DESC LIMIT 1",
+          [req.params.countryId],
+        );
+        await client.query(
+          "UPDATE user_countries SET times_visited = $1, visit_date = $2, num_days = $3 WHERE id = $4",
+          [remaining.rows[0].cnt, newest.rows[0].visit_date, newest.rows[0].num_days, req.params.countryId],
+        );
+
+        await client.query("COMMIT");
+        res.status(200).json({ message: "Trip removed" });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
     } catch (err) {
       next(err);
     }

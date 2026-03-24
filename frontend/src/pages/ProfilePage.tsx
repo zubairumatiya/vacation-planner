@@ -32,6 +32,8 @@ interface UserCountry {
   visibility: "public" | "friends" | "private";
   visitDate: string | null;
   numDays: number | null;
+  timesVisited: number;
+  isNative: boolean;
 }
 
 const mapUserCountry = (raw: Record<string, unknown>): UserCountry => ({
@@ -42,6 +44,8 @@ const mapUserCountry = (raw: Record<string, unknown>): UserCountry => ({
   visibility: raw.visibility as "public" | "friends" | "private",
   visitDate: (raw.visit_date as string) || null,
   numDays: (raw.num_days as number) ?? null,
+  timesVisited: (raw.times_visited as number) ?? 1,
+  isNative: (raw.is_native as boolean) ?? false,
 });
 
 const mapFollowUser = (raw: Record<string, unknown>): FollowUser => ({

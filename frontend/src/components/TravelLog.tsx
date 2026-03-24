@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Fragment } from "react";
 import { Link } from "react-router-dom";
 import styles from "../styles/TravelLog.module.css";
 import Tooltip from "./Tooltip";
+import { getVisitCountTextColor, formatVisitCount } from "../utils/visitCountColors";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -13,6 +14,8 @@ interface UserCountry {
   visibility: "public" | "friends" | "private";
   visitDate: string | null;
   numDays: number | null;
+  timesVisited: number;
+  isNative: boolean;
 }
 
 interface CountrySuggestion {
@@ -29,6 +32,8 @@ const mapUserCountry = (raw: Record<string, unknown>): UserCountry => ({
   visibility: raw.visibility as "public" | "friends" | "private",
   visitDate: (raw.visit_date as string) || null,
   numDays: (raw.num_days as number) ?? null,
+  timesVisited: (raw.times_visited as number) ?? 1,
+  isNative: (raw.is_native as boolean) ?? false,
 });
 
 const CONTINENTS = [
@@ -152,6 +157,11 @@ const TravelLog = ({
   const [visitMonth, setVisitMonth] = useState("");
   const [visitYear, setVisitYear] = useState("");
   const [numDays, setNumDays] = useState("");
+  const [isNative, setIsNative] = useState(false);
+  const [timesVisited, setTimesVisited] = useState(1);
+  const [tripDetails, setTripDetails] = useState<{visitMonth: string; visitYear: string; numDays: string}[]>([]);
+  const [expandedCountryId, setExpandedCountryId] = useState<string | null>(null);
+  const [expandedTrips, setExpandedTrips] = useState<{tripNumber: number; visitDate: string | null; numDays: number | null}[]>([]);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -194,17 +204,7 @@ const TravelLog = ({
           );
           if (res.ok) {
             const data = await res.json();
-            // Filter out already-added countries
-            const existingIds = new Set(countries.map((c) => c.countryId));
-            setSuggestions(
-              (
-                data.countries as {
-                  id: number;
-                  name: string;
-                  continent: string;
-                }[]
-              ).filter((c) => !existingIds.has(c.id)),
-            );
+            setSuggestions(data.countries as { id: number; name: string; continent: string; }[]);
           }
         } catch {
           // handled
@@ -247,45 +247,92 @@ const TravelLog = ({
   };
 
   const selectCountry = (suggestion: CountrySuggestion) => {
+    const existing = countries.find((c) => c.countryId === suggestion.id);
     setPendingCountry(suggestion);
     setVisitMonth("");
     setVisitYear("");
     setNumDays("");
+    setIsNative(false);
+    if (existing) {
+      // Already in travel log — adding another trip
+      setTimesVisited(existing.timesVisited + 1);
+      setTripDetails([]);
+    } else {
+      setTimesVisited(1);
+      setTripDetails([]);
+    }
     setSearchQuery("");
     setSuggestions([]);
   };
 
   const confirmAddCountry = async () => {
     if (!pendingCountry) return;
+    const existing = countries.find((c) => c.countryId === pendingCountry.id);
+
     try {
-      const res = await authFetch(`${apiUrl}/travel-log`, {
-        method: "POST",
-        body: JSON.stringify({
-          countryId: pendingCountry.id,
-          visitDate:
-            visitMonth && visitYear ? `${visitYear}-${visitMonth}` : undefined,
-          numDays: numDays ? parseInt(numDays) : undefined,
-        }),
-      });
-      if (res.ok || res.status === 201) {
-        const data = await res.json();
-        const newCountry = mapUserCountry(
-          data.country as Record<string, unknown>,
-        );
-        setCountries((prev) =>
-          [...prev, newCountry].sort((a, b) => {
-            if (a.continent !== b.continent)
-              return a.continent.localeCompare(b.continent);
-            return a.countryName.localeCompare(b.countryName);
+      if (existing) {
+        // Add another trip to existing country
+        const res = await authFetch(`${apiUrl}/travel-log/${existing.id}/trips`, {
+          method: "POST",
+          body: JSON.stringify({
+            visitDate: visitMonth && visitYear ? `${visitYear}-${visitMonth}` : undefined,
+            numDays: numDays ? parseInt(numDays) : undefined,
           }),
-        );
-        setOpenContinents((prev) => new Set(prev).add(newCountry.continent));
+        });
+        if (res.ok || res.status === 201) {
+          // Re-fetch updated country data
+          const logRes = await authFetch(`${apiUrl}/travel-log`);
+          if (logRes.ok) {
+            const data = await logRes.json();
+            setCountries(
+              (data.countries as Record<string, unknown>[]).map(mapUserCountry),
+            );
+          }
+        }
+      } else {
+        // New country
+        const trips = isNative ? undefined :
+          timesVisited > 1
+            ? tripDetails.map((t) => ({
+                visitDate: t.visitMonth && t.visitYear ? `${t.visitYear}-${t.visitMonth}` : undefined,
+                numDays: t.numDays ? parseInt(t.numDays) : undefined,
+              }))
+            : undefined;
+
+        const res = await authFetch(`${apiUrl}/travel-log`, {
+          method: "POST",
+          body: JSON.stringify({
+            countryId: pendingCountry.id,
+            visitDate: visitMonth && visitYear ? `${visitYear}-${visitMonth}` : undefined,
+            numDays: numDays ? parseInt(numDays) : undefined,
+            isNative,
+            timesVisited: isNative ? 0 : timesVisited,
+            trips,
+          }),
+        });
+        if (res.ok || res.status === 201) {
+          const data = await res.json();
+          const newCountry = mapUserCountry(
+            data.country as Record<string, unknown>,
+          );
+          setCountries((prev) =>
+            [...prev, newCountry].sort((a, b) => {
+              if (a.continent !== b.continent)
+                return a.continent.localeCompare(b.continent);
+              return a.countryName.localeCompare(b.countryName);
+            }),
+          );
+          setOpenContinents((prev) => new Set(prev).add(newCountry.continent));
+        }
       }
     } catch {
       // handled
     }
     setPendingCountry(null);
     setShowSearch(false);
+    setIsNative(false);
+    setTimesVisited(1);
+    setTripDetails([]);
   };
 
   const cancelAddCountry = () => {
@@ -464,82 +511,179 @@ const TravelLog = ({
 
       {pendingCountry && (
         <div className={styles.detailsForm}>
-          <div className={styles.detailsTitle}>{pendingCountry.name}</div>
-          <div className={styles.detailsFields}>
-            <label className={styles.detailsLabel}>
-              <span>
-                Date visited{" "}
-                <span className={styles.optionalTag}>(optional)</span>
+          <div className={styles.detailsTitle}>
+            {pendingCountry.name}
+            {countries.find((c) => c.countryId === pendingCountry.id) && (
+              <span style={{ fontSize: "0.75rem", color: "#9ca3af", marginLeft: "0.5rem" }}>
+                Adding another trip
               </span>
-              <div className={styles.dateSelects}>
-                <select
-                  className={styles.detailsInput}
-                  value={visitMonth}
-                  onChange={(e) => setVisitMonth(e.target.value)}
-                >
-                  <option value="">Month</option>
-                  {[
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
-                  ].map((name, i) => {
-                    const val = String(i + 1).padStart(2, "0");
-                    return (
-                      <option key={val} value={val}>
-                        {name}
-                      </option>
-                    );
-                  })}
-                </select>
-                <span className={styles.dateSeparator}>/</span>
-                <select
-                  className={styles.detailsInput}
-                  value={visitYear}
-                  onChange={(e) => setVisitYear(e.target.value)}
-                >
-                  <option value="">YYYY</option>
-                  {Array.from({ length: 50 }, (_, i) => {
-                    const yr = String(new Date().getFullYear() - i);
-                    return (
-                      <option key={yr} value={yr}>
-                        {yr}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+            )}
+          </div>
+          {!countries.find((c) => c.countryId === pendingCountry.id) && (
+            <label className={styles.detailsLabel} style={{ flexDirection: "row", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={isNative}
+                onChange={(e) => {
+                  setIsNative(e.target.checked);
+                  if (e.target.checked) {
+                    setTimesVisited(0);
+                    setTripDetails([]);
+                  } else {
+                    setTimesVisited(1);
+                  }
+                }}
+                style={{ accentColor: "#34d399" }}
+              />
+              <span>Native country</span>
             </label>
+          )}
+          {!isNative && !countries.find((c) => c.countryId === pendingCountry.id) && (
             <label className={styles.detailsLabel}>
               <span>
-                Days spent{" "}
+                Times visited{" "}
                 <span className={styles.optionalTag}>(optional)</span>
               </span>
               <input
                 type="number"
                 className={styles.detailsInput}
-                placeholder="e.g. 7"
+                placeholder="1"
                 min="1"
-                value={numDays}
-                onChange={(e) => setNumDays(e.target.value)}
+                value={timesVisited}
+                onChange={(e) => {
+                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                  setTimesVisited(val);
+                  setTripDetails(
+                    Array.from({ length: val }, (_, i) => tripDetails[i] || { visitMonth: "", visitYear: "", numDays: "" })
+                  );
+                }}
+                style={{ width: "4rem" }}
               />
             </label>
-          </div>
+          )}
+          {!isNative && timesVisited > 1 && !countries.find((c) => c.countryId === pendingCountry.id) ? (
+            <div className={styles.detailsFields}>
+              {tripDetails.map((trip, i) => (
+                <div key={i} style={{ borderTop: i > 0 ? "1px solid #2a2d3a" : "none", paddingTop: i > 0 ? "0.5rem" : 0 }}>
+                  <div style={{ fontSize: "0.75rem", color: "#9ca3af", marginBottom: "0.25rem", fontWeight: 600 }}>
+                    Trip {i + 1}
+                  </div>
+                  <label className={styles.detailsLabel}>
+                    <span>
+                      Date visited{" "}
+                      <span className={styles.optionalTag}>(optional)</span>
+                    </span>
+                    <div className={styles.dateSelects}>
+                      <select
+                        className={styles.detailsInput}
+                        value={trip.visitMonth}
+                        onChange={(e) => {
+                          const updated = [...tripDetails];
+                          updated[i] = { ...updated[i], visitMonth: e.target.value };
+                          setTripDetails(updated);
+                        }}
+                      >
+                        <option value="">Month</option>
+                        {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((name, mi) => {
+                          const val = String(mi + 1).padStart(2, "0");
+                          return <option key={val} value={val}>{name}</option>;
+                        })}
+                      </select>
+                      <span className={styles.dateSeparator}>/</span>
+                      <select
+                        className={styles.detailsInput}
+                        value={trip.visitYear}
+                        onChange={(e) => {
+                          const updated = [...tripDetails];
+                          updated[i] = { ...updated[i], visitYear: e.target.value };
+                          setTripDetails(updated);
+                        }}
+                      >
+                        <option value="">YYYY</option>
+                        {Array.from({ length: 50 }, (_, yi) => {
+                          const yr = String(new Date().getFullYear() - yi);
+                          return <option key={yr} value={yr}>{yr}</option>;
+                        })}
+                      </select>
+                    </div>
+                  </label>
+                  <label className={styles.detailsLabel}>
+                    <span>
+                      Days spent{" "}
+                      <span className={styles.optionalTag}>(optional)</span>
+                    </span>
+                    <input
+                      type="number"
+                      className={styles.detailsInput}
+                      placeholder="e.g. 7"
+                      min="1"
+                      value={trip.numDays}
+                      onChange={(e) => {
+                        const updated = [...tripDetails];
+                        updated[i] = { ...updated[i], numDays: e.target.value };
+                        setTripDetails(updated);
+                      }}
+                    />
+                  </label>
+                </div>
+              ))}
+            </div>
+          ) : !isNative ? (
+            <div className={styles.detailsFields}>
+              <label className={styles.detailsLabel}>
+                <span>
+                  Date visited{" "}
+                  <span className={styles.optionalTag}>(optional)</span>
+                </span>
+                <div className={styles.dateSelects}>
+                  <select
+                    className={styles.detailsInput}
+                    value={visitMonth}
+                    onChange={(e) => setVisitMonth(e.target.value)}
+                  >
+                    <option value="">Month</option>
+                    {["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"].map((name, i) => {
+                      const val = String(i + 1).padStart(2, "0");
+                      return <option key={val} value={val}>{name}</option>;
+                    })}
+                  </select>
+                  <span className={styles.dateSeparator}>/</span>
+                  <select
+                    className={styles.detailsInput}
+                    value={visitYear}
+                    onChange={(e) => setVisitYear(e.target.value)}
+                  >
+                    <option value="">YYYY</option>
+                    {Array.from({ length: 50 }, (_, i) => {
+                      const yr = String(new Date().getFullYear() - i);
+                      return <option key={yr} value={yr}>{yr}</option>;
+                    })}
+                  </select>
+                </div>
+              </label>
+              <label className={styles.detailsLabel}>
+                <span>
+                  Days spent{" "}
+                  <span className={styles.optionalTag}>(optional)</span>
+                </span>
+                <input
+                  type="number"
+                  className={styles.detailsInput}
+                  placeholder="e.g. 7"
+                  min="1"
+                  value={numDays}
+                  onChange={(e) => setNumDays(e.target.value)}
+                />
+              </label>
+            </div>
+          ) : null}
           <div className={styles.detailsActions}>
             <button
               type="button"
               className={styles.detailsConfirmBtn}
               onClick={confirmAddCountry}
             >
-              Add
+              {countries.find((c) => c.countryId === pendingCountry.id) ? "Add Trip" : "Add"}
             </button>
             <button
               type="button"
@@ -595,41 +739,110 @@ const TravelLog = ({
                       : "#";
                   return (
                     <li key={c.id} className={styles.countryItem}>
-                      {canClick && userId ? (
-                        <Link
-                          to={linkTo}
-                          className={styles.countryLink}
-                        >
-                          {c.countryName}
-                        </Link>
-                      ) : (
-                        <span>{c.countryName}</span>
-                      )}
-                      {(c.visitDate || c.numDays) && (
-                        <span className={styles.countryMeta}>
-                          {c.visitDate &&
-                            new Date(
-                              c.visitDate.length === 7
-                                ? c.visitDate + "-01"
-                                : c.visitDate,
-                            ).toLocaleDateString("en-US", {
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          {c.visitDate && c.numDays && " · "}
-                          {c.numDays &&
-                            `${c.numDays} day${c.numDays !== 1 ? "s" : ""}`}
-                        </span>
-                      )}
-                      {!readOnly && (
-                        <button
-                          type="button"
-                          className={styles.eyeBtn}
-                          onClick={() => cycleVisibility(c)}
-                          aria-label={`Visibility: ${c.visibility}`}
-                        >
-                          {getEyeIcon(c.visibility)}
-                        </button>
+                      <div className={styles.countryRow}>
+                        <div className={styles.countryNameWrap}>
+                          {canClick && userId ? (
+                            <Link
+                              to={linkTo}
+                              className={styles.countryLink}
+                            >
+                              {c.countryName}
+                            </Link>
+                          ) : (
+                            <span>{c.countryName}</span>
+                          )}
+                          {(c.isNative || c.timesVisited > 1) && (
+                            <span
+                              className={styles.visitCount}
+                              style={{ color: getVisitCountTextColor(c.timesVisited, c.isNative) }}
+                            >
+                              ({formatVisitCount(c.timesVisited, c.isNative)})
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.countryMetaWrap}>
+                          {(c.visitDate || c.numDays) && (
+                            <span className={styles.countryMeta}>
+                              {c.visitDate &&
+                                new Date(
+                                  c.visitDate.length === 7
+                                    ? c.visitDate + "-01"
+                                    : c.visitDate,
+                                ).toLocaleDateString("en-US", {
+                                  month: "short",
+                                  year: "numeric",
+                                })}
+                              {c.visitDate && c.numDays && " · "}
+                              {c.numDays &&
+                                `${c.numDays} day${c.numDays !== 1 ? "s" : ""}`}
+                            </span>
+                          )}
+                          {c.timesVisited > 1 && (
+                            <button
+                              type="button"
+                              className={styles.expandBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (expandedCountryId === c.id) {
+                                  setExpandedCountryId(null);
+                                  setExpandedTrips([]);
+                                } else {
+                                  setExpandedCountryId(c.id);
+                                  // Fetch trips
+                                  authFetch(`${apiUrl}/travel-log/${c.id}/detail`)
+                                    .then((r) => r.json())
+                                    .then((data) => {
+                                      const trips = (data.trips as Record<string, unknown>[]).map((t) => ({
+                                        tripNumber: t.trip_number as number,
+                                        visitDate: (t.visit_date as string) || null,
+                                        numDays: (t.num_days as number) ?? null,
+                                      }));
+                                      setExpandedTrips(trips);
+                                    })
+                                    .catch(() => setExpandedTrips([]));
+                                }
+                              }}
+                              aria-label={expandedCountryId === c.id ? "Collapse trips" : "Expand trips"}
+                            >
+                              <div className={`${styles.expandArrow} ${expandedCountryId === c.id ? styles.expandArrowOpen : ""}`} />
+                            </button>
+                          )}
+                          {!readOnly && (
+                            <button
+                              type="button"
+                              className={styles.eyeBtn}
+                              onClick={() => cycleVisibility(c)}
+                              aria-label={`Visibility: ${c.visibility}`}
+                            >
+                              {getEyeIcon(c.visibility)}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {expandedCountryId === c.id && expandedTrips.length > 0 && (
+                        <div className={styles.tripDropdown}>
+                          {expandedTrips.map((trip) => (
+                            <div key={trip.tripNumber} className={styles.tripRow}>
+                              <span className={styles.tripLabel}>Trip {trip.tripNumber}</span>
+                              <span className={styles.countryMeta}>
+                                {trip.visitDate
+                                  ? new Date(
+                                      trip.visitDate.length === 7
+                                        ? trip.visitDate + "-01"
+                                        : trip.visitDate,
+                                    ).toLocaleDateString("en-US", {
+                                      month: "short",
+                                      year: "numeric",
+                                    })
+                                  : ""}
+                                {trip.visitDate && trip.numDays ? " · " : ""}
+                                {trip.numDays
+                                  ? `${trip.numDays} day${trip.numDays !== 1 ? "s" : ""}`
+                                  : ""}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </li>
                   );

@@ -5,6 +5,7 @@ import refreshFn from "../utils/refreshFn";
 import styles from "../styles/CountryDetailPage.module.css";
 import TripSidebar from "../components/TripSidebar";
 import Tooltip from "../components/Tooltip";
+import { getVisitCountTextColor, formatVisitCount } from "../utils/visitCountColors";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -19,6 +20,13 @@ interface CountryPlace {
   sortIndex: number;
 }
 
+interface UserCountryTrip {
+  id: string;
+  tripNumber: number;
+  visitDate: string | null;
+  numDays: number | null;
+}
+
 interface UserCountryDetail {
   id: string;
   userId: string;
@@ -30,6 +38,8 @@ interface UserCountryDetail {
   lastName: string;
   visitDate: string | null;
   numDays: number | null;
+  timesVisited: number;
+  isNative: boolean;
 }
 
 const mapPlace = (raw: Record<string, unknown>): CountryPlace => ({
@@ -54,6 +64,8 @@ const mapUserCountry = (raw: Record<string, unknown>): UserCountryDetail => ({
   lastName: raw.last_name as string,
   visitDate: (raw.visit_date as string) || null,
   numDays: (raw.num_days as number) ?? null,
+  timesVisited: (raw.times_visited as number) ?? 1,
+  isNative: (raw.is_native as boolean) ?? false,
 });
 
 const CATEGORIES = [
@@ -78,6 +90,8 @@ const CountryDetailPage = () => {
 
   const [country, setCountry] = useState<UserCountryDetail | null>(null);
   const [places, setPlaces] = useState<CountryPlace[]>([]);
+  const [trips, setTrips] = useState<UserCountryTrip[]>([]);
+  const [selectedTripIndex, setSelectedTripIndex] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -158,6 +172,15 @@ const CountryDetailPage = () => {
             mapUserCountry(data.userCountry as Record<string, unknown>),
           );
           setPlaces((data.places as Record<string, unknown>[]).map(mapPlace));
+          if (data.trips) {
+            const mappedTrips = (data.trips as Record<string, unknown>[]).map((t) => ({
+              id: t.id as string,
+              tripNumber: t.trip_number as number,
+              visitDate: (t.visit_date as string) || null,
+              numDays: (t.num_days as number) ?? null,
+            }));
+            setTrips(mappedTrips);
+          }
           setIsOwner(data.isOwner as boolean);
         } else {
           navigate(-1);
@@ -381,7 +404,18 @@ const CountryDetailPage = () => {
   };
 
   const openMetaEditor = () => {
-    if (country) {
+    const selectedTrip = trips[selectedTripIndex];
+    if (selectedTrip) {
+      const dateStr = selectedTrip.visitDate
+        ? selectedTrip.visitDate.length > 7
+          ? selectedTrip.visitDate.slice(0, 7)
+          : selectedTrip.visitDate
+        : "";
+      const parts = dateStr ? dateStr.split("-") : [];
+      setEditVisitYear(parts[0] || "");
+      setEditVisitMonth(parts[1] || "");
+      setEditNumDays(selectedTrip.numDays != null ? String(selectedTrip.numDays) : "");
+    } else if (country) {
       const dateStr = country.visitDate
         ? country.visitDate.length > 7
           ? country.visitDate.slice(0, 7)
@@ -402,14 +436,52 @@ const CountryDetailPage = () => {
         ? `${editVisitYear}-${editVisitMonth}`
         : null;
     const numDays = editNumDays ? parseInt(editNumDays) : null;
+    const selectedTrip = trips[selectedTripIndex];
+
+    try {
+      if (selectedTrip) {
+        // Update specific trip
+        const res = await authFetch(`${apiUrl}/travel-log/trips/${selectedTrip.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ visitDate, numDays }),
+        });
+        if (res.ok) {
+          setTrips((prev) =>
+            prev.map((t) =>
+              t.id === selectedTrip.id ? { ...t, visitDate, numDays } : t,
+            ),
+          );
+          // Update denormalized cache if editing newest trip (index 0)
+          if (selectedTripIndex === 0) {
+            setCountry({ ...country, visitDate, numDays });
+          }
+          setEditingMeta(false);
+        }
+      } else {
+        const res = await authFetch(`${apiUrl}/travel-log/${country.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ visitDate, numDays }),
+        });
+        if (res.ok) {
+          setCountry({ ...country, visitDate, numDays });
+          setEditingMeta(false);
+        }
+      }
+    } catch {
+      // handled
+    }
+  };
+
+  const toggleNative = async () => {
+    if (!country) return;
+    const newNative = !country.isNative;
     try {
       const res = await authFetch(`${apiUrl}/travel-log/${country.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ visitDate, numDays }),
+        body: JSON.stringify({ isNative: newNative }),
       });
       if (res.ok) {
-        setCountry({ ...country, visitDate, numDays });
-        setEditingMeta(false);
+        setCountry({ ...country, isNative: newNative });
       }
     } catch {
       // handled
@@ -442,23 +514,58 @@ const CountryDetailPage = () => {
           {fullName}
         </Link>
         <span className={styles.separator}>&gt;</span>
-        <span className={styles.countryTitle}>{country.countryName} Log</span>
-        {(country.visitDate || country.numDays) && !editingMeta && (
-          <span className={styles.countryMeta}>
-            {country.visitDate &&
-              new Date(
-                country.visitDate.length === 7
-                  ? country.visitDate + "-01"
-                  : country.visitDate,
-              ).toLocaleDateString("en-US", {
-                month: "short",
-                year: "numeric",
-              })}
-            {country.visitDate && country.numDays && " · "}
-            {country.numDays &&
-              `${country.numDays} day${country.numDays !== 1 ? "s" : ""}`}
-          </span>
+        <span className={styles.countryTitle}>
+          {country.countryName} Log
+          {(country.isNative || country.timesVisited > 1) && (
+            <span style={{ color: getVisitCountTextColor(country.timesVisited, country.isNative), marginLeft: "0.4rem", fontSize: "0.85rem", fontWeight: 600 }}>
+              ({formatVisitCount(country.timesVisited, country.isNative)})
+            </span>
+          )}
+        </span>
+        {isOwner && (
+          <label style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.75rem", color: "#9ca3af", cursor: "pointer", marginLeft: "0.5rem" }}>
+            <input
+              type="checkbox"
+              checked={country.isNative}
+              onChange={toggleNative}
+              style={{ accentColor: "#34d399" }}
+            />
+            Native
+          </label>
         )}
+        {trips.length > 1 && !editingMeta && (
+          <select
+            className={styles.metaEditInput}
+            value={selectedTripIndex}
+            onChange={(e) => setSelectedTripIndex(Number(e.target.value))}
+            style={{ marginLeft: "0.5rem", fontSize: "0.75rem", width: "auto" }}
+          >
+            {trips.map((t, i) => (
+              <option key={t.id} value={i}>
+                Trip {t.tripNumber}
+                {t.visitDate ? ` — ${new Date(t.visitDate.length === 7 ? t.visitDate + "-01" : t.visitDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })}` : ""}
+              </option>
+            ))}
+          </select>
+        )}
+        {(() => {
+          const displayTrip = trips[selectedTripIndex];
+          const vDate = displayTrip?.visitDate || country.visitDate;
+          const nDays = displayTrip?.numDays ?? country.numDays;
+          return (vDate || nDays) && !editingMeta ? (
+            <span className={styles.countryMeta}>
+              {vDate &&
+                new Date(
+                  vDate.length === 7 ? vDate + "-01" : vDate,
+                ).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "numeric",
+                })}
+              {vDate && nDays && " · "}
+              {nDays && `${nDays} day${nDays !== 1 ? "s" : ""}`}
+            </span>
+          ) : null;
+        })()}
         {isOwner && !editingMeta && (
           <Tooltip label="Edit date and days">
           <button

@@ -5,6 +5,7 @@ import refreshFn from "../utils/refreshFn";
 import { getAvatarSrc } from "../utils/avatarUtils";
 import styles from "../styles/FriendsCountryLogs.module.css";
 import Tooltip from "../components/Tooltip";
+import { getVisitCountTextColor, formatVisitCount } from "../utils/visitCountColors";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -240,7 +241,14 @@ export default function FriendsCountryLogs({
                   />
                 </Link>
                 <div className={styles.cardInfo}>
-                  <span className={styles.username}>{friend.username}</span>
+                  <span className={styles.username}>
+                    {friend.username}
+                    {(friend.isNative || friend.timesVisited > 1) && (
+                      <span style={{ color: getVisitCountTextColor(friend.timesVisited, friend.isNative), marginLeft: "6px", fontWeight: 600 }}>
+                        ({formatVisitCount(friend.timesVisited, friend.isNative)})
+                      </span>
+                    )}
+                  </span>
                   <div className={styles.meta}>
                     {friend.visitDate && (
                       <span>
@@ -273,7 +281,7 @@ export default function FriendsCountryLogs({
               className={styles.navButton}
               disabled={selectedFriendIndex === 0}
               onClick={() =>
-                setSelectedFriendIndex(selectedFriendIndex ?? 0 - 1)
+                setSelectedFriendIndex((selectedFriendIndex ?? 0) - 1)
               }
             >
               <svg
@@ -312,7 +320,7 @@ export default function FriendsCountryLogs({
               className={styles.navButton}
               disabled={selectedFriendIndex === friendLogs.length - 1}
               onClick={() =>
-                setSelectedFriendIndex(selectedFriendIndex ?? 0 + 1)
+                setSelectedFriendIndex((selectedFriendIndex ?? 0) + 1)
               }
             >
               <svg

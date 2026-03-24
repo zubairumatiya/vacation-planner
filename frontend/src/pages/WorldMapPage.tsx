@@ -19,6 +19,7 @@ import {
   type PreparedFeature,
 } from "@vnedyalk0v/react19-simple-maps";
 import styles from "../styles/WorldMapPage.module.css";
+import { getVisitCountFill, getVisitCountHoverFill, getVisitCountPressedFill, getVisitCountTextColor, formatVisitCount } from "../utils/visitCountColors";
 
 const geoUrl = new URL("/features.json", window.location.origin).toString();
 const apiUrl = import.meta.env.VITE_API_URL;
@@ -31,6 +32,8 @@ interface UserCountry {
   visibility: "public" | "friends" | "private";
   visitDate: string | null;
   numDays: number | null;
+  timesVisited: number;
+  isNative: boolean;
 }
 
 const mapUserCountry = (raw: Record<string, unknown>): UserCountry => ({
@@ -41,6 +44,8 @@ const mapUserCountry = (raw: Record<string, unknown>): UserCountry => ({
   visibility: raw.visibility as "public" | "friends" | "private",
   visitDate: (raw.visit_date as string) || null,
   numDays: (raw.num_days as number) ?? null,
+  timesVisited: (raw.times_visited as number) ?? 1,
+  isNative: (raw.is_native as boolean) ?? false,
 });
 
 const formatDate = (dateStr: string) => {
@@ -100,6 +105,7 @@ const WorldMapPage = () => {
     id: number;
     name: string;
     continent: string;
+    existingId?: string | null;
   } | null>(null);
   const [popupPos, setPopupPos] = useState<{ x: number; y: number } | null>(
     null,
@@ -195,7 +201,7 @@ const WorldMapPage = () => {
     if (!isOwner) return;
 
     const normalized = normalizeGeoName(geoName);
-    if (visitedMap.has(normalized)) return;
+    const existingCountry = visitedMap.get(normalized) || visitedMap.get(geoName.toLowerCase());
 
     const searchName = geoNameMap[geoName.toLowerCase()] ?? geoName;
 
@@ -216,7 +222,7 @@ const WorldMapPage = () => {
           setVisitMonth("");
           setVisitYear("");
           setNumDays("");
-          setPendingCountry(match);
+          setPendingCountry({ ...match, existingId: existingCountry?.id || null });
           setPopupPos({ x, y });
           startTransition(() => {
             setTooltipContent("");
@@ -374,19 +380,25 @@ const WorldMapPage = () => {
                         }}
                         style={{
                           default: {
-                            fill: isCountryVisited ? "#34d399" : "#2a2d3a",
+                            fill: isCountryVisited
+                              ? getVisitCountFill(matchedCountry!.timesVisited, matchedCountry!.isNative)
+                              : "#2a2d3a",
                             stroke: "#1e1e2e",
                             strokeWidth: 0.5,
                             outline: "none",
                           },
                           hover: {
-                            fill: isCountryVisited ? "#10b981" : "#3b3f52",
+                            fill: isCountryVisited
+                              ? getVisitCountHoverFill(matchedCountry!.timesVisited, matchedCountry!.isNative)
+                              : "#3b3f52",
                             stroke: "#1e1e2e",
                             strokeWidth: 0.5,
                             outline: "none",
                           },
                           pressed: {
-                            fill: isCountryVisited ? "#059669" : "#4b5068",
+                            fill: isCountryVisited
+                              ? getVisitCountPressedFill(matchedCountry!.timesVisited, matchedCountry!.isNative)
+                              : "#4b5068",
                             stroke: "#1e1e2e",
                             strokeWidth: 0.5,
                             outline: "none",
@@ -412,7 +424,9 @@ const WorldMapPage = () => {
           >
             <div className={styles.popupArrow} />
             <div className={styles.popupHeader}>
-              <span className={styles.popupTitle}>{pendingCountry.name}</span>
+              <span className={styles.popupTitle}>
+                {pendingCountry.existingId ? `Add trip to ${pendingCountry.name}` : pendingCountry.name}
+              </span>
               <button
                 type="button"
                 className={styles.popupClose}
@@ -503,23 +517,45 @@ const WorldMapPage = () => {
                 className={styles.popupAddBtn}
                 onClick={async () => {
                   try {
-                    const res = await authFetch(`${apiUrl}/travel-log`, {
-                      method: "POST",
-                      body: JSON.stringify({
-                        countryId: pendingCountry.id,
-                        visitDate:
-                          visitMonth && visitYear
-                            ? `${visitYear}-${visitMonth}`
-                            : undefined,
-                        numDays: numDays ? parseInt(numDays) : undefined,
-                      }),
-                    });
-                    if (res.ok || res.status === 201) {
-                      const data = await res.json();
-                      const newCountry = mapUserCountry(
-                        data.country as Record<string, unknown>,
-                      );
-                      setTravelLog((prev) => [...prev, newCountry]);
+                    if (pendingCountry.existingId) {
+                      // Add another trip
+                      const res = await authFetch(`${apiUrl}/travel-log/${pendingCountry.existingId}/trips`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                          visitDate: visitMonth && visitYear ? `${visitYear}-${visitMonth}` : undefined,
+                          numDays: numDays ? parseInt(numDays) : undefined,
+                        }),
+                      });
+                      if (res.ok || res.status === 201) {
+                        // Refresh travel log
+                        const logUrl = `${apiUrl}/travel-log`;
+                        const logRes = await authFetch(logUrl);
+                        if (logRes.ok) {
+                          const data = await logRes.json();
+                          setTravelLog(
+                            (data.countries as Record<string, unknown>[]).map(mapUserCountry),
+                          );
+                        }
+                      }
+                    } else {
+                      const res = await authFetch(`${apiUrl}/travel-log`, {
+                        method: "POST",
+                        body: JSON.stringify({
+                          countryId: pendingCountry.id,
+                          visitDate:
+                            visitMonth && visitYear
+                              ? `${visitYear}-${visitMonth}`
+                              : undefined,
+                          numDays: numDays ? parseInt(numDays) : undefined,
+                        }),
+                      });
+                      if (res.ok || res.status === 201) {
+                        const data = await res.json();
+                        const newCountry = mapUserCountry(
+                          data.country as Record<string, unknown>,
+                        );
+                        setTravelLog((prev) => [...prev, newCountry]);
+                      }
                     }
                   } catch (err) {
                     console.error(err);
@@ -559,6 +595,11 @@ const WorldMapPage = () => {
             </div>
             {isVisited && hoveredCountry && (
               <div className={styles.tooltipDetails}>
+                {(hoveredCountry.isNative || hoveredCountry.timesVisited > 1) && (
+                  <div style={{ color: getVisitCountTextColor(hoveredCountry.timesVisited, hoveredCountry.isNative), fontWeight: 600 }}>
+                    ({formatVisitCount(hoveredCountry.timesVisited, hoveredCountry.isNative)})
+                  </div>
+                )}
                 {hoveredCountry.visitDate && (
                   <div>Visited: {formatDate(hoveredCountry.visitDate)}</div>
                 )}

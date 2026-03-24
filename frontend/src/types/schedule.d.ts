@@ -341,6 +341,8 @@ declare global {
     userCountryId: string;
     visitDate: string | null;
     numDays: number | null;
+    timesVisited: number;
+    isNative: boolean;
     userId: string;
     username: string;
     firstName: string;
