@@ -2,6 +2,7 @@
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
+  position: relative;
 }
 
 .header {
@@ -59,19 +60,6 @@
   color: #2fe782;
 }
 
-.metaEditForm {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: 0.25rem;
-}
-
-.metaEditFields {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
 .metaEditInput {
   padding: 3px 6px;
   border-radius: 4px;
@@ -86,32 +74,139 @@
   border-color: #2fe782;
 }
 
-.metaEditSave {
+/* Dropdown meta edit form */
+.metaEditDropdown {
+  position: absolute;
+  z-index: 50;
+  left: 20vw;
+  top: 70px;
+  right: 0;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  padding: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  width: 25vw;
+}
+
+.metaEditTopRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.metaEditTripsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.metaEditTripHeader {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.metaEditTripRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.metaEditTripRow > :first-child {
+  flex: 0.7;
+}
+
+.metaEditTripRow > :nth-child(2) {
+  flex: 0.3;
+}
+
+.metaEditDropdownLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: #aaa;
+  font-size: 0.75rem;
+  flex: 0.5;
+  align-items: center;
+}
+
+.metaEditDropdownInput {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.8rem;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.metaEditDropdownInput:focus {
+  border-color: #2fe782;
+}
+
+.metaEditDateSelects {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.metaEditDateSep {
+  color: #888;
+  font-size: 0.85rem;
+}
+
+.metaEditNativeLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  color: #aaa;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.metaEditNativeLabel input {
+  margin-top: 0.5rem;
+}
+
+.metaEditDropdownActions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.metaEditDropdownSave {
   background-color: #2fe782;
   border: none;
   color: #222;
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-size: 0.7rem;
+  padding: 4px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
 }
 
-.metaEditSave:hover {
+.metaEditDropdownSave:hover {
   background-color: #00bf55;
 }
 
-.metaEditCancel {
+.metaEditDropdownCancel {
   background: transparent;
   border: 1px solid #888;
   color: #888;
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-size: 0.7rem;
+  padding: 4px 16px;
+  border-radius: 6px;
+  font-size: 0.8rem;
   cursor: pointer;
 }
 
-.metaEditCancel:hover {
+.metaEditDropdownCancel:hover {
   border-color: #e53e3e;
   color: #e53e3e;
 }

@@ -238,10 +238,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       switch (e.key.toLowerCase()) {
         case "a":
           e.preventDefault();
+          closeSidebarRef.current?.();
           setAiChatOpen((prev) => {
             if (!prev) {
               setHasUnreadAiResponse(false);
-              closeSidebarRef.current?.();
             }
             return !prev;
           });
@@ -285,10 +285,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   }, [token]);
 
   const handleAiButtonClick = () => {
+    closeSidebarRef.current?.();
     setAiChatOpen((prev) => {
       if (!prev) {
         setHasUnreadAiResponse(false);
-        closeSidebarRef.current?.();
       }
       return !prev;
     });
@@ -480,6 +480,17 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           // Refresh the want-to-see list UI
           setListUpdateKey((prev) => prev + 1);
           // Mark the corresponding sidebar recommendation as added
+          authFetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
+            method: "PATCH",
+            body: JSON.stringify({ placeName: item.location }),
+          })
+            .then(() => {
+              setSidebarRefreshKey((prev) => prev + 1);
+            })
+            .catch(() => {});
+        } else {
+          // General mode — item goes to schedule
+          setScheduleUpdateKey((prev) => prev + 1);
           authFetch(`${apiURL}/ai/mark-added-by-name/${tripId}`, {
             method: "PATCH",
             body: JSON.stringify({ placeName: item.location }),
@@ -920,7 +931,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                           >
                             {addingAllRecs
                               ? "Adding..."
-                              : `Add all ${aiMode === "schedule" ? "recommendations" : "items"}`}
+                              : `Add all ${lastAiMode === "schedule" ? "recommendations" : "items"}`}
                           </button>
                         )}
                         {lastAiMode === "schedule"
@@ -1072,6 +1083,27 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                           <span className={styles.aiPlaceName}>
                                             {item.location}
                                           </span>
+                                          {item.startTime && item.endTime && (
+                                            <span
+                                              className={styles.aiPlaceTime}
+                                            >
+                                              {new Date(
+                                                item.startTime,
+                                              ).toLocaleTimeString("en-US", {
+                                                hour: "numeric",
+                                                minute: "2-digit",
+                                                timeZone: "UTC",
+                                              })}
+                                              {" – "}
+                                              {new Date(
+                                                item.endTime,
+                                              ).toLocaleTimeString("en-US", {
+                                                hour: "numeric",
+                                                minute: "2-digit",
+                                                timeZone: "UTC",
+                                              })}
+                                            </span>
+                                          )}
                                           <span
                                             className={styles.aiPlaceDetails}
                                           >
@@ -1082,7 +1114,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                           label={
                                             addedItems.has(idx)
                                               ? "Added"
-                                              : "Add to list"
+                                              : lastAiMode === "list"
+                                                ? "Add to list"
+                                                : "Add to schedule"
                                           }
                                         >
                                           <button

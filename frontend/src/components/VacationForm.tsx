@@ -23,7 +23,7 @@ const QuestionMarkIcon = ({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleMouseEnter = () => {
-    timerRef.current = setTimeout(() => setShowTooltip(true), 1000);
+    timerRef.current = setTimeout(() => setShowTooltip(true), 50);
   };
 
   const handleMouseLeave = () => {
@@ -312,7 +312,7 @@ const VacationForm = (props?: Props) => {
     }
     if (!sHtmlDateErr || !eHtmlDateErr) {
       setErrMessage(
-        "Make sure trip start is not past 10 years from today AND start of trip and end of trip does not exceed 365 days",
+        "Make sure trip start is not in the past AND start of trip and end of trip do not exceed 365 days",
       );
     }
   }, [

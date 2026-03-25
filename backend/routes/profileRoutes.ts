@@ -176,7 +176,9 @@ router.post(
       const receiverId = req.params.userId;
 
       if (requesterId === receiverId) {
-        res.status(400).json({ message: "Cannot send friend request to yourself" });
+        res
+          .status(400)
+          .json({ message: "Cannot send friend request to yourself" });
         return;
       }
 
@@ -527,16 +529,24 @@ router.patch(
         );
 
         // If follow request, update follows table
-        if (notification.type === "follow_request" && notification.reference_id) {
-          await client.query(
-            "UPDATE follows SET status = $1 WHERE id = $2",
-            [action, notification.reference_id],
-          );
+        if (
+          notification.type === "follow_request" &&
+          notification.reference_id
+        ) {
+          await client.query("UPDATE follows SET status = $1 WHERE id = $2", [
+            action,
+            notification.reference_id,
+          ]);
         }
 
         // If trip invitation and accepted, add user to trip with the role stored in metadata
-        if (notification.type === "trip_invitation" && action === "accepted" && notification.reference_id) {
-          const invitedRole = notification.metadata?.role === "editor" ? "editor" : "reader";
+        if (
+          notification.type === "trip_invitation" &&
+          action === "accepted" &&
+          notification.reference_id
+        ) {
+          const invitedRole =
+            notification.metadata?.role === "editor" ? "editor" : "reader";
           await client.query(
             "INSERT INTO user_trips (user_id, trip_id, role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING",
             [userId, notification.reference_id, invitedRole],
@@ -652,7 +662,9 @@ router.get(
   ensureLoggedIn,
   async (
     req: TypedRequest<unknown, unknown, TripIdParam>,
-    res: TypedResponse<{ shares: TripShare[]; pendingInvitations: TripShare[] } | MessageResponse>,
+    res: TypedResponse<
+      { shares: TripShare[]; pendingInvitations: TripShare[] } | MessageResponse
+    >,
     next: NextFunction,
   ) => {
     try {
@@ -765,7 +777,12 @@ router.post(
           const intendedRole = share.role === "editor" ? "editor" : "reader";
           await client.query(
             "INSERT INTO notifications (user_id, from_user_id, type, reference_id, metadata) VALUES ($1, $2, 'trip_invitation', $3, $4)",
-            [share.userId, req.user.id, req.params.tripId, JSON.stringify({ role: intendedRole })],
+            [
+              share.userId,
+              req.user.id,
+              req.params.tripId,
+              JSON.stringify({ role: intendedRole }),
+            ],
           );
         }
         await client.query("COMMIT");
@@ -954,7 +971,9 @@ router.post(
       const { countryId, visitDate, numDays, isNative, timesVisited, trips } = req.body;
 
       const normalizedDate = visitDate
-        ? visitDate.length === 7 ? `${visitDate}-01` : visitDate
+        ? visitDate.length === 7
+          ? `${visitDate}-01`
+          : visitDate
         : null;
 
       // Verify country exists
@@ -1106,7 +1125,9 @@ router.patch(
       if (visitDate !== undefined) {
         sets.push(`visit_date = $${idx++}`);
         const normalizedDate = visitDate
-          ? visitDate.length === 7 ? `${visitDate}-01` : visitDate
+          ? visitDate.length === 7
+            ? `${visitDate}-01`
+            : visitDate
           : null;
         vals.push(normalizedDate);
       }
@@ -1119,6 +1140,11 @@ router.patch(
       if (req.body.isNative !== undefined) {
         sets.push(`is_native = $${idx++}`);
         vals.push(req.body.isNative);
+      }
+
+      if (req.body.timesVisited !== undefined) {
+        sets.push(`times_visited = $${idx++}`);
+        vals.push(Math.max(1, parseInt(req.body.timesVisited) || 1));
       }
 
       if (sets.length === 0) {
@@ -1445,7 +1471,11 @@ router.post(
       const userId = req.user.id;
       const { category, name } = req.body;
 
-      if (!category || !name || !["city", "eat", "stay", "excursion"].includes(category)) {
+      if (
+        !category ||
+        !name ||
+        !["city", "eat", "stay", "excursion"].includes(category)
+      ) {
         res.status(400).json({ message: "Invalid category or name" });
         return;
       }
@@ -1556,7 +1586,9 @@ router.delete(
         return;
       }
 
-      await db.query("DELETE FROM country_places WHERE id = $1", [req.params.placeId]);
+      await db.query("DELETE FROM country_places WHERE id = $1", [
+        req.params.placeId,
+      ]);
       res.status(200).json({ message: "Place removed" });
     } catch (err) {
       next(err);

@@ -12,6 +12,10 @@ export default defineConfig({
     ignoreHTTPSErrors: true,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    colorScheme: "dark",
+    launchOptions: {
+      slowMo: 500,
+    },
   },
   projects: [
     {

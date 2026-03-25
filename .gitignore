@@ -11,6 +11,8 @@ stats.html
 Screenshot*.png
 vacation-planner.code-workspace
 docs/ai-prompts.md
+palette.png
+.claude
 playwright-report/
 test-results/
 .DS_Store

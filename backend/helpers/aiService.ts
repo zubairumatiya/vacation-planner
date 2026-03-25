@@ -99,7 +99,10 @@ export async function chat(
         .map((a) => (a.data.location as string).toLowerCase().trim());
       if (addedNames.length > 0) {
         const conditions = addedNames
-          .map((_, i) => `LOWER(value) LIKE '%' || $${i + 2} || '%' OR $${i + 2} LIKE '%' || LOWER(value) || '%'`)
+          .map(
+            (_, i) =>
+              `LOWER(value) LIKE '%' || $${i + 2} || '%' OR $${i + 2} LIKE '%' || LOWER(value) || '%'`,
+          )
           .join(" OR ");
         await db.query(
           `UPDATE trip_list SET item_added = true
@@ -242,14 +245,15 @@ ${formatListItems(ctx)}`);
   }
 
   // ── Already recommended (dedup) ──
-  if (mode === "list" || mode === "schedule") {
+  {
     const allPrevPlaces = [
       ...recommendedPlaces.map((p) => p.place_name),
       ...listPlaces.map((p) => p.place_name),
+      ...schedule.map((s) => s.location),
     ];
     if (allPrevPlaces.length > 0) {
-      sections.push(`## Already Recommended (do not re-recommend)
-${allPrevPlaces.join(", ")}`);
+      sections.push(`## Already Recommended / Scheduled (do not re-recommend)
+${[...new Set(allPrevPlaces)].join(", ")}`);
     }
   }
 
@@ -303,26 +307,24 @@ Answer the user's question. Use action symbols if modifying the schedule. Use it
 
   // ── Action symbol reference ──
   sections.push(`## Action Symbols
-Every structured item in your response MUST start with one of these symbols on its own line, followed by a JSON block on the next line(s):
 
-\`+ADD\` — Add a new item to the schedule. JSON: { "location", "details", "category", "startTime", "endTime", "cost", "multiDay" }
-\`~REPLACE\` — Update an existing schedule item by id. JSON: { "id", ...fields to update }
-\`-REMOVE\` — Delete a schedule item by id. JSON: { "id" }. Cannot remove locked items.
-\`?SUGGEST\` — Suggest an item (not committed to DB). JSON: same as +ADD.
-\`>TEXT\` — Free-text commentary. The line(s) after >TEXT until the next symbol are plain text.
-\`!NULL\` — Exhausted category. Write \`!NULL category_name\` on its own line.
+   Your response MUST use one of these symbols on its own line, followed by a JSON block on the next line(s):
+   ${
+     mode === "schedule"
+       ? `\`+ADD\` — Add a new item to the schedule. JSON: { "location", "details", "category", "startTime", "endTime", "cost", 
+  "multiDay" }`
+       : ""
+   } 
+    \`?SUGGEST\` — Suggest an item. JSON: same as add 
+    \`~REPLACE\` — Update an existing schedule item by id. JSON: { "id", ...fields to update }
+    \`-REMOVE\` — Delete a schedule item by id. JSON: { "id" }
 
-Example response:
->TEXT
-Here are my recommendations for your trip.
-
-+ADD
-{"location": "Museum X", "details": "Famous art museum", "category": "museum", "startTime": "2026-03-20T10:00:00Z", "endTime": "2026-03-20T12:00:00Z", "cost": 15, "multiDay": false}
-
-?SUGGEST
-{"location": "Hidden Cafe", "details": "Local favorite", "category": "restaurant", "startTime": "", "endTime": "", "cost": 10, "multiDay": false}
-
-!NULL nightlife`);
+    example JSON format for ${mode === "schedule" ? "+ADD and" : ""} ?SUGGEST: {"location": "Museum X", "details": "Famous art museum", "category": "museum", "startTime": "2026-03-20T10:00:00Z", "endTime": "2026-03-20T12:00:00Z", "cost": 15, "multiDay": false}
+    
+  Text & Status Commands (NO JSON):
+   \`>TEXT\` — Free-text commentary. The line(s) after >TEXT until the next symbol are plain text.
+   \`!NULL\` — Exhausted category. Write \`!NULL category_name\` on its own line.
+ `);
 
   return sections.join("\n\n");
 }
@@ -500,8 +502,8 @@ export function parseActionResponse(rawText: string): ParsedResponse {
               location: data.location ?? "",
               details: data.details ?? "",
               category: data.category ?? "",
-              startTime: data.startTime ?? "",
-              endTime: data.endTime ?? "",
+              startTime: sanitizeTimestamp(data.startTime) ?? data.startTime ?? "",
+              endTime: sanitizeTimestamp(data.endTime) ?? data.endTime ?? "",
               cost: Number(data.cost) || 0,
               multiDay: Boolean(data.multiDay),
             });
@@ -521,7 +523,7 @@ export function parseActionResponse(rawText: string): ParsedResponse {
   }
 
   return {
-    text: textParts.join("\n").trim(),
+    text: textParts.join("\n").trim().replace(/\s*\[id:[^\]]+\]/g, ""),
     actions,
     itinerary,
     exhaustedCategories,
@@ -535,10 +537,14 @@ export function parseActionResponse(rawText: string): ParsedResponse {
 function sanitizeTimestamp(value: unknown): string | null {
   if (typeof value !== "string" || !value) return null;
   // Fix extra colon-separated segment e.g. "T13:00:00:00Z" → "T13:00:00Z"
-  const fixed = value.replace(
+  let fixed = value.replace(
     /T(\d{2}:\d{2}:\d{2}):\d{2}(Z|[+-]\d{2}:\d{2})?$/,
     "T$1$2",
   );
+  // Treat bare timestamps (no Z or offset) as UTC
+  if (/T\d{2}:\d{2}(:\d{2})?$/.test(fixed)) {
+    fixed += "Z";
+  }
   const d = new Date(fixed);
   if (isNaN(d.getTime())) return null;
   return d.toISOString();
@@ -595,11 +601,17 @@ async function executeActions(
           }
           if (d.startTime !== undefined) {
             const ts = sanitizeTimestamp(d.startTime);
-            if (ts) { fields.push(`start_time = $${idx++}`); values.push(ts); }
+            if (ts) {
+              fields.push(`start_time = $${idx++}`);
+              values.push(ts);
+            }
           }
           if (d.endTime !== undefined) {
             const ts = sanitizeTimestamp(d.endTime);
-            if (ts) { fields.push(`end_time = $${idx++}`); values.push(ts); }
+            if (ts) {
+              fields.push(`end_time = $${idx++}`);
+              values.push(ts);
+            }
           }
           if (d.cost !== undefined) {
             fields.push(`cost = $${idx++}`);

@@ -151,7 +151,8 @@ const SignUp = () => {
     }
   };
 
-  const handleEmailBlur = () => {
+  const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if ((e.relatedTarget as HTMLElement)?.classList.contains(styles.checkBtn)) return;
     setEmailMicroing(true);
   };
 
@@ -299,7 +300,7 @@ const SignUp = () => {
             </label>
             <input
               onChange={handleEmailChange}
-              onBlur={emailMicroing ? undefined : handleEmailBlur}
+              onBlur={emailMicroing ? undefined : (e) => handleEmailBlur(e)}
               className={`${styles.input} ${emailError ? styles.inputError : ""}`}
               type="email"
               name="email"

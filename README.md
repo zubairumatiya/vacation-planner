@@ -31,10 +31,12 @@ Built as a solo project to demonstrate production-level full-stack development: 
 
 - **AI-Powered Trip Planning** - Chat with Google Gemini to generate schedules, get place recommendations, and build itineraries from a wish list
   <!-- ![AI Planning](docs/assets/ai-planning.gif) -->
-- **Drag-and-Drop Itinerary Builder** - Reorder schedule items with drag-and-drop, track time slots and costs per activity
+  ![ai feature gif](docs/assets/ai-feature.gif)
+- **Drag-and-Drop Itinerary Builder** - Reorder schedule items with drag-and-drop, inside schedule and from list.
   <!-- ![Schedule Builder](docs/assets/schedule-builder.gif) -->
+  ![drag and drop gif](docs/assets/dnd-feature.gif)
 - **Interactive World Map** - Visualize visited countries
-- **Travel Log** keep a historical log of countries you've been to and notate cities/restaurants/hotels/excursions per country for future reference and for friends to see your recommendations 
+- **Travel Log** keep a historical log of countries you've been to and notate cities/restaurants/hotels/excursions per country for future reference and for friends to see your recommendations
 - **Trip Collaboration** - Share trips with owner/editor/reader permissions, real-time access control
 - **Social Features** - Follow friends, browse a public trip feed, receive notifications for follows and invitations, see when a friend is currently on a trip, see when friends are planning trips that are open invites and tag along!
 - **Guest Mode** - Plan trips without an account using localStorage, then migrate data on signup
@@ -42,25 +44,27 @@ Built as a solo project to demonstrate production-level full-stack development: 
 ## Tech Stack
 
 ### Frontend
-| &nbsp; | Technology |
-|:---:|---|
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="16"/> | React 19 + TypeScript |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vitejs/vitejs-original.svg" width="16"/> | Vite |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg" width="16"/> | Tailwind CSS + CSS Modules |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/reactrouter/reactrouter-original.svg" width="16"/> | React Router v7 |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg" width="16"/> | Google Maps API (@vis.gl/react-google-maps) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vitest/vitest-original.svg" width="16"/> | Vitest + Testing Library + MSW |
+
+|                                                         &nbsp;                                                         | Technology                                  |
+| :--------------------------------------------------------------------------------------------------------------------: | ------------------------------------------- |
+|          <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="16"/>           | React 19 + TypeScript                       |
+|      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vitejs/vitejs-original.svg" width="16"/>      | Vite                                        |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/tailwindcss/tailwindcss-original.svg" width="16"/> | Tailwind CSS + CSS Modules                  |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/reactrouter/reactrouter-original.svg" width="16"/> | React Router v7                             |
+|      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg" width="16"/>      | Google Maps API (@vis.gl/react-google-maps) |
+|      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/vitest/vitest-original.svg" width="16"/>      | Vitest + Testing Library + MSW              |
 
 ### Backend
-| &nbsp; | Technology |
-|:---:|---|
-| <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.simpleicons.org/express/white"/><img src="https://cdn.simpleicons.org/express/black" width="16"/></picture> | Express v5 + TypeScript |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" width="16"/> | PostgreSQL (Supabase) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/nodejs/nodejs-original.svg" width="16"/> | node-postgres (raw SQL, no ORM) |
-| <img src="https://img.icons8.com/color/48/java-web-token.png" width="16"/> | JWT (access + refresh tokens) + bcrypt |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg" width="16"/> | Google OAuth |
-| <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" width="16"/> | Google Gemini AI |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/playwright/playwright-original.svg" width="16"/> | Playwright (E2E) + Vitest + Supertest |
+
+|                                                                                        &nbsp;                                                                                         | Technology                             |
+| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | -------------------------------------- |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="https://cdn.simpleicons.org/express/white"/><img src="https://cdn.simpleicons.org/express/black" width="16"/></picture> | Express v5 + TypeScript                |
+|                                     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" width="16"/>                                     | PostgreSQL (Supabase)                  |
+|                                     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/nodejs/nodejs-original.svg" width="16"/>                                      | node-postgres (raw SQL, no ORM)        |
+|                                                      <img src="https://img.icons8.com/color/48/java-web-token.png" width="16"/>                                                       | JWT (access + refresh tokens) + bcrypt |
+|                                     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/google/google-original.svg" width="16"/>                                      | Google OAuth                           |
+|                                         <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" width="16"/>                                         | Google Gemini AI                       |
+|                                 <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/playwright/playwright-original.svg" width="16"/>                                  | Playwright (E2E) + Vitest + Supertest  |
 
 ---
 
@@ -101,6 +105,7 @@ graph TB
 ```
 
 **Key architectural decisions:**
+
 - Raw SQL over an ORM for full query control and performance
 - JWT access tokens (1h) + HTTP-only refresh token cookies (7d) for secure session management
 - Middleware chain for authorization: `ensureLoggedIn` -> `ensureTripAccess` -> route handler
@@ -113,18 +118,19 @@ graph TB
 
 See [docs/API.md](docs/API.md) for the full static API reference. Key endpoints:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/auth/login` | Authenticate user, returns JWT + sets refresh cookie |
-| `POST` | `/signup` | Register with email verification |
-| `GET` | `/vacation/:tripId` | Get trip with schedule, list, and sharing info |
-| `POST` | `/vacation` | Create a new trip with schedule items |
-| `POST` | `/ai/chat` | Send a message to Gemini AI for trip recommendations |
+| Method | Endpoint            | Description                                          |
+| ------ | ------------------- | ---------------------------------------------------- |
+| `POST` | `/auth/login`       | Authenticate user, returns JWT + sets refresh cookie |
+| `POST` | `/signup`           | Register with email verification                     |
+| `GET`  | `/vacation/:tripId` | Get trip with schedule, list, and sharing info       |
+| `POST` | `/vacation`         | Create a new trip with schedule items                |
+| `POST` | `/ai/chat`          | Send a message to Gemini AI for trip recommendations |
 
 ## Testing & Quality Assurance
 
 <!-- ![E2E Tests](docs/assets/e2e-tests.gif) -->
 
+![e2e gif](docs/assets/e2e-tests.gif)
 **Test coverage across three layers:**
 
 - **Unit tests** - Shared validation utils, backend helpers (`snakeToCamel`, `checkIndexSpacing`)
@@ -135,7 +141,7 @@ See [docs/API.md](docs/API.md) for the full static API reference. Key endpoints:
 # Run all tests
 npm test
 
-# Run E2E tests (requires dev servers running)
+# Run E2E tests (requires dev servers running and env variables E2E_EMAIL and E2E_PASSWORD)
 npm run test:e2e
 ```
 
@@ -195,12 +201,11 @@ How the architecture evolved from a simple CRUD app to a collaborative platform 
 
 Track all bugs and enhancements on [GitHub Issues](https://github.com/zubairumatiya/vacation-planner/issues).
 
-<!-- Label your issues with: bug, enhancement, tech-debt -->
-
 **Current known issues:**
-- Google Maps API key has usage limits — heavy usage may hit quota caps, causing map tiles to stop loading
-- Collaborative editing is not real-time (no WebSockets yet) — concurrent edits trigger a 409 conflict, prompting users to overwrite or discard rather than syncing live
-- US territories and certain regions (e.g., Greenland) cannot be interacted with on the world map due to limitations in the TopoJSON dataset
+
+- Google Maps API is on the free tier — map may stop loading if usage quota is reached. [issue #19](https://github.com/zubairumatiya/vacation-planner/issues/19)
+- Collaborative editing is not real-time (no WebSockets yet) — concurrent edits trigger a 409 conflict, prompting users to overwrite or discard rather than syncing live [issue #20](https://github.com/zubairumatiya/vacation-planner/issues/20)
+- Country territories and certain regions (e.g., Greenland, Puerto Rico) cannot be interacted with on the world map due to limitations in the TopoJSON dataset [issue #21](https://github.com/zubairumatiya/vacation-planner/issues/21)
 
 ---
 

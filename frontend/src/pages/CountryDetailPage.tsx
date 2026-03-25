@@ -5,7 +5,10 @@ import refreshFn from "../utils/refreshFn";
 import styles from "../styles/CountryDetailPage.module.css";
 import TripSidebar from "../components/TripSidebar";
 import Tooltip from "../components/Tooltip";
-import { getVisitCountTextColor, formatVisitCount } from "../utils/visitCountColors";
+import {
+  getVisitCountTextColor,
+  formatVisitCount,
+} from "../utils/visitCountColors";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -91,7 +94,6 @@ const CountryDetailPage = () => {
   const [country, setCountry] = useState<UserCountryDetail | null>(null);
   const [places, setPlaces] = useState<CountryPlace[]>([]);
   const [trips, setTrips] = useState<UserCountryTrip[]>([]);
-  const [selectedTripIndex, setSelectedTripIndex] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -107,9 +109,15 @@ const CountryDetailPage = () => {
   const [loadingViewerTrips, setLoadingViewerTrips] = useState(false);
   const [addingToTrip, setAddingToTrip] = useState(false);
   const [editingMeta, setEditingMeta] = useState(false);
-  const [editVisitMonth, setEditVisitMonth] = useState("");
-  const [editVisitYear, setEditVisitYear] = useState("");
-  const [editNumDays, setEditNumDays] = useState("");
+  const [editTrips, setEditTrips] = useState<
+    {
+      id: string | null;
+      visitMonth: string;
+      visitYear: string;
+      numDays: string;
+    }[]
+  >([]);
+  const [editTimesVisited, setEditTimesVisited] = useState(1);
   const [addedPlaces, setAddedPlaces] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem("addedPlaces");
@@ -173,13 +181,14 @@ const CountryDetailPage = () => {
           );
           setPlaces((data.places as Record<string, unknown>[]).map(mapPlace));
           if (data.trips) {
-            const mappedTrips = (data.trips as Record<string, unknown>[]).map((t) => ({
-              id: t.id as string,
-              tripNumber: t.trip_number as number,
-              visitDate: (t.visit_date as string) || null,
-              numDays: (t.num_days as number) ?? null,
-            }));
-            setTrips(mappedTrips);
+            setTrips(
+              (data.trips as Record<string, unknown>[]).map((t) => ({
+                id: t.id as string,
+                tripNumber: t.trip_number as number,
+                visitDate: (t.visit_date as string) || null,
+                numDays: (t.num_days as number) ?? null,
+              })),
+            );
           }
           setIsOwner(data.isOwner as boolean);
         } else {
@@ -403,70 +412,120 @@ const CountryDetailPage = () => {
     }
   };
 
+  const parseTripDate = (dateStr: string | null) => {
+    if (!dateStr) return { month: "", year: "" };
+    const trimmed = dateStr.length > 7 ? dateStr.slice(0, 7) : dateStr;
+    const parts = trimmed.split("-");
+    return { month: parts[1] || "", year: parts[0] || "" };
+  };
+
   const openMetaEditor = () => {
-    const selectedTrip = trips[selectedTripIndex];
-    if (selectedTrip) {
-      const dateStr = selectedTrip.visitDate
-        ? selectedTrip.visitDate.length > 7
-          ? selectedTrip.visitDate.slice(0, 7)
-          : selectedTrip.visitDate
-        : "";
-      const parts = dateStr ? dateStr.split("-") : [];
-      setEditVisitYear(parts[0] || "");
-      setEditVisitMonth(parts[1] || "");
-      setEditNumDays(selectedTrip.numDays != null ? String(selectedTrip.numDays) : "");
-    } else if (country) {
-      const dateStr = country.visitDate
-        ? country.visitDate.length > 7
-          ? country.visitDate.slice(0, 7)
-          : country.visitDate
-        : "";
-      const parts = dateStr ? dateStr.split("-") : [];
-      setEditVisitYear(parts[0] || "");
-      setEditVisitMonth(parts[1] || "");
-      setEditNumDays(country.numDays != null ? String(country.numDays) : "");
+    if (!country) return;
+    if (trips.length > 0) {
+      setEditTrips(
+        trips.map((t) => {
+          const { month, year } = parseTripDate(t.visitDate);
+          return {
+            id: t.id,
+            visitMonth: month,
+            visitYear: year,
+            numDays: t.numDays != null ? String(t.numDays) : "",
+          };
+        }),
+      );
+      setEditTimesVisited(trips.length);
+    } else {
+      const { month, year } = parseTripDate(country.visitDate);
+      setEditTrips([
+        {
+          id: null,
+          visitMonth: month,
+          visitYear: year,
+          numDays: country.numDays != null ? String(country.numDays) : "",
+        },
+      ]);
+      setEditTimesVisited(country.timesVisited || 1);
     }
     setEditingMeta(true);
   };
 
   const saveMetaEdits = async () => {
     if (!country) return;
-    const visitDate =
-      editVisitMonth && editVisitYear
-        ? `${editVisitYear}-${editVisitMonth}`
-        : null;
-    const numDays = editNumDays ? parseInt(editNumDays) : null;
-    const selectedTrip = trips[selectedTripIndex];
-
     try {
-      if (selectedTrip) {
-        // Update specific trip
-        const res = await authFetch(`${apiUrl}/travel-log/trips/${selectedTrip.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ visitDate, numDays }),
-        });
-        if (res.ok) {
-          setTrips((prev) =>
-            prev.map((t) =>
-              t.id === selectedTrip.id ? { ...t, visitDate, numDays } : t,
-            ),
+      const existingIds = new Set(trips.map((t) => t.id));
+      const editIds = new Set(editTrips.filter((t) => t.id).map((t) => t.id));
+
+      for (const trip of trips) {
+        if (!editIds.has(trip.id)) {
+          await authFetch(
+            `${apiUrl}/travel-log/${country.id}/trips/${trip.id}`,
+            { method: "DELETE" },
           );
-          // Update denormalized cache if editing newest trip (index 0)
-          if (selectedTripIndex === 0) {
-            setCountry({ ...country, visitDate, numDays });
-          }
-          setEditingMeta(false);
-        }
-      } else {
-        const res = await authFetch(`${apiUrl}/travel-log/${country.id}`, {
-          method: "PATCH",
-          body: JSON.stringify({ visitDate, numDays }),
-        });
-        if (res.ok) {
-          setCountry({ ...country, visitDate, numDays });
-          setEditingMeta(false);
         }
       }
+
+      const newTrips: UserCountryTrip[] = [];
+      for (const et of editTrips) {
+        const visitDate =
+          et.visitMonth && et.visitYear
+            ? `${et.visitYear}-${et.visitMonth}`
+            : null;
+        const numDays = et.numDays ? parseInt(et.numDays) : null;
+
+        if (et.id && existingIds.has(et.id)) {
+          const res = await authFetch(`${apiUrl}/travel-log/trips/${et.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ visitDate, numDays }),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const t = data.trip as Record<string, unknown>;
+            newTrips.push({
+              id: t.id as string,
+              tripNumber: t.trip_number as number,
+              visitDate: (t.visit_date as string) || null,
+              numDays: (t.num_days as number) ?? null,
+            });
+          }
+        } else {
+          const res = await authFetch(
+            `${apiUrl}/travel-log/${country.id}/trips`,
+            {
+              method: "POST",
+              body: JSON.stringify({ visitDate, numDays }),
+            },
+          );
+          if (res.ok || res.status === 201) {
+            const data = await res.json();
+            const t = data.trip as Record<string, unknown>;
+            newTrips.push({
+              id: t.id as string,
+              tripNumber: t.trip_number as number,
+              visitDate: (t.visit_date as string) || null,
+              numDays: (t.num_days as number) ?? null,
+            });
+          }
+        }
+      }
+
+      setTrips(newTrips);
+      if (newTrips.length > 0) {
+        const newest = newTrips[0];
+        setCountry({
+          ...country,
+          timesVisited: newTrips.length,
+          visitDate: newest.visitDate,
+          numDays: newest.numDays,
+        });
+      } else {
+        setCountry({
+          ...country,
+          timesVisited: 0,
+          visitDate: null,
+          numDays: null,
+        });
+      }
+      setEditingMeta(false);
     } catch {
       // handled
     }
@@ -517,195 +576,102 @@ const CountryDetailPage = () => {
         <span className={styles.countryTitle}>
           {country.countryName} Log
           {(country.isNative || country.timesVisited > 1) && (
-            <span style={{ color: getVisitCountTextColor(country.timesVisited, country.isNative), marginLeft: "0.4rem", fontSize: "0.85rem", fontWeight: 600 }}>
+            <span
+              style={{
+                color: getVisitCountTextColor(
+                  country.timesVisited,
+                  country.isNative,
+                ),
+                marginLeft: "0.4rem",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+              }}
+            >
               ({formatVisitCount(country.timesVisited, country.isNative)})
             </span>
           )}
         </span>
-        {isOwner && (
-          <label style={{ display: "flex", alignItems: "center", gap: "0.35rem", fontSize: "0.75rem", color: "#9ca3af", cursor: "pointer", marginLeft: "0.5rem" }}>
-            <input
-              type="checkbox"
-              checked={country.isNative}
-              onChange={toggleNative}
-              style={{ accentColor: "#34d399" }}
-            />
-            Native
-          </label>
+        {(country.visitDate || country.numDays) && !editingMeta && (
+          <span className={styles.countryMeta}>
+            {country.visitDate &&
+              new Date(
+                country.visitDate.length === 7 ? country.visitDate + "-01" : country.visitDate,
+              ).toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              })}
+            {country.visitDate && country.numDays && " · "}
+            {country.numDays && `${country.numDays} day${country.numDays !== 1 ? "s" : ""}`}
+          </span>
         )}
-        {trips.length > 1 && !editingMeta && (
-          <select
-            className={styles.metaEditInput}
-            value={selectedTripIndex}
-            onChange={(e) => setSelectedTripIndex(Number(e.target.value))}
-            style={{ marginLeft: "0.5rem", fontSize: "0.75rem", width: "auto" }}
-          >
-            {trips.map((t, i) => (
-              <option key={t.id} value={i}>
-                Trip {t.tripNumber}
-                {t.visitDate ? ` — ${new Date(t.visitDate.length === 7 ? t.visitDate + "-01" : t.visitDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })}` : ""}
-              </option>
-            ))}
-          </select>
-        )}
-        {(() => {
-          const displayTrip = trips[selectedTripIndex];
-          const vDate = displayTrip?.visitDate || country.visitDate;
-          const nDays = displayTrip?.numDays ?? country.numDays;
-          return (vDate || nDays) && !editingMeta ? (
-            <span className={styles.countryMeta}>
-              {vDate &&
-                new Date(
-                  vDate.length === 7 ? vDate + "-01" : vDate,
-                ).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric",
-                })}
-              {vDate && nDays && " · "}
-              {nDays && `${nDays} day${nDays !== 1 ? "s" : ""}`}
-            </span>
-          ) : null;
-        })()}
         {isOwner && !editingMeta && (
           <Tooltip label="Edit date and days">
-          <button
-            type="button"
-            className={styles.editMetaBtn}
-            onClick={openMetaEditor}
-            aria-label="Edit date and days"
-          >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <button
+              type="button"
+              className={styles.editMetaBtn}
+              onClick={openMetaEditor}
+              aria-label="Edit date and days"
             >
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
-            </svg>
-          </button>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
           </Tooltip>
-        )}
-        {editingMeta && (
-          <div className={styles.metaEditForm}>
-            <div className={styles.metaEditFields}>
-              <select
-                className={styles.metaEditInput}
-                value={editVisitMonth}
-                onChange={(e) => setEditVisitMonth(e.target.value)}
-              >
-                <option value="">Month</option>
-                {[
-                  "Jan",
-                  "Feb",
-                  "Mar",
-                  "Apr",
-                  "May",
-                  "Jun",
-                  "Jul",
-                  "Aug",
-                  "Sep",
-                  "Oct",
-                  "Nov",
-                  "Dec",
-                ].map((name, i) => {
-                  const val = String(i + 1).padStart(2, "0");
-                  return (
-                    <option key={val} value={val}>
-                      {name}
-                    </option>
-                  );
-                })}
-              </select>
-              <select
-                className={styles.metaEditInput}
-                value={editVisitYear}
-                onChange={(e) => setEditVisitYear(e.target.value)}
-              >
-                <option value="">YYYY</option>
-                {Array.from({ length: 50 }, (_, i) => {
-                  const yr = String(new Date().getFullYear() - i);
-                  return (
-                    <option key={yr} value={yr}>
-                      {yr}
-                    </option>
-                  );
-                })}
-              </select>
-              <input
-                type="number"
-                className={styles.metaEditInput}
-                placeholder="Days"
-                min="1"
-                value={editNumDays}
-                onChange={(e) => setEditNumDays(e.target.value)}
-                style={{ width: "4rem" }}
-              />
-            </div>
-            <button
-              type="button"
-              className={styles.metaEditSave}
-              onClick={saveMetaEdits}
-            >
-              Save
-            </button>
-            <button
-              type="button"
-              className={styles.metaEditCancel}
-              onClick={() => setEditingMeta(false)}
-            >
-              Cancel
-            </button>
-          </div>
         )}
         <div className={styles.headerRight}>
           <Tooltip label="Horizontal layout">
-          <button
-            type="button"
-            className={`${styles.layoutBtn} ${layout === "rows" ? styles.layoutBtnActive : ""}`}
-            onClick={() => setLayout("rows")}
-            aria-label="Horizontal layout"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
+            <button
+              type="button"
+              className={`${styles.layoutBtn} ${layout === "rows" ? styles.layoutBtnActive : ""}`}
+              onClick={() => setLayout("rows")}
+              aria-label="Horizontal layout"
             >
-              <line x1="1" y1="3" x2="15" y2="3" />
-              <line x1="1" y1="8" x2="15" y2="8" />
-              <line x1="1" y1="13" x2="15" y2="13" />
-            </svg>
-          </button>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              >
+                <line x1="1" y1="3" x2="15" y2="3" />
+                <line x1="1" y1="8" x2="15" y2="8" />
+                <line x1="1" y1="13" x2="15" y2="13" />
+              </svg>
+            </button>
           </Tooltip>
           <Tooltip label="Column layout">
-          <button
-            type="button"
-            className={`${styles.layoutBtn} ${layout === "columns" ? styles.layoutBtnActive : ""}`}
-            onClick={() => setLayout("columns")}
-            aria-label="Column layout"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
+            <button
+              type="button"
+              className={`${styles.layoutBtn} ${layout === "columns" ? styles.layoutBtnActive : ""}`}
+              onClick={() => setLayout("columns")}
+              aria-label="Column layout"
             >
-              <line x1="3" y1="1" x2="3" y2="15" />
-              <line x1="8" y1="1" x2="8" y2="15" />
-              <line x1="13" y1="1" x2="13" y2="15" />
-            </svg>
-          </button>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              >
+                <line x1="3" y1="1" x2="3" y2="15" />
+                <line x1="8" y1="1" x2="8" y2="15" />
+                <line x1="13" y1="1" x2="13" y2="15" />
+              </svg>
+            </button>
           </Tooltip>
           {isOwner && (
             <button
@@ -733,6 +699,159 @@ const CountryDetailPage = () => {
           )}
         </div>
       </div>
+
+      {editingMeta && (
+        <div className={styles.metaEditDropdown}>
+          <div className={styles.metaEditTopRow}>
+            <label className={styles.metaEditDropdownLabel}>
+              <span>Times visited</span>
+              <input
+                type="number"
+                className={styles.metaEditDropdownInput}
+                min="1"
+                value={editTimesVisited}
+                onChange={(e) => {
+                  const val = Math.max(1, parseInt(e.target.value) || 1);
+                  setEditTimesVisited(val);
+                  setEditTrips((prev) =>
+                    Array.from(
+                      { length: val },
+                      (_, i) =>
+                        prev[i] || {
+                          id: null,
+                          visitMonth: "",
+                          visitYear: "",
+                          numDays: "",
+                        },
+                    ),
+                  );
+                }}
+                style={{ width: "4rem" }}
+              />
+            </label>
+            <label className={styles.metaEditNativeLabel}>
+              <span>Native country</span>
+              <input
+                type="checkbox"
+                checked={country.isNative}
+                onChange={toggleNative}
+                style={{ accentColor: "#34d399" }}
+              />
+            </label>
+          </div>
+          <div className={styles.metaEditTripsList}>
+            {editTrips.map((et, i) => (
+              <div
+                key={et.id || `new-${i}`}
+                style={{
+                  borderTop: i > 0 ? "1px solid rgb(52, 175, 112)" : "none",
+                  paddingTop: i > 0 ? "0.5rem" : 0,
+                }}
+              >
+                {editTrips.length > 1 && (
+                  <div className={styles.metaEditTripHeader}>Trip {i + 1}</div>
+                )}
+                <div className={styles.metaEditTripRow}>
+                  <label className={styles.metaEditDropdownLabel}>
+                    <span>Date visited</span>
+                    <div className={styles.metaEditDateSelects}>
+                      <select
+                        className={styles.metaEditDropdownInput}
+                        value={et.visitMonth}
+                        onChange={(e) => {
+                          const updated = [...editTrips];
+                          updated[i] = {
+                            ...updated[i],
+                            visitMonth: e.target.value,
+                          };
+                          setEditTrips(updated);
+                        }}
+                      >
+                        <option value="">Month</option>
+                        {[
+                          "Jan",
+                          "Feb",
+                          "Mar",
+                          "Apr",
+                          "May",
+                          "Jun",
+                          "Jul",
+                          "Aug",
+                          "Sep",
+                          "Oct",
+                          "Nov",
+                          "Dec",
+                        ].map((name, mi) => {
+                          const val = String(mi + 1).padStart(2, "0");
+                          return (
+                            <option key={val} value={val}>
+                              {name}
+                            </option>
+                          );
+                        })}
+                      </select>
+                      <span className={styles.metaEditDateSep}>/</span>
+                      <select
+                        className={styles.metaEditDropdownInput}
+                        value={et.visitYear}
+                        onChange={(e) => {
+                          const updated = [...editTrips];
+                          updated[i] = {
+                            ...updated[i],
+                            visitYear: e.target.value,
+                          };
+                          setEditTrips(updated);
+                        }}
+                      >
+                        <option value="">YYYY</option>
+                        {Array.from({ length: 50 }, (_, yi) => {
+                          const yr = String(new Date().getFullYear() - yi);
+                          return (
+                            <option key={yr} value={yr}>
+                              {yr}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  </label>
+                  <label className={styles.metaEditDropdownLabel}>
+                    <span>Days spent</span>
+                    <input
+                      type="number"
+                      className={styles.metaEditDropdownInput}
+                      placeholder="e.g. 7"
+                      min="1"
+                      value={et.numDays}
+                      onChange={(e) => {
+                        const updated = [...editTrips];
+                        updated[i] = { ...updated[i], numDays: e.target.value };
+                        setEditTrips(updated);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className={styles.metaEditDropdownActions}>
+            <button
+              type="button"
+              className={styles.metaEditDropdownSave}
+              onClick={saveMetaEdits}
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              className={styles.metaEditDropdownCancel}
+              onClick={() => setEditingMeta(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {showDeleteModal && (
         <div

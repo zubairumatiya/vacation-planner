@@ -164,9 +164,10 @@
 
 .countryRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   width: 100%;
+  margin-top: 0.1rem;
 }
 
 .countryNameWrap {
@@ -178,9 +179,16 @@
 
 .countryMetaWrap {
   display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.countryMetaRow {
+  display: flex;
   align-items: center;
   gap: 0.35rem;
-  flex-shrink: 0;
+  margin-top: 0.15rem;
 }
 
 .visitCount {
@@ -207,24 +215,33 @@
   border-right: 4px solid transparent;
   border-top: 5px solid #888;
   transition: transform 0.15s;
+  rotate: -90deg;
+  margin-top: 2px;
 }
 
 .expandArrowOpen {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
 }
 
 .tripDropdown {
-  padding: 0.25rem 0 0.25rem 1rem;
+  padding: 0.25rem 0.5rem 0.25rem 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 0.2rem;
 }
 
 .tripRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
+  justify-content: flex-end;
+  font-size: 0.85rem;
+  color: #fcf7eacc;
+}
+
+.tripRow span {
+  border-left: 2px solid #3e0fc0;
+  padding-left: 0.25rem;
 }
 
 .tripLabel {
@@ -317,6 +334,45 @@
   display: flex;
   gap: 0.75rem;
   margin-bottom: 0.5rem;
+  flex-direction: column;
+}
+.tripListSeparator {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+}
+.detailsWrapper {
+  display: flex;
+  justify-content: center;
+}
+.detailsFields > div {
+  display: flex;
+  flex-direction: column;
+}
+.detailsLabel:first-child {
+  flex: 0.7;
+}
+
+.detailsLabel:nth-child(2) {
+  flex: 0.3;
+}
+
+.detailsTopRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+  justify-content: center;
+}
+
+.nativeLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  color: #aaa;
+  font-size: 0.75rem;
+  cursor: pointer;
 }
 
 .detailsLabel {
@@ -362,8 +418,17 @@
 }
 
 .detailsActions {
+  justify-content: center;
   display: flex;
   gap: 0.5rem;
+}
+
+.detailsTopRow > :first-child {
+  align-items: center;
+}
+
+.nativeLabel input {
+  margin-top: 0.5rem;
 }
 
 .detailsConfirmBtn {

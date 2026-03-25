@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useCallback } from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import HotkeyTooltip from "./HotkeyTooltip";
 import Tooltip from "./Tooltip";
 import { AuthContext } from "../context/AuthContext";
@@ -71,7 +71,12 @@ const SuggestionsSidebar = ({
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const loggingOutRef = auth?.loggingOutRef;
   const [open, setOpen] = useState(false);
-  closeSidebarRef.current = () => setOpen(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const savedScrollRef = useRef(0);
+  closeSidebarRef.current = () => {
+    if (scrollRef.current) savedScrollRef.current = scrollRef.current.scrollTop;
+    setOpen(false);
+  };
   const [schedulePlaces, setSchedulePlaces] = useState<AiRecommendedPlace[]>([]);
   const [listPlaces, setListPlaces] = useState<AiListPlace[]>([]);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -141,11 +146,21 @@ const SuggestionsSidebar = ({
     }
   }, [totalCount]);
 
+  // Restore scroll position when sidebar reopens
+  useEffect(() => {
+    if (open && scrollRef.current) {
+      scrollRef.current.scrollTop = savedScrollRef.current;
+    }
+  }, [open]);
+
   useEffect(() => {
     const handleHotkey = (e: KeyboardEvent) => {
       if (e.metaKey && e.shiftKey && !e.altKey && !e.ctrlKey && e.key.toLowerCase() === "s") {
         if (totalCount === 0) return;
         e.preventDefault();
+        if (scrollRef.current) {
+          savedScrollRef.current = scrollRef.current.scrollTop;
+        }
         setOpen((prev) => {
           if (!prev) onSidebarOpen();
           return !prev;
@@ -486,12 +501,15 @@ const SuggestionsSidebar = ({
         <button
           type="button"
           className={`${styles.sidebarTab} ${open ? styles.sidebarTabOpen : ""}`}
-          onClick={() =>
+          onClick={() => {
+            if (open && scrollRef.current) {
+              savedScrollRef.current = scrollRef.current.scrollTop;
+            }
             setOpen((prev) => {
               if (!prev) onSidebarOpen();
               return !prev;
-            })
-          }
+            });
+          }}
           aria-label={
             open
               ? "Close recommendations sidebar"
@@ -522,8 +540,7 @@ const SuggestionsSidebar = ({
         )}
         </button>
       </HotkeyTooltip>
-      {open && (
-        <div className={styles.sidebar}>
+        <div className={styles.sidebar} style={{ display: open ? undefined : "none" }}>
           <div className={styles.sidebarHeader}>
             <span className={styles.sidebarTitle}>Recommendations</span>
             <div
@@ -607,7 +624,7 @@ const SuggestionsSidebar = ({
               </Tooltip>
             </div>
           </div>
-          <div className={styles.sidebarList}>
+          <div className={styles.sidebarList} ref={scrollRef}>
             {/* Schedule items grouped by date */}
             {sortedBucketKeys.map((bucket) => (
               <div key={bucket}>
@@ -660,7 +677,6 @@ const SuggestionsSidebar = ({
             })()}
           </div>
         </div>
-      )}
     </>
   );
 };

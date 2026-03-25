@@ -22,6 +22,7 @@ interface UserSearchResult {
   firstName: string;
   lastName: string;
   username: string;
+  followStatus: string | null;
 }
 
 interface UserCountry {
@@ -63,6 +64,7 @@ const mapUserSearchResult = (
   firstName: raw.first_name as string,
   lastName: raw.last_name as string,
   username: raw.username as string,
+  followStatus: (raw.follow_status as string) || null,
 });
 
 const ProfilePage = () => {
@@ -398,9 +400,9 @@ const ProfilePage = () => {
                         @{user.username}
                       </span>
                     </div>
-                    {isFriend(user.id) ? (
+                    {isFriend(user.id) || user.followStatus === "accepted" ? (
                       <span className={styles.pendingText}>Friends</span>
-                    ) : isPending(user.id) ? (
+                    ) : isPending(user.id) || user.followStatus === "pending" ? (
                       <span className={styles.pendingText}>Pending</span>
                     ) : (
                       <button
