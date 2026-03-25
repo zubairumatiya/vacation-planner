@@ -708,10 +708,20 @@
   font-style: italic;
 }
 
+.emptyStateWrapper {
+  display: flex;
+  justify-content: center;
+}
 .emptyText {
+  display: flex;
+  flex: 0.8;
+  justify-content: center;
   color: #666;
   font-size: 0.8rem;
   padding: 0.25rem 0;
+}
+.ghostBalancer {
+  flex: 0.2;
 }
 
 /* Layout modes */
@@ -808,6 +818,85 @@
   font-size: 0.75rem;
   padding: 6px 12px;
   margin: 0;
+}
+
+/* City filter */
+.cityFilterSelect {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.75rem;
+  outline: none;
+  cursor: pointer;
+  max-width: 140px;
+}
+
+.cityFilterSelect:focus {
+  border-color: #2fe782;
+}
+
+.addCitySelect {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.8rem;
+  outline: none;
+  cursor: pointer;
+  max-width: 120px;
+}
+
+.addCitySelect:focus {
+  border-color: #2fe782;
+}
+
+.placeCityLabel {
+  color: #888;
+  font-size: 0.7rem;
+  font-weight: 400;
+  margin-left: 0.3rem;
+}
+
+/* Inline editing */
+.inlineEditForm {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  flex: 1;
+}
+
+.inlineEditInput {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.inlineEditInput:focus {
+  border-color: #2fe782;
+}
+
+.inlineEditCitySelect {
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.75rem;
+  outline: none;
+  cursor: pointer;
+  max-width: 100px;
+}
+
+.inlineEditCitySelect:focus {
+  border-color: #2fe782;
 }
 
 @media (max-width: 600px) {

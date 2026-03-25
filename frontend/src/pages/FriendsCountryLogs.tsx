@@ -5,7 +5,10 @@ import refreshFn from "../utils/refreshFn";
 import { getAvatarSrc } from "../utils/avatarUtils";
 import styles from "../styles/FriendsCountryLogs.module.css";
 import Tooltip from "../components/Tooltip";
-import { getVisitCountTextColor, formatVisitCount } from "../utils/visitCountColors";
+import {
+  getVisitCountTextColor,
+  formatVisitCount,
+} from "../utils/visitCountColors";
 
 const apiUrl = import.meta.env.VITE_API_URL;
 
@@ -18,6 +21,7 @@ interface CountryPlace {
   isPuke: boolean;
   note: string | null;
   sortIndex: number;
+  cityId: string | null;
 }
 
 const CATEGORIES = [
@@ -36,13 +40,16 @@ const mapPlace = (raw: Record<string, unknown>): CountryPlace => ({
   isPuke: raw.is_puke as boolean,
   note: (raw.note as string) || null,
   sortIndex: raw.sort_index as number,
+  cityId: (raw.city_id as string) || null,
 });
 
 export default function FriendsCountryLogs({
   countryName,
+  tripLocation,
   onItemAdded,
 }: {
   countryName: string;
+  tripLocation?: string;
   onItemAdded: () => void;
 }) {
   const { tripId } = useParams<{ tripId: string }>();
@@ -53,6 +60,10 @@ export default function FriendsCountryLogs({
   const refreshInFlightRef = auth?.refreshInFlightRef;
   const loggingOutRef = auth?.loggingOutRef;
 
+  const tripCity = tripLocation
+    ? tripLocation.split(",")[0].trim().toLowerCase()
+    : "";
+
   const [friendLogs, setFriendLogs] = useState<FriendCountryLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedFriendIndex, setSelectedFriendIndex] = useState<number | null>(
@@ -60,6 +71,7 @@ export default function FriendsCountryLogs({
   );
   const [friendPlaces, setFriendPlaces] = useState<CountryPlace[]>([]);
   const [friendDetailLoading, setFriendDetailLoading] = useState(false);
+  const [friendCityFilter, setFriendCityFilter] = useState<string>("all");
   const [addedPlaces, setAddedPlaces] = useState<Set<string>>(() => {
     try {
       const stored = localStorage.getItem("addedPlaces");
@@ -120,7 +132,23 @@ export default function FriendsCountryLogs({
         );
         if (res.ok) {
           const data = (await res.json()) as { friends: FriendCountryLog[] };
-          setFriendLogs(data.friends);
+          const sorted = [...data.friends];
+          if (tripCity) {
+            sorted.sort((a, b) => {
+              const aMatch = a.cities?.some(
+                (c: string) => c.toLowerCase() === tripCity,
+              )
+                ? 1
+                : 0;
+              const bMatch = b.cities?.some(
+                (c: string) => c.toLowerCase() === tripCity,
+              )
+                ? 1
+                : 0;
+              return bMatch - aMatch;
+            });
+          }
+          setFriendLogs(sorted);
         }
       } catch {
         // silent fail
@@ -136,23 +164,35 @@ export default function FriendsCountryLogs({
   useEffect(() => {
     if (selectedFriendIndex === null) {
       setFriendPlaces([]);
+      setFriendDetailLoading(false);
       return;
     }
 
     const friend = friendLogs[selectedFriendIndex];
     if (!friend) return;
 
+    setFriendDetailLoading(true);
+    setFriendPlaces([]);
     const fetchDetail = async () => {
-      setFriendDetailLoading(true);
       try {
         const res = await authFetch(
           `${apiUrl}/travel-log/${friend.userCountryId}/detail`,
         );
         if (res.ok) {
           const data = await res.json();
-          setFriendPlaces(
-            (data.places as Record<string, unknown>[]).map(mapPlace),
+          const mappedPlaces = (data.places as Record<string, unknown>[]).map(
+            mapPlace,
           );
+          setFriendPlaces(mappedPlaces);
+
+          if (tripCity) {
+            const matchingCity = mappedPlaces.find(
+              (p) => p.category === "city" && p.name.toLowerCase() === tripCity,
+            );
+            setFriendCityFilter(matchingCity ? matchingCity.id : "all");
+          } else {
+            setFriendCityFilter("all");
+          }
         }
       } catch {
         // silent fail
@@ -205,9 +245,17 @@ export default function FriendsCountryLogs({
     );
   }
 
-  // Group places by category for detail view
+  // Group places by category for detail view, filtered by city
+  const friendCities = friendPlaces.filter((p) => p.category === "city");
   const grouped: Record<string, CountryPlace[]> = {};
   for (const p of friendPlaces) {
+    if (
+      p.category !== "city" &&
+      friendCityFilter !== "all" &&
+      p.cityId !== friendCityFilter
+    ) {
+      continue;
+    }
     if (!grouped[p.category]) grouped[p.category] = [];
     grouped[p.category].push(p);
   }
@@ -244,26 +292,57 @@ export default function FriendsCountryLogs({
                   <span className={styles.username}>
                     {friend.username}
                     {(friend.isNative || friend.timesVisited > 1) && (
-                      <span style={{ color: getVisitCountTextColor(friend.timesVisited, friend.isNative), marginLeft: "6px", fontWeight: 600 }}>
-                        ({formatVisitCount(friend.timesVisited, friend.isNative)})
+                      <span
+                        style={{
+                          color: getVisitCountTextColor(
+                            friend.timesVisited,
+                            friend.isNative,
+                          ),
+                          marginLeft: "6px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        (
+                        {formatVisitCount(friend.timesVisited, friend.isNative)}
+                        )
                       </span>
                     )}
                   </span>
-                  <div className={styles.meta}>
-                    {friend.visitDate && (
-                      <span>
-                        {new Date(friend.visitDate).toLocaleDateString(
-                          "en-US",
-                          { month: "short", year: "numeric" },
+                  {tripCity &&
+                    friend.cities?.some(
+                      (c: string) =>
+                        c.toLowerCase().includes(tripCity) ||
+                        tripCity.includes(c.toLowerCase()),
+                    ) && (
+                      <span className={styles.cityBadge}>
+                        (
+                        {friend.cities.find(
+                          (c: string) =>
+                            c.toLowerCase().includes(tripCity) ||
+                            tripCity.includes(c.toLowerCase()),
                         )}
+                        )
                       </span>
                     )}
-                    {friend.numDays && (
-                      <span>
-                        {friend.numDays} day{friend.numDays !== 1 ? "s" : ""}
-                      </span>
-                    )}
-                    <span>
+                  <div className={styles.meta}>
+                    <div className={styles.groupCardRow}>
+                      {friend.visitDate && (
+                        <span>
+                          {new Date(friend.visitDate).toLocaleDateString(
+                            "en-US",
+                            { month: "short", year: "numeric" },
+                          )}
+                        </span>
+                      )}
+
+                      {friend.numDays && (
+                        <span>
+                          {" "}
+                          {friend.numDays} day{friend.numDays !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                    <span className={styles.placesCount}>
                       {friend.placesCount} item
                       {friend.placesCount !== 1 ? "s" : ""}
                     </span>
@@ -273,84 +352,97 @@ export default function FriendsCountryLogs({
             ))}
           </div>
         </>
+      ) : friendDetailLoading || friendPlaces.length === 0 ? (
+        <div className={styles.loading}>Loading...</div>
       ) : (
         <div className={styles.detailView}>
           <div className={styles.detailNav}>
             <Tooltip label="Previous Friend">
-            <button
-              className={styles.navButton}
-              disabled={selectedFriendIndex === 0}
-              onClick={() =>
-                setSelectedFriendIndex((selectedFriendIndex ?? 0) - 1)
-              }
-            >
-              <svg
-                viewBox="1 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                style={{ width: "20px", height: "20px" }}
+              <button
+                className={styles.navButton}
+                disabled={selectedFriendIndex === 0}
+                onClick={() =>
+                  setSelectedFriendIndex((selectedFriendIndex ?? 0) - 1)
+                }
               >
-                <path
-                  d="M15 18L9 12L15 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
+                <svg
+                  viewBox="1 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ width: "20px", height: "20px" }}
+                >
+                  <path
+                    d="M15 18L9 12L15 6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
             </Tooltip>
-            <div className={styles.detailHeader}>
-              <Link
-                to={`/user/${selectedFriend.userId}`}
-                className={styles.detailAvatarLink}
-              >
-                <img
-                  src={getAvatarSrc(selectedFriend.avatar)}
-                  alt={selectedFriend.username}
-                  className={styles.detailAvatar}
-                />
-              </Link>
+            <Link
+              to={`/user/${selectedFriend.userId}`}
+              className={styles.detailHeader}
+            >
+              <img
+                src={getAvatarSrc(selectedFriend.avatar)}
+                alt={selectedFriend.username}
+                className={styles.detailAvatar}
+              />
               <span className={styles.detailName}>
                 {selectedFriend.firstName} {selectedFriend.lastName}
               </span>
-            </div>
+            </Link>
             <Tooltip label="Next Friend">
-            <button
-              className={styles.navButton}
-              disabled={selectedFriendIndex === friendLogs.length - 1}
-              onClick={() =>
-                setSelectedFriendIndex((selectedFriendIndex ?? 0) + 1)
-              }
-            >
-              <svg
-                viewBox="0 0 22 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                style={{ width: "20px", height: "20px" }}
+              <button
+                className={styles.navButton}
+                disabled={selectedFriendIndex === friendLogs.length - 1}
+                onClick={() =>
+                  setSelectedFriendIndex((selectedFriendIndex ?? 0) + 1)
+                }
               >
-                <path
-                  d="M9 18L15 12L9 6"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </button>
+                <svg
+                  viewBox="0 0 22 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  style={{ width: "20px", height: "20px" }}
+                >
+                  <path
+                    d="M9 18L15 12L9 6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
             </Tooltip>
           </div>
-          <button
-            className={styles.backButton}
-            onClick={() => setSelectedFriendIndex(null)}
-          >
-            Back to Friends
-          </button>
+          <div className={styles.detailTopBar}>
+            <button
+              className={styles.backButton}
+              onClick={() => setSelectedFriendIndex(null)}
+            >
+              Back to Friends
+            </button>
+            {friendCities.length > 0 && (
+              <select
+                className={styles.cityFilterSelect}
+                value={friendCityFilter}
+                onChange={(e) => setFriendCityFilter(e.target.value)}
+              >
+                <option value="all">All</option>
+                {friendCities.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
 
-          {friendDetailLoading ? (
-            <div className={styles.loading}>Loading details...</div>
-          ) : (
-            <div className={styles.detailBody}>
+          <div className={styles.detailBody}>
               {CATEGORIES.map(({ key, label }) => {
                 const items = grouped[key] || [];
                 return (
@@ -423,7 +515,6 @@ export default function FriendsCountryLogs({
                 );
               })}
             </div>
-          )}
         </div>
       )}
     </div>

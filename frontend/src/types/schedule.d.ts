@@ -349,5 +349,6 @@ declare global {
     lastName: string;
     avatar: string | null;
     placesCount: number;
+    cities: string[];
   }
 }

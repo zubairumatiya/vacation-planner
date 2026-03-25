@@ -12,6 +12,7 @@ interface CountryPlace {
   isPuke: boolean;
   note: string | null;
   sortIndex: number;
+  cityId: string | null;
 }
 
 interface SidebarTrip {

@@ -21,6 +21,7 @@ interface CountryPlace {
   isPuke: boolean;
   note: string | null;
   sortIndex: number;
+  cityId: string | null;
 }
 
 interface UserCountryTrip {
@@ -54,6 +55,7 @@ const mapPlace = (raw: Record<string, unknown>): CountryPlace => ({
   isPuke: raw.is_puke as boolean,
   note: (raw.note as string) || null,
   sortIndex: raw.sort_index as number,
+  cityId: (raw.city_id as string) || null,
 });
 
 const mapUserCountry = (raw: Record<string, unknown>): UserCountryDetail => ({
@@ -102,6 +104,11 @@ const CountryDetailPage = () => {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [layout, setLayout] = useState<"rows" | "columns">("rows");
+  const [cityFilter, setCityFilter] = useState<string>("all");
+  const [addCityId, setAddCityId] = useState<string>("");
+  const [editingPlaceId, setEditingPlaceId] = useState<string | null>(null);
+  const [editPlaceName, setEditPlaceName] = useState("");
+  const [editPlaceCityId, setEditPlaceCityId] = useState<string | null>(null);
   const [addToTripPlaceId, setAddToTripPlaceId] = useState<string | null>(null);
   const [viewerTrips, setViewerTrips] = useState<
     { id: string; tripName: string; endDate: string }[]
@@ -219,11 +226,15 @@ const CountryDetailPage = () => {
   const handleAddPlace = async (category: string) => {
     if (!addName.trim()) return;
     try {
+      const body: Record<string, string> = { category, name: addName.trim() };
+      if (addCityId && category !== "city") {
+        body.cityId = addCityId;
+      }
       const res = await authFetch(
         `${apiUrl}/travel-log/${userCountryId}/places`,
         {
           method: "POST",
-          body: JSON.stringify({ category, name: addName.trim() }),
+          body: JSON.stringify(body),
         },
       );
       if (res.ok || res.status === 201) {
@@ -231,6 +242,7 @@ const CountryDetailPage = () => {
         const newPlace = mapPlace(data.place as Record<string, unknown>);
         setPlaces((prev) => [...prev, newPlace]);
         setAddName("");
+        setAddCityId("");
         setAddingCategory(null);
       }
     } catch {
@@ -337,6 +349,49 @@ const CountryDetailPage = () => {
       });
       if (res.ok) {
         setPlaces((prev) => prev.filter((p) => p.id !== placeId));
+      }
+    } catch {
+      // handled
+    }
+  };
+
+  const handleStartEdit = (place: CountryPlace) => {
+    if (!isOwner) return;
+    setEditingPlaceId(place.id);
+    setEditPlaceName(place.name);
+    setEditPlaceCityId(place.cityId);
+  };
+
+  const handleSaveEdit = async (placeId: string) => {
+    const trimmedName = editPlaceName.trim();
+    if (!trimmedName) return;
+
+    const place = places.find((p) => p.id === placeId);
+    if (!place) return;
+
+    const body: Record<string, unknown> = {};
+    if (trimmedName !== place.name) body.name = trimmedName;
+    if (editPlaceCityId !== place.cityId) body.cityId = editPlaceCityId;
+
+    if (Object.keys(body).length === 0) {
+      setEditingPlaceId(null);
+      return;
+    }
+
+    try {
+      const res = await authFetch(`${apiUrl}/travel-log/places/${placeId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setPlaces((prev) =>
+          prev.map((p) =>
+            p.id === placeId
+              ? { ...p, name: trimmedName, cityId: editPlaceCityId }
+              : p,
+          ),
+        );
+        setEditingPlaceId(null);
       }
     } catch {
       // handled
@@ -550,8 +605,16 @@ const CountryDetailPage = () => {
   if (loading || !country) return null;
 
   const fullName = `${country.firstName} ${country.lastName}`;
+  const cities = places.filter((p) => p.category === "city");
   const grouped: Record<string, CountryPlace[]> = {};
   for (const p of places) {
+    if (
+      p.category !== "city" &&
+      cityFilter !== "all" &&
+      p.cityId !== cityFilter
+    ) {
+      continue;
+    }
     if (!grouped[p.category]) grouped[p.category] = [];
     grouped[p.category].push(p);
   }
@@ -595,13 +658,16 @@ const CountryDetailPage = () => {
           <span className={styles.countryMeta}>
             {country.visitDate &&
               new Date(
-                country.visitDate.length === 7 ? country.visitDate + "-01" : country.visitDate,
+                country.visitDate.length === 7
+                  ? country.visitDate + "-01"
+                  : country.visitDate,
               ).toLocaleDateString("en-US", {
                 month: "short",
                 year: "numeric",
               })}
             {country.visitDate && country.numDays && " · "}
-            {country.numDays && `${country.numDays} day${country.numDays !== 1 ? "s" : ""}`}
+            {country.numDays &&
+              `${country.numDays} day${country.numDays !== 1 ? "s" : ""}`}
           </span>
         )}
         {isOwner && !editingMeta && (
@@ -629,6 +695,20 @@ const CountryDetailPage = () => {
           </Tooltip>
         )}
         <div className={styles.headerRight}>
+          {cities.length > 0 && (
+            <select
+              className={styles.cityFilterSelect}
+              value={cityFilter}
+              onChange={(e) => setCityFilter(e.target.value)}
+            >
+              <option value="all">All</option>
+              {cities.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
           <Tooltip label="Horizontal layout">
             <button
               type="button"
@@ -923,10 +1003,25 @@ const CountryDetailPage = () => {
                       if (e.key === "Escape") {
                         setAddingCategory(null);
                         setAddName("");
+                        setAddCityId("");
                       }
                     }}
                     autoFocus
                   />
+                  {key !== "city" && cities.length > 0 && (
+                    <select
+                      className={styles.addCitySelect}
+                      value={addCityId}
+                      onChange={(e) => setAddCityId(e.target.value)}
+                    >
+                      <option value="">No city</option>
+                      {cities.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     type="button"
                     className={styles.addConfirmBtn}
@@ -940,6 +1035,7 @@ const CountryDetailPage = () => {
                     onClick={() => {
                       setAddingCategory(null);
                       setAddName("");
+                      setAddCityId("");
                     }}
                   >
                     Cancel
@@ -948,82 +1044,150 @@ const CountryDetailPage = () => {
               )}
 
               {items.length === 0 && addingCategory !== key && (
-                <p className={styles.emptyText}>None yet</p>
+                <div className={styles.emptyStateWrapper}>
+                  <p className={styles.emptyText}>None yet</p>
+                  <p className={styles.ghostBalancer}></p>
+                </div>
               )}
 
               <ul className={styles.placeList}>
                 {items.map((place) => (
-                  <li key={place.id} className={styles.placeItem}>
-                    {addedPlaces.has(place.id) ? (
-                      <div className={styles.addedBadgeWrapper}>
-                        <button
-                          type="button"
-                          className={styles.addedBadgeBtn}
-                          onClick={() => {
-                            setAddedPlaces((prev) => {
-                              const next = new Set(prev);
-                              next.delete(place.id);
-                              return next;
-                            });
-                          }}
+                  <li
+                    key={place.id}
+                    className={styles.placeItem}
+                    onDoubleClick={() => handleStartEdit(place)}
+                  >
+                    {key !== "city" &&
+                      (addedPlaces.has(place.id) ? (
+                        <div className={styles.addedBadgeWrapper}>
+                          <button
+                            type="button"
+                            className={styles.addedBadgeBtn}
+                            onClick={() => {
+                              setAddedPlaces((prev) => {
+                                const next = new Set(prev);
+                                next.delete(place.id);
+                                return next;
+                              });
+                            }}
+                          >
+                            <span className={styles.addedBadgeCheck}>
+                              ✓ item added
+                            </span>
+                            <span className={styles.addedBadgeDismiss}>
+                              ✗ dismiss
+                            </span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          className={styles.addToTripWrapper}
+                          ref={
+                            addToTripPlaceId === place.id
+                              ? dropdownRef
+                              : undefined
+                          }
                         >
-                          <span className={styles.addedBadgeCheck}>
-                            ✓ item added
-                          </span>
-                          <span className={styles.addedBadgeDismiss}>
-                            ✗ dismiss
-                          </span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div
-                        className={styles.addToTripWrapper}
-                        ref={
-                          addToTripPlaceId === place.id
-                            ? dropdownRef
-                            : undefined
-                        }
-                      >
-                        <button
-                          type="button"
-                          className={styles.addToTripBtn}
-                          onClick={() => handleAddToTripClick(place.id)}
-                          aria-label="Add to trip"
-                        >
-                          +
-                        </button>
-                        {addToTripPlaceId === place.id && (
-                          <div className={styles.addToTripDropdown}>
-                            {loadingViewerTrips ? (
-                              <p className={styles.dropdownLoading}>
-                                Loading...
-                              </p>
-                            ) : viewerTrips.length === 0 ? (
-                              <p className={styles.dropdownLoading}>
-                                No editable trips
-                              </p>
-                            ) : (
-                              viewerTrips.map((trip) => (
-                                <button
-                                  key={trip.id}
-                                  type="button"
-                                  className={styles.tripOption}
-                                  onClick={() =>
-                                    handleAddPlaceToTrip(trip.id, place)
-                                  }
-                                  disabled={addingToTrip}
-                                >
-                                  {trip.tripName}
-                                </button>
-                              ))
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                          <button
+                            type="button"
+                            className={styles.addToTripBtn}
+                            onClick={() => handleAddToTripClick(place.id)}
+                            aria-label="Add to trip"
+                          >
+                            +
+                          </button>
+                          {addToTripPlaceId === place.id && (
+                            <div className={styles.addToTripDropdown}>
+                              {loadingViewerTrips ? (
+                                <p className={styles.dropdownLoading}>
+                                  Loading...
+                                </p>
+                              ) : viewerTrips.length === 0 ? (
+                                <p className={styles.dropdownLoading}>
+                                  No editable trips
+                                </p>
+                              ) : (
+                                viewerTrips.map((trip) => (
+                                  <button
+                                    key={trip.id}
+                                    type="button"
+                                    className={styles.tripOption}
+                                    onClick={() =>
+                                      handleAddPlaceToTrip(trip.id, place)
+                                    }
+                                    disabled={addingToTrip}
+                                  >
+                                    {trip.tripName}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     <div className={styles.placeRow}>
-                      <span className={styles.placeName}>{place.name}</span>
-                      {editingNoteId !== place.id ? (
+                      {editingPlaceId === place.id ? (
+                        <div className={styles.inlineEditForm}>
+                          <input
+                            type="text"
+                            className={styles.inlineEditInput}
+                            value={editPlaceName}
+                            onChange={(e) => setEditPlaceName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveEdit(place.id);
+                              if (e.key === "Escape") setEditingPlaceId(null);
+                            }}
+                            autoFocus
+                          />
+                          {place.category !== "city" && cities.length > 0 && (
+                            <select
+                              className={styles.inlineEditCitySelect}
+                              value={editPlaceCityId || ""}
+                              onChange={(e) =>
+                                setEditPlaceCityId(e.target.value || null)
+                              }
+                            >
+                              <option value="">No city</option>
+                              {cities.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          <button
+                            type="button"
+                            className={styles.addConfirmBtn}
+                            onClick={() => handleSaveEdit(place.id)}
+                          >
+                            Save
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.addCancelBtn}
+                            onClick={() => setEditingPlaceId(null)}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <span className={styles.placeName}>
+                          {place.name}
+                          {place.cityId &&
+                            (() => {
+                              const city = cities.find(
+                                (c) => c.id === place.cityId,
+                              );
+                              return city ? (
+                                <span className={styles.placeCityLabel}>
+                                  ({city.name})
+                                </span>
+                              ) : null;
+                            })()}
+                        </span>
+                      )}
+                      {editingPlaceId === place.id ? null : editingNoteId !==
+                        place.id ? (
                         <div className={styles.noteDisplay}>{place.note}</div>
                       ) : (
                         <div className={styles.noteArea}>

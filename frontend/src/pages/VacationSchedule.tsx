@@ -1379,6 +1379,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           <div style={{ display: isFriendsPage ? undefined : "none" }}>
             <FriendsCountryLogs
               countryName={countryName}
+              tripLocation={tripLocation}
               onItemAdded={() => setListUpdateKey((prev) => prev + 1)}
             />
           </div>

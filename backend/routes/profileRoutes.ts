@@ -388,7 +388,13 @@ router.get(
           u.first_name,
           u.last_name,
           u.avatar,
-          COUNT(cp.id)::int AS places_count
+          COUNT(cp.id)::int AS places_count,
+          COALESCE(
+            (SELECT json_agg(cp2.name ORDER BY cp2.created_at)
+             FROM country_places cp2
+             WHERE cp2.user_country_id = uc.id AND cp2.category = 'city'),
+            '[]'
+          ) AS cities
         FROM user_countries uc
         JOIN countries c ON c.id = uc.country_id
         JOIN users u ON u.id = uc.user_id
@@ -1469,7 +1475,7 @@ router.post(
   ) => {
     try {
       const userId = req.user.id;
-      const { category, name } = req.body;
+      const { category, name, cityId } = req.body;
 
       if (
         !category ||
@@ -1490,10 +1496,21 @@ router.post(
         return;
       }
 
+      if (cityId) {
+        const cityCheck = await db.query(
+          "SELECT id FROM country_places WHERE id = $1 AND user_country_id = $2 AND category = 'city'",
+          [cityId, req.params.userCountryId],
+        );
+        if (cityCheck.rows.length === 0) {
+          res.status(400).json({ message: "Invalid city" });
+          return;
+        }
+      }
+
       const result: QueryResult<CountryPlace> = await db.query(
-        `INSERT INTO country_places (user_country_id, category, name)
-         VALUES ($1, $2, $3) RETURNING *`,
-        [req.params.userCountryId, category, name.trim()],
+        `INSERT INTO country_places (user_country_id, category, name, city_id)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [req.params.userCountryId, category, name.trim(), cityId || null],
       );
 
       res.status(201).json({ place: result.rows[0] });
@@ -1542,6 +1559,14 @@ router.patch(
       if (req.body.note !== undefined) {
         updates.push(`note = $${paramIndex++}`);
         values.push(req.body.note);
+      }
+      if (req.body.name !== undefined) {
+        updates.push(`name = $${paramIndex++}`);
+        values.push(req.body.name.trim());
+      }
+      if (req.body.cityId !== undefined) {
+        updates.push(`city_id = $${paramIndex++}`);
+        values.push(req.body.cityId);
       }
 
       if (updates.length === 0) {

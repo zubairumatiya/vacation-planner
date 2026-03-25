@@ -514,18 +514,22 @@ export interface CountryPlace {
   is_puke: boolean;
   note: string | null;
   sort_index: number;
+  city_id: string | null;
   created_at: Date;
 }
 
 export interface AddPlaceBody {
   category: "city" | "eat" | "stay" | "excursion";
   name: string;
+  cityId?: string;
 }
 
 export interface UpdatePlaceBody {
   isFavorite?: boolean;
   isPuke?: boolean;
   note?: string | null;
+  name?: string;
+  cityId?: string | null;
 }
 
 export interface CountryDetailResponse {
@@ -585,6 +589,7 @@ export interface FriendCountryLog {
   last_name: string;
   avatar: string | null;
   places_count: number;
+  cities: string[];
 }
 
 export interface FriendCountryLogsResponse {

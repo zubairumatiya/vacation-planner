@@ -107,7 +107,7 @@
 
 .meta span:not(:last-child)::after {
   content: "\00B7";
-  margin-left: 0.35rem;
+  margin-left: 0.3rem;
 }
 
 /* Detail View */
@@ -154,10 +154,12 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  text-decoration: none;
+  color: #fcf7ea;
 }
 
-.detailAvatarLink {
-  flex-shrink: 0;
+.detailHeader:hover {
+  color: #6366f1;
 }
 
 .detailAvatar {
@@ -165,10 +167,10 @@
   height: 28px;
   border-radius: 50%;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .detailName {
-  color: #fcf7ea;
   font-size: 0.95rem;
   font-weight: 600;
 }
@@ -217,6 +219,17 @@
   color: #666;
   font-size: 0.75rem;
   padding: 0.2rem 0;
+}
+.groupCardRow {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.placesCount {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .placeList {
@@ -336,6 +349,41 @@
 
 .addedBadgeBtn:hover .addedBadgeDismiss {
   display: inline;
+}
+
+/* City badges and filter */
+.cityBadge {
+  color: #888;
+  font-size: 0.7rem;
+  font-weight: 400;
+  margin-left: 0.25rem;
+}
+
+.detailTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.detailTopBar .backButton {
+  margin-bottom: 0;
+}
+
+.cityFilterSelect {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #333;
+  color: #fcf7ea;
+  font-size: 0.75rem;
+  outline: none;
+  cursor: pointer;
+  max-width: 160px;
+}
+
+.cityFilterSelect:focus {
+  border-color: #2fe782;
 }
 
 @media (max-width: 550px) {
