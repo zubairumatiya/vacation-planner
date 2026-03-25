@@ -476,6 +476,7 @@ export interface UpdateVisibilityBody {
   visitDate?: string | null;
   numDays?: number | null;
   isNative?: boolean;
+  timesVisited?: string;
 }
 
 export interface AddTripBody {

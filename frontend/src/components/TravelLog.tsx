@@ -172,7 +172,10 @@ const TravelLog = ({
     { tripNumber: number; visitDate: string | null; numDays: number | null }[]
   >([]);
   const [tripsCache, setTripsCache] = useState<
-    Record<string, { tripNumber: number; visitDate: string | null; numDays: number | null }[]>
+    Record<
+      string,
+      { tripNumber: number; visitDate: string | null; numDays: number | null }[]
+    >
   >({});
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -460,7 +463,7 @@ const TravelLog = ({
           <div
             className={styles.tooltipContainer}
             onMouseEnter={() => {
-              timerRef.current = setTimeout(() => setShowTooltip(true), 500);
+              timerRef.current = setTimeout(() => setShowTooltip(true), 100);
             }}
             onMouseLeave={() => {
               if (timerRef.current) clearTimeout(timerRef.current);
@@ -885,7 +888,11 @@ const TravelLog = ({
                         </div>
                         <div
                           className={styles.countryMetaWrap}
-                          style={c.timesVisited > 1 ? { cursor: "pointer" } : undefined}
+                          style={
+                            c.timesVisited > 1
+                              ? { cursor: "pointer" }
+                              : undefined
+                          }
                           onClick={
                             c.timesVisited > 1
                               ? (e) => {

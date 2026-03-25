@@ -9,6 +9,8 @@ dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 const pool = new Pool({
   connectionString: process.env.DB_URL,
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000,
 });
 
 export default pool;
