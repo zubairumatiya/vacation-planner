@@ -13,4 +13,8 @@ const pool = new Pool({
   idleTimeoutMillis: 30000,
 });
 
+pool.on("error", (err) => {
+  console.error("Idle pool client error:", err.message);
+});
+
 export default pool;

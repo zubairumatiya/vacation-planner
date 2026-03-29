@@ -1,0 +1,35 @@
+.pinNumber {
+  font-weight: 700;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.tooltipContent {
+  padding: 0.25rem;
+  color: #1a1a1a;
+}
+
+.tooltipName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0 0 0.25rem;
+}
+
+.tooltipDetails {
+  font-size: 0.8rem;
+  color: #444;
+}
+
+.tooltipDate {
+  font-size: 0.75rem;
+  margin: 0 0 0.15rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.tooltipTime {
+  font-size: 0.75rem;
+  margin: 0 0 0.25rem;
+  color: #2f40c7;
+  font-weight: bolder;
+}

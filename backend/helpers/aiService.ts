@@ -12,7 +12,7 @@ import type {
 } from "../types/app-types.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-const MODEL = "gemini-3-flash-preview";
+const MODEL = "gemini-2.5-flash";
 
 interface TripContext {
   trip: Trip;
@@ -502,7 +502,8 @@ export function parseActionResponse(rawText: string): ParsedResponse {
               location: data.location ?? "",
               details: data.details ?? "",
               category: data.category ?? "",
-              startTime: sanitizeTimestamp(data.startTime) ?? data.startTime ?? "",
+              startTime:
+                sanitizeTimestamp(data.startTime) ?? data.startTime ?? "",
               endTime: sanitizeTimestamp(data.endTime) ?? data.endTime ?? "",
               cost: Number(data.cost) || 0,
               multiDay: Boolean(data.multiDay),
@@ -523,7 +524,10 @@ export function parseActionResponse(rawText: string): ParsedResponse {
   }
 
   return {
-    text: textParts.join("\n").trim().replace(/\s*\[id:[^\]]+\]/g, ""),
+    text: textParts
+      .join("\n")
+      .trim()
+      .replace(/\s*\[id:[^\]]+\]/g, ""),
     actions,
     itinerary,
     exhaustedCategories,

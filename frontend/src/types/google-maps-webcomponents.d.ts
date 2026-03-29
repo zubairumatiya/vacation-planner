@@ -37,6 +37,9 @@ declare global {
     sortIndex: number;
     lastModified: string;
     isLocked: boolean;
+    latitude: number | null;
+    longitude: number | null;
+    placeId: string | null;
   };
 
   type Chunk = {
@@ -108,6 +111,9 @@ declare global {
     list: Item[];
     handleSubmitItem: WantToSeeListProps["handleSubmitItem"];
     handleDeleteItem: WantToSeeListProps["handleDeleteItem"];
+    days: DayContainer[];
+    selectedDay: string | null;
+    onDaySelect: (day: string | null) => void;
   }
 
   type PlaceSearchElement = HTMLElement & {

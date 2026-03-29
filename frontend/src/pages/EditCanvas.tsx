@@ -247,6 +247,100 @@ const EditCanvas = ({
     return () => mql.removeEventListener("change", handler);
   }, []);
 
+  const resolveAttemptedRef = useRef<Map<string, string>>(new Map());
+
+  const resolveCoordinates = useCallback(
+    async (itemIds: string[], locationMap: Map<string, string>) => {
+      if (!token || !tripId || itemIds.length === 0) return;
+      itemIds.forEach((id) => {
+        resolveAttemptedRef.current.set(id, locationMap.get(id) ?? "");
+      });
+      try {
+        const res = await fetch(
+          `${apiURL}/resolve-coordinates/${tripId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ itemIds }),
+          },
+        );
+        if (res.ok) {
+          const data = (await res.json()) as {
+            resolved: Array<{
+              id: string;
+              latitude: number;
+              longitude: number;
+              placeId: string | null;
+            }>;
+            failed: string[];
+          };
+          if (data.resolved?.length > 0) {
+            const coordMap = new Map(
+              data.resolved.map((r) => [
+                r.id,
+                { latitude: r.latitude, longitude: r.longitude, placeId: r.placeId },
+              ]),
+            );
+            setSchedule((prev) => {
+              const updated = { ...prev };
+              for (const day of Object.keys(updated)) {
+                updated[day] = updated[day].map((item) => {
+                  const coords = coordMap.get(String(item.id));
+                  if (coords) {
+                    return {
+                      ...item,
+                      latitude: coords.latitude,
+                      longitude: coords.longitude,
+                      placeId: coords.placeId,
+                    };
+                  }
+                  return item;
+                });
+              }
+              return updated;
+            });
+          }
+        }
+      } catch {
+        // silent - pins just won't show
+      }
+    },
+    [token, tripId],
+  );
+
+  useEffect(() => {
+    if (loading || loading2 || isGuest) return;
+    const allItems = Object.values(schedule).flat();
+
+    // Clear tracking for items whose location text changed (edited by user)
+    for (const item of allItems) {
+      const id = String(item.id);
+      const prevLocation = resolveAttemptedRef.current.get(id);
+      if (prevLocation !== undefined && prevLocation !== item.location) {
+        resolveAttemptedRef.current.delete(id);
+      }
+    }
+
+    const needsResolution = allItems.filter(
+      (item) =>
+        item.latitude == null &&
+        item.longitude == null &&
+        item.location?.trim() &&
+        !resolveAttemptedRef.current.has(String(item.id)),
+    );
+    if (needsResolution.length === 0) return;
+    const locationMap = new Map(
+      needsResolution.map((item) => [String(item.id), item.location]),
+    );
+    resolveCoordinates(
+      needsResolution.map((item) => String(item.id)),
+      locationMap,
+    );
+  }, [schedule, loading, loading2, isGuest, resolveCoordinates]);
+
   useEffect(() => {
     const fetchQuestionnaire = async () => {
       try {
@@ -508,6 +602,9 @@ const EditCanvas = ({
         sortIndex: 0,
         lastModified: "",
         isLocked: false,
+        latitude: null,
+        longitude: null,
+        placeId: null,
       };
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag?.type === "schedule") {
@@ -1026,6 +1123,9 @@ const EditCanvas = ({
               sortIndex: item.sortIndex,
               lastModified: item.lastModified,
               isLocked: item.isLocked,
+              latitude: item.latitude ?? null,
+              longitude: item.longitude ?? null,
+              placeId: item.placeId ?? null,
             });
           }
         }
@@ -1548,6 +1648,9 @@ const EditCanvas = ({
         sortIndex: 0,
         lastModified: "",
         isLocked: false,
+        latitude: null,
+        longitude: null,
+        placeId: null,
       };
 
       const currentDayItems = schedule[dayKey] ?? [];
@@ -2142,6 +2245,8 @@ const EditCanvas = ({
                       list={wishList}
                       handleSubmitItem={handleSubmitItem}
                       handleDeleteItem={handleDeleteItem}
+                      scheduleItems={Object.values(schedule).flat()}
+                      days={days}
                     />
                   )}
                 </ErrorBoundary>

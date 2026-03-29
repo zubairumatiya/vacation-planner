@@ -108,6 +108,7 @@
 .meta span:not(:last-child)::after {
   content: "\00B7";
   margin-left: 0.3rem;
+  margin-right: 0.3rem;
 }
 
 /* Detail View */

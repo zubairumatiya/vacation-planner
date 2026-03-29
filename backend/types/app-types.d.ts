@@ -53,6 +53,9 @@ export interface Schedule {
   sort_index: number;
   last_modified: string;
   is_locked: boolean;
+  latitude: number | null;
+  longitude: number | null;
+  place_id: string | null;
 }
 
 export interface TripList {
@@ -342,6 +345,165 @@ export interface AutocompleteResponse {
 
 export interface DetailsResponse {
   viewport: Viewport;
+}
+
+export interface ResolveCoordinatesBody {
+  itemIds: string[];
+}
+
+export interface ResolveCoordinatesResponse {
+  resolved: Array<{ id: string; latitude: number; longitude: number; placeId: string | null }>;
+  failed: string[];
+}
+
+export interface PlaceCoordinatesRow {
+  place_id: string;
+  latitude: number;
+  longitude: number;
+  created_at: Date;
+}
+
+export interface PlaceDetailsRow {
+  place_id: string;
+  display_name: { text: string; languageCode: string } | null;
+  formatted_address: string | null;
+  short_formatted_address: string | null;
+  location: { latitude: number; longitude: number } | null;
+  primary_type: string | null;
+  primary_type_display_name: { text: string; languageCode: string } | null;
+  types: string[] | null;
+  google_maps_uri: string | null;
+  google_maps_links: Record<string, string> | null;
+  business_status: string | null;
+  icon_mask_base_uri: string | null;
+  icon_background_color: string | null;
+  photos: Array<Record<string, unknown>> | null;
+  viewport: { low: { latitude: number; longitude: number }; high: { latitude: number; longitude: number } } | null;
+  address_components: Array<Record<string, unknown>> | null;
+  postal_address: Record<string, unknown> | null;
+  adr_format_address: string | null;
+  plus_code: Record<string, unknown> | null;
+  time_zone: Record<string, unknown> | null;
+  utc_offset_minutes: number | null;
+  sub_destinations: Array<Record<string, unknown>> | null;
+  containing_places: Array<Record<string, unknown>> | null;
+  accessibility_options: Record<string, unknown> | null;
+  rating: number | null;
+  user_rating_count: number | null;
+  price_level: string | null;
+  price_range: Record<string, unknown> | null;
+  website_uri: string | null;
+  international_phone_number: string | null;
+  national_phone_number: string | null;
+  regular_opening_hours: Record<string, unknown> | null;
+  current_opening_hours: Record<string, unknown> | null;
+  editorial_summary: { text: string; languageCode: string } | null;
+  reviews: Array<Record<string, unknown>> | null;
+  dine_in: boolean | null;
+  takeout: boolean | null;
+  delivery: boolean | null;
+  curbside_pickup: boolean | null;
+  reservable: boolean | null;
+  serves_breakfast: boolean | null;
+  serves_brunch: boolean | null;
+  serves_lunch: boolean | null;
+  serves_dinner: boolean | null;
+  serves_beer: boolean | null;
+  serves_wine: boolean | null;
+  serves_cocktails: boolean | null;
+  serves_coffee: boolean | null;
+  serves_dessert: boolean | null;
+  serves_vegetarian_food: boolean | null;
+  outdoor_seating: boolean | null;
+  live_music: boolean | null;
+  good_for_children: boolean | null;
+  good_for_groups: boolean | null;
+  good_for_watching_sports: boolean | null;
+  allows_dogs: boolean | null;
+  restroom: boolean | null;
+  parking_options: Record<string, unknown> | null;
+  payment_options: Record<string, unknown> | null;
+  menu_for_children: boolean | null;
+  generative_summary: Record<string, unknown> | null;
+  neighborhood_summary: Record<string, unknown> | null;
+  review_summary: Record<string, unknown> | null;
+  created_at: Date;
+}
+
+export interface FullPlaceApiResponse {
+  id: string;
+  displayName?: { text: string; languageCode: string };
+  formattedAddress?: string;
+  shortFormattedAddress?: string;
+  location?: { latitude: number; longitude: number };
+  primaryType?: string;
+  primaryTypeDisplayName?: { text: string; languageCode: string };
+  types?: string[];
+  googleMapsUri?: string;
+  googleMapsLinks?: Record<string, string>;
+  businessStatus?: string;
+  iconMaskBaseUri?: string;
+  iconBackgroundColor?: string;
+  photos?: Array<Record<string, unknown>>;
+  viewport?: { low: { latitude: number; longitude: number }; high: { latitude: number; longitude: number } };
+  addressComponents?: Array<Record<string, unknown>>;
+  postalAddress?: Record<string, unknown>;
+  adrFormatAddress?: string;
+  plusCode?: Record<string, unknown>;
+  timeZone?: Record<string, unknown>;
+  utcOffsetMinutes?: number;
+  subDestinations?: Array<Record<string, unknown>>;
+  containingPlaces?: Array<Record<string, unknown>>;
+  accessibilityOptions?: Record<string, unknown>;
+  rating?: number;
+  userRatingCount?: number;
+  priceLevel?: string;
+  priceRange?: Record<string, unknown>;
+  websiteUri?: string;
+  internationalPhoneNumber?: string;
+  nationalPhoneNumber?: string;
+  regularOpeningHours?: Record<string, unknown>;
+  currentOpeningHours?: Record<string, unknown>;
+  editorialSummary?: { text: string; languageCode: string };
+  reviews?: Array<Record<string, unknown>>;
+  dineIn?: boolean;
+  takeout?: boolean;
+  delivery?: boolean;
+  curbsidePickup?: boolean;
+  reservable?: boolean;
+  servesBreakfast?: boolean;
+  servesBrunch?: boolean;
+  servesLunch?: boolean;
+  servesDinner?: boolean;
+  servesBeer?: boolean;
+  servesWine?: boolean;
+  servesCocktails?: boolean;
+  servesCoffee?: boolean;
+  servesDessert?: boolean;
+  servesVegetarianFood?: boolean;
+  outdoorSeating?: boolean;
+  liveMusic?: boolean;
+  goodForChildren?: boolean;
+  goodForGroups?: boolean;
+  goodForWatchingSports?: boolean;
+  allowsDogs?: boolean;
+  restroom?: boolean;
+  parkingOptions?: Record<string, unknown>;
+  paymentOptions?: Record<string, unknown>;
+  menuForChildren?: boolean;
+  generativeSummary?: Record<string, unknown>;
+  neighborhoodSummary?: Record<string, unknown>;
+  reviewSummary?: Record<string, unknown>;
+}
+
+export interface FullTextSearchResponse {
+  places: FullPlaceApiResponse[];
+  nextPageToken?: string;
+}
+
+export interface IdOnlyTextSearchResponse {
+  places: Array<{ id: string }>;
+  nextPageToken?: string;
 }
 
 export interface TripIdParam extends ParamsDictionary {

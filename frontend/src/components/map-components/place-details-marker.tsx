@@ -57,6 +57,6 @@ export const PlaceDetailsMarker = memo(
         )}
       </>
     );
-  }
+  },
 );
 PlaceDetailsMarker.displayName = "PlaceDetailsMarker";

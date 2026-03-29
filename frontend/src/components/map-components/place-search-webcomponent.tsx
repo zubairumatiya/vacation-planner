@@ -23,6 +23,9 @@ const PlaceSearchWebComponent = ({
   list,
   handleSubmitItem,
   handleDeleteItem,
+  days,
+  selectedDay,
+  onDaySelect,
 }: PlaceSearchProps) => {
   const auth = useContext(AuthContext);
   const token = auth?.token;
@@ -343,6 +346,44 @@ const PlaceSearchWebComponent = ({
               </select>
             </div>
           </div>
+          {days.length > 0 && (
+            <div className={styles.reviewsFilterContainer}>
+              <label htmlFor="schedule-pins" className={styles.filterLabel}>
+                Schedule Pins:
+              </label>
+              <select
+                name="schedule-pins"
+                id="schedule-pins"
+                className={styles.select}
+                value={selectedDay ?? "all"}
+                onChange={(e) =>
+                  onDaySelect(e.target.value === "all" ? null : e.target.value)
+                }
+              >
+                <option value="all">All</option>
+                {days.map((d) => (
+                  <option key={d.day} value={d.day}>
+                    {d.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {results.length > 0 && (
+            <button
+              className={styles.clearSearchButton}
+              onClick={() => {
+                setResults([]);
+                setPlaces([]);
+                setHoldNPT("");
+                setPageCount(1);
+                setCurrentPageMax(0);
+                setHoldRemainder([]);
+              }}
+            >
+              Clear Search
+            </button>
+          )}
           <div></div>
         </div>
 

@@ -1,10 +1,11 @@
 // Copyright (c) 2023 Vis.gl contributors
 // Licensed under the MIT License
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { APIProvider, Map } from "@vis.gl/react-google-maps";
 
 import { PlaceDetailsMarker } from "../components/map-components/place-details-marker";
+import { SchedulePinMarker } from "../components/map-components/schedule-pin-marker";
 import PlaceSearchWebComponent from "../components/map-components/place-search-webcomponent";
 import { SearchBar } from "../components/map-components/search-bar";
 
@@ -33,6 +34,8 @@ type Props = {
   list: Item[];
   handleSubmitItem: WantToSeeListProps["handleSubmitItem"];
   handleDeleteItem: WantToSeeListProps["handleDeleteItem"];
+  scheduleItems: Schedule[];
+  days: DayContainer[];
 };
 
 const MyMapComponent = ({
@@ -41,11 +44,29 @@ const MyMapComponent = ({
   list,
   handleSubmitItem,
   handleDeleteItem,
+  scheduleItems,
+  days,
 }: Props) => {
   const [places, setPlaces] = useState<MapSearchPlace[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | undefined>(
     undefined,
   );
+  const [hoveredScheduleItemId, setHoveredScheduleItemId] = useState<
+    string | undefined
+  >(undefined);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSchedulePinHover = useCallback((id: string | undefined) => {
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    if (id) {
+      setHoveredScheduleItemId(id);
+    } else {
+      hoverTimeoutRef.current = setTimeout(() => {
+        setHoveredScheduleItemId(undefined);
+      }, 50);
+    }
+  }, []);
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const [locationName, setLocationName] = useState<string>(startLocation ?? "");
   const [placeType, setPlaceType] = useState<PlaceType>("restaurant");
@@ -76,19 +97,64 @@ const MyMapComponent = ({
     };
   }
 
+  const allPinnableItems = useMemo(() => {
+    return scheduleItems.filter(
+      (item) => item.latitude != null && item.longitude != null,
+    );
+  }, [scheduleItems]);
+
+  const schedulePlaceIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const item of allPinnableItems) {
+      if (item.placeId) ids.add(item.placeId);
+    }
+    return ids;
+  }, [allPinnableItems]);
+
   // Memoize the place markers to prevent unnecessary re-renders
   // Only recreate when places, selection, or details size changes
   const placeMarkers = useMemo(() => {
-    return places.map((place, index) => (
-      <PlaceDetailsMarker
-        detailsSize={"FULL"}
-        key={place.id || index}
-        selected={place.id === selectedPlaceId}
-        place={place}
-        onClick={() => setSelectedPlaceId(place.id)}
-      />
-    ));
-  }, [places, selectedPlaceId, detailsSize]);
+    return places
+      .filter((place) => !schedulePlaceIds.has(place.id))
+      .map((place, index) => (
+        <PlaceDetailsMarker
+          detailsSize={"FULL"}
+          key={place.id || index}
+          selected={place.id === selectedPlaceId}
+          place={place}
+          onClick={() => setSelectedPlaceId(place.id)}
+        />
+      ));
+  }, [places, selectedPlaceId, detailsSize, schedulePlaceIds]);
+
+  const filteredScheduleItems = useMemo(() => {
+    if (!selectedDay) return allPinnableItems;
+    return allPinnableItems.filter(
+      (item) => item.startTime.toISOString().split("T")[0] === selectedDay,
+    );
+  }, [allPinnableItems, selectedDay]);
+
+  const schedulePinMarkers = useMemo(() => {
+    return filteredScheduleItems.map((item) => {
+      const globalIndex = allPinnableItems.indexOf(item);
+      const isOverlap = !!item.placeId && places.some((p) => p.id === item.placeId);
+      return (
+        <SchedulePinMarker
+          key={String(item.id)}
+          item={item}
+          index={globalIndex + 1}
+          selected={String(item.id) === hoveredScheduleItemId}
+          onHover={handleSchedulePinHover}
+          isOverlap={isOverlap}
+        />
+      );
+    });
+  }, [filteredScheduleItems, allPinnableItems, hoveredScheduleItemId, places]);
+
+  const handleMapClick = useCallback(() => {
+    setSelectedPlaceId(undefined);
+    setHoveredScheduleItemId(undefined);
+  }, []);
 
   return (
     <APIProvider apiKey={API_KEY}>
@@ -97,11 +163,6 @@ const MyMapComponent = ({
         style={{ colorScheme: colorScheme.current }}
       >
         <div className={styles.mapContainer}>
-          {/*
-            SearchBar allows users to:
-            - Select the type of place they want to find
-            - Search for a specific location to center the map on
-          */}
           <SearchBar
             placeType={placeType}
             setPlaceType={setPlaceType}
@@ -114,11 +175,6 @@ const MyMapComponent = ({
 
           <div className={styles.listAndMap}>
             <div className={styles.placeListWrapper}>
-              {/*
-            PlaceSearchtWebComponent displays a list of places based on:
-            - The selected place type (restaurant, cafe, etc.)
-            - The current map location and bounds
-          */}
               <PlaceSearchWebComponent
                 placeType={placeType}
                 locationName={locationName}
@@ -130,18 +186,15 @@ const MyMapComponent = ({
                 list={list}
                 handleSubmitItem={handleSubmitItem}
                 handleDeleteItem={handleDeleteItem}
+                days={days}
+                selectedDay={selectedDay}
+                onDaySelect={setSelectedDay}
               />
             </div>
-            {/*
-            The Map component renders the Google Map
-            Clicking on the map background will deselect any selected place
-            */}
             <div className={styles.mapWrapper}>
-              <Map
-                {...MAP_CONFIG}
-                onClick={() => setSelectedPlaceId(undefined)}
-              >
+              <Map {...MAP_CONFIG} onClick={handleMapClick}>
                 {placeMarkers}
+                {schedulePinMarkers}
               </Map>
             </div>
           </div>

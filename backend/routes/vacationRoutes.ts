@@ -40,9 +40,23 @@ import {
   QuestionnaireResponse,
   CountryInfoResponse,
   MessageResponse,
+  ResolveCoordinatesBody,
+  ResolveCoordinatesResponse,
+  PlaceCoordinatesRow,
+  PlaceDetailsRow,
+  FullPlaceApiResponse,
+  FullTextSearchResponse,
+  IdOnlyTextSearchResponse,
 } from "../types/app-types.js";
 import stateAwareConfirmation from "../middleware/stateAwareConfirmation.js";
 import camelToSpacedLower from "../helpers/camelToSpacedLower.js";
+import { isTransitItem } from "../helpers/isTransitItem.js";
+import {
+  mapDbRowToPlace,
+  buildUpsertQuery,
+  FULL_FIELD_MASK,
+  ID_ONLY_FIELD_MASK,
+} from "../helpers/placesCacheHelpers.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -647,7 +661,7 @@ router.patch(
 
       if (Array.isArray(newSortIndex)) {
         query =
-          "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, last_modified=NOW() WHERE id=$7 RETURNING *";
+          "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, latitude=NULL, longitude=NULL, last_modified=NOW() WHERE id=$7 RETURNING *";
         values = [
           req.body.location,
           req.body.details,
@@ -659,7 +673,7 @@ router.patch(
         ];
       } else {
         query =
-          "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, sort_index=$7, last_modified=NOW() WHERE id=$8 RETURNING *";
+          "UPDATE trip_schedule SET location=$1, details=$2, start_time=$3, end_time=$4, cost=$5, multi_day=$6, sort_index=$7, latitude=NULL, longitude=NULL, last_modified=NOW() WHERE id=$8 RETURNING *";
         values = [
           req.body.location,
           req.body.details,
@@ -1046,33 +1060,93 @@ router.post(
         .toLowerCase()
         .trim();
       const query = `${normalPlaceType}s near ${req.body.locationName}`;
+      const searchBody = {
+        textQuery: `${query}`,
+        pageToken: holdToken,
+        minRating: req.body.ratingFilter,
+        pageSize: 20,
+        includedType: `${snakePlaceType}`,
+        strictTypeFiltering: true,
+        locationRestriction: { rectangle: req.body.viewport },
+      };
+
       while (countOfPlaces < 20 && holdToken !== undefined) {
-        const result = await fetch(
+        searchBody.pageToken = holdToken;
+
+        // Step 1: ID-only fetch (Basic tier)
+        const idResult = await fetch(
           "https://places.googleapis.com/v1/places:searchText",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
               "X-Goog-Api-Key": `${API_KEY}`,
-              "X-Goog-FieldMask":
-                "places.id,nextPageToken,places.displayName,places.location,places.shortFormattedAddress,places.primaryType,places.rating,places.userRatingCount,places.types",
+              "X-Goog-FieldMask": ID_ONLY_FIELD_MASK,
             },
-            body: JSON.stringify({
-              textQuery: `${query}`,
-              pageToken: holdToken,
-              minRating: req.body.ratingFilter,
-              pageSize: 20,
-              includedType: `${snakePlaceType}`,
-              strictTypeFiltering: true,
-              locationRestriction: { rectangle: req.body.viewport },
-            }),
+            body: JSON.stringify(searchBody),
           },
         );
-        if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
-        const data = (await result.json()) as TextSearchResponse;
+        if (!idResult.ok) throw new Error(`HTTP error! status: ${idResult.status}`);
+        const idData = (await idResult.json()) as IdOnlyTextSearchResponse;
 
-        let filteredPlaces = data.places ?? [];
-        filteredPlaces = filteredPlaces.filter((v: Place) => {
+        const returnedIds = (idData.places ?? []).map((p) => p.id);
+        let pagePlaces: Place[] = [];
+
+        if (returnedIds.length > 0) {
+          // Step 2: Cache lookup
+          const cacheResult = await db.query<PlaceDetailsRow>(
+            "SELECT * FROM place_details WHERE place_id = ANY($1)",
+            [returnedIds],
+          );
+          const cachedIds = new Set(cacheResult.rows.map((r) => r.place_id));
+          const allCached = returnedIds.every((id) => cachedIds.has(id));
+
+          if (allCached) {
+            // 100% cache hit
+            console.log(`[map] Cache hit: all ${returnedIds.length} places from cache`);
+            pagePlaces = cacheResult.rows.map(mapDbRowToPlace);
+          } else {
+            // Cache miss — repeat with full fieldMask
+            console.log(`[map] Cache miss: ${cachedIds.size}/${returnedIds.length} cached, fetching full data`);
+            const fullResult = await fetch(
+              "https://places.googleapis.com/v1/places:searchText",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "X-Goog-Api-Key": `${API_KEY}`,
+                  "X-Goog-FieldMask": FULL_FIELD_MASK,
+                },
+                body: JSON.stringify(searchBody),
+              },
+            );
+            if (!fullResult.ok) throw new Error(`HTTP error! status: ${fullResult.status}`);
+            const fullData = (await fullResult.json()) as FullTextSearchResponse;
+
+            const fullPlaces = fullData.places ?? [];
+
+            // Upsert into place_details
+            if (fullPlaces.length > 0) {
+              const upsert = buildUpsertQuery(fullPlaces);
+              await db.query(upsert.text, upsert.values);
+            }
+
+            // Map to Place interface
+            pagePlaces = fullPlaces.map((p) => ({
+              id: p.id,
+              displayName: p.displayName ?? { text: "", languageCode: "en" },
+              location: p.location ?? { latitude: 0, longitude: 0 },
+              shortFormattedAddress: p.shortFormattedAddress ?? "",
+              primaryType: p.primaryType ?? "",
+              types: p.types ?? [],
+              rating: p.rating,
+              userRatingCount: p.userRatingCount ?? 0,
+            }));
+          }
+        }
+
+        // Continue existing filter/accumulation logic
+        let filteredPlaces = pagePlaces.filter((v: Place) => {
           return v.types.includes(snakePlaceType);
         });
 
@@ -1087,7 +1161,7 @@ router.post(
           countOfPlaces += filteredPlaces.length;
           gatherPlaces.push(...filteredPlaces);
         }
-        holdToken = data.nextPageToken ?? "";
+        holdToken = idData.nextPageToken ?? "";
         if (holdToken === "") break;
       }
       res.status(200).json({ places: gatherPlaces, nextPageToken: holdToken });
@@ -1160,6 +1234,191 @@ router.post(
       if (!result.ok) throw new Error(`HTTP error! status: ${result.status}`);
       const data = (await result.json()) as DetailsResponse;
       res.status(200).json(data);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.post(
+  "/resolve-coordinates/:tripId",
+  ensureLoggedIn,
+  ensureTripAccess,
+  async (
+    req: TypedRequest<ResolveCoordinatesBody, unknown, TripIdParam>,
+    res: TypedResponse<ResolveCoordinatesResponse>,
+    next: NextFunction,
+  ) => {
+    try {
+      const { itemIds } = req.body;
+      if (!Array.isArray(itemIds) || itemIds.length === 0 || itemIds.length > 50) {
+        res.sendStatus(400);
+        return;
+      }
+
+      const tripResult = await db.query<Trip>(
+        "SELECT location FROM trips WHERE id=$1",
+        [req.params.tripId],
+      );
+      if (tripResult.rowCount === 0) {
+        res.sendStatus(404);
+        return;
+      }
+      const tripLocation = tripResult.rows[0].location;
+
+      const placeholders = itemIds.map((_, i) => `$${i + 2}`).join(",");
+      const scheduleResult = await db.query<Schedule>(
+        `SELECT id, location, latitude, longitude, place_id FROM trip_schedule WHERE trip_id=$1 AND id IN (${placeholders})`,
+        [req.params.tripId, ...itemIds],
+      );
+
+      const resolved: Array<{ id: string; latitude: number; longitude: number; placeId: string | null }> = [];
+      const failed: string[] = [];
+
+      for (const item of scheduleResult.rows) {
+        if (isTransitItem(item.location ?? "")) {
+          failed.push(item.id);
+          continue;
+        }
+
+        if (item.latitude != null && item.longitude != null) {
+          resolved.push({ id: item.id, latitude: item.latitude, longitude: item.longitude, placeId: item.place_id ?? null });
+          continue;
+        }
+
+        try {
+          // Step 1: If item already has a place_id, check place_coordinates cache
+          if (item.place_id) {
+            const coordCache = await db.query<PlaceCoordinatesRow>(
+              "SELECT latitude, longitude FROM place_coordinates WHERE place_id=$1",
+              [item.place_id],
+            );
+            if (coordCache.rowCount! > 0) {
+              const { latitude, longitude } = coordCache.rows[0];
+              await db.query(
+                "UPDATE trip_schedule SET latitude=$1, longitude=$2 WHERE id=$3",
+                [latitude, longitude, item.id],
+              );
+              console.log(`[resolve-coords] Cache hit (place_coordinates) for "${item.location}"`);
+              resolved.push({ id: item.id, latitude, longitude, placeId: item.place_id });
+              continue;
+            }
+          }
+
+          // Step 2: Text search to discover place_id
+          const searchRes = await fetch(
+            "https://places.googleapis.com/v1/places:searchText",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": `${API_KEY}`,
+                "X-Goog-FieldMask": "places.id,places.displayName",
+              },
+              body: JSON.stringify({
+                textQuery: `${item.location}, ${tripLocation}`,
+                pageSize: 1,
+              }),
+            },
+          );
+
+          if (!searchRes.ok) {
+            failed.push(item.id);
+            continue;
+          }
+
+          const searchData = (await searchRes.json()) as { places?: Array<{ id: string; displayName?: { text: string } }> };
+          console.log(`[resolve-coords] Text search for "${item.location}" =>`, searchData.places?.map(p => ({ id: p.id, name: p.displayName?.text })));
+          if (!searchData.places || searchData.places.length === 0) {
+            failed.push(item.id);
+            continue;
+          }
+
+          const placeId = searchData.places[0].id;
+
+          // Step 3: Check place_coordinates with discovered place_id
+          const coordCache = await db.query<PlaceCoordinatesRow>(
+            "SELECT latitude, longitude FROM place_coordinates WHERE place_id=$1",
+            [placeId],
+          );
+          if (coordCache.rowCount! > 0) {
+            const { latitude, longitude } = coordCache.rows[0];
+            await db.query(
+              "UPDATE trip_schedule SET latitude=$1, longitude=$2, place_id=$3 WHERE id=$4",
+              [latitude, longitude, placeId, item.id],
+            );
+            console.log(`[resolve-coords] Cache hit (place_coordinates) for "${item.location}" via text search`);
+            resolved.push({ id: item.id, latitude, longitude, placeId });
+            continue;
+          }
+
+          // Step 4: Check place_details cache
+          const detailCache = await db.query<PlaceDetailsRow>(
+            "SELECT location FROM place_details WHERE place_id=$1",
+            [placeId],
+          );
+          if (detailCache.rowCount! > 0 && detailCache.rows[0].location) {
+            const { latitude, longitude } = detailCache.rows[0].location;
+            await db.query(
+              "UPDATE trip_schedule SET latitude=$1, longitude=$2, place_id=$3 WHERE id=$4",
+              [latitude, longitude, placeId, item.id],
+            );
+            await db.query(
+              "INSERT INTO place_coordinates (place_id, latitude, longitude) VALUES ($1, $2, $3) ON CONFLICT (place_id) DO NOTHING",
+              [placeId, latitude, longitude],
+            );
+            console.log(`[resolve-coords] Cache hit (place_details) for "${item.location}"`);
+            resolved.push({ id: item.id, latitude, longitude, placeId });
+            continue;
+          }
+
+          // Step 5: API fallback — GET place details
+          const detailRes = await fetch(
+            `https://places.googleapis.com/v1/places/${placeId}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": `${API_KEY}`,
+                "X-Goog-FieldMask": "displayName,location",
+              },
+            },
+          );
+
+          if (!detailRes.ok) {
+            failed.push(item.id);
+            continue;
+          }
+
+          const detailData = (await detailRes.json()) as {
+            displayName?: { text: string };
+            location?: { latitude: number; longitude: number };
+          };
+          console.log(`[resolve-coords] Place details for "${placeId}" =>`, { name: detailData.displayName?.text, location: detailData.location });
+
+          if (!detailData.location?.latitude || !detailData.location?.longitude) {
+            failed.push(item.id);
+            continue;
+          }
+
+          const { latitude, longitude } = detailData.location;
+
+          await db.query(
+            "UPDATE trip_schedule SET latitude=$1, longitude=$2, place_id=$3 WHERE id=$4",
+            [latitude, longitude, placeId, item.id],
+          );
+          await db.query(
+            "INSERT INTO place_coordinates (place_id, latitude, longitude) VALUES ($1, $2, $3) ON CONFLICT (place_id) DO NOTHING",
+            [placeId, latitude, longitude],
+          );
+
+          resolved.push({ id: item.id, latitude, longitude, placeId });
+        } catch {
+          failed.push(item.id);
+        }
+      }
+
+      res.status(200).json({ resolved, failed });
     } catch (err) {
       next(err);
     }

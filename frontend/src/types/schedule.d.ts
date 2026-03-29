@@ -34,6 +34,9 @@ declare global {
     sortIndex: number;
     lastModified: string;
     isLocked: boolean;
+    latitude: number | null;
+    longitude: number | null;
+    placeId: string | null;
   }
 
   /** GET /schedule/:tripId */

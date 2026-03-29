@@ -1071,39 +1071,18 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                               return Object.entries(grouped).map(
                                 ([cat, items]) => (
                                   <div key={cat}>
-                                    <div className={styles.aiDateHeader}>
+                                    <div className={styles.aiCategoryHeader}>
                                       {cat}
                                     </div>
                                     {items.map(({ item, idx }) => (
                                       <div
                                         key={`${item.location}-${idx}`}
-                                        className={`${styles.aiPlaceCard} ${addedItems.has(idx) ? styles.aiPlaceCardAdded : ""}`}
+                                        className={`${styles.aiListCard} ${addedItems.has(idx) ? styles.aiPlaceCardAdded : ""}`}
                                       >
                                         <div className={styles.aiPlaceInfo}>
                                           <span className={styles.aiPlaceName}>
                                             {item.location}
                                           </span>
-                                          {item.startTime && item.endTime && (
-                                            <span
-                                              className={styles.aiPlaceTime}
-                                            >
-                                              {new Date(
-                                                item.startTime,
-                                              ).toLocaleTimeString("en-US", {
-                                                hour: "numeric",
-                                                minute: "2-digit",
-                                                timeZone: "UTC",
-                                              })}
-                                              {" – "}
-                                              {new Date(
-                                                item.endTime,
-                                              ).toLocaleTimeString("en-US", {
-                                                hour: "numeric",
-                                                minute: "2-digit",
-                                                timeZone: "UTC",
-                                              })}
-                                            </span>
-                                          )}
                                           <span
                                             className={styles.aiPlaceDetails}
                                           >

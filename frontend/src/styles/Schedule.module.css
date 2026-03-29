@@ -452,6 +452,26 @@
   margin-bottom: 0.25rem;
 }
 
+.aiCategoryHeader {
+  color: #6366f1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.5rem 0.15rem;
+  border-bottom: 1px solid #333;
+  margin-bottom: 0.25rem;
+}
+
+.aiListCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: #1e1e20;
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  transition: opacity 0.2s;
+}
+
 .aiPlaceCard {
   display: flex;
   align-items: flex-start;

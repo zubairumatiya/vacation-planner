@@ -249,6 +249,19 @@
   margin-left: 0;
 }
 
+.clearSearchButton {
+  all: unset;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: #e05555;
+  margin-top: 0.3rem;
+  transition: color 0.15s;
+}
+
+.clearSearchButton:hover {
+  color: #ff7777;
+}
+
 .applyButton {
   padding: 0.25rem 0.5rem;
   margin: 0.5rem;
