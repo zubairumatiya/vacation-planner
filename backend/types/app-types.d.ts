@@ -56,6 +56,7 @@ export interface Schedule {
   latitude: number | null;
   longitude: number | null;
   place_id: string | null;
+  show_on_map: boolean;
 }
 
 export interface TripList {

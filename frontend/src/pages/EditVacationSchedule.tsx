@@ -671,6 +671,67 @@ const EditVacationSchedule = ({
     }
   };
 
+  const handleToggleMapPin = async (item: Schedule) => {
+    if (tripId === "guest") {
+      const res = updateGuestScheduleItem(String(item.id), {
+        showOnMap: !item.showOnMap,
+      });
+      if (res.updatedData) {
+        setSchedule((prev) => {
+          const updated = { ...prev };
+          for (const day in updated) {
+            updated[day] = updated[day].map((s) =>
+              s.id === item.id
+                ? { ...s, showOnMap: !item.showOnMap, lastModified: res.updatedData!.lastModified }
+                : s,
+            );
+          }
+          return updated;
+        });
+      }
+      return;
+    }
+    if (!token) {
+      navigate("/redirect", {
+        state: { message: "Session expired, redirecting to log in..." },
+      });
+      return;
+    }
+    try {
+      const res = await fetch(`${apiURL}/toggle-map-pin/${item.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ tripId }),
+      });
+      if (res.ok) {
+        const data: ScheduleUpdateResponse = await res.json();
+        if (data.updatedData) {
+          setSchedule((prev) => {
+            const updated = { ...prev };
+            for (const day in updated) {
+              updated[day] = updated[day].map((s) =>
+                s.id === item.id
+                  ? {
+                      ...s,
+                      showOnMap: !item.showOnMap,
+                      lastModified: data.updatedData!.lastModified,
+                    }
+                  : s,
+              );
+            }
+            return updated;
+          });
+        }
+      }
+    } catch {
+      // silent fail for map pin toggle
+    }
+  };
+
   const duplicateItem = async (item: Schedule, dayContainer: string) => {
     if (tripId === "guest") {
       const result = addGuestScheduleItem({
@@ -883,6 +944,7 @@ const EditVacationSchedule = ({
                 viewMode={false}
                 onDuplicate={duplicateItem}
                 onToggleLock={handleToggleLock}
+                onToggleMapPin={handleToggleMapPin}
               />
             </div>
             {individualAddition.addingContainer !== dayObj.day ? (

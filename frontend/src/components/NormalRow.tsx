@@ -6,6 +6,7 @@ import editIcon from "../assets/icons/edit-icon.svg";
 import duplicateIcon from "../assets/icons/duplicate-icon.svg";
 import lockIcon from "../assets/icons/lock-icon.svg";
 import unlockIcon from "../assets/icons/unlock-icon.svg";
+import mapPinIcon from "../assets/icons/map-pin-icon.svg";
 import dragIcon from "../assets/icons/dragger.svg";
 import { useContext } from "react";
 import { EditScheduleContext } from "../context/EditScheduleContext";
@@ -18,6 +19,7 @@ type NormalRowProps = {
   viewMode: boolean;
   onDuplicate?: (item: Schedule, dayContainer: string) => void;
   onToggleLock?: (item: Schedule) => void;
+  onToggleMapPin?: (item: Schedule) => void;
 };
 
 const NormalRow = ({
@@ -26,6 +28,7 @@ const NormalRow = ({
   viewMode,
   onDuplicate,
   onToggleLock,
+  onToggleMapPin,
   ...restOfProps
 }: NormalRowProps) => {
   const { handleEdit } = useContext(EditScheduleContext);
@@ -112,7 +115,7 @@ const NormalRow = ({
           </div>
           <div className={styles.rightActionsCol}>
             <img
-              className={`${styles.editIcon} ${value.isLocked ? styles.lockActive : ""}`}
+              className={`${styles.lockIcon} ${value.isLocked ? styles.lockActive : ""}`}
               src={value.isLocked ? lockIcon : unlockIcon}
               alt={value.isLocked ? "locked" : "unlocked"}
               title={
@@ -123,6 +126,16 @@ const NormalRow = ({
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleLock?.(value);
+              }}
+            />
+            <img
+              className={`${styles.lockIcon} ${value.showOnMap ? styles.mapPinActive : ""}`}
+              src={mapPinIcon}
+              alt={value.showOnMap ? "shown on map" : "hidden from map"}
+              title={value.showOnMap ? "Remove from map" : "Show on map"}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleMapPin?.(value);
               }}
             />
           </div>

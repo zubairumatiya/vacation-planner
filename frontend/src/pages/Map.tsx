@@ -99,7 +99,7 @@ const MyMapComponent = ({
 
   const allPinnableItems = useMemo(() => {
     return scheduleItems.filter(
-      (item) => item.latitude != null && item.longitude != null,
+      (item) => item.latitude != null && item.longitude != null && item.showOnMap,
     );
   }, [scheduleItems]);
 
@@ -169,6 +169,7 @@ const MyMapComponent = ({
             setLocationName={setLocationName}
             locationName={locationName}
             searchDisabled={searchDisabled}
+            setSearchDisabled={setSearchDisabled}
             setSubmitButtonTrigger={setSubmitButtonTrigger}
             setViewport={setViewport}
           />

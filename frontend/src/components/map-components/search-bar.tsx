@@ -18,6 +18,7 @@ export const SearchBar = memo(function SearchBar({
   setLocationName,
   locationName,
   searchDisabled,
+  setSearchDisabled,
   setSubmitButtonTrigger,
   setViewport,
 }: SearchBarProps) {
@@ -220,6 +221,7 @@ export const SearchBar = memo(function SearchBar({
         className={styles.submitButton}
         disabled={(searchDisabled && localSearchDisabled) || holdName === ""}
         onClick={() => {
+          setSearchDisabled(true);
           setSubmitButtonTrigger((prev) => !prev);
           if (closure) closure();
           setHoldName(inputValue);

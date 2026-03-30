@@ -109,6 +109,10 @@ export function addGuestScheduleItem(item: {
     sortIndex: data.schedule.length,
     lastModified: new Date().toISOString(),
     isLocked: false,
+    latitude: null,
+    longitude: null,
+    placeId: null,
+    showOnMap: true,
   };
 
   data.schedule.push(newItem);
@@ -130,6 +134,7 @@ export function updateGuestScheduleItem(
       | "multiDay"
       | "sortIndex"
       | "isLocked"
+      | "showOnMap"
     >
   >,
 ): ScheduleUpdateResponse {

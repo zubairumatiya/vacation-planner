@@ -37,6 +37,7 @@ declare global {
     latitude: number | null;
     longitude: number | null;
     placeId: string | null;
+    showOnMap: boolean;
   }
 
   /** GET /schedule/:tripId */
@@ -249,6 +250,7 @@ declare global {
     viewMode: boolean;
     onDuplicate?: (item: Schedule, dayContainer: string) => void;
     onToggleLock?: (item: Schedule) => void;
+    onToggleMapPin?: (item: Schedule) => void;
   };
 
   type ViewTableComponentProps = {
@@ -269,6 +271,7 @@ declare global {
     viewMode: boolean;
     onDuplicate?: (item: Schedule, dayContainer: string) => void;
     onToggleLock?: (item: Schedule) => void;
+    onToggleMapPin?: (item: Schedule) => void;
   };
 
   type EditRowProps = {

@@ -335,12 +335,14 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .tableRow .editIcon {
+  .tableRow .editIcon,
+  .tableRow .lockIcon {
     opacity: 0;
     transition: opacity 0.15s ease;
   }
 
-  .tableRow:hover .editIcon {
+  .tableRow:hover .editIcon,
+  .tableRow:hover .lockIcon {
     opacity: 1;
   }
 }
@@ -584,6 +586,7 @@ div .tableContainerDragging {
 .rightActionsCol {
   display: flex;
   flex-direction: column;
+  gap: 0.25rem;
 }
 .leftActionsCol {
   display: flex;
@@ -610,6 +613,24 @@ div .tableContainerDragging {
 }
 
 .editIcon:hover {
+  border-color: #747bff;
+  background: rgba(47, 231, 130, 0.08);
+}
+
+.lockIcon {
+  border: 1px solid #444;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  padding: 0.2rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  background: transparent;
+  overflow: hidden;
+}
+.lockIcon:hover {
   border-color: #2fe782;
   background: rgba(47, 231, 130, 0.08);
 }
@@ -629,6 +650,13 @@ div .tableContainerDragging {
 }
 
 .lockActive {
+  opacity: 1;
+  filter: brightness(0) saturate(100%) invert(55%) sepia(81%) saturate(400%)
+    hue-rotate(90deg) brightness(95%) contrast(90%);
+  border-color: rgba(47, 231, 130, 0.3);
+}
+
+.mapPinActive {
   opacity: 1;
   filter: brightness(0) saturate(100%) invert(55%) sepia(81%) saturate(400%)
     hue-rotate(90deg) brightness(95%) contrast(90%);

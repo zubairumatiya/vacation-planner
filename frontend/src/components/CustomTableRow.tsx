@@ -18,6 +18,7 @@ const CustomTableRow = ({
   viewMode,
   onDuplicate,
   onToggleLock,
+  onToggleMapPin,
 }: TableRowProps) => {
   const [height, setHeight] = useState<number | null>(null);
   const { handleEdit, editLineId } = useContext(EditScheduleContext);
@@ -87,6 +88,7 @@ const CustomTableRow = ({
           viewMode={viewMode}
           onDuplicate={onDuplicate}
           onToggleLock={onToggleLock}
+          onToggleMapPin={onToggleMapPin}
           {...attributes}
           {...listeners}
         ></NormalRow>

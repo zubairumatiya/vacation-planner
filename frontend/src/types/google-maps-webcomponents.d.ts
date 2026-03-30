@@ -40,6 +40,7 @@ declare global {
     latitude: number | null;
     longitude: number | null;
     placeId: string | null;
+    showOnMap: boolean;
   };
 
   type Chunk = {
@@ -173,6 +174,7 @@ declare global {
     setLocationName: (placeDisplayName: string) => void;
     locationName: string;
     searchDisabled: boolean;
+    setSearchDisabled: React.Dispatch<React.SetStateAction<boolean>>;
     setSubmitButtonTrigger: React.Dispatch<React.SetStateAction<boolean>>;
     setViewport: React.Dispatch<React.SetStateAction<Viewport | null>>;
   }
