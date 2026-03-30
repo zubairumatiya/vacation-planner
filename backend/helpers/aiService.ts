@@ -12,7 +12,7 @@ import type {
 } from "../types/app-types.js";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
-const MODEL = "gemini-3-flash-preview";
+const MODEL = "gemini-2.5-flash";
 
 interface TripContext {
   trip: Trip;
@@ -68,12 +68,30 @@ export async function chat(
     contents = effectiveMessage;
   }
 
+  // Compute trip destination center for Maps grounding
+  const vp = context.trip.g_vp;
+  const centerLat = vp ? (vp.south + vp.north) / 2 : undefined;
+  const centerLng = vp ? (vp.west + vp.east) / 2 : undefined;
+
   const response = await ai.models.generateContent({
     model: MODEL,
     contents,
     config: {
       systemInstruction: systemPrompt,
       thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
+      tools: [{ googleSearch: {} }, { googleMaps: {} }],
+      ...(centerLat !== undefined && centerLng !== undefined
+        ? {
+            toolConfig: {
+              retrievalConfig: {
+                latLng: {
+                  latitude: centerLat,
+                  longitude: centerLng,
+                },
+              },
+            },
+          }
+        : {}),
     },
   });
 
