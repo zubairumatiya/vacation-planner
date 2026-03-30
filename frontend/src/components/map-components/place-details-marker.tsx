@@ -7,7 +7,7 @@ import {
 } from "@vis.gl/react-google-maps";
 
 export const PlaceDetailsMarker = memo(
-  ({ place, selected, onClick, detailsSize }: PlaceDetailsMarkerProps) => {
+  ({ place, selected, onClick, detailsSize, isOverlap }: PlaceDetailsMarkerProps) => {
     const [markerRef, marker] = useAdvancedMarkerRef();
     useMapsLibrary("places");
 
@@ -29,7 +29,9 @@ export const PlaceDetailsMarker = memo(
             lng: place?.location?.longitude ?? 0,
           }}
           onClick={handleMarkerClick}
-        />
+        >
+          {isOverlap ? <div style={{ display: "none" }} /> : null}
+        </AdvancedMarker>
         {selected && (
           <InfoWindow
             anchor={marker}

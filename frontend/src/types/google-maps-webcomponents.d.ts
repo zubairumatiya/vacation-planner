@@ -98,6 +98,7 @@ declare global {
     selected: boolean;
     onClick: (placeId: string | undefined) => void;
     detailsSize: "FULL";
+    isOverlap?: boolean;
   }
 
   interface PlaceSearchProps {

@@ -1251,7 +1251,9 @@ router.post(
   ) => {
     try {
       const { itemIds } = req.body;
+      console.log(`[resolve-coords] START tripId=${req.params.tripId}, itemIds=`, itemIds);
       if (!Array.isArray(itemIds) || itemIds.length === 0 || itemIds.length > 50) {
+        console.log(`[resolve-coords] Bad request: itemIds invalid (length=${itemIds?.length})`);
         res.sendStatus(400);
         return;
       }
@@ -1261,10 +1263,12 @@ router.post(
         [req.params.tripId],
       );
       if (tripResult.rowCount === 0) {
+        console.log(`[resolve-coords] Trip not found: ${req.params.tripId}`);
         res.sendStatus(404);
         return;
       }
       const tripLocation = tripResult.rows[0].location;
+      console.log(`[resolve-coords] Trip location: "${tripLocation}"`);
 
       const placeholders = itemIds.map((_, i) => `$${i + 2}`).join(",");
       const scheduleResult = await db.query<Schedule>(
@@ -1275,13 +1279,17 @@ router.post(
       const resolved: Array<{ id: string; latitude: number; longitude: number; placeId: string | null }> = [];
       const failed: string[] = [];
 
+      console.log(`[resolve-coords] Found ${scheduleResult.rowCount} schedule items to process`);
       for (const item of scheduleResult.rows) {
+        console.log(`[resolve-coords] Processing item id=${item.id}, location="${item.location}", place_id=${item.place_id}, lat=${item.latitude}, lng=${item.longitude}`);
         if (isTransitItem(item.location ?? "")) {
+          console.log(`[resolve-coords] Skipping transit item "${item.location}"`);
           failed.push(item.id);
           continue;
         }
 
         if (item.latitude != null && item.longitude != null) {
+          console.log(`[resolve-coords] Already has coords, skipping "${item.location}"`);
           resolved.push({ id: item.id, latitude: item.latitude, longitude: item.longitude, placeId: item.place_id ?? null });
           continue;
         }
@@ -1323,6 +1331,7 @@ router.post(
           );
 
           if (!searchRes.ok) {
+            console.log(`[resolve-coords] Text search API failed for "${item.location}": ${searchRes.status} ${searchRes.statusText}`);
             failed.push(item.id);
             continue;
           }
@@ -1330,6 +1339,7 @@ router.post(
           const searchData = (await searchRes.json()) as { places?: Array<{ id: string; displayName?: { text: string } }> };
           console.log(`[resolve-coords] Text search for "${item.location}" =>`, searchData.places?.map(p => ({ id: p.id, name: p.displayName?.text })));
           if (!searchData.places || searchData.places.length === 0) {
+            console.log(`[resolve-coords] No places found for "${item.location}"`);
             failed.push(item.id);
             continue;
           }
@@ -1386,6 +1396,7 @@ router.post(
           );
 
           if (!detailRes.ok) {
+            console.log(`[resolve-coords] Place details API failed for "${placeId}": ${detailRes.status} ${detailRes.statusText}`);
             failed.push(item.id);
             continue;
           }
@@ -1397,6 +1408,7 @@ router.post(
           console.log(`[resolve-coords] Place details for "${placeId}" =>`, { name: detailData.displayName?.text, location: detailData.location });
 
           if (!detailData.location?.latitude || !detailData.location?.longitude) {
+            console.log(`[resolve-coords] No location in place details for "${placeId}"`);
             failed.push(item.id);
             continue;
           }
@@ -1412,12 +1424,15 @@ router.post(
             [placeId, latitude, longitude],
           );
 
+          console.log(`[resolve-coords] Resolved via API: "${item.location}" => lat=${latitude}, lng=${longitude}, placeId=${placeId}`);
           resolved.push({ id: item.id, latitude, longitude, placeId });
-        } catch {
+        } catch (err) {
+          console.log(`[resolve-coords] Error processing item id=${item.id}, location="${item.location}":`, err);
           failed.push(item.id);
         }
       }
 
+      console.log(`[resolve-coords] DONE resolved=${resolved.length}, failed=${failed.length}`);
       res.status(200).json({ resolved, failed });
     } catch (err) {
       next(err);

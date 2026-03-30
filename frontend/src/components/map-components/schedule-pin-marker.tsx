@@ -13,6 +13,7 @@ interface SchedulePinMarkerProps {
   selected: boolean;
   onHover: (id: string | undefined) => void;
   isOverlap?: boolean;
+  onClick?: () => void;
 }
 
 function formatDate(date: Date): string {
@@ -33,7 +34,7 @@ function formatTime(date: Date): string {
 }
 
 export const SchedulePinMarker = memo(
-  ({ item, index, selected, onHover, isOverlap }: SchedulePinMarkerProps) => {
+  ({ item, index, selected, onHover, isOverlap, onClick }: SchedulePinMarkerProps) => {
     const [markerRef, marker] = useAdvancedMarkerRef();
 
     const handleMouseEnter = useCallback(() => {
@@ -58,7 +59,7 @@ export const SchedulePinMarker = memo(
           }}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          onClick={handleMouseEnter}
+          onClick={() => { handleMouseEnter(); onClick?.(); }}
         >
           <Pin
             background={isOverlap ? "#ef4444" : "#22c55e"}

@@ -114,17 +114,16 @@ const MyMapComponent = ({
   // Memoize the place markers to prevent unnecessary re-renders
   // Only recreate when places, selection, or details size changes
   const placeMarkers = useMemo(() => {
-    return places
-      .filter((place) => !schedulePlaceIds.has(place.id))
-      .map((place, index) => (
-        <PlaceDetailsMarker
-          detailsSize={"FULL"}
-          key={place.id || index}
-          selected={place.id === selectedPlaceId}
-          place={place}
-          onClick={() => setSelectedPlaceId(place.id)}
-        />
-      ));
+    return places.map((place, index) => (
+      <PlaceDetailsMarker
+        detailsSize={"FULL"}
+        key={place.id || index}
+        selected={place.id === selectedPlaceId}
+        place={place}
+        onClick={() => setSelectedPlaceId(place.id)}
+        isOverlap={schedulePlaceIds.has(place.id)}
+      />
+    ));
   }, [places, selectedPlaceId, detailsSize, schedulePlaceIds]);
 
   const filteredScheduleItems = useMemo(() => {
@@ -146,6 +145,7 @@ const MyMapComponent = ({
           selected={String(item.id) === hoveredScheduleItemId}
           onHover={handleSchedulePinHover}
           isOverlap={isOverlap}
+          onClick={isOverlap ? () => setSelectedPlaceId(item.placeId!) : undefined}
         />
       );
     });
