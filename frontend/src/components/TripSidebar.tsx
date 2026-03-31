@@ -193,6 +193,7 @@ const TripSidebar = ({
         isPuke: newPlace.is_puke as boolean,
         note: (newPlace.note as string) || null,
         sortIndex: newPlace.sort_index as number,
+        cityId: (newPlace.city_id as string) || null,
       });
     } catch {
       // handled

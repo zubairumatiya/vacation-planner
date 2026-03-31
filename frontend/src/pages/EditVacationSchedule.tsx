@@ -332,6 +332,10 @@ const EditVacationSchedule = ({
           tripId: tripId ?? "",
           lastModified: "",
           isLocked: false,
+          latitude: null,
+          longitude: null,
+          placeId: null,
+          showOnMap: false,
         };
         const tempArr = reSort([...schedule[dateAdded].slice(), tempItem]);
         setSchedule((prev) => ({
@@ -367,6 +371,10 @@ const EditVacationSchedule = ({
         tripId: tripId ?? "",
         lastModified: "",
         isLocked: false,
+        latitude: null,
+        longitude: null,
+        placeId: null,
+        showOnMap: false,
       };
       const tempArr = reSort([...schedule[dateAdded].slice(), tempItem]);
       const chunk = indexChunk("temp", tempArr);

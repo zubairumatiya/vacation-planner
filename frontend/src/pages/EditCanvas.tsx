@@ -605,6 +605,7 @@ const EditCanvas = ({
         latitude: null,
         longitude: null,
         placeId: null,
+        showOnMap: false,
       };
       setDragRow(tempScheduleItem.current);
     } else if (typeOfDrag?.type === "schedule") {
@@ -1126,6 +1127,7 @@ const EditCanvas = ({
               latitude: item.latitude ?? null,
               longitude: item.longitude ?? null,
               placeId: item.placeId ?? null,
+              showOnMap: item.showOnMap ?? false,
             });
           }
         }
@@ -1651,6 +1653,7 @@ const EditCanvas = ({
         latitude: null,
         longitude: null,
         placeId: null,
+        showOnMap: false,
       };
 
       const currentDayItems = schedule[dayKey] ?? [];

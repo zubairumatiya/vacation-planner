@@ -381,6 +381,10 @@ const EditableRow = ({
       tripId: tripId ?? "",
       lastModified: "",
       isLocked: false,
+      latitude: null,
+      longitude: null,
+      placeId: null,
+      showOnMap: false,
     };
     const tempArr = reSort(
       newTable
@@ -587,6 +591,10 @@ const EditableRow = ({
             startTime: new Date(startDateAssembler),
             endTime: new Date(endDateAssembler),
             isLocked: false,
+            latitude: null,
+            longitude: null,
+            placeId: null,
+            showOnMap: false,
           };
           setHoldOverwrite(holdIntent);
           setBannerMsg(
