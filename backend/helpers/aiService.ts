@@ -1,4 +1,4 @@
-import { GoogleGenAI, type Content, ThinkingLevel } from "@google/genai";
+import { GoogleGenAI, type Content, type GenerateContentResponse } from "@google/genai";
 import db from "../db/db.js";
 import type {
   AiAction,
@@ -41,6 +41,11 @@ export async function chat(
   rawModelResponse?: string;
   exhaustedCategories?: string[];
   scheduleUpdated?: boolean;
+  grounding?: {
+    searchEntryPoint?: string;
+    mapsSources?: { title: string; uri: string }[];
+    webSources?: { title: string; uri: string }[];
+  };
 }> {
   const context = await fetchTripContext(tripId);
   const systemPrompt = buildSystemPrompt(
@@ -73,30 +78,82 @@ export async function chat(
   const centerLat = vp ? (vp.south + vp.north) / 2 : undefined;
   const centerLng = vp ? (vp.west + vp.east) / 2 : undefined;
 
-  const response = await ai.models.generateContent({
-    model: MODEL,
-    contents,
-    config: {
-      systemInstruction: systemPrompt,
-      thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH },
-      tools: [{ googleSearch: {} }, { googleMaps: {} }],
-      ...(centerLat !== undefined && centerLng !== undefined
-        ? {
-            toolConfig: {
-              retrievalConfig: {
-                latLng: {
-                  latitude: centerLat,
-                  longitude: centerLng,
+  let response: GenerateContentResponse;
+  try {
+    response = await ai.models.generateContent({
+      model: MODEL,
+      contents,
+      config: {
+        systemInstruction: systemPrompt,
+        tools: [{ googleSearch: {} }, { googleMaps: {} }],
+        ...(centerLat !== undefined && centerLng !== undefined
+          ? {
+              toolConfig: {
+                retrievalConfig: {
+                  latLng: {
+                    latitude: centerLat,
+                    longitude: centerLng,
+                  },
                 },
               },
-            },
-          }
-        : {}),
-    },
-  });
+            }
+          : {}),
+      },
+    });
+  } catch (err: unknown) {
+    const status =
+      err instanceof Error && "status" in err
+        ? (err as { status: number }).status
+        : undefined;
+    const msg = err instanceof Error ? err.message : "";
+    if (status === 429 || msg.includes("RESOURCE_EXHAUSTED")) {
+      console.warn("[AI] Grounding quota exhausted, retrying without grounding tools");
+      response = await ai.models.generateContent({
+        model: MODEL,
+        contents,
+        config: { systemInstruction: systemPrompt },
+      });
+    } else {
+      throw err;
+    }
+  }
 
   const rawText = response.text ?? "";
   const parsed = parseActionResponse(rawText);
+
+  // Extract grounding metadata
+  const grounding = response.candidates?.[0]?.groundingMetadata;
+  const groundingData: {
+    searchEntryPoint?: string;
+    mapsSources?: { title: string; uri: string }[];
+    webSources?: { title: string; uri: string }[];
+  } = {};
+
+  if (grounding) {
+    // Search entry point HTML
+    if (grounding.searchEntryPoint?.renderedContent) {
+      groundingData.searchEntryPoint =
+        grounding.searchEntryPoint.renderedContent;
+    }
+
+    // Maps and web source chunks
+    const mapsChunks: { title: string; uri: string }[] = [];
+    const webChunks: { title: string; uri: string }[] = [];
+    for (const chunk of grounding.groundingChunks ?? []) {
+      if (chunk.web?.uri && chunk.web?.title) {
+        webChunks.push({ title: chunk.web.title, uri: chunk.web.uri });
+      }
+      // The Maps grounding chunks use a "maps" key per the docs
+      const maps = (chunk as Record<string, unknown>).maps as
+        | { title?: string; uri?: string }
+        | undefined;
+      if (maps?.uri && maps?.title) {
+        mapsChunks.push({ title: maps.title, uri: maps.uri });
+      }
+    }
+    if (mapsChunks.length > 0) groundingData.mapsSources = mapsChunks;
+    if (webChunks.length > 0) groundingData.webSources = webChunks;
+  }
 
   // Execute DB actions for +ADD, ~REPLACE, -REMOVE (skip in list mode — list items only go to ai_list_places)
   let scheduleUpdated = false;
@@ -166,6 +223,8 @@ export async function chat(
         ? parsed.exhaustedCategories
         : undefined,
     scheduleUpdated: scheduleUpdated || undefined,
+    grounding:
+      Object.keys(groundingData).length > 0 ? groundingData : undefined,
   };
 }
 

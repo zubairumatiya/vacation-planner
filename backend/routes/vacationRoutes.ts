@@ -82,7 +82,7 @@ const COUNTRY_ALIASES: Record<string, string> = {
   "South Korea": "South Korea",
   "Republic of Korea": "South Korea",
   "North Korea": "North Korea",
-  "DPRK": "North Korea",
+  DPRK: "North Korea",
   "Czech Republic": "Czech Republic",
   Czechia: "Czech Republic",
   "Ivory Coast": "Ivory Coast",
@@ -112,9 +112,7 @@ function extractCountryFromLocation(location: string): string {
   return parts[parts.length - 1];
 }
 
-async function resolveCountryName(
-  rawCountry: string,
-): Promise<string | null> {
+async function resolveCountryName(rawCountry: string): Promise<string | null> {
   // 1. Check alias map (case-insensitive)
   const aliasKey = Object.keys(COUNTRY_ALIASES).find(
     (k) => k.toLowerCase() === rawCountry.toLowerCase(),
@@ -207,7 +205,16 @@ router.post(
     res: TypedResponse<AddVacationResponse>,
     next: NextFunction,
   ) => {
-    const { tripname, location, startDate, endDate, gId, gVp, isPublic, isOpenInvite } = req.body;
+    const {
+      tripname,
+      location,
+      startDate,
+      endDate,
+      gId,
+      gVp,
+      isPublic,
+      isOpenInvite,
+    } = req.body;
     if (!tripname || !location || !startDate || !endDate || !gId || !gVp) {
       res.status(400).json({
         message: "Invalid input - make sure all the fields are filled",
@@ -227,7 +234,16 @@ router.post(
     try {
       const results: QueryResult<{ id: string }> = await db.query(
         "INSERT INTO trips (trip_name, location, start_date, end_date, g_id, g_vp, is_public, is_open_invite) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-        [tripname, location, startDate, endDate, gId, gVp, isPublic ?? false, isOpenInvite ?? false],
+        [
+          tripname,
+          location,
+          startDate,
+          endDate,
+          gId,
+          gVp,
+          isPublic ?? false,
+          isOpenInvite ?? false,
+        ],
       );
       await db.query(
         "INSERT INTO user_trips (user_id, trip_id, role) VALUES ($1, $2, 'owner')",
@@ -244,32 +260,47 @@ router.post(
 router.post(
   "/migrate-guest-trip",
   ensureLoggedIn,
-  async (req: TypedRequest<{
-    tripName: string;
-    location: string;
-    startDate: string;
-    endDate: string;
-    gId: string;
-    gVp: unknown;
-    isPublic: boolean;
-    isOpenInvite: boolean;
-    schedule: Array<{
-      startTime: string;
-      endTime: string;
+  async (
+    req: TypedRequest<{
+      tripName: string;
       location: string;
-      details: string;
-      cost: number;
-      multiDay: boolean;
-      sortIndex: number;
-    }>;
-    list: Array<{
-      value: string;
-      fromGoogle: string | null;
-      details: string | null;
-      itemAdded: boolean;
-    }>;
-  }>, res: TypedResponse<{ tripId?: string; message?: string }>, next: NextFunction) => {
-    const { tripName, location, startDate, endDate, gId, gVp, isPublic, isOpenInvite, schedule, list } = req.body;
+      startDate: string;
+      endDate: string;
+      gId: string;
+      gVp: unknown;
+      isPublic: boolean;
+      isOpenInvite: boolean;
+      schedule: Array<{
+        startTime: string;
+        endTime: string;
+        location: string;
+        details: string;
+        cost: number;
+        multiDay: boolean;
+        sortIndex: number;
+      }>;
+      list: Array<{
+        value: string;
+        fromGoogle: string | null;
+        details: string | null;
+        itemAdded: boolean;
+      }>;
+    }>,
+    res: TypedResponse<{ tripId?: string; message?: string }>,
+    next: NextFunction,
+  ) => {
+    const {
+      tripName,
+      location,
+      startDate,
+      endDate,
+      gId,
+      gVp,
+      isPublic,
+      isOpenInvite,
+      schedule,
+      list,
+    } = req.body;
     if (!tripName || !location || !startDate || !endDate || !gId || !gVp) {
       res.status(400).json({ message: "Invalid input" });
       return;
@@ -281,7 +312,16 @@ router.post(
 
       const tripResult: QueryResult<{ id: string }> = await client.query(
         "INSERT INTO trips (trip_name, location, start_date, end_date, g_id, g_vp, is_public, is_open_invite) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id",
-        [tripName, location, startDate, endDate, gId, gVp, isPublic ?? false, isOpenInvite ?? false],
+        [
+          tripName,
+          location,
+          startDate,
+          endDate,
+          gId,
+          gVp,
+          isPublic ?? false,
+          isOpenInvite ?? false,
+        ],
       );
       const tripId = tripResult.rows[0].id;
 
@@ -294,7 +334,16 @@ router.post(
         for (const item of schedule) {
           await client.query(
             "INSERT INTO trip_schedule (trip_id, start_time, end_time, location, cost, details, multi_day, sort_index) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-            [tripId, item.startTime, item.endTime, item.location, item.cost ?? 0, item.details ?? "", item.multiDay ?? false, item.sortIndex ?? 0],
+            [
+              tripId,
+              item.startTime,
+              item.endTime,
+              item.location,
+              item.cost ?? 0,
+              item.details ?? "",
+              item.multiDay ?? false,
+              item.sortIndex ?? 0,
+            ],
           );
         }
       }
@@ -328,7 +377,16 @@ router.patch(
     res: TypedResponse<AddVacationResponse>,
     next: NextFunction,
   ) => {
-    const { tripname, location, startDate, endDate, gId, gVp, isPublic, isOpenInvite } = req.body;
+    const {
+      tripname,
+      location,
+      startDate,
+      endDate,
+      gId,
+      gVp,
+      isPublic,
+      isOpenInvite,
+    } = req.body;
     if (!tripname || !location || !startDate || !endDate || !gId || !gVp) {
       res.sendStatus(400);
       return;
@@ -344,7 +402,17 @@ router.patch(
     try {
       const result: QueryResult<Trip> = await db.query(
         "UPDATE trips SET trip_name=$1, start_date=$2, end_date=$3, location=$4, g_id=$5, g_vp=$6, is_public=$7, is_open_invite=$8, last_modified=NOW() WHERE id=$9 RETURNING *",
-        [tripname, startDate, endDate, location, gId, gVp, isPublic ?? false, isOpenInvite ?? false, req.params.tripId],
+        [
+          tripname,
+          startDate,
+          endDate,
+          location,
+          gId,
+          gVp,
+          isPublic ?? false,
+          isOpenInvite ?? false,
+          req.params.tripId,
+        ],
       );
       if (result.rowCount !== null && result.rowCount > 0) {
         res.status(200).json({ message: "success" });
@@ -435,9 +503,7 @@ router.get(
       const arrCargo =
         result3.rowCount !== null && result3.rowCount > 0 ? result3.rows : [];
 
-      const rawCountry = extractCountryFromLocation(
-        result2.rows[0].location,
-      );
+      const rawCountry = extractCountryFromLocation(result2.rows[0].location);
       const countryName = await resolveCountryName(rawCountry);
 
       const response: TripWithSchedule = {
@@ -934,7 +1000,12 @@ router.post(
       if (req.body.fromGoogle) {
         queryText =
           "INSERT INTO trip_list (trip_id, value, from_google, details) VALUES ($1, $2, $3, $4) RETURNING id, value, from_google, details, last_modified, item_added";
-        queryParams = [req.params.tripId, req.body.value, req.body.fromGoogle, details];
+        queryParams = [
+          req.params.tripId,
+          req.body.value,
+          req.body.fromGoogle,
+          details,
+        ];
       } else {
         queryText =
           "INSERT INTO trip_list (trip_id, value, details) VALUES ($1, $2, $3) RETURNING id, value, from_google, details, last_modified, item_added";
@@ -964,16 +1035,18 @@ router.patch(
     next: NextFunction,
   ) => {
     try {
-      const details = req.body.details !== undefined ? req.body.details : undefined;
-      const result: QueryResult<TripList> = details !== undefined
-        ? await db.query(
-            "UPDATE trip_list SET value=$1, details=$2, last_modified=NOW() WHERE id=$3 RETURNING *",
-            [req.body.value, details, req.params.id],
-          )
-        : await db.query(
-            "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
-            [req.body.value, req.params.id],
-          );
+      const details =
+        req.body.details !== undefined ? req.body.details : undefined;
+      const result: QueryResult<TripList> =
+        details !== undefined
+          ? await db.query(
+              "UPDATE trip_list SET value=$1, details=$2, last_modified=NOW() WHERE id=$3 RETURNING *",
+              [req.body.value, details, req.params.id],
+            )
+          : await db.query(
+              "UPDATE trip_list SET value=$1, last_modified=NOW() WHERE id=$2 RETURNING *",
+              [req.body.value, req.params.id],
+            );
       snakeToCamel<TripList>(result.rows);
       res.status(200).json({ data: result.rows });
       return;
@@ -1016,10 +1089,9 @@ router.delete(
     next: NextFunction,
   ) => {
     try {
-      const result = await db.query(
-        "DELETE FROM trip_list WHERE trip_id=$1",
-        [req.params.tripId],
-      );
+      const result = await db.query("DELETE FROM trip_list WHERE trip_id=$1", [
+        req.params.tripId,
+      ]);
       res
         .status(200)
         .json({ message: `Deleted ${result.rowCount} list items` });
@@ -1114,7 +1186,8 @@ router.post(
             body: JSON.stringify(searchBody),
           },
         );
-        if (!idResult.ok) throw new Error(`HTTP error! status: ${idResult.status}`);
+        if (!idResult.ok)
+          throw new Error(`HTTP error! status: ${idResult.status}`);
         const idData = (await idResult.json()) as IdOnlyTextSearchResponse;
 
         const returnedIds = (idData.places ?? []).map((p) => p.id);
@@ -1131,11 +1204,9 @@ router.post(
 
           if (allCached) {
             // 100% cache hit
-            console.log(`[map] Cache hit: all ${returnedIds.length} places from cache`);
             pagePlaces = cacheResult.rows.map(mapDbRowToPlace);
           } else {
             // Cache miss — repeat with full fieldMask
-            console.log(`[map] Cache miss: ${cachedIds.size}/${returnedIds.length} cached, fetching full data`);
             const fullResult = await fetch(
               "https://places.googleapis.com/v1/places:searchText",
               {
@@ -1148,8 +1219,10 @@ router.post(
                 body: JSON.stringify(searchBody),
               },
             );
-            if (!fullResult.ok) throw new Error(`HTTP error! status: ${fullResult.status}`);
-            const fullData = (await fullResult.json()) as FullTextSearchResponse;
+            if (!fullResult.ok)
+              throw new Error(`HTTP error! status: ${fullResult.status}`);
+            const fullData =
+              (await fullResult.json()) as FullTextSearchResponse;
 
             const fullPlaces = fullData.places ?? [];
 
@@ -1174,7 +1247,7 @@ router.post(
         }
 
         // Continue existing filter/accumulation logic
-        let filteredPlaces = pagePlaces.filter((v: Place) => {
+        const filteredPlaces = pagePlaces.filter((v: Place) => {
           return v.types.includes(snakePlaceType);
         });
 
@@ -1279,9 +1352,11 @@ router.post(
   ) => {
     try {
       const { itemIds } = req.body;
-      console.log(`[resolve-coords] START tripId=${req.params.tripId}, itemIds=`, itemIds);
-      if (!Array.isArray(itemIds) || itemIds.length === 0 || itemIds.length > 50) {
-        console.log(`[resolve-coords] Bad request: itemIds invalid (length=${itemIds?.length})`);
+      if (
+        !Array.isArray(itemIds) ||
+        itemIds.length === 0 ||
+        itemIds.length > 50
+      ) {
         res.sendStatus(400);
         return;
       }
@@ -1291,12 +1366,10 @@ router.post(
         [req.params.tripId],
       );
       if (tripResult.rowCount === 0) {
-        console.log(`[resolve-coords] Trip not found: ${req.params.tripId}`);
         res.sendStatus(404);
         return;
       }
       const tripLocation = tripResult.rows[0].location;
-      console.log(`[resolve-coords] Trip location: "${tripLocation}"`);
 
       const placeholders = itemIds.map((_, i) => `$${i + 2}`).join(",");
       const scheduleResult = await db.query<Schedule>(
@@ -1304,21 +1377,27 @@ router.post(
         [req.params.tripId, ...itemIds],
       );
 
-      const resolved: Array<{ id: string; latitude: number; longitude: number; placeId: string | null }> = [];
+      const resolved: Array<{
+        id: string;
+        latitude: number;
+        longitude: number;
+        placeId: string | null;
+      }> = [];
       const failed: string[] = [];
 
-      console.log(`[resolve-coords] Found ${scheduleResult.rowCount} schedule items to process`);
       for (const item of scheduleResult.rows) {
-        console.log(`[resolve-coords] Processing item id=${item.id}, location="${item.location}", place_id=${item.place_id}, lat=${item.latitude}, lng=${item.longitude}`);
         if (isTransitItem(item.location ?? "")) {
-          console.log(`[resolve-coords] Skipping transit item "${item.location}"`);
           failed.push(item.id);
           continue;
         }
 
         if (item.latitude != null && item.longitude != null) {
-          console.log(`[resolve-coords] Already has coords, skipping "${item.location}"`);
-          resolved.push({ id: item.id, latitude: item.latitude, longitude: item.longitude, placeId: item.place_id ?? null });
+          resolved.push({
+            id: item.id,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            placeId: item.place_id ?? null,
+          });
           continue;
         }
 
@@ -1335,8 +1414,12 @@ router.post(
                 "UPDATE trip_schedule SET latitude=$1, longitude=$2 WHERE id=$3",
                 [latitude, longitude, item.id],
               );
-              console.log(`[resolve-coords] Cache hit (place_coordinates) for "${item.location}"`);
-              resolved.push({ id: item.id, latitude, longitude, placeId: item.place_id });
+              resolved.push({
+                id: item.id,
+                latitude,
+                longitude,
+                placeId: item.place_id,
+              });
               continue;
             }
           }
@@ -1349,7 +1432,7 @@ router.post(
               headers: {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": `${API_KEY}`,
-                "X-Goog-FieldMask": "places.id,places.displayName",
+                "X-Goog-FieldMask": "places.id",
               },
               body: JSON.stringify({
                 textQuery: `${item.location}, ${tripLocation}`,
@@ -1359,15 +1442,14 @@ router.post(
           );
 
           if (!searchRes.ok) {
-            console.log(`[resolve-coords] Text search API failed for "${item.location}": ${searchRes.status} ${searchRes.statusText}`);
             failed.push(item.id);
             continue;
           }
 
-          const searchData = (await searchRes.json()) as { places?: Array<{ id: string; displayName?: { text: string } }> };
-          console.log(`[resolve-coords] Text search for "${item.location}" =>`, searchData.places?.map(p => ({ id: p.id, name: p.displayName?.text })));
+          const searchData = (await searchRes.json()) as {
+            places?: Array<{ id: string }>;
+          };
           if (!searchData.places || searchData.places.length === 0) {
-            console.log(`[resolve-coords] No places found for "${item.location}"`);
             failed.push(item.id);
             continue;
           }
@@ -1385,7 +1467,6 @@ router.post(
               "UPDATE trip_schedule SET latitude=$1, longitude=$2, place_id=$3 WHERE id=$4",
               [latitude, longitude, placeId, item.id],
             );
-            console.log(`[resolve-coords] Cache hit (place_coordinates) for "${item.location}" via text search`);
             resolved.push({ id: item.id, latitude, longitude, placeId });
             continue;
           }
@@ -1405,7 +1486,6 @@ router.post(
               "INSERT INTO place_coordinates (place_id, latitude, longitude) VALUES ($1, $2, $3) ON CONFLICT (place_id) DO NOTHING",
               [placeId, latitude, longitude],
             );
-            console.log(`[resolve-coords] Cache hit (place_details) for "${item.location}"`);
             resolved.push({ id: item.id, latitude, longitude, placeId });
             continue;
           }
@@ -1418,25 +1498,24 @@ router.post(
               headers: {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": `${API_KEY}`,
-                "X-Goog-FieldMask": "displayName,location",
+                "X-Goog-FieldMask": "location",
               },
             },
           );
 
           if (!detailRes.ok) {
-            console.log(`[resolve-coords] Place details API failed for "${placeId}": ${detailRes.status} ${detailRes.statusText}`);
             failed.push(item.id);
             continue;
           }
 
           const detailData = (await detailRes.json()) as {
-            displayName?: { text: string };
             location?: { latitude: number; longitude: number };
           };
-          console.log(`[resolve-coords] Place details for "${placeId}" =>`, { name: detailData.displayName?.text, location: detailData.location });
 
-          if (!detailData.location?.latitude || !detailData.location?.longitude) {
-            console.log(`[resolve-coords] No location in place details for "${placeId}"`);
+          if (
+            !detailData.location?.latitude ||
+            !detailData.location?.longitude
+          ) {
             failed.push(item.id);
             continue;
           }
@@ -1452,15 +1531,13 @@ router.post(
             [placeId, latitude, longitude],
           );
 
-          console.log(`[resolve-coords] Resolved via API: "${item.location}" => lat=${latitude}, lng=${longitude}, placeId=${placeId}`);
           resolved.push({ id: item.id, latitude, longitude, placeId });
         } catch (err) {
-          console.log(`[resolve-coords] Error processing item id=${item.id}, location="${item.location}":`, err);
           failed.push(item.id);
+          console.error(err);
         }
       }
 
-      console.log(`[resolve-coords] DONE resolved=${resolved.length}, failed=${failed.length}`);
       res.status(200).json({ resolved, failed });
     } catch (err) {
       next(err);

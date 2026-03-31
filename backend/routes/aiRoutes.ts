@@ -155,7 +155,6 @@ router.post(
       res.status(200).json(result);
       return;
     } catch (err) {
-      console.error("[AI] Chat error:", err);
       next(err);
     }
   }

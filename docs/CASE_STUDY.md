@@ -4,7 +4,59 @@ A deep dive into the hardest problems encountered while building Vacation Planne
 
 ---
 
-## 1. Guest-to-Authenticated Data Migration
+## 1. Google Maps API Cost Optimization
+
+### The Problem
+
+Google Maps Places API pricing is tier-based — the more fields you request, the higher the cost per call. With features like map search (returning 20+ results), autocomplete lookups, and resolving coordinates for every schedule item, an unoptimized approach would hit expensive API tiers hundreds of times per session.
+
+Google offers a Places UI Kit that handles pricing optimally with simple setup, but it caps results at 20 places total — a hard limit that reduces functionality and user value for a search-heavy app like a trip planner. Rather than accept that tradeoff, I went with a hybrid approach: using the UI Kit where its constraints are acceptable (autocomplete) and building custom API integrations where I needed full control over pagination, caching, and result volume.
+
+### The Solution
+
+Built a multi-layered cost optimization strategy that minimizes API spend at every level:
+
+**1. ID-first Text Search (free tier before paid tier)**
+
+Instead of requesting full place details upfront, the map search endpoint first calls Text Search with an `ID_ONLY_FIELD_MASK` (`places.id,nextPageToken`) — a Basic-tier request. This returns place IDs without incurring the cost of higher-tier field requests. Only after checking which IDs are already cached does the system make a second call with the full field mask.
+
+**2. Batch requests over individual lookups**
+
+When place details are needed, the system re-issues a Text Search with `pageSize: 20` and the `FULL_FIELD_MASK` — one request that returns up to 20 fully-detailed places. The alternative would be calling the Place Details endpoint per item (20 individual requests). Text Search with 20 results counts as a single API request regardless of result count.
+
+**3. Database caching with global benefit**
+
+All fetched place data is upserted into a `place_details` table (67 columns covering every relevant field) and a `place_coordinates` table for fast lat/lng lookups. Before any API call, the system queries the cache:
+
+```sql
+SELECT * FROM place_details WHERE place_id = ANY($1)
+```
+
+If all requested IDs are cached, zero API calls are made. This cache is global — when one user searches for restaurants in Tokyo, every future user benefits from that cached data. Over time, the hit rate compounds and more requests become free.
+
+**4. Multi-tier coordinate resolution**
+
+The `/resolve-coordinates` endpoint uses a 5-step waterfall to avoid unnecessary API calls:
+1. Check `place_coordinates` cache (cheapest — just lat/lng)
+2. ID-only Text Search to discover the place ID
+3. Check `place_coordinates` again with the discovered ID
+4. Check `place_details` cache and extract coordinates from there
+5. Last resort: single Place Details API call with a minimal field mask (`displayName,location`)
+
+**5. Maximized field mask at no extra cost**
+
+Since the required fields (photos, reviews, opening hours) already trigger the highest pricing tier, the `FULL_FIELD_MASK` was expanded to capture every potentially useful field — dining attributes, accessibility options, parking, generative summaries, and more. This costs nothing extra but gives the app richer data to work with now and in the future.
+
+### Lessons Learned
+
+- API cost optimization is a design problem, not just an implementation detail — the architecture has to be built around the pricing model
+- Caching with global scope creates a compounding return: every new user's searches reduce future API costs for all users
+- Understanding pricing tiers deeply (which fields trigger which tier) lets you maximize value per request
+- Owning your data in a relational database gives you flexibility that API-only access never will — filtering, joining with trip data, analytics, all become possible
+
+---
+
+## 2. Guest-to-Authenticated Data Migration
 
 ### The Problem
 
@@ -35,7 +87,7 @@ The migration runs once after signup/login if guest data is detected, and is ide
 
 ---
 
-## 2. Collaborative Conflict Detection (409 Overwrite Flow)
+## 3. Collaborative Conflict Detection (409 Overwrite Flow)
 
 ### The Problem
 
@@ -73,7 +125,7 @@ Chose to prompt because:
 
 ---
 
-## 3. Drag-and-Drop Index Spacing in PostgreSQL
+## 4. Drag-and-Drop Index Spacing in PostgreSQL
 
 ### The Problem
 
@@ -93,7 +145,7 @@ Adopted a **sparse index spacing** strategy. Items are assigned indices with lar
 
 ---
 
-## 4. JWT Refresh Token Race Conditions
+## 5. JWT Refresh Token Race Conditions
 
 ### The Problem
 

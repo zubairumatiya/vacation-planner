@@ -83,6 +83,7 @@
 .listPanel {
   flex: 0.5;
   max-height: 97vh;
+  z-index: 1;
 }
 
 @media (max-width: 700px) {

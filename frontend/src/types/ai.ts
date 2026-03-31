@@ -13,6 +13,17 @@ export interface AiAction {
   data: Record<string, unknown>;
 }
 
+export interface GroundingSource {
+  title: string;
+  uri: string;
+}
+
+export interface GroundingData {
+  searchEntryPoint?: string;
+  mapsSources?: GroundingSource[];
+  webSources?: GroundingSource[];
+}
+
 export interface AiChatResponse {
   text: string;
   itinerary?: AiItineraryItem[];
@@ -22,6 +33,7 @@ export interface AiChatResponse {
   error?: string;
   message?: string;
   scheduleUpdated?: boolean;
+  grounding?: GroundingData;
 }
 
 export interface AiRecommendedPlace {

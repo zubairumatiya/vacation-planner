@@ -11,7 +11,11 @@ import { AuthContext } from "../context/AuthContext";
 import styles from "../styles/Schedule.module.css";
 import refreshFn from "../utils/refreshFn";
 import SharePanel from "../components/SharePanel";
-import type { AiItineraryItem, AiChatResponse } from "../types/ai";
+import type {
+  AiItineraryItem,
+  AiChatResponse,
+  GroundingData,
+} from "../types/ai";
 import ReactMarkdown from "react-markdown";
 import aiResPopSound from "../assets/sounds/aiResPop.mp3";
 import { ErrorBoundary } from "react-error-boundary";
@@ -73,6 +77,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [exhaustedCategories, setExhaustedCategories] = useState<string[]>([]);
   const [addedItems, setAddedItems] = useState<Set<number>>(new Set());
   const [addingItem, setAddingItem] = useState<number | null>(null);
+  const [aiGrounding, setAiGrounding] = useState<GroundingData | null>(null);
+  const [mapsDropdownOpen, setMapsDropdownOpen] = useState(false);
+  const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
   const loggingOutRef = auth?.loggingOutRef;
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -314,6 +321,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     setAiLoading(true);
     setAiResponse(null);
     setAiItinerary([]);
+    setAiGrounding(null);
+    setMapsDropdownOpen(false);
+    setExpandedCards(new Set());
     setLastAiMode(aiMode);
     setAddedItems(new Set());
     try {
@@ -324,7 +334,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
           prompt: aiPrompt.trim() || undefined,
           mode: aiMode,
           categories: aiMode === "list" ? selectedCategories : undefined,
-          previousResponse: hasPrompt ? (lastAiResponse || undefined) : undefined,
+          previousResponse: hasPrompt ? lastAiResponse || undefined : undefined,
           fillInTheRest: aiMode === "schedule" ? fillInTheRest : undefined,
         }),
       });
@@ -335,7 +345,6 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
       }
 
       const data: AiChatResponse = await response.json();
-      console.log("[AI] response:", data);
 
       // Store raw model response for conversation continuity
       if (data.rawModelResponse) {
@@ -344,6 +353,10 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
 
       if (data.text) {
         setAiResponse(data.text);
+      }
+
+      if (data.grounding) {
+        setAiGrounding(data.grounding);
       }
 
       // Handle exhausted categories
@@ -1019,7 +1032,18 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             </span>
                                           )}
                                           <span
-                                            className={styles.aiPlaceDetails}
+                                            className={`${styles.aiPlaceDetails} ${expandedCards.has(idx) ? styles.aiPlaceDetailsExpanded : ""} ${item.details && item.details.length > 80 ? styles.aiPlaceDetailsExpandable : ""}`}
+                                            onClick={() =>
+                                              setExpandedCards((prev) => {
+                                                const next = new Set(prev);
+                                                if (next.has(idx)) {
+                                                  next.delete(idx);
+                                                } else {
+                                                  next.add(idx);
+                                                }
+                                                return next;
+                                              })
+                                            }
                                           >
                                             {item.details}
                                           </span>
@@ -1084,7 +1108,18 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                             {item.location}
                                           </span>
                                           <span
-                                            className={styles.aiPlaceDetails}
+                                            className={`${styles.aiPlaceDetails} ${expandedCards.has(idx) ? styles.aiPlaceDetailsExpanded : ""} ${item.details && item.details.length > 80 ? styles.aiPlaceDetailsExpandable : ""}`}
+                                            onClick={() =>
+                                              setExpandedCards((prev) => {
+                                                const next = new Set(prev);
+                                                if (next.has(idx)) {
+                                                  next.delete(idx);
+                                                } else {
+                                                  next.add(idx);
+                                                }
+                                                return next;
+                                              })
+                                            }
                                           >
                                             {item.details}
                                           </span>
@@ -1122,6 +1157,72 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                                 ),
                               );
                             })()}
+                        {/* Grounding attribution */}
+                        {aiGrounding?.searchEntryPoint && (
+                          <div
+                            className={styles.searchEntryPoint}
+                            dangerouslySetInnerHTML={{
+                              __html: aiGrounding.searchEntryPoint,
+                            }}
+                          />
+                        )}
+                        {aiGrounding?.webSources &&
+                          aiGrounding.webSources.length > 0 && (
+                            <div className={styles.groundingSources}>
+                              {aiGrounding.webSources.map((src, i) => (
+                                <a
+                                  key={i}
+                                  href={src.uri}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={styles.groundingSourceLink}
+                                >
+                                  {src.title}
+                                </a>
+                              ))}
+                            </div>
+                          )}
+                        {aiGrounding?.mapsSources &&
+                          aiGrounding.mapsSources.length > 0 && (
+                            <div className={styles.mapsGroundingWrapper}>
+                              <button
+                                type="button"
+                                className={styles.mapsGroundingToggle}
+                                onClick={() =>
+                                  setMapsDropdownOpen((prev) => !prev)
+                                }
+                              >
+                                <span className={styles.mapsGroundingLabel}>
+                                  Google Maps
+                                </span>
+                                <span
+                                  className={styles.mapsGroundingArrow}
+                                  style={{
+                                    transform: mapsDropdownOpen
+                                      ? "rotate(180deg)"
+                                      : "rotate(0deg)",
+                                  }}
+                                >
+                                  ▾
+                                </span>
+                              </button>
+                              {mapsDropdownOpen && (
+                                <div className={styles.mapsGroundingList}>
+                                  {aiGrounding.mapsSources.map((src, i) => (
+                                    <a
+                                      key={i}
+                                      href={src.uri}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={styles.mapsGroundingLink}
+                                    >
+                                      {src.title}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>

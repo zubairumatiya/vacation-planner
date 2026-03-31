@@ -174,7 +174,7 @@
 
 .tableContainer {
   display: flex;
-  justify-content: center;
+
   max-height: 60vh;
   overflow: auto;
 }
@@ -242,4 +242,10 @@
   display: flex;
   gap: 0px 3rem;
   justify-content: center;
+}
+
+@media (max-width: 552px) {
+  .viewToggleContainer {
+    top: -5.5rem;
+  }
 }

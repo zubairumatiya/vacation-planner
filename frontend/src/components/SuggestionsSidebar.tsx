@@ -82,6 +82,7 @@ const SuggestionsSidebar = ({
   const [addingId, setAddingId] = useState<string | null>(null);
   const [choiceId, setChoiceId] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [expandedSidebar, setExpandedSidebar] = useState<Set<string>>(new Set());
 
   const authFetch = useCallback(
     async (url: string, options: RequestInit = {}) => {
@@ -368,11 +369,23 @@ const SuggestionsSidebar = ({
             style={{
               fontSize: "0.7rem",
               color: "#999",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
+              ...(place.details.length > 80 ? { cursor: "pointer" } : {}),
+              ...(expandedSidebar.has(place.id)
+                ? {}
+                : {
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }),
             }}
+            onClick={() =>
+              setExpandedSidebar((prev) => {
+                const next = new Set(prev);
+                next.has(place.id) ? next.delete(place.id) : next.add(place.id);
+                return next;
+              })
+            }
           >
             {place.details}
           </span>

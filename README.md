@@ -178,7 +178,7 @@ cd frontend && npm run dev
 
 ### Technical Case Study & Post-Mortem
 
-Deep dives into the hardest problems solved during development, including JWT refresh token race conditions, drag-and-drop index spacing in PostgreSQL, and managing guest-to-authenticated data migration.
+Deep dives into the hardest problems solved during development, including a multi-layered Google Maps API cost optimization strategy, JWT refresh token race conditions, drag-and-drop index spacing in PostgreSQL, and managing guest-to-authenticated data migration.
 
 **[Read the Case Study ->](docs/CASE_STUDY.md)**
 
@@ -192,6 +192,8 @@ How the architecture evolved from a simple CRUD app to a collaborative platform 
 
 - [ ] Real-time collaboration with WebSockets
 - [ ] React Native app
+- [ ] Implement MCP
+- [ ] Tags/badges for schedule items
 - [ ] Trip templates and public trip cloning
 - [ ] Budget tracking with currency conversion
 - [ ] Offline mode with service worker sync
@@ -206,6 +208,7 @@ Track all bugs and enhancements on [GitHub Issues](https://github.com/zubairumat
 - Google Maps API is on the free tier — map may stop loading if usage quota is reached. [issue #19](https://github.com/zubairumatiya/vacation-planner/issues/19)
 - Collaborative editing is not real-time (no WebSockets yet) — concurrent edits trigger a 409 conflict, prompting users to overwrite or discard rather than syncing live [issue #20](https://github.com/zubairumatiya/vacation-planner/issues/20)
 - Country territories and certain regions (e.g., Greenland, Puerto Rico) cannot be interacted with on the world map due to limitations in the TopoJSON dataset [issue #21](https://github.com/zubairumatiya/vacation-planner/issues/21)
+- Gemini API free tier usage limits [issue #22](https://github.com/zubairumatiya/vacation-planner/issues/22)
 
 ---
 
