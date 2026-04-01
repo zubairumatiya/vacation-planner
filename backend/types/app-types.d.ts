@@ -738,6 +738,7 @@ export interface FeedTravelLog {
 export interface FriendsFeedResponse {
   trips: FeedTrip[];
   travelLogs: FeedTravelLog[];
+  newTravelLogCount: number;
 }
 
 export interface FriendCountryLog {

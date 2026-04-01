@@ -10,15 +10,13 @@
 </p>
 
 <p align="center">
-  <a href="YOUR_LIVE_DEMO_URL"><strong>Live Demo</strong></a>
+  <a href="https://vacation-planner-ai.vercel.app"><strong>App Link</strong></a>
 </p>
 
 ---
 
 <p align="center">
-  <a href="YOUR_LOOM_URL">
-    <img src="YOUR_LOOM_URL/thumbnail" alt="Walkthrough Video" width="600"/>
-  </a>
+  <video src="docs/assets/VacationPlannerDemo.mp4" width="600" controls></video>
 </p>
 
 ## Overview

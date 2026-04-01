@@ -329,7 +329,7 @@ const WorldMapPage = () => {
           </svg>
         </button>
         <h1 className={styles.title}>
-          {profileName ? `${profileName}'s Travels` : "World Map"}
+          {isOwner ? "My Travels" : profileName ? `${profileName}'s Travels` : "World Map"}
         </h1>
         <div className={styles.statsChip}>
           <span className={styles.statsNumber}>{visitedCount}</span>

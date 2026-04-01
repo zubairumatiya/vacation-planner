@@ -62,7 +62,9 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
   const [tripLocation, setTripLocation] = useState<string>("");
   const [countryName, setCountryName] = useState<string>("");
   const [tripLength, setTripLength] = useState(0);
-  const [role, setRole] = useState("");
+  const [role, setRole] = useState(
+    (location.state as { role?: string } | null)?.role ?? ""
+  );
   const [sharePanelOpen, setSharePanelOpen] = useState(false);
   const sharePanelRef = useRef<HTMLDivElement>(null);
   const [aiChatOpen, setAiChatOpen] = useState(false);
@@ -253,17 +255,21 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
             return !prev;
           });
           break;
-        case "f":
-          e.preventDefault();
-          navigate(`/vacation/${tripId}/friends`);
+        case "d":
+          if (role === "owner" || role === "editor") {
+            e.preventDefault();
+            navigate(`/vacation/${tripId}/friends`);
+          }
           break;
         case "v":
           e.preventDefault();
           navigate(`/vacation/${tripId}`);
           break;
         case "e":
-          e.preventDefault();
-          navigate(`/vacation/${tripId}/edit`);
+          if (role === "owner" || role === "editor") {
+            e.preventDefault();
+            navigate(`/vacation/${tripId}/edit`);
+          }
           break;
         case "i":
           e.preventDefault();
@@ -273,7 +279,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
     };
     document.addEventListener("keydown", handleHotkeys);
     return () => document.removeEventListener("keydown", handleHotkeys);
-  }, [tripId, navigate]);
+  }, [tripId, navigate, role]);
 
   useEffect(() => {
     if (!token) return;
@@ -1358,7 +1364,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </NavLink>
             </HotkeyTooltip>
           </li>
-          {role !== "reader" && (
+          {(role === "owner" || role === "editor") && (
             <li className={styles.navItem}>
               <HotkeyTooltip
                 label="Edit"
@@ -1380,11 +1386,11 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
               </HotkeyTooltip>
             </li>
           )}
-          {role !== "reader" && (
+          {(role === "owner" || role === "editor") && (
             <li className={styles.navItem}>
               <HotkeyTooltip
                 label="Friends"
-                shortcut="⌘⇧F"
+                shortcut="⌘⇧D"
                 wrapperStyle={{ width: "100%" }}
                 topOffset="43%"
               >
@@ -1433,7 +1439,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
         </ul>
       </nav>
       <div className={styles.hiddenCard}></div>
-      {role !== "reader" && (
+      {(role === "owner" || role === "editor") && (
         <>
           <div style={{ display: isEditPage ? undefined : "none" }}>
             <ErrorBoundary

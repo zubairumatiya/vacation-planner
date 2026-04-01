@@ -230,6 +230,8 @@ const Home = () => {
   const setActiveTab = (tab: "home" | "friends") => setSearchParams({ tab });
   const [feedTrips, setFeedTrips] = useState<FeedTrip[]>([]);
   const [feedLogs, setFeedLogs] = useState<FeedTravelLog[]>([]);
+  const [newLogCount, setNewLogCount] = useState(0);
+  const [logsExpanded, setLogsExpanded] = useState(false);
   const [loadingFeed, setLoadingFeed] = useState(false);
 
   useEffect(() => {
@@ -348,9 +350,11 @@ const Home = () => {
               const data = (await retryReq.json()) as {
                 trips: FeedTrip[];
                 travelLogs: FeedTravelLog[];
+                newTravelLogCount: number;
               };
               setFeedTrips(data.trips || []);
               setFeedLogs(data.travelLogs || []);
+              setNewLogCount(data.newTravelLogCount || 0);
             }
           } else if (logout) {
             logout();
@@ -359,9 +363,11 @@ const Home = () => {
           const data = (await res.json()) as {
             trips: FeedTrip[];
             travelLogs: FeedTravelLog[];
+            newTravelLogCount: number;
           };
           setFeedTrips(data.trips || []);
           setFeedLogs(data.travelLogs || []);
+          setNewLogCount(data.newTravelLogCount || 0);
         }
       } catch (err) {
         console.error(err);
@@ -383,6 +389,22 @@ const Home = () => {
     feedTrips.length,
     feedLogs.length,
   ]);
+
+  const handleExpandLogs = async () => {
+    const wasExpanded = logsExpanded;
+    setLogsExpanded(!logsExpanded);
+    if (!wasExpanded && newLogCount > 0) {
+      setNewLogCount(0);
+      try {
+        await fetch(`${apiUrl}/friends/feed/seen`, {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -630,6 +652,7 @@ const Home = () => {
                 )}
                 <Link
                   to={`/vacation/${v.id}`}
+                  state={{ role: v.role }}
                   className={`${styles.title} ${editing && styles.editing}`}
                   style={{ flex: 1 }}
                 >
@@ -743,7 +766,7 @@ const Home = () => {
         style={{ opacity: 0.5 }}
       >
         <div className={styles.titleNEdit}>
-          <Link to={`/vacation/${v.id}`} className={styles.title}>
+          <Link to={`/vacation/${v.id}`} state={{ role: v.role }} className={styles.title}>
             <div>
               <div className="flex items-center gap-2 justify-center">
                 <h2 className="text-xl font-semibold text-indigo-400 hover:text-indigo-500">
@@ -1039,6 +1062,7 @@ const Home = () => {
                               {isShared ? (
                                 <Link
                                   to={`/vacation/${ft.id}`}
+                                  state={{ role: ft.myRole }}
                                   className={homeTabsStyles.tripNameLink}
                                 >
                                   {ft.tripName}
@@ -1131,6 +1155,7 @@ const Home = () => {
                               {isShared ? (
                                 <Link
                                   to={`/vacation/${ft.id}`}
+                                  state={{ role: ft.myRole }}
                                   className={homeTabsStyles.tripNameLink}
                                 >
                                   {ft.tripName}
@@ -1169,47 +1194,59 @@ const Home = () => {
                 )}
               </div>
 
-              {/* Travel Logs */}
+              {/* New Travel Logs */}
               <div className={homeTabsStyles.friendSection}>
-                <div className={homeTabsStyles.sectionTitle}>Travel Logs</div>
-                {feedLogs.length === 0 ? (
-                  <p className={homeTabsStyles.emptyText}>
-                    No travel logs from friends.
-                  </p>
-                ) : (
-                  feedLogs.map((fl) => (
-                    <div key={fl.id} className={homeTabsStyles.logCard}>
-                      {fl.visibility === "public" ? (
-                        <Link
-                          to={`/user/${fl.userId}/country/${fl.id}`}
-                          className={homeTabsStyles.logName}
-                        >
-                          {fl.countryName}
-                        </Link>
-                      ) : (
-                        <span className={homeTabsStyles.logNamePrivate}>
-                          {fl.countryName}
-                        </span>
-                      )}
-                      <div className={homeTabsStyles.logMeta}>
-                        <div className={homeTabsStyles.ownerInfo}>
-                          <div className={homeTabsStyles.ownerName}>
-                            {fl.userFirstName} {fl.userLastName}
-                          </div>
+                <div
+                  className={homeTabsStyles.sectionTitleCollapsible}
+                  onClick={handleExpandLogs}
+                >
+                  <span>New Travel Logs</span>
+                  <span className={newLogCount > 0 ? homeTabsStyles.badge : homeTabsStyles.badgeSeen}>
+                    {feedLogs.length}
+                  </span>
+                  <img
+                    src={dropDownIcon}
+                    alt=""
+                    className={`${homeTabsStyles.collapseArrow} ${logsExpanded ? homeTabsStyles.collapseArrowOpen : ""}`}
+                  />
+                </div>
+                {logsExpanded &&
+                  (feedLogs.length === 0 ? (
+                    <p className={homeTabsStyles.emptyText}>No new logs</p>
+                  ) : (
+                    feedLogs.map((fl) => (
+                      <div key={fl.id} className={homeTabsStyles.logCard}>
+                        {fl.visibility === "public" ? (
+                          <Link
+                            to={`/user/${fl.userId}/country/${fl.id}`}
+                            className={homeTabsStyles.logName}
+                          >
+                            {fl.countryName}
+                          </Link>
+                        ) : (
+                          <span className={homeTabsStyles.logNamePrivate}>
+                            {fl.countryName}
+                          </span>
+                        )}
+                        <div className={homeTabsStyles.logMeta}>
                           <Link
                             to={`/user/${fl.userId}`}
-                            className={homeTabsStyles.logOwner}
+                            className={homeTabsStyles.ownerInfoLink}
                           >
-                            @{fl.userUsername}
+                            <span className={homeTabsStyles.ownerName}>
+                              {fl.userFirstName} {fl.userLastName}
+                            </span>
+                            <span className={homeTabsStyles.logOwner}>
+                              @{fl.userUsername}
+                            </span>
                           </Link>
-                        </div>
-                        <div className={homeTabsStyles.daysAgo}>
-                          {fl.daysAgo === 0 ? "today" : `${fl.daysAgo}d ago`}
+                          <div className={homeTabsStyles.daysAgo}>
+                            {fl.daysAgo === 0 ? "today" : `${fl.daysAgo}d ago`}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))
-                )}
+                    ))
+                  ))}
               </div>
             </>
           )}

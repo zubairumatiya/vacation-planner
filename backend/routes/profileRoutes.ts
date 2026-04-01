@@ -296,7 +296,7 @@ router.get(
   },
 );
 
-// GET /friends/feed - get upcoming public trips and recent travel logs from friends
+// GET /friends/feed - get upcoming public trips and new travel logs from friends
 router.get(
   "/friends/feed",
   ensureLoggedIn,
@@ -331,6 +331,14 @@ router.get(
         [userId],
       );
 
+      // Get the user's last_viewed_travel_logs_at timestamp
+      const userResult = await db.query<{ last_viewed_travel_logs_at: string | null }>(
+        `SELECT last_viewed_travel_logs_at FROM users WHERE id = $1`,
+        [userId],
+      );
+      const lastViewed = userResult.rows[0]?.last_viewed_travel_logs_at;
+
+      // New travel logs: unseen (any age) + seen but < 8 days old
       const travelLogsQuery = await db.query<FeedTravelLog>(
         `SELECT uc.id, c.name as country_name, uc.created_at, uc.visibility,
                 u.id as user_id, u.first_name as user_first_name, u.last_name as user_last_name,
@@ -343,9 +351,21 @@ router.get(
          JOIN follows f ON ((f.requester_id = $1 AND f.receiver_id = u.id) OR (f.receiver_id = $1 AND f.requester_id = u.id)) AND f.status = 'accepted'
          WHERE uc.visibility IN ('public', 'friends')
          AND uc.user_id != $1
+         AND (
+           ($2::timestamptz IS NULL OR uc.created_at > $2)
+           OR
+           (uc.created_at >= CURRENT_TIMESTAMP - INTERVAL '8 days')
+         )
          ORDER BY uc.created_at DESC`,
-        [userId],
+        [userId, lastViewed],
       );
+
+      // Count unseen logs for the badge
+      const unseenCount = lastViewed
+        ? travelLogsQuery.rows.filter(
+            (log) => new Date(log.created_at) > new Date(lastViewed),
+          ).length
+        : travelLogsQuery.rows.length;
 
       const trips = tripsQuery.rows;
       const travelLogs = travelLogsQuery.rows;
@@ -356,7 +376,26 @@ router.get(
       res.status(200).json({
         trips,
         travelLogs,
+        newTravelLogCount: unseenCount,
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /friends/feed/seen - mark travel logs as seen
+router.patch(
+  "/friends/feed/seen",
+  ensureLoggedIn,
+  async (req: TypedRequest, res: TypedResponse<MessageResponse>, next: NextFunction) => {
+    try {
+      const userId = req.user.id;
+      await db.query(
+        `UPDATE users SET last_viewed_travel_logs_at = CURRENT_TIMESTAMP WHERE id = $1`,
+        [userId],
+      );
+      res.status(200).json({ message: "Travel logs marked as seen" });
     } catch (err) {
       next(err);
     }

@@ -626,6 +626,7 @@ const CountryDetailPage = () => {
           authFetch={authFetch}
           userCountryId={userCountryId!}
           onPlaceAdded={(p) => setPlaces((prev) => [...prev, p])}
+          cities={cities.map((c) => ({ id: c.id, name: c.name }))}
         />
       )}
       <div className={styles.header}>

@@ -82,62 +82,64 @@ const NormalRow = ({
       <td>{value.multiDay ? "yes" : "no"}</td>
       {!viewMode && (
         <td className={styles.actionsTd}>
-          <div className={styles.leftActionsCol}>
-            <img
-              className={styles.editIcon}
-              src={editIcon}
-              alt="edit-icon"
-              title="Edit"
-              onClick={(e) =>
-                handleEdit(
-                  e,
-                  value.id,
-                  value.location,
-                  value.cost,
-                  value.details,
-                  value.multiDay,
-                  startDate,
-                  endDate,
-                  dayContainer,
-                )
-              }
-            />
-            <img
-              className={styles.duplicateIcon}
-              src={duplicateIcon}
-              alt="duplicate-icon"
-              title="Duplicate"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDuplicate?.(value, dayContainer);
-              }}
-            />
-          </div>
-          <div className={styles.rightActionsCol}>
-            <img
-              className={`${styles.lockIcon} ${value.isLocked ? styles.lockActive : ""}`}
-              src={value.isLocked ? lockIcon : unlockIcon}
-              alt={value.isLocked ? "locked" : "unlocked"}
-              title={
-                value.isLocked
-                  ? "Unlock (AI can move this)"
-                  : "Lock (AI won't move this)"
-              }
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleLock?.(value);
-              }}
-            />
-            <img
-              className={`${styles.lockIcon} ${value.showOnMap ? styles.mapPinActive : ""}`}
-              src={mapPinIcon}
-              alt={value.showOnMap ? "shown on map" : "hidden from map"}
-              title={value.showOnMap ? "Remove from map" : "Show on map"}
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleMapPin?.(value);
-              }}
-            />
+          <div className={styles.actionsWrapper}>
+            <div className={styles.leftActionsCol}>
+              <img
+                className={styles.editIcon}
+                src={editIcon}
+                alt="edit-icon"
+                title="Edit"
+                onClick={(e) =>
+                  handleEdit(
+                    e,
+                    value.id,
+                    value.location,
+                    value.cost,
+                    value.details,
+                    value.multiDay,
+                    startDate,
+                    endDate,
+                    dayContainer,
+                  )
+                }
+              />
+              <img
+                className={styles.duplicateIcon}
+                src={duplicateIcon}
+                alt="duplicate-icon"
+                title="Duplicate"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDuplicate?.(value, dayContainer);
+                }}
+              />
+            </div>
+            <div className={styles.rightActionsCol}>
+              <img
+                className={`${styles.lockIcon} ${value.isLocked ? styles.lockActive : ""}`}
+                src={value.isLocked ? lockIcon : unlockIcon}
+                alt={value.isLocked ? "locked" : "unlocked"}
+                title={
+                  value.isLocked
+                    ? "Unlock (AI can move this)"
+                    : "Lock (AI won't move this)"
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleLock?.(value);
+                }}
+              />
+              <img
+                className={`${styles.lockIcon} ${value.showOnMap ? styles.mapPinActive : ""}`}
+                src={mapPinIcon}
+                alt={value.showOnMap ? "shown on map" : "hidden from map"}
+                title={value.showOnMap ? "Remove from map" : "Show on map"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleMapPin?.(value);
+                }}
+              />
+            </div>
           </div>
         </td>
       )}

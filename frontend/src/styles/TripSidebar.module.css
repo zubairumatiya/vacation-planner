@@ -254,6 +254,20 @@
   color: #2fe782;
 }
 
+.cityPickerLabel {
+  font-size: 0.65rem;
+  color: #888;
+  padding: 0.35rem 0.75rem 0.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.skipCity {
+  color: #888;
+  font-style: italic;
+}
+
 .loadingText {
   color: #666;
   font-size: 0.75rem;

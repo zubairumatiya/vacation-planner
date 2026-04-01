@@ -48,6 +48,7 @@ const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelP
   const loggingOutRef = auth?.loggingOutRef;
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   const authFetch = async (url: string, options: RequestInit = {}) => {
     const headers = {
@@ -84,6 +85,8 @@ const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelP
       }
     } catch {
       // handled
+    } finally {
+      setLoaded(true);
     }
   };
 
@@ -158,7 +161,7 @@ const InboxPanel = ({ onBack, onUnreadCountChange, onTripAccepted }: InboxPanelP
           Back
         </button>
       </div>
-      {notifications.length === 0 ? (
+      {!loaded ? null : notifications.length === 0 ? (
         <p className={styles.emptyText}>No notifications</p>
       ) : (
         <ul className={styles.list}>

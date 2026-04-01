@@ -70,19 +70,27 @@ const formatTime = (isoString: string) => {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
+    timeZone: "UTC",
   });
 };
+
+interface CityOption {
+  id: string;
+  name: string;
+}
 
 interface TripSidebarProps {
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
   userCountryId: string;
   onPlaceAdded: (place: CountryPlace) => void;
+  cities: CityOption[];
 }
 
 const TripSidebar = ({
   authFetch,
   userCountryId,
   onPlaceAdded,
+  cities,
 }: TripSidebarProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [trips, setTrips] = useState<SidebarTrip[]>([]);
@@ -95,6 +103,10 @@ const TripSidebar = ({
     new Set(),
   );
   const [addToLogOpenId, setAddToLogOpenId] = useState<string | null>(null);
+  const [pendingCategory, setPendingCategory] = useState<{
+    itemId: string;
+    category: "city" | "eat" | "stay" | "excursion";
+  } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch trips on first open
@@ -130,20 +142,27 @@ const TripSidebar = ({
       .finally(() => setLoadingSchedule(false));
   }, [selectedTripId]);
 
-  // Click outside to close category dropdown
+  // Click outside to close dropdown — if city step is showing, submit without city
   useEffect(() => {
-    if (!addToLogOpenId) return;
+    if (!addToLogOpenId && !pendingCategory) return;
     const handler = (e: MouseEvent) => {
       if (
         dropdownRef.current &&
         !dropdownRef.current.contains(e.target as Node)
       ) {
+        if (pendingCategory) {
+          const item = scheduleItems.find(
+            (i) => i.id === pendingCategory.itemId,
+          );
+          if (item) handleAddToLog(item, pendingCategory.category, null);
+          setPendingCategory(null);
+        }
         setAddToLogOpenId(null);
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [addToLogOpenId]);
+  }, [addToLogOpenId, pendingCategory, scheduleItems]);
 
   const toggleExpanded = useCallback((id: string) => {
     setExpandedItemIds((prev) => {
@@ -157,14 +176,18 @@ const TripSidebar = ({
   const handleAddToLog = async (
     item: SidebarScheduleItem,
     category: "city" | "eat" | "stay" | "excursion",
+    cityId: string | null,
   ) => {
     setAddToLogOpenId(null);
+    setPendingCategory(null);
     try {
+      const body: Record<string, string> = { category, name: item.location };
+      if (cityId && category !== "city") body.cityId = cityId;
       const res = await authFetch(
         `${apiUrl}/travel-log/${userCountryId}/places`,
         {
           method: "POST",
-          body: JSON.stringify({ category, name: item.location }),
+          body: JSON.stringify(body),
         },
       );
       if (!res.ok && res.status !== 201) return;
@@ -386,18 +409,69 @@ const TripSidebar = ({
                                 </button>
                                 {isDropdownOpen && (
                                   <div className={styles.categoryDropdown}>
-                                    {CATEGORIES.map((cat) => (
-                                      <button
-                                        key={cat.key}
-                                        type="button"
-                                        className={styles.categoryOption}
-                                        onClick={() =>
-                                          handleAddToLog(item, cat.key)
-                                        }
-                                      >
-                                        {cat.label}
-                                      </button>
-                                    ))}
+                                    {pendingCategory?.itemId === item.id ? (
+                                      <>
+                                        <div className={styles.cityPickerLabel}>
+                                          City (optional)
+                                        </div>
+                                        {cities.map((c) => (
+                                          <button
+                                            key={c.id}
+                                            type="button"
+                                            className={styles.categoryOption}
+                                            onClick={() =>
+                                              handleAddToLog(
+                                                item,
+                                                pendingCategory.category,
+                                                c.id,
+                                              )
+                                            }
+                                          >
+                                            {c.name}
+                                          </button>
+                                        ))}
+                                        <button
+                                          type="button"
+                                          className={`${styles.categoryOption} ${styles.skipCity}`}
+                                          onClick={() =>
+                                            handleAddToLog(
+                                              item,
+                                              pendingCategory.category,
+                                              null,
+                                            )
+                                          }
+                                        >
+                                          No city
+                                        </button>
+                                      </>
+                                    ) : (
+                                      CATEGORIES.map((cat) => (
+                                        <button
+                                          key={cat.key}
+                                          type="button"
+                                          className={styles.categoryOption}
+                                          onClick={() => {
+                                            if (
+                                              cat.key !== "city" &&
+                                              cities.length > 0
+                                            ) {
+                                              setPendingCategory({
+                                                itemId: item.id,
+                                                category: cat.key,
+                                              });
+                                            } else {
+                                              handleAddToLog(
+                                                item,
+                                                cat.key,
+                                                null,
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          {cat.label}
+                                        </button>
+                                      ))
+                                    )}
                                   </div>
                                 )}
                               </div>
