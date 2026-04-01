@@ -16,7 +16,7 @@
 ---
 
 <p align="center">
-  <video src="docs/assets/VacationPlannerDemo.mp4" width="600" controls></video>
+  <video src="https://github.com/user-attachments/assets/56d0407b-fd8c-4130-a2fe-22c0f3a0b964" width="600" controls></video>
 </p>
 
 ## Overview
