@@ -19,11 +19,6 @@
 html {
   overscroll-behavior: none;
   height: 100vh;
-  overflow: hidden;
-}
-html,
-body {
-  touch-action: none;
 }
 
 a {

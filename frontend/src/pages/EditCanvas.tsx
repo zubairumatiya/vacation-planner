@@ -586,6 +586,7 @@ const EditCanvas = ({
     setClonedSchedule(schedule);
     setWishListClone(wishList);
     document.body.classList.add("freezeScroll");
+    document.documentElement.classList.add("freezeScroll");
     if (typeOfDrag?.type === "list") {
       setActiveListId(e.active.id);
       const listItem = wishList.find((item) => item.id == e.active.id);
@@ -696,6 +697,7 @@ const EditCanvas = ({
 
   const handleDragEnd = ({ active, over }: DragEndEvent) => {
     document.body.classList.remove("freezeScroll");
+    document.documentElement.classList.remove("freezeScroll");
 
     if (over?.id == null) {
       handleDragCancel();
@@ -1360,6 +1362,7 @@ const EditCanvas = ({
       }
       setWishList(wishListClone);
       document.body.classList.remove("freezeScroll");
+      document.documentElement.classList.remove("freezeScroll");
       setActiveListId(null);
     }
     setActiveId(null);
