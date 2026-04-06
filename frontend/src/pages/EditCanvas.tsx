@@ -2107,7 +2107,13 @@ const EditCanvas = ({
         autoScroll={{
           enabled: true,
           threshold: { x: 0.08, y: 0.25 },
-          acceleration: 2.5,
+          acceleration: 5,
+          canScroll(element) {
+            return (
+              element !== document.body &&
+              element !== document.documentElement
+            );
+          },
         }}
       >
         <BannerContextProvider

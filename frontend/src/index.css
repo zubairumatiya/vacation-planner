@@ -19,6 +19,7 @@
 html {
   overscroll-behavior: none;
   height: 100vh;
+  overflow: hidden;
 }
 
 a {
@@ -33,7 +34,7 @@ a:hover {
 body {
   margin: 0;
   display: flex;
-  place-items: center;
+  align-items: flex-start;
   min-width: 320px;
   /*min-height: 100vh;*/
   scroll-behavior: auto;
@@ -44,7 +45,8 @@ body {
 }
 
 .freezeScroll {
-  overflow: hidden;
+  overflow: hidden !important;
+  touch-action: none;
 }
 
 h1 {
