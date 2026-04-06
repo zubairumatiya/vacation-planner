@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <a href="https://vacation-planner-ai.vercel.app"><strong>App Link</strong></a>
+  <a href="https://www.vacation-planner.dev"><strong>App Link</strong></a>
 </p>
 
 ---
