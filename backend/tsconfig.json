@@ -4,13 +4,14 @@
     "module": "esnext",
     "moduleResolution": "node",
     "target": "esnext",
+    "rootDir": "..",
     "outDir": "./dist",
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["."],
+  "include": [".", "../shared"],
   "exclude": [
     "node_modules",
     "dist",

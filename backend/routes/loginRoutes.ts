@@ -163,17 +163,30 @@ router.post(
           "SELECT * FROM unverified_users WHERE email=$1 AND expires_at > NOW()",
           [email],
         );
+      const expiredUnverifiedEmail: QueryResult<UnverifiedUser> =
+        await db.query(
+          "SELECT * FROM unverified_users WHERE email=$1 AND expires_at <= NOW()",
+          [email],
+        );
       const existingActiveEmail: QueryResult<User> = await db.query(
         "SELECT * FROM users WHERE email=$1",
         [email],
       );
 
-      // Check username taken in verified users
+      // Check username taken in verified and unverified users
       const existingUsername: QueryResult<User> = await db.query(
         "SELECT id FROM users WHERE username=$1",
         [username],
       );
-      if (existingUsername.rows.length > 0) {
+      const existingUnverifiedUsername: QueryResult<UnverifiedUser> =
+        await db.query(
+          "SELECT id FROM unverified_users WHERE username=$1 AND expires_at > NOW()",
+          [username],
+        );
+      if (
+        existingUsername.rows.length > 0 ||
+        existingUnverifiedUsername.rows.length > 0
+      ) {
         res.status(409).json({ message: "Username is already taken" });
         return;
       }
@@ -199,6 +212,13 @@ router.post(
             "An account with this email already exist. Please log in or reset your password",
         });
         return;
+      } else if (expiredUnverifiedEmail.rows.length > 0) {
+        await db.query(
+          "UPDATE unverified_users SET password=$1, first_name=$2, last_name=$3, username=$4, avatar=$5, token=$6, expires_at=NOW() + interval '1 hour', last_email_sent_at=NOW() WHERE email=$7",
+          [hash, firstName, lastName, username, avatar || null, hashToken(token), email],
+        );
+        await sendRegistrationEmail(email, token);
+        res.status(200).json({ message: "success" });
       } else {
         await db.query(
           "INSERT INTO unverified_users (email, password, first_name, last_name, username, avatar, token, expires_at, last_email_sent_at) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW()+ interval '1 hour', NOW())",
@@ -236,34 +256,75 @@ router.get(
     if (token) {
       try {
         const hashedToken = hashToken(token);
-        const checkExpiration: QueryResult<UnverifiedUser> = await db.query(
+
+        const foundToken: QueryResult<UnverifiedUser> = await db.query(
+          "SELECT * FROM unverified_users WHERE token=$1",
+          [hashedToken],
+        );
+
+        if (foundToken.rows.length === 0) {
+          res.status(400).json({ message: "token not found or expired token" });
+          return;
+        }
+
+        const notExpired: QueryResult<UnverifiedUser> = await db.query(
           "SELECT * FROM unverified_users WHERE token=$1 AND expires_at > NOW()",
           [hashedToken],
         );
-        if (checkExpiration.rows.length === 0) {
-          res.status(400).json({ message: "token not found or expired token" });
-          return;
-        } else {
-          //begin moving user from unverified db to users db
-          const client = await db.connect();
-          try {
-            await client.query("BEGIN");
-            await client.query(
-              "INSERT INTO users (email, password, first_name, last_name, username, avatar) SELECT email, password, first_name, last_name, username, avatar FROM unverified_users WHERE token=$1",
-              [hashedToken],
+
+        if (notExpired.rows.length === 0) {
+          // Token is expired — check if username is still available
+          const { username, email } = foundToken.rows[0];
+
+          const usernameTakenInUsers: QueryResult<User> = await db.query(
+            "SELECT id FROM users WHERE username=$1",
+            [username],
+          );
+          const usernameTakenInUnverified: QueryResult<UnverifiedUser> =
+            await db.query(
+              "SELECT id FROM unverified_users WHERE username=$1 AND expires_at > NOW()",
+              [username],
             );
-            await client.query("DELETE FROM unverified_users WHERE token=$1", [
+
+          if (
+            usernameTakenInUsers.rows.length > 0 ||
+            usernameTakenInUnverified.rows.length > 0
+          ) {
+            await db.query("DELETE FROM unverified_users WHERE token=$1", [
               hashedToken,
             ]);
-            await client.query("COMMIT");
-          } catch (err) {
-            await client.query("ROLLBACK");
-            throw err;
-          } finally {
-            client.release();
+            res.redirect(
+              302,
+              `${BASE_URL}/signup?err=verification-expired-username-taken`,
+            );
+          } else {
+            res.redirect(
+              302,
+              `${BASE_URL}/verify-email?err=verification-expired&email=${encodeURIComponent(email)}`,
+            );
           }
-          res.redirect(302, `${BASE_URL}/verify-email?verified=success`);
+          return;
         }
+
+        // Token is valid — move user from unverified to users
+        const client = await db.connect();
+        try {
+          await client.query("BEGIN");
+          await client.query(
+            "INSERT INTO users (email, password, first_name, last_name, username, avatar) SELECT email, password, first_name, last_name, username, avatar FROM unverified_users WHERE token=$1",
+            [hashedToken],
+          );
+          await client.query("DELETE FROM unverified_users WHERE token=$1", [
+            hashedToken,
+          ]);
+          await client.query("COMMIT");
+        } catch (err) {
+          await client.query("ROLLBACK");
+          throw err;
+        } finally {
+          client.release();
+        }
+        res.redirect(302, `${BASE_URL}/verify-email?verified=success`);
       } catch (err) {
         next(err);
       }
@@ -323,7 +384,7 @@ router.post(
               httpOnly: true,
               secure: true, //process.env.NODE_ENV === "production",
               sameSite: "none",
-              path: "/auth",
+              path: "/",
               maxAge: 7 * 24 * 60 * 60 * 1000,
             })
             .status(200)
@@ -363,7 +424,7 @@ router.post(
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === "production",
             sameSite: "none",
-            path: "/auth",
+            path: "/",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           })
           .sendStatus(200);
@@ -375,7 +436,7 @@ router.post(
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === "production",
             sameSite: "none",
-            path: "/auth",
+            path: "/",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           })
           .sendStatus(200);
@@ -438,7 +499,7 @@ router.post(
             httpOnly: true,
             secure: true, //process.env.NODE_ENV === "production",
             sameSite: "none",
-            path: "/auth",
+            path: "/",
             maxAge: 7 * 24 * 60 * 60 * 1000,
           })
           .json({ token });

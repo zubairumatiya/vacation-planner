@@ -4,8 +4,9 @@ const apiUrl = import.meta.env.VITE_API_URL;
 
 const VerifyEmail = () => {
   const [resendLinkMessage, setResendLinkMessage] = useState(false);
-  const [timer, setTimer] = useState("5"); // will change this to 300 in production and all the other 5 (should be like 4 of them)
+  const [timer, setTimer] = useState("300");
   const [nonRefreshTimeRestart, setNonRefreshTimeRestart] = useState(false);
+  const [verificationExpired, setVerificationExpired] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -16,6 +17,13 @@ const VerifyEmail = () => {
         state: { message: "123" },
       });
     }
+    if (params.get("err") === "verification-expired") {
+      setVerificationExpired(true);
+      const email = params.get("email");
+      if (email) {
+        localStorage.setItem("pendingEmail", email);
+      }
+    }
   }, [location]);
 
   useEffect(() => {
@@ -23,8 +31,8 @@ const VerifyEmail = () => {
     if (storedTime !== null) {
       setTimer(storedTime);
     } else {
-      localStorage.setItem("resendTimer", "5");
-      setTimer("5");
+      localStorage.setItem("resendTimer", "300");
+      setTimer("300");
     }
   }, []);
 
@@ -60,8 +68,8 @@ const VerifyEmail = () => {
       });
       if (res.status === 200) {
         setResendLinkMessage(true);
-        localStorage.setItem("resendTimer", "5");
-        setTimer("5");
+        localStorage.setItem("resendTimer", "300");
+        setTimer("300");
         setNonRefreshTimeRestart((prev) => !prev);
       } else {
         if (res.status === 429) {
@@ -77,6 +85,9 @@ const VerifyEmail = () => {
 
   return (
     <>
+      {verificationExpired && (
+        <p>Your verification link expired. Resend a new one below.</p>
+      )}
       {resendLinkMessage && <p>Link resent check email please</p>}
       <h2> We have sent a verification link to your email. </h2>
       <p>

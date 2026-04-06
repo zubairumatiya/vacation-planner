@@ -1,5 +1,9 @@
 {
   "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://vacation-planner-backend-yr9p.onrender.com/:path*"
+    },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
