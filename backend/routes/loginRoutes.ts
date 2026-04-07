@@ -380,12 +380,18 @@ router.post(
             String(foundUser.rows[0].id),
           );
           res
+            .clearCookie("refreshToken", {
+              httpOnly: true,
+              secure: true,
+              sameSite: "none",
+              path: "/auth",
+            })
             .cookie("refreshToken", refToken, {
               httpOnly: true,
               secure: true, //process.env.NODE_ENV === "production",
               sameSite: "none",
               path: "/",
-              maxAge: 7 * 24 * 60 * 60 * 1000,
+              maxAge: 3 * 24 * 60 * 60 * 1000,
             })
             .status(200)
             .json({ message: "Success!", token });
@@ -413,6 +419,10 @@ router.post(
       }
       const cookies = cookie.parse(cookieHeader);
       const refToken = cookies.refreshToken;
+      if (!refToken) {
+        res.sendStatus(401);
+        return;
+      }
       const decodedRefToken = jwt.decode(refToken) as CustomJwtPayload | null;
       if (decodedRefToken && decodedRefToken.jti) {
         await db.query(
@@ -425,7 +435,12 @@ router.post(
             secure: true, //process.env.NODE_ENV === "production",
             sameSite: "none",
             path: "/",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+          })
+          .clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            path: "/auth",
           })
           .sendStatus(200);
 
@@ -437,7 +452,12 @@ router.post(
             secure: true, //process.env.NODE_ENV === "production",
             sameSite: "none",
             path: "/",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+          })
+          .clearCookie("refreshToken", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            path: "/auth",
           })
           .sendStatus(200);
         return;
@@ -500,7 +520,7 @@ router.post(
             secure: true, //process.env.NODE_ENV === "production",
             sameSite: "none",
             path: "/",
-            maxAge: 7 * 24 * 60 * 60 * 1000,
+            maxAge: 3 * 24 * 60 * 60 * 1000,
           })
           .json({ token });
         return;

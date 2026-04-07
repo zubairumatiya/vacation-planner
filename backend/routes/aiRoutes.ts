@@ -152,6 +152,7 @@ router.post(
         previousResponse,
         fillInTheRest,
       );
+      console.log("[AI] Response:", result);
       res.status(200).json(result);
       return;
     } catch (err) {

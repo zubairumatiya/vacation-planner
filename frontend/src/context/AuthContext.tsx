@@ -114,6 +114,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       clearTimeout(currentTimerRef.current);
     }
     if (token != null) {
+      const decoded = JSON.parse(atob(token.split(".")[1]));
+      const msUntilExpiry = decoded.exp * 1000 - Date.now();
+      const delay = Math.max(msUntilExpiry - 60_000, 0);
       currentTimerRef.current = setTimeout(async () => {
         try {
           const result: { token: string | null; err: boolean } =
@@ -126,7 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (err) {
           console.error(err);
         }
-      }, 3600000);
+      }, delay);
     }
   }, [token]);
   return (

@@ -87,7 +87,7 @@ export const SearchBar = memo(function SearchBar({
     } else {
       setLocalSearchDisabled(true);
     }
-  }, [placeTypeValue, holdName]);
+  }, [placeTypeValue, holdName, placeType, locationName]);
 
   const handlePlaceTypeChange = (
     event: React.ChangeEvent<HTMLSelectElement>,
@@ -222,6 +222,7 @@ export const SearchBar = memo(function SearchBar({
         disabled={(searchDisabled && localSearchDisabled) || holdName === ""}
         onClick={() => {
           setSearchDisabled(true);
+          setPlaceType(placeTypeRef.current);
           setSubmitButtonTrigger((prev) => !prev);
           if (closure) closure();
           setHoldName(inputValue);

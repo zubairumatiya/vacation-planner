@@ -917,7 +917,7 @@ const VacationSchedule = ({ setCostTotal, costTotal }: VacationProps) => {
                     </div>
                     {aiLoading && (
                       <div className={styles.aiResponseArea}>
-                        <p className={styles.aiThinking}>Thinking...</p>
+                        <p className={styles.aiThinking}>Please wait, this may take up to a minute...</p>
                       </div>
                     )}
                     {aiResponse && (
