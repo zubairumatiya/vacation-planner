@@ -34,6 +34,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (loggingOut && window.location.pathname === "/login") {
       setLoggingOut(false);
+      loggingOutRef.current = false;
     }
   }, [loggingOut]);
 

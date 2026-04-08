@@ -5,6 +5,7 @@ type TooltipProps = {
   shortcut?: string;
   children: ReactNode;
   position?: "top" | "bottom";
+  align?: "center" | "right";
   wrapperStyle?: React.CSSProperties;
   topOffset?: string;
 };
@@ -14,6 +15,7 @@ const Tooltip = ({
   shortcut,
   children,
   position = "bottom",
+  align = "center",
   wrapperStyle,
   topOffset,
 }: TooltipProps) => {
@@ -25,10 +27,7 @@ const Tooltip = ({
   useEffect(() => {
     if (!visible || !wrapperRef.current) return;
     const rect = wrapperRef.current.getBoundingClientRect();
-    const style: React.CSSProperties = {
-      left: "50%",
-      transform: "translateX(-50%)",
-    };
+    const style: React.CSSProperties = {};
     if (position === "top") {
       style.bottom = "100%";
       style.marginBottom = 6;
@@ -36,18 +35,24 @@ const Tooltip = ({
       style.top = topOffset ?? "100%";
       style.marginTop = 6;
     }
-    const tooltipWidth = 160;
-    const overshootRight =
-      rect.left + rect.width / 2 + tooltipWidth / 2 - window.innerWidth;
-    if (overshootRight > 0) {
-      style.left = undefined;
+    if (align === "right") {
       style.right = 0;
-      style.transform = "none";
-    }
-    const overshootLeft = -(rect.left + rect.width / 2 - tooltipWidth / 2);
-    if (overshootLeft > 0) {
-      style.left = 0;
-      style.transform = "none";
+    } else {
+      style.left = "50%";
+      style.transform = "translateX(-50%)";
+      const tooltipWidth = 160;
+      const overshootRight =
+        rect.left + rect.width / 2 + tooltipWidth / 2 - window.innerWidth;
+      if (overshootRight > 0) {
+        style.left = undefined;
+        style.right = 0;
+        style.transform = "none";
+      }
+      const overshootLeft = -(rect.left + rect.width / 2 - tooltipWidth / 2);
+      if (overshootLeft > 0) {
+        style.left = 0;
+        style.transform = "none";
+      }
     }
     setTooltipStyle(style);
   }, [visible, position]);

@@ -431,23 +431,28 @@ const PlaceSearchWebComponent = ({
                         />
                       </button>
                     ) : (
-                      <Tooltip label="Add to Want to See List">
-                      <button
-                        className={styles.addToListButton}
-                        onClick={(e) =>
-                          handleListAdd(
-                            e,
-                            place.id,
-                            place?.displayName?.text ?? "undefined",
-                          )
-                        }
+                      <Tooltip
+                        label="Add to Want to See List"
+                        align="right"
+                        wrapperStyle={{ position: "absolute", right: "0.3rem", top: "0.3rem" }}
                       >
-                        <img
-                          src={addToList}
-                          alt="addToListIcon"
-                          className={styles.addToListIcon}
-                        />
-                      </button>
+                        <button
+                          className={styles.addToListButton}
+                          style={{ position: "static" }}
+                          onClick={(e) =>
+                            handleListAdd(
+                              e,
+                              place.id,
+                              place?.displayName?.text ?? "undefined",
+                            )
+                          }
+                        >
+                          <img
+                            src={addToList}
+                            alt="addToListIcon"
+                            className={styles.addToListIcon}
+                          />
+                        </button>
                       </Tooltip>
                     )}
                   </div>

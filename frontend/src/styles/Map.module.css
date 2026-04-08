@@ -190,6 +190,8 @@
   flex-direction: column;
   justify-content: center;
   color: #888;
+  width: 100%;
+  padding-right: 2.2rem;
 }
 
 .placeName {
@@ -481,9 +483,8 @@
   border: solid 0 #4ec84e;
   padding: 0.2rem;
   position: absolute;
-  right: 0;
-  top: 0;
-  margin: 0.7rem;
+  right: 0.3rem;
+  top: 0.3rem;
   background-color: #333;
 }
 
