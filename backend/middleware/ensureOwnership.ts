@@ -1,10 +1,10 @@
 import db from "../db/db.js";
-import { NextFunction } from "express";
-import { TypedRequest, TypedResponse, MessageResponse, OwnershipBody } from "../types/app-types.js";
+import { NextFunction, Request } from "express";
+import { TypedResponse, MessageResponse } from "../types/app-types.js";
 import { QueryResult } from "pg";
 
 export default async function ensureOwnership(
-  req: TypedRequest<OwnershipBody>,
+  req: Request,
   res: TypedResponse<MessageResponse>,
   next: NextFunction
 ): Promise<void> {

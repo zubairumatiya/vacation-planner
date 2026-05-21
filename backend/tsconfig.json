@@ -9,7 +9,8 @@
     "resolveJsonModule": true,
     "moduleDetection": "force",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true
   },
   "include": [".", "../shared"],
   "exclude": [

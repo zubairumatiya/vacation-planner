@@ -1,4 +1,4 @@
-export function snakeToCamel<T>(rows: T[]): void {
+export function snakeToCamel<T extends object>(rows: T[]): void {
   for (const row of rows) {
     for (const key of Object.keys(row)) {
       if (key.includes("_")) {

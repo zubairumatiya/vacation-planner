@@ -15,7 +15,7 @@ export default async function checkIndexSpacing(
   if (above == null && below == null) {
     return 0;
   } else if (above == null) {
-    return below - 1000;
+    return below! - 1000;
   } else if (below == null) {
     return above + 1000;
   } else {
@@ -30,6 +30,9 @@ export default async function checkIndexSpacing(
           [body.start, Math.floor((above + below) / 2), itemId],
         );
         if (result.rowCount === null || result.rowCount < 1) {
+          return undefined;
+        }
+        if (tripId == null) {
           return undefined;
         }
         const renumRows = await renumberIndexDb(tripId, client);
