@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "typeRoots": ["./types", "./node_modules/@types"],
-    "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
     "target": "esnext",
     "rootDir": "..",
     "outDir": "./dist",

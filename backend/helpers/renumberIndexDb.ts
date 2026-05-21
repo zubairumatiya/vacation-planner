@@ -1,5 +1,5 @@
 import { PoolClient } from "pg";
-import { Schedule } from "../types/app-types";
+import { Schedule } from "../types/app-types.js";
 
 export default async function renumberIndexDb(
   tripId: string,
