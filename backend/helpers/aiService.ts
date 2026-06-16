@@ -385,23 +385,27 @@ Answer the user's question. Use action symbols if modifying the schedule. Use it
   // ── Action symbol reference ──
   sections.push(`## Action Symbols
 
-   Your response MUST use one of these symbols on its own line, followed by a JSON block on the next line(s):
-   ${
+Format rules (follow exactly):
+- Put the symbol ALONE on its own line, then the JSON object on the line(s) immediately after it.
+- Emit one JSON object per symbol. Repeat the symbol for each item.
+- "cost" must be a number (e.g. 15), not a word like "Moderate" or "Free". Use 0 if unknown.
+- Do NOT append a combined summary or any extra JSON document at the end of your response.
+${
      mode === "schedule"
-       ? `\`+ADD\` — Add a new item to the schedule. JSON: { "location", "details", "category", "startTime", "endTime", "cost", 
-  "multiDay" }`
+       ? `\`+ADD\` — Add a new item to the schedule. JSON: { "location", "details", "category", "startTime", "endTime", "cost", "multiDay" }\n`
        : ""
-   } 
-    \`?SUGGEST\` — Suggest an item. JSON: same as add 
-    \`~REPLACE\` — Update an existing schedule item by id. JSON: { "id", ...fields to update }
-    \`-REMOVE\` — Delete a schedule item by id. JSON: { "id" }
+   }\`?SUGGEST\` — Suggest an item. JSON: same shape as +ADD
+\`~REPLACE\` — Update an existing schedule item by id. JSON: { "id", ...fields to update }
+\`-REMOVE\` — Delete a schedule item by id. JSON: { "id" }
 
-    example JSON format for ${mode === "schedule" ? "+ADD and" : ""} ?SUGGEST: {"location": "Museum X", "details": "Famous art museum", "category": "museum", "startTime": "2026-03-20T10:00:00Z", "endTime": "2026-03-20T12:00:00Z", "cost": 15, "multiDay": false}
-    
-  Text & Status Commands (NO JSON):
-   \`>TEXT\` — Free-text commentary. The line(s) after >TEXT until the next symbol are plain text.
-   \`!NULL\` — Exhausted category. Write \`!NULL category_name\` on its own line.
- `);
+Example (symbol and JSON on separate lines, cost numeric):
+?SUGGEST
+{"location": "Museum X", "details": "Famous art museum", "category": "museum", "startTime": "2026-03-20T10:00:00Z", "endTime": "2026-03-20T12:00:00Z", "cost": 15, "multiDay": false}
+
+Text & Status Commands (NO JSON):
+\`>TEXT\` — Free-text commentary. The line(s) after >TEXT until the next symbol are plain text.
+\`!NULL\` — Exhausted category. Write \`!NULL category_name\` on its own line.
+`);
 
   return sections.join("\n\n");
 }
@@ -510,94 +514,178 @@ interface ParsedResponse {
   exhaustedCategories: string[];
 }
 
+const ACTION_SYMBOLS = [
+  "+ADD",
+  "~REPLACE",
+  "-REMOVE",
+  "?SUGGEST",
+  ">TEXT",
+  "!NULL",
+] as const;
+
+// Find the next DSL symbol at or after `from`. Symbols are only recognized as
+// standalone tokens (bounded by start/whitespace before and whitespace/`{`/end
+// after) so we don't match inside a word or inside JSON string content.
+function nextSymbol(
+  text: string,
+  from: number,
+): { index: number; symbol: string } | null {
+  let best: { index: number; symbol: string } | null = null;
+  for (const sym of ACTION_SYMBOLS) {
+    let idx = text.indexOf(sym, from);
+    while (idx !== -1) {
+      const prev = idx === 0 ? "" : text[idx - 1];
+      const afterIdx = idx + sym.length;
+      const next = afterIdx >= text.length ? "" : text[afterIdx];
+      const prevOk = prev === "" || /\s/.test(prev);
+      const nextOk = next === "" || /\s/.test(next) || next === "{";
+      if (prevOk && nextOk) {
+        if (!best || idx < best.index) best = { index: idx, symbol: sym };
+        break;
+      }
+      idx = text.indexOf(sym, idx + 1);
+    }
+  }
+  return best;
+}
+
+// Brace-match a JSON object starting at the `{` at `start`, respecting strings
+// and escapes. Returns the raw slice and the index just past the closing `}`.
+function extractJsonObject(
+  text: string,
+  start: number,
+): { json: string; end: number } | null {
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let k = start; k < text.length; k++) {
+    const ch = text[k];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (ch === "\\") {
+      if (inString) escaped = true;
+      continue;
+    }
+    if (ch === '"') {
+      inString = !inString;
+      continue;
+    }
+    if (inString) continue;
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return { json: text.slice(start, k + 1), end: k + 1 };
+    }
+  }
+  return null;
+}
+
+// Coerce a model-supplied cost into a number. Handles plain numbers and
+// currency-formatted strings ("$15", "1,200"); qualitative tiers like
+// "Moderate" or "Free" have no real price, so they fall through to 0 rather
+// than inventing a figure.
+function parseCost(value: unknown): number {
+  if (typeof value === "number" && isFinite(value)) return value;
+  if (typeof value === "string") {
+    const n = Number(value.replace(/[$,\s]/g, ""));
+    if (isFinite(n)) return n;
+  }
+  return 0;
+}
+
 export function parseActionResponse(rawText: string): ParsedResponse {
   const actions: AiAction[] = [];
   const itinerary: AiItineraryItem[] = [];
   const exhaustedCategories: string[] = [];
   const textParts: string[] = [];
 
-  const lines = rawText.split("\n");
-  let i = 0;
+  // Collect loose prose, but drop standalone JSON documents the model
+  // sometimes appends instead of (or alongside) the DSL — those aren't meant
+  // for display and would otherwise render as a raw blob.
+  const pushText = (s: string) => {
+    const trimmed = s.trim();
+    if (!trimmed) return;
+    if (/^[{[]/.test(trimmed)) {
+      try {
+        JSON.parse(trimmed);
+        return;
+      } catch {
+        // not a complete JSON document — keep it as text
+      }
+    }
+    textParts.push(trimmed);
+  };
 
-  while (i < lines.length) {
-    const line = lines[i].trim();
+  let pos = 0;
+  while (pos < rawText.length) {
+    const found = nextSymbol(rawText, pos);
+    if (!found) {
+      pushText(rawText.slice(pos));
+      break;
+    }
+    if (found.index > pos) pushText(rawText.slice(pos, found.index));
 
-    // Check for !NULL
-    if (line.startsWith("!NULL")) {
-      const cat = line.replace("!NULL", "").trim();
+    const symbol = found.symbol;
+    const after = found.index + symbol.length;
+
+    if (symbol === "!NULL") {
+      const eol = rawText.indexOf("\n", after);
+      const end = eol === -1 ? rawText.length : eol;
+      const cat = rawText.slice(after, end).trim();
       if (cat) exhaustedCategories.push(cat);
-      i++;
+      pos = end;
       continue;
     }
 
-    // Check for action symbols
-    const symbolMatch = line.match(
-      /^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT)$/,
-    );
-    if (symbolMatch) {
-      const symbol = symbolMatch[1] as AiAction["symbol"];
-
-      if (symbol === ">TEXT") {
-        // Collect text until next symbol line
-        i++;
-        const textLines: string[] = [];
-        while (i < lines.length) {
-          const nextLine = lines[i].trim();
-          if (/^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT|!NULL)/.test(nextLine))
-            break;
-          textLines.push(lines[i]);
-          i++;
-        }
-        const textContent = textLines.join("\n").trim();
-        if (textContent) {
-          textParts.push(textContent);
-          actions.push({ symbol: ">TEXT", data: { text: textContent } });
-        }
-        continue;
+    if (symbol === ">TEXT") {
+      const nxt = nextSymbol(rawText, after);
+      const end = nxt ? nxt.index : rawText.length;
+      const textContent = rawText.slice(after, end).trim();
+      if (textContent) {
+        textParts.push(textContent);
+        actions.push({ symbol: ">TEXT", data: { text: textContent } });
       }
-
-      // For +ADD, ~REPLACE, -REMOVE, ?SUGGEST — collect JSON block
-      i++;
-      const jsonLines: string[] = [];
-      while (i < lines.length) {
-        const nextLine = lines[i].trim();
-        if (/^(\+ADD|~REPLACE|-REMOVE|\?SUGGEST|>TEXT|!NULL)/.test(nextLine))
-          break;
-        if (nextLine) jsonLines.push(nextLine);
-        i++;
-      }
-
-      const jsonStr = jsonLines.join("\n").trim();
-      if (jsonStr) {
-        try {
-          const data = JSON.parse(jsonStr);
-          actions.push({ symbol, data });
-
-          // Build itinerary items from +ADD and ?SUGGEST
-          if (symbol === "+ADD" || symbol === "?SUGGEST") {
-            itinerary.push({
-              location: data.location ?? "",
-              details: data.details ?? "",
-              category: data.category ?? "",
-              startTime:
-                sanitizeTimestamp(data.startTime) ?? data.startTime ?? "",
-              endTime: sanitizeTimestamp(data.endTime) ?? data.endTime ?? "",
-              cost: Number(data.cost) || 0,
-              multiDay: Boolean(data.multiDay),
-            });
-          }
-        } catch (err) {
-          console.error("[AI] Failed to parse action JSON:", err, jsonStr);
-        }
-      }
+      pos = end;
       continue;
     }
 
-    // Regular text line (not prefixed by any symbol) — collect as text
-    if (line) {
-      textParts.push(lines[i]);
+    // JSON-bearing symbol (+ADD, ~REPLACE, -REMOVE, ?SUGGEST). The JSON object
+    // may sit on the same line as the symbol or on following lines.
+    const nxt = nextSymbol(rawText, after);
+    const limit = nxt ? nxt.index : rawText.length;
+    const brace = rawText.indexOf("{", after);
+    if (brace === -1 || brace >= limit) {
+      // Symbol with no JSON payload — skip it.
+      pos = after;
+      continue;
     }
-    i++;
+    const extracted = extractJsonObject(rawText, brace);
+    if (!extracted) {
+      pos = after;
+      continue;
+    }
+    try {
+      const data = JSON.parse(extracted.json);
+      actions.push({ symbol: symbol as AiAction["symbol"], data });
+
+      // Build itinerary items from +ADD and ?SUGGEST
+      if (symbol === "+ADD" || symbol === "?SUGGEST") {
+        itinerary.push({
+          location: data.location ?? "",
+          details: data.details ?? "",
+          category: data.category ?? "",
+          startTime: sanitizeTimestamp(data.startTime) ?? data.startTime ?? "",
+          endTime: sanitizeTimestamp(data.endTime) ?? data.endTime ?? "",
+          cost: parseCost(data.cost),
+          multiDay: Boolean(data.multiDay),
+        });
+      }
+    } catch (err) {
+      console.error("[AI] Failed to parse action JSON:", err, extracted.json);
+    }
+    pos = extracted.end;
   }
 
   return {
