@@ -494,7 +494,23 @@ router.post(
           [true, decodedRefToken.jti],
         );
         if (result.rowCount !== null && result.rowCount < 1) {
-          res.status(401).json({ error: "Could not find" }); // frontend receieves this in 401 request and will log user out
+          // The token couldn't be rotated: either it was already revoked —
+          // a previously-rotated token being replayed, which signals theft —
+          // or its row no longer exists (e.g. it was pruned). Only on genuine
+          // reuse do we revoke every refresh token for this user. We don't
+          // track per-session families, so revocation is by user_id: all of
+          // the user's outstanding sessions are killed and they must re-login.
+          const existing = await db.query<{ revoked: boolean }>(
+            "SELECT revoked FROM refresh_tokens WHERE jti=$1",
+            [decodedRefToken.jti],
+          );
+          if (existing.rows[0]?.revoked && decodedRefToken.sub) {
+            await db.query(
+              "UPDATE refresh_tokens SET revoked=true WHERE user_id=$1 AND revoked=false",
+              [String(decodedRefToken.sub)],
+            );
+          }
+          res.status(401).json({ error: "Could not find" }); // frontend receives this 401 and logs the user out
           return;
         }
         const exp = decodedRefToken.exp;
